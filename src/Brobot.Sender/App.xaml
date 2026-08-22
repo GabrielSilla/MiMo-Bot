@@ -1,0 +1,11 @@
+<Application x:Class="Brobot.Sender.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Brobot.Sender"
+             ShutdownMode="OnExplicitShutdown">
+    <!-- No StartupUri: MainWindow is created hidden (see App.xaml.cs) rather
+         than shown-then-hidden, which would otherwise flash briefly at launch. -->
+    <Application.Resources>
+
+    </Application.Resources>
+</Application>

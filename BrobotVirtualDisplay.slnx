@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Brobot.Connection/Brobot.Connection.csproj" />
+    <Project Path="src/Brobot.Display.Abstractions/Brobot.Display.Abstractions.csproj" />
+    <Project Path="src/Brobot.Display.Simulator/Brobot.Display.Simulator.csproj" />
+    <Project Path="src/Brobot.Sender/Brobot.Sender.csproj" />
+  </Folder>
+</Solution>

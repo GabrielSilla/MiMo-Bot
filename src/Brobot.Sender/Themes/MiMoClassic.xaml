@@ -1,0 +1,29 @@
+<!--
+    "MiMo Classic" — the original warm cream/tan look MiMo shipped with.
+    Every color MainWindow/SettingsWindow render with lives here as a brush
+    resource, referenced elsewhere via DynamicResource (never a literal hex
+    or a StaticResource) so ThemeManager can swap the whole palette at
+    runtime just by replacing this dictionary with another theme's, without
+    touching any window's markup.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F7EFE2"/>
+
+    <SolidColorBrush x:Key="InkBrush" Color="#1C1A16"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="#8C8375"/>
+    <SolidColorBrush x:Key="CardBrush" Color="#FFFCF6"/>
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#EFE3CE"/>
+    <SolidColorBrush x:Key="BadgeBrush" Color="#EFE0C8"/>
+
+    <!-- Checkbox/ComboBox/Install-button chrome -->
+    <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ControlBorderBrush" Color="#DDD0B8"/>
+    <SolidColorBrush x:Key="CheckMarkBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonTextBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="HighlightBrush" Color="#F3E9D6"/>
+
+    <SolidColorBrush x:Key="SaveButtonHoverBrush" Color="#33302A"/>
+
+</ResourceDictionary>

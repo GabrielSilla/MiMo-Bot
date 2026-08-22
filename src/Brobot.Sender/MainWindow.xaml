@@ -1,0 +1,460 @@
+<Window x:Class="Brobot.Sender.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Brobot.Sender"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        mc:Ignorable="d"
+        Title="MiMo" Height="760" Width="580"
+        ResizeMode="CanResize"
+        Icon="pack://application:,,,/Brobot.Sender;component/src/mimo-b.png"
+        Background="{DynamicResource WindowBackgroundBrush}">
+    <Window.Resources>
+        <!-- Implicit (no x:Key) style: applies to every PackIconMaterial in this
+             window automatically. Border doesn't center its child by default
+             when the child has an explicit fixed size — without this, every
+             icon sits pinned to the top-left corner of its badge instead of
+             centered in it. -->
+        <Style TargetType="iconPacks:PackIconMaterial">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Color brushes (InkBrush, CardBrush, ...) come from the active theme
+             in App.Resources (see ThemeManager/Themes/MiMoClassic.xaml), not
+             from here — everything below looks them up via DynamicResource
+             so a theme change repaints this window without a restart. -->
+
+        <!-- Card shell shared by every row -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+
+        <Style x:Key="IconBadgeStyle" TargetType="Border">
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Background" Value="{DynamicResource BadgeBrush}"/>
+        </Style>
+
+        <Style x:Key="CardTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
+        </Style>
+
+        <Style x:Key="CardDescriptionStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,3,0,0"/>
+        </Style>
+
+        <Style x:Key="CardStatusStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+
+        <!-- Rounded black-square checkbox with a white checkmark, matching the MiMo reference -->
+        <Style x:Key="MimoCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="Box" Width="28" Height="28" CornerRadius="9"
+                                Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1.5">
+                            <Path x:Name="Check" Data="M4,9 L8,13.5 L16,4" Stroke="{DynamicResource CheckMarkBrush}" StrokeThickness="2.3"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="Collapsed"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource InkBrush}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource InkBrush}"/>
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Minimal rounded ComboBox, just enough chrome to read as a dropdown -->
+        <Style x:Key="MimoComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="Toggle" Focusable="False" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Grid.Column="0" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center"/>
+                                                <Path Grid.Column="1" Data="M0,0 L5,6 L10,0" Stroke="{DynamicResource InkBrush}" StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                      VerticalAlignment="Center" Margin="8,0,2,0"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <!-- ContentTemplate/ContentTemplateSelector/ContentStringFormat must be forwarded
+                                 alongside Content, or a ComboBox using DisplayMemberPath (like TemaComboBox)
+                                 shows the selected item's raw ToString() here instead of its display text —
+                                 the dropdown popup gets it right via its own auto-generated item container,
+                                 this closed-state presenter doesn't inherit that for free. -->
+                            <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                              Margin="10,6,28,6" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Border Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1.5" CornerRadius="10"
+                                        MinWidth="{TemplateBinding ActualWidth}" Padding="4" Margin="0,4,0,0">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="14" ShadowDepth="3" Opacity="0.18" Color="#000000"/>
+                                    </Border.Effect>
+                                    <StackPanel IsItemsHost="True"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MimoComboBoxItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder" Background="Transparent" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource HighlightBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Small pill button for the Pensamentos da IA card's Instalar/Desinstalar
+             action — outlined instead of filled like SaveButtonStyle, since this is
+             a secondary, occasional action next to the card's own content, not the
+             page's single primary action. -->
+        <Style x:Key="InstallButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{DynamicResource ControlBackgroundBrush}" BorderBrush="{DynamicResource InkBrush}" BorderThickness="1.5"
+                                CornerRadius="10" Padding="14,8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource HighlightBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Rounded TextBox matching the ComboBox/Button chrome above, for the
+             Conexão card's host/port fields -->
+        <Style x:Key="MimoTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource InkBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SaveButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource ButtonTextBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{DynamicResource InkBrush}" CornerRadius="14" Padding="0,14">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SaveButtonHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <ScrollViewer x:Name="RootScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+        <Grid Margin="32,28,24,28">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Image Grid.Row="0" Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
+                   Height="48" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,14"/>
+            <TextBlock Grid.Row="1" Text="Escolha as informações que o MiMo pode receber"
+                       HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,0,0,24"/>
+
+            <!-- Conexão: MiMo's IP address on the local network (WiFi — see
+                 CLAUDE.md's connection-freeze note on why this replaced the
+                 Serial/USB path entirely for this app) -->
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="Wifi" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Conexão" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Endereço IP do MiMo na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="ConnectionStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <TextBox x:Name="ConnectionAddressTextBox" Grid.Column="2" Width="140" VerticalAlignment="Center" Margin="0,0,10,0"
+                             Style="{StaticResource MimoTextBoxStyle}"/>
+                    <Button x:Name="ConnectionButton" Grid.Column="3" Content="Conectar" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="ConnectionButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Hora -->
+            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="ClockOutline" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Hora" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Envia a hora atual para o MiMo" Style="{StaticResource CardDescriptionStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="HoraCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="HoraCheckBox_CheckedChanged" Unchecked="HoraCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Clima -->
+            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="WeatherPartlyCloudy" Width="26" Height="26"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Clima" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Envia as condições climáticas atuais" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="ClimaStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="ClimaCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="ClimaCheckBox_CheckedChanged" Unchecked="ClimaCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Pensamentos da IA -->
+            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="Brain" Width="26" Height="26"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Atividade da IA" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Envia a atividade da IA selecionada" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="PensamentosIaStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <ComboBox x:Name="PensamentosIaComboBox" Grid.Column="2" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"
+                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              SelectedIndex="0" SelectionChanged="PensamentosIaComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Claude"/>
+                        <ComboBoxItem Content="Codex"/>
+                        <ComboBoxItem Content="Gemini"/>
+                        <ComboBoxItem Content="Cursor"/>
+                        <ComboBoxItem Content="Outro"/>
+                    </ComboBox>
+                    <Button x:Name="PensamentosIaInstallButton" Grid.Column="3" Content="Instalar" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="PensamentosIaInstallButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Mídia -->
+            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="PlayCircleOutline" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Mídia" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Envia informações sobre o que você está ouvindo ou assistindo" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="MediaStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="MediaCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="MediaCheckBox_CheckedChanged" Unchecked="MediaCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Jogos -->
+            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="GamepadVariantOutline" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Jogos" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Avisa o MiMo quando você está jogando" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="GameStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="GameCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="GameCheckBox_CheckedChanged" Unchecked="GameCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Tema -->
+            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="Palette" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Tema" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Escolhe a aparência do MiMo" Style="{StaticResource CardDescriptionStyle}"/>
+                    </StackPanel>
+                    <!-- ItemTemplate rather than DisplayMemberPath: MimoComboBoxStyle's closed-box
+                         ContentPresenter only picks up ComboBox.ItemTemplate (forwarded as
+                         SelectionBoxItemTemplate) — DisplayMemberPath alone only formats the
+                         dropdown's own item containers, not the closed-box display, which would
+                         otherwise fall back to ThemeInfo's raw ToString(). -->
+                    <ComboBox x:Name="TemaComboBox" Grid.Column="2" Width="140" VerticalAlignment="Center"
+                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              SelectionChanged="TemaComboBox_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </Border>
+
+            <!-- Info -->
+            <Border Grid.Row="9" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="36" Height="36" CornerRadius="11" Background="{DynamicResource BadgeBrush}">
+                        <iconPacks:PackIconMaterial Kind="InformationOutline" Width="18" Height="18"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Sobre as informações" Style="{StaticResource CardTitleStyle}" FontSize="14"/>
+                        <TextBlock Text="O MiMo usará essas informações para interagir de forma mais relevante com você."
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Button Grid.Row="10" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+                    Click="SaveButton_Click"/>
+        </Grid>
+    </ScrollViewer>
+</Window>
