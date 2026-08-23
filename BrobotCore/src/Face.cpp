@@ -68,6 +68,41 @@ private:
     uint8_t dim(uint8_t c) const { return (uint8_t)((float)c * _factor); }
 };
 
+constexpr uint8_t MATRIX_R = 40, MATRIX_G = 255, MATRIX_B = 90;
+
+// Forwards every draw call to another IDisplay, replacing any non-black
+// color with a fixed one — used by MATRIX (see Face::render) to reskin
+// every shape green without touching the dozen functions below that draw
+// them. Pure black (0,0,0) passes through unchanged rather than also
+// becoming green: every "cut a gap" background-colored punch-out (rounded
+// eye corners, the book's spine gap, the gamepad's buttons, ...) relies on
+// that gap staying the actual background color, or the cutout effect
+// disappears and the shape reads as solid instead of hollow.
+class RecoloringDisplay : public IDisplay {
+public:
+    RecoloringDisplay(IDisplay& inner, uint8_t r, uint8_t g, uint8_t b) : _inner(inner), _r(r), _g(g), _b(b) {}
+
+    int width() const override { return _inner.width(); }
+    int height() const override { return _inner.height(); }
+
+    void clear(uint8_t r, uint8_t g, uint8_t b) override { _inner.clear(r, g, b); } // background clear stays whatever it was
+    void drawPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawPixel(x, y, ro(r,g,b), go(r,g,b), bo(r,g,b)); }
+    void drawRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawRect(x, y, w, h, ro(r,g,b), go(r,g,b), bo(r,g,b)); }
+    void fillRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { _inner.fillRect(x, y, w, h, ro(r,g,b), go(r,g,b), bo(r,g,b)); }
+    void drawRoundedRect(int x, int y, int w, int h, int radius, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawRoundedRect(x, y, w, h, radius, ro(r,g,b), go(r,g,b), bo(r,g,b)); }
+    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawText(text, x, y, ro(r,g,b), go(r,g,b), bo(r,g,b)); }
+    void present() override { _inner.present(); }
+
+private:
+    IDisplay& _inner;
+    uint8_t _r, _g, _b;
+
+    bool isBackground(uint8_t r, uint8_t g, uint8_t b) const { return r == 0 && g == 0 && b == 0; }
+    uint8_t ro(uint8_t r, uint8_t g, uint8_t b) const { return isBackground(r, g, b) ? 0 : _r; }
+    uint8_t go(uint8_t r, uint8_t g, uint8_t b) const { return isBackground(r, g, b) ? 0 : _g; }
+    uint8_t bo(uint8_t r, uint8_t g, uint8_t b) const { return isBackground(r, g, b) ? 0 : _b; }
+};
+
 // Corner rounding: a small 2-row "staircase" cut (2px, then 1px) instead of
 // one flat diagonal chamfer. It approximates a quarter-circle of radius ~4,
 // which reads as a soft round corner rather than a cut-off corner — closer
@@ -84,12 +119,30 @@ constexpr int EYE_SIZE = 42;
 constexpr int EYE_GAP = 16;
 constexpr int EYE_Y = 24;
 
-// COFFEE overrides the normal centered eye geometry entirely: smaller eyes,
-// pinned to the left edge instead of centered, so the coffee cup (see
-// drawCoffeeCup) has the right side of the frame to itself.
-constexpr int COFFEE_EYE_SIZE = 22;
-constexpr int COFFEE_EYE_GAP = 8;
+// COFFEE overrides the normal centered eye geometry entirely: smaller-than-
+// normal eyes, pinned to the left edge instead of centered, so the coffee
+// cup (see drawCoffeeCup, COFFEE_CUP_X=116) has the right side of the frame
+// to itself. Sized to leave a clear ~25px gap before the cup/saucer at
+// COFFEE_EYES_X=10 — right eye now ends at 10+32+10+32=84, well short of
+// the cup's saucer at 113 (COFFEE_CUP_X - 3).
+constexpr int COFFEE_EYE_SIZE = 32;
+constexpr int COFFEE_EYE_GAP = 10;
+// EYE_Y (24) was tuned for the full 42px eyes; at the smaller COFFEE size
+// that top-anchored position reads as sitting too high, especially next to
+// the cup (COFFEE_CUP_Y=58). Shifted down so the eyes' vertical center
+// roughly lines up with the cup's top edge instead of floating near the
+// weather/clock badge strip.
+constexpr int COFFEE_EYE_Y = 42;
 constexpr int COFFEE_EYES_X = 10;
+
+// MATRIX pins the (full-size, centered) eyes to the bottom of the frame
+// instead of the usual upper-middle spot, freeing up the top of the screen
+// for the console log (see below). Margin keeps them clear of the very
+// bottom edge, same reasoning BOOT_FALL_START_OFFSET_Y_PX's comment in
+// Personality.cpp gives for the top edge.
+constexpr int MATRIX_EYE_BOTTOM_MARGIN = 8;
+constexpr int MATRIX_LOG_TOP_Y = 4;
+constexpr int MATRIX_LOG_X = 4;
 
 constexpr int MESSAGE_LINE_HEIGHT = 9;    // 7px glyph + 2px between lines
 // The display area is a fixed 3-line window. Once the (still-typing) text
@@ -550,22 +603,44 @@ void drawSleepZzz(IDisplay& display, int rightEyeX, int eyeSize, int eyeTop, uns
     }
 }
 
+// MATRIX's scrolling console log — plain top-anchored lines, oldest first,
+// each prefixed with "> " like a terminal prompt. No word-wrap/box like the
+// normal message system: Personality already caps each entry's length (see
+// MATRIX_LOG_LINE_CAPACITY) and older lines simply age out of the ring
+// buffer instead of scrolling within a fixed box, so a plain one-line-per-
+// entry draw is enough. Color is passed through RecoloringDisplay anyway —
+// MSG_R/G/B here is just "any non-black", not the literal color drawn.
+void drawMatrixLog(IDisplay& display, const FaceState& state) {
+    char line[MATRIX_LOG_LINE_CAPACITY + 3]; // + "> " prefix and the null terminator
+    int y = MATRIX_LOG_TOP_Y;
+    for (int i = 0; i < state.logLineCount; i++) {
+        snprintf(line, sizeof(line), "> %s", state.logLines[i]);
+        display.drawText(line, MATRIX_LOG_X, y, MSG_R, MSG_G, MSG_B);
+        y += MESSAGE_LINE_HEIGHT;
+    }
+}
+
 } // namespace
 
 void Face::render(IDisplay& rawDisplay, const FaceState& state) {
-    // Everything below draws through `display`, which is either the real
-    // target or a DimmingDisplay wrapping it — picked once here so none of
-    // the drawing code below needs to know or care which.
-    DimmingDisplay dimmed(rawDisplay, SLEEP_DIM_FACTOR);
-    IDisplay& display = (state.expression == Expression::SLEEPING) ? static_cast<IDisplay&>(dimmed) : rawDisplay;
+    // Everything below draws through `display`, composed from whichever of
+    // these two decorators actually apply — recolor first (innermost), so a
+    // simultaneous SLEEPING dims the theme's own green rather than dimming
+    // straight past it back to the normal teal.
+    bool isMatrix = state.theme == Theme::MATRIX;
+    RecoloringDisplay recolored(rawDisplay, MATRIX_R, MATRIX_G, MATRIX_B);
+    IDisplay& themed = isMatrix ? static_cast<IDisplay&>(recolored) : rawDisplay;
+    DimmingDisplay dimmed(themed, SLEEP_DIM_FACTOR);
+    IDisplay& display = (state.expression == Expression::SLEEPING) ? static_cast<IDisplay&>(dimmed) : themed;
 
-    bool hasMessage = state.message != nullptr && state.message[0] != '\0';
+    bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix;
 
     bool isCoffee = state.expression == Expression::COFFEE;
 
     int eyeSize = isCoffee ? COFFEE_EYE_SIZE : EYE_SIZE;
     int eyeGap = isCoffee ? COFFEE_EYE_GAP : EYE_GAP;
-    int eyeY = EYE_Y;
+    int eyeY = isCoffee ? COFFEE_EYE_Y
+        : (isMatrix ? (display.height() - EYE_SIZE - MATRIX_EYE_BOTTOM_MARGIN) : EYE_Y);
 
     ExpressionShape shape = shapeFor(state.expression);
     eyeGap += shape.gapDelta;
@@ -609,18 +684,24 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         drawEye(display, rightX, eyeTop, eyeSize, eyeHeight);
     }
 
-    if (state.expression == Expression::SLEEPING) {
-        drawSleepZzz(display, rightX, eyeSize, eyeTop, state.nowMs);
-    } else if (state.expression == Expression::MUSIC) {
-        drawMusicNote(display, state.nowMs);
-    } else if (state.expression == Expression::WATCHING) {
-        drawPlayIcon(display, state.nowMs);
-    } else if (state.expression == Expression::READING) {
-        drawBookIcon(display, state.nowMs);
-    } else if (state.expression == Expression::PLAYING) {
-        drawGamepadIcon(display, state.nowMs);
-    } else if (state.expression == Expression::COFFEE) {
-        drawCoffeeCup(display, state.nowMs);
+    // MATRIX drops every corner icon and badge — their info already lives
+    // in the console log below (see Personality::update/onMessageCommand),
+    // and the icons' usual Y range (roughly 14-70px down) would otherwise
+    // collide with the log's own top-anchored lines.
+    if (!isMatrix) {
+        if (state.expression == Expression::SLEEPING) {
+            drawSleepZzz(display, rightX, eyeSize, eyeTop, state.nowMs);
+        } else if (state.expression == Expression::MUSIC) {
+            drawMusicNote(display, state.nowMs);
+        } else if (state.expression == Expression::WATCHING) {
+            drawPlayIcon(display, state.nowMs);
+        } else if (state.expression == Expression::READING) {
+            drawBookIcon(display, state.nowMs);
+        } else if (state.expression == Expression::PLAYING) {
+            drawGamepadIcon(display, state.nowMs);
+        } else if (state.expression == Expression::COFFEE) {
+            drawCoffeeCup(display, state.nowMs);
+        }
     }
 
     if (hasMessage) {
@@ -631,10 +712,14 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // Persistent overlays: drawn last (on top), always in the same two
     // corners regardless of expression or message — see the badge functions'
     // comment above for why they don't share the expression icons' spot.
-    if (state.hasWeather) {
+    if (state.hasWeather && !isMatrix) {
         drawWeatherBadge(display, state.weatherTempC, state.weatherCondition, state.timeText);
     }
-    if (state.timeText != nullptr && state.timeText[0] != '\0') {
+    if (state.timeText != nullptr && state.timeText[0] != '\0' && !isMatrix) {
         drawClockBadge(display, state.timeText);
+    }
+
+    if (isMatrix) {
+        drawMatrixLog(display, state);
     }
 }

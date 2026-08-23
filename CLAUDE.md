@@ -47,8 +47,8 @@ src/
                                      Simulator and Sender to reach Core (see Architecture below)
   Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
                                      Brobot: MainWindow is a card-based checklist (Conexão, Hora, Clima,
-                                     Pausa, Atividade da IA, Mídia, Jogos — mostly checkboxes, except Atividade
-                                     da IA which is an Instalar/Desinstalar button, see below).
+                                     Pausa, Atividade da IA, Mídia, Jogos, Tela do MiMo — mostly checkboxes,
+                                     except Atividade da IA which is an Instalar/Desinstalar button, see below).
                                      Connection setup lives inline in MainWindow's own Conexão card
                                      (WiFi/TCP only — no SettingsWindow, no Serial/USB, see below) rather
                                      than a separate window. WeatherMonitor + WindowsMediaMonitor + GameMonitor +
@@ -123,6 +123,7 @@ FACE <NEUTRAL|HAPPY|SAD|ANGRY|SLEEPING|SLEEPY|COFFEE|MUSIC|WATCHING|ERROR|READIN
 MSG <text>                    (empty text clears the message)
 WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears the badge)
 TIME <HH:MM>                  (empty clears the clock)
+THEME <DEFAULT|MATRIX>        (persistent, like WEATHER/TIME — see Face.cpp's MATRIX notes)
 
 CLR r g b
 PIXEL x y r g b
@@ -320,6 +321,44 @@ builds never see it.
   not PNG/bitmap (see PROTOCOL.md's `DrawBitmap` note — at this resolution a
   downscaled bitmap would look worse, not better, and needs a whole asset/wire
   pipeline this doesn't).
+  **`Theme::MATRIX`** (Sender's Tela do MiMo card, `THEME MATRIX`/`THEME
+  DEFAULT` — named `CLASSIC` in the `Theme` enum, not `DEFAULT`, since
+  `<Arduino.h>` `#define`s `DEFAULT` as a macro, same class of problem as
+  `Expression::FAILED` not being named `ERROR`) is a whole-frame reskin
+  layered on top of everything above, not a new `Expression`: `Face::render`
+  composes a `RecoloringDisplay` decorator (recolors every non-black draw
+  call to a fixed green, leaving actual black — every "cut a gap" punch-out
+  — alone so rounded corners/spine gaps/d-pad cutouts still read as hollow)
+  the same way it already composes `DimmingDisplay` for `SLEEPING`, with
+  `RecoloringDisplay` innermost so a simultaneous `SLEEPING` dims the theme's
+  green instead of un-recoloring it back to teal. While `MATRIX` is active,
+  every corner icon/badge is suppressed (`drawWeatherBadge`/`drawClockBadge`/
+  the music-note-through-gamepad-through-coffee-cup icons, even Sleeping's
+  "Z Z Z") — their info now lives in the console log below instead, and
+  their usual Y-range would otherwise collide with it — and the (still
+  full-size, still expression-shaped) eyes get pinned to the bottom of the
+  frame instead of the usual upper-middle spot (`COFFEE`'s own bottom-left
+  pin still takes precedence over Matrix's bottom-center one, same "coffee's
+  layout wins" precedence order the geometry code already had). The freed-up
+  top of the frame renders `Personality`'s own scrolling log (`_log`,
+  `MATRIX_LOG_LINES` = 6 entries, `MATRIX_LOG_LINE_CAPACITY` = 34 chars each,
+  in `Face.h` since both `Personality` and `FaceState` need the same
+  capacity) — a plain shift-and-append array, not a wraparound ring buffer,
+  since the capacity is tiny and this keeps rendering a simple 0..count
+  chronological loop with `> ` prefixed per line, no index math.
+  `Personality::pushLogLine` is called from exactly two places: once inside
+  `onMessageCommand` (covers every message that already flows through there
+  — AI hook text, media "now playing", "Jogando X", weather alerts, Pausa's
+  coffee reminders — with a single call site, since the log doesn't care
+  which tier a message is headed for) and once for each freshly-picked
+  bedtime message. A third source, the periodic `"HH:MM - tempC -
+  condicao"` line, is composed directly in `Personality::update` (using a
+  small `conditionLabel` PT-BR lookup, separate from the wire protocol's own
+  English `CoreConditionName`) and gated on `_timeText` actually changing
+  since the last log push — TIME arrives every second from Sender's Hora
+  card, so logging on every tick would flood the log with near-duplicate
+  timestamps; once a minute matches how often the display value actually
+  changes anyway.
 - **`Personality.cpp`**: blink and look-around use eased (smoothstep) transitions
   spread over enough frames to look smooth at ~20fps, not instant jumps. Look-around
   picks randomly from 8 directions (incl. diagonals) and swings close to the
@@ -606,6 +645,14 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   COFFEE` isn't sticky on Core (it auto-reverts like any other foreground
   expression), so there's nothing to explicitly clear on uncheck, unlike
   MUSIC/WATCHING/PLAYING/THINKING elsewhere in this file.
+- **Tela do MiMo** is a single checkbox (`MatrixThemeCheckBox`) sending
+  `THEME MATRIX`/`THEME DEFAULT` — deliberately a separate card from Tema
+  above, which only changes this app's own light/dark WPF colors and has no
+  idea Core's display even exists. Like Clima's `WEATHER` badge, `THEME` is
+  a persistent flag Core forgets across its own reboot, so `UpdateConnectionStatus`
+  resends `THEME MATRIX` on reconnect the same way it resends the last
+  weather reading — but only the on-branch: there's no equivalent need to
+  resend `THEME DEFAULT`, since that's already Core's own boot default.
 - **"Atividade da IA"** (a provider `ComboBox`: Claude/Codex/Gemini/Cursor/
   Outro, plus an **Instalar**/**Desinstalar** button — no checkbox) is the
   per-tool-hooks → local endpoint → `FACE`/`MSG` bridge. Unlike every other
@@ -629,7 +676,16 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   idempotent — re-running `Install()` skips events that are already there
   instead of duplicating them, which also means a partial/broken install
   (e.g. the user hand-deleted one event) self-repairs on the next click
-  rather than needing a manual uninstall first.
+  rather than needing a manual uninstall first. The same click also wires up
+  `settings.json`'s top-level `"statusLine"` (see `mimo-claude-statusline.ps1`
+  below) — a single object, not an array of installable entries like
+  `hooks`, so `Install()` only claims it when it's absent or already ours
+  (`IsOurStatusLine`, matched the same way as hook entries — by the
+  command containing `mimo-claude-statusline.ps1`), never overwriting a
+  statusLine the user configured themselves. This is deliberately
+  best-effort: `IsInstalled()` still only checks `hooks`, so a pre-existing
+  foreign statusLine can't leave the "Instalar" button permanently unable
+  to report success.
 - **`hooks/mimo-claude-hook.ps1`** (repo root, copied to Brobot.Sender's
   output directory — see the csproj — so `ClaudeCodeHookInstaller` can point
   a hook command at a real file next to whichever `Brobot.Sender.exe` is
@@ -642,6 +698,31 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   is swallowed and it always `exit 0`s — and must never write to stdout,
   since `UserPromptSubmit` hooks have their stdout appended straight into
   Claude's context.
+- **`hooks/mimo-claude-statusline.ps1`** (same repo root / copy-to-output /
+  path-resolution setup as the hook script above): registered as Claude
+  Code's `statusLine` command, not a `hooks` entry — a genuinely different
+  contract, not just another event. It receives a much richer JSON payload
+  (`model`, `cost`, `context_window`, ...) than any hook gets, and — unlike
+  `mimo-claude-hook.ps1`, where writing to stdout is actively forbidden —
+  this script's own stdout *is* what Claude Code renders as the terminal's
+  status line, so it always prints a one-line summary no matter what else
+  happens, alongside forwarding the same text to `AiThoughtsListener` as a
+  `ContextUsage` event. Computes "`N` tokens gastos na requisicao. `X`% do
+  contexto utilizado" from `context_window.current_usage` (the last
+  response's `input_tokens + output_tokens + cache_creation_input_tokens +
+  cache_read_input_tokens`) and `context_window.total_input_tokens /
+  context_window.context_window_size`. Two deliberate departures from what
+  the field names suggest, both per Claude Code's own docs, not a bug here:
+  `context_window.total_output_tokens` is *not* a running session total
+  despite the name — it's just the most recent response's output tokens —
+  so it's not used at all; and `total_input_tokens` (tokens currently
+  loaded in the context window, which resets after a `/compact`) is what
+  gets treated as "session total" for the percentage, per an explicit
+  product call, since Claude Code exposes no field that's a true
+  since-session-start running sum. `current_usage` is `null` before the
+  first API call and again right after a `/compact`, so every field read
+  is guarded and falls back to `0` — the terminal's status line must never
+  go blank because of a null here, and neither must the MiMo side.
 - **`AiThoughtsListener.cs`**: a plain `TcpListener` on `127.0.0.1:5591`
   (`MainWindow.AiThoughtsPort`), not `HttpListener` — `HttpListener` needs
   either Administrator or a `netsh` URL ACL reservation to bind a prefix on
@@ -655,7 +736,9 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   `FACE READING` (+ `MSG <text>` if the hook sent one), `Notification` →
   `MSG <text>` only (no `FACE` change — a notification isn't itself an
   expression), `Stop` → `FACE FINISHED` + `MSG Terminei!`, `SessionEnd` →
-  `FACE NEUTRAL` + clear `MSG`. THINKING is Core's one remaining sticky
+  `FACE NEUTRAL` + clear `MSG`, `ContextUsage` (from
+  `mimo-claude-statusline.ps1`, not a hook — see below) → `MSG <text>` only,
+  same no-`FACE`-change reasoning as `Notification`. THINKING is Core's one remaining sticky
   *foreground* expression (see PROTOCOL.md/Personality.cpp), so
   `_aiThoughtFaceActive` tracks it the same way `_mediaFaceActive`/
   `_gameFaceActive` track their own sticky *background* expressions —

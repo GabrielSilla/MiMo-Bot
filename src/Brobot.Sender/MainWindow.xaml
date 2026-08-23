@@ -253,6 +253,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Image Grid.Row="0" Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
@@ -471,8 +472,29 @@
                 </Grid>
             </Border>
 
+            <!-- Tela do MiMo -->
+            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="Console" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Tela do MiMo" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Estilo visual do display (experimental)" Style="{StaticResource CardDescriptionStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="MatrixThemeCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="MatrixThemeCheckBox_CheckedChanged" Unchecked="MatrixThemeCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
             <!-- Info -->
-            <Border Grid.Row="10" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
+            <Border Grid.Row="11" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="36" Height="36" CornerRadius="11" Background="{DynamicResource BadgeBrush}">
                         <iconPacks:PackIconMaterial Kind="InformationOutline" Width="18" Height="18"
@@ -486,7 +508,7 @@
                 </StackPanel>
             </Border>
 
-            <Button Grid.Row="11" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+            <Button Grid.Row="12" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
                     Click="SaveButton_Click"/>
         </Grid>
     </ScrollViewer>

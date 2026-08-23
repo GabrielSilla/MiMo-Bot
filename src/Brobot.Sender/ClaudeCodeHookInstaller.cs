@@ -22,6 +22,7 @@ namespace Brobot.Sender;
 public static class ClaudeCodeHookInstaller
 {
     private const string HookScriptMarker = "mimo-claude-hook.ps1";
+    private const string StatusLineScriptMarker = "mimo-claude-statusline.ps1";
 
     // Every event the bridge wires up, and the matcher each needs. Claude
     // Code requires "matcher" on some events and ignores it on others (see
@@ -45,6 +46,7 @@ public static class ClaudeCodeHookInstaller
     // it always sits next to whichever Brobot.Sender.exe is actually running,
     // rather than pointing at a hardcoded source-repo path.
     private static string HookScriptPath => Path.Combine(AppContext.BaseDirectory, HookScriptMarker);
+    private static string StatusLineScriptPath => Path.Combine(AppContext.BaseDirectory, StatusLineScriptMarker);
 
     public static bool IsInstalled()
     {
@@ -106,56 +108,80 @@ public static class ClaudeCodeHookInstaller
             matcherGroups.Add(group);
         }
 
+        // statusLine is a single top-level object, not an array of
+        // independently-installable entries like hooks — only claim it when
+        // it's empty or already ours, so a statusLine the user configured
+        // themselves (their own script, another tool's) is never clobbered.
+        // Best-effort: IsInstalled() below still only checks hooks, so a
+        // conflict here doesn't leave the "Instalar" button permanently
+        // unable to report success.
+        if (root["statusLine"] is not JsonObject || IsOurStatusLine(root))
+        {
+            root["statusLine"] = new JsonObject
+            {
+                ["type"] = "command",
+                ["command"] = StatusLineCommand,
+            };
+        }
+
         Save(root);
     }
 
     public static void Uninstall()
     {
         JsonObject? root = TryLoad();
-        if (root?["hooks"] is not JsonObject hooks)
+        if (root == null)
         {
             return;
         }
 
-        foreach ((string eventName, _) in Events)
+        if (root["hooks"] is JsonObject hooks)
         {
-            if (hooks[eventName] is not JsonArray matcherGroups)
+            foreach ((string eventName, _) in Events)
             {
-                continue;
-            }
-
-            for (int i = matcherGroups.Count - 1; i >= 0; i--)
-            {
-                if (matcherGroups[i] is not JsonObject group || group["hooks"] is not JsonArray groupHooks)
+                if (hooks[eventName] is not JsonArray matcherGroups)
                 {
                     continue;
                 }
 
-                for (int j = groupHooks.Count - 1; j >= 0; j--)
+                for (int i = matcherGroups.Count - 1; i >= 0; i--)
                 {
-                    if (IsOurHookEntry(groupHooks[j], eventName))
+                    if (matcherGroups[i] is not JsonObject group || group["hooks"] is not JsonArray groupHooks)
                     {
-                        groupHooks.RemoveAt(j);
+                        continue;
+                    }
+
+                    for (int j = groupHooks.Count - 1; j >= 0; j--)
+                    {
+                        if (IsOurHookEntry(groupHooks[j], eventName))
+                        {
+                            groupHooks.RemoveAt(j);
+                        }
+                    }
+
+                    // Only drop the matcher group once *we* emptied it — a group
+                    // that still has the user's own other hooks in it stays.
+                    if (groupHooks.Count == 0)
+                    {
+                        matcherGroups.RemoveAt(i);
                     }
                 }
 
-                // Only drop the matcher group once *we* emptied it — a group
-                // that still has the user's own other hooks in it stays.
-                if (groupHooks.Count == 0)
+                if (matcherGroups.Count == 0)
                 {
-                    matcherGroups.RemoveAt(i);
+                    hooks.Remove(eventName);
                 }
             }
 
-            if (matcherGroups.Count == 0)
+            if (hooks.Count == 0)
             {
-                hooks.Remove(eventName);
+                root.Remove("hooks");
             }
         }
 
-        if (hooks.Count == 0)
+        if (IsOurStatusLine(root))
         {
-            root.Remove("hooks");
+            root.Remove("statusLine");
         }
 
         Save(root);
@@ -163,6 +189,14 @@ public static class ClaudeCodeHookInstaller
 
     private static string CommandFor(string eventName) =>
         $"powershell -NoProfile -ExecutionPolicy Bypass -File \"{HookScriptPath}\" -EventName {eventName}";
+
+    private static string StatusLineCommand =>
+        $"powershell -NoProfile -ExecutionPolicy Bypass -File \"{StatusLineScriptPath}\"";
+
+    private static bool IsOurStatusLine(JsonObject? root) =>
+        root?["statusLine"] is JsonObject statusLine
+        && statusLine["command"]?.GetValue<string>() is string cmd
+        && cmd.Contains(StatusLineScriptMarker);
 
     private static bool ContainsOurHook(JsonObject hooks, string eventName)
     {

@@ -131,6 +131,11 @@ public partial class MainWindow : Window
         if (connected && !_wasConnected && _lastWeatherReading is { } reading) {
             _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
         }
+        // Same reasoning as the weather resend above — THEME is another
+        // persistent flag Core forgets on its own after a reboot.
+        if (connected && !_wasConnected && MatrixThemeCheckBox.IsChecked == true) {
+            _connection.SendCommand("THEME MATRIX");
+        }
         _wasConnected = connected;
     }
 
@@ -258,11 +263,22 @@ public partial class MainWindow : Window
     {
         if (PausaCheckBox.IsChecked == true)
         {
-            // Re-armed every time the box is checked: today's morning/afternoon
-            // slot should still fire even if it was already checked (and
-            // fired) once earlier today, then toggled off and back on.
-            _breakMorningFiredOn = null;
-            _breakAfternoonFiredOn = null;
+            // Re-armed every time the box is checked, but only for whichever
+            // slot(s) haven't happened yet today — a slot whose time already
+            // passed gets marked as fired immediately instead of null, or
+            // CheckBreakTime's very next tick would see "haven't fired today"
+            // + "now >= target" and fire right away, no matter how long ago
+            // the target time actually was. This was a real bug: checking
+            // Pausa at, say, 20:00 with a 10:00 morning slot fired the
+            // reminder instantly instead of waiting for tomorrow's 10:00.
+            DateTime now = DateTime.Now;
+            DateOnly today = DateOnly.FromDateTime(now);
+            TimeOnly nowTime = TimeOnly.FromDateTime(now);
+
+            _breakMorningFiredOn = (TryParseTime(PausaManhaTextBox.Text, out TimeOnly morning) && nowTime >= morning)
+                ? today : (DateOnly?)null;
+            _breakAfternoonFiredOn = (TryParseTime(PausaTardeTextBox.Text, out TimeOnly afternoon) && nowTime >= afternoon)
+                ? today : (DateOnly?)null;
 
             _breakTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _breakTimer.Tick += (_, _) => CheckBreakTime();
@@ -514,6 +530,17 @@ public partial class MainWindow : Window
             ?? ThemeManager.Available.First(t => t.Key == ThemeManager.DefaultTheme);
     }
 
+    /// <summary>
+    /// A separate concept from the "Tema" card above: that one only changes
+    /// this app's own light/dark colors, this one sends a new THEME command
+    /// that changes how Core itself draws the display (see PROTOCOL.md) —
+    /// unrelated systems that just happen to both be about "appearance".
+    /// </summary>
+    private void MatrixThemeCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        _connection.SendCommand(MatrixThemeCheckBox.IsChecked == true ? "THEME MATRIX" : "THEME DEFAULT");
+    }
+
     private void PensamentosIaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         // The ComboBox's SelectedIndex="0" in XAML fires this during
@@ -613,6 +640,17 @@ public partial class MainWindow : Window
                     }
                     break;
 
+                case "ContextUsage":
+                    // Sent by mimo-claude-statusline.ps1 (Claude Code's statusLine
+                    // command, not a hook — see ClaudeCodeHookInstaller) on every
+                    // new assistant message. No FACE change, same reasoning as
+                    // Notification — this is a stat, not an expression.
+                    if (!string.IsNullOrWhiteSpace(thought.Text))
+                    {
+                        _connection.SendCommand($"MSG {thought.Text}");
+                    }
+                    break;
+
                 case "Stop":
                     _connection.SendCommand("FACE FINISHED");
                     _connection.SendCommand("MSG Terminei!");
@@ -668,6 +706,7 @@ public partial class MainWindow : Window
         {
             settings.PausaTarde = PausaTardeTextBox.Text.Trim();
         }
+        settings.MatrixThemeEnabled = MatrixThemeCheckBox.IsChecked == true;
         settings.PensamentosIaProvider = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? "Claude";
         settings.MidiaEnabled = MediaCheckBox.IsChecked == true;
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
@@ -723,6 +762,7 @@ public partial class MainWindow : Window
         PausaManhaTextBox.Text = settings.PausaManha;
         PausaTardeTextBox.Text = settings.PausaTarde;
         PausaCheckBox.IsChecked = settings.PausaEnabled;
+        MatrixThemeCheckBox.IsChecked = settings.MatrixThemeEnabled;
         MediaCheckBox.IsChecked = settings.MidiaEnabled;
         GameCheckBox.IsChecked = settings.JogosEnabled;
 

@@ -14,6 +14,7 @@ public:
     void onMessageCommand(const char* text, unsigned long now);
     void onWeatherCommand(const char* args, unsigned long now);
     void onTimeCommand(const char* args, unsigned long now);
+    void onThemeCommand(const char* name, unsigned long now);
 
     void update(unsigned long now);
     FaceState currentState() const;
@@ -95,9 +96,18 @@ private:
     static constexpr size_t TIME_TEXT_CAPACITY = 6; // "HH:MM\0"
     char _timeText[TIME_TEXT_CAPACITY] = {0};
 
+    // MATRIX theme's own state — see Face.h's Theme/MATRIX_LOG_* comments.
+    // The theme itself never times out or gets pre-empted, same "just holds
+    // whatever was last sent" idea as _hasWeather/_timeText above.
+    Theme _theme = Theme::CLASSIC;
+    char _log[MATRIX_LOG_LINES][MATRIX_LOG_LINE_CAPACITY] = {{0}};
+    int _logCount = 0; // number of filled slots, index 0 = oldest
+    char _lastLoggedTimeText[TIME_TEXT_CAPACITY] = {0}; // last "HH:MM" a time+weather line was logged for, so it's once per minute, not once per second
+
     void updateBlink(unsigned long now);
     void updateLook(unsigned long now);
     void updateBootAnimation(unsigned long elapsed);
     Expression resolveExpression(unsigned long now) const;
     static bool isBackgroundExpression(Expression e);
+    void pushLogLine(const char* text);
 };

@@ -24,6 +24,10 @@
       <Link>mimo-claude-hook.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\hooks\mimo-claude-statusline.ps1">
+      <Link>mimo-claude-statusline.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

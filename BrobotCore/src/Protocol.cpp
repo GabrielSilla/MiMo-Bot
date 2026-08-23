@@ -47,6 +47,8 @@ void Protocol::dispatch(char* line, unsigned long now) {
         _personality.onWeatherCommand(args, now);
     } else if (commandLength == 4 && strncmp(line, "TIME", 4) == 0) {
         _personality.onTimeCommand(args, now);
+    } else if (commandLength == 5 && strncmp(line, "THEME", 5) == 0) {
+        _personality.onThemeCommand(args, now);
     }
     // Unknown commands are ignored.
 }

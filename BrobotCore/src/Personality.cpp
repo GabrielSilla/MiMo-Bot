@@ -1,6 +1,7 @@
 #include "Personality.h"
 
 #include <Arduino.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -140,6 +141,22 @@ WeatherCondition parseWeatherCondition(const char* name) {
     return WeatherCondition::CLEAR;
 }
 
+// PT-BR one-word label for MATRIX's periodic "HH:MM - tempC - condicao" log
+// line (see Personality::update) — separate from CoreConditionName on the
+// Sender/C# side, which is the wire protocol's own English enum name, not
+// display text.
+const char* conditionLabel(WeatherCondition condition) {
+    switch (condition) {
+        case WeatherCondition::CLOUDY: return "Nublado";
+        case WeatherCondition::RAIN: return "Chuva";
+        case WeatherCondition::STORM: return "Tempestade";
+        case WeatherCondition::SNOW: return "Neve";
+        case WeatherCondition::FOG: return "Neblina";
+        case WeatherCondition::CLEAR:
+        default: return "Sol";
+    }
+}
+
 // Eases the 0..1 travel fraction so motion accelerates in and decelerates
 // out, instead of moving at a constant speed — reads as noticeably smoother
 // with the same number of frames.
@@ -238,6 +255,11 @@ void Personality::onFaceCommand(const char* name, unsigned long now) {
 
 void Personality::onMessageCommand(const char* text, unsigned long now) {
     _lastInteractionAt = now;
+    // Logged once here regardless of which tier it's about to land in below
+    // — covers AI hook messages, media "now playing", "Jogando X", weather
+    // alerts, and Pausa's coffee reminders, all in one place, since they all
+    // flow through this same command.
+    pushLogLine(text);
 
     // A lone MSG (no FACE on the same "turn", e.g. a Notification hook
     // event) routes to whichever tier the last FACE command belonged to —
@@ -293,6 +315,36 @@ void Personality::onTimeCommand(const char* args, unsigned long now) {
     _timeText[TIME_TEXT_CAPACITY - 1] = '\0';
 }
 
+// Same "passive telemetry" reasoning as onWeatherCommand/onTimeCommand:
+// never touches _lastInteractionAt, and just holds whatever theme was last
+// sent until replaced.
+void Personality::onThemeCommand(const char* name, unsigned long now) {
+    (void)now;
+    _theme = (strcmp(name, "MATRIX") == 0) ? Theme::MATRIX : Theme::CLASSIC;
+}
+
+// Appends to MATRIX's console log, dropping the oldest line once full — a
+// plain shift-and-append rather than a wraparound ring buffer, since
+// MATRIX_LOG_LINES is tiny (6) and this keeps currentState() able to just
+// hand out _log[0..count) in chronological order with no index math.
+// Empty text is a no-op: clearing a message shouldn't leave a blank log line.
+void Personality::pushLogLine(const char* text) {
+    if (text == nullptr || text[0] == '\0') {
+        return;
+    }
+
+    if (_logCount == MATRIX_LOG_LINES) {
+        for (int i = 1; i < MATRIX_LOG_LINES; i++) {
+            strncpy(_log[i - 1], _log[i], MATRIX_LOG_LINE_CAPACITY);
+        }
+        _logCount--;
+    }
+
+    strncpy(_log[_logCount], text, MATRIX_LOG_LINE_CAPACITY - 1);
+    _log[_logCount][MATRIX_LOG_LINE_CAPACITY - 1] = '\0';
+    _logCount++;
+}
+
 void Personality::update(unsigned long now) {
     _currentNow = now;
     _renderExpression = resolveExpression(now);
@@ -320,7 +372,21 @@ void Personality::update(unsigned long now) {
     if (bedtime && now >= _nextBedtimeMessageAt) {
         int index = random(0, BEDTIME_MESSAGE_COUNT);
         _bedtimeMessage.set(BEDTIME_MESSAGES[index], now);
+        pushLogLine(BEDTIME_MESSAGES[index]);
         _nextBedtimeMessageAt = now + BEDTIME_MESSAGE_INTERVAL_MS;
+    }
+
+    // MATRIX's periodic "HH:MM - tempC - condicao" line — once per minute
+    // (gated on _timeText actually changing), not once per second the way
+    // TIME itself arrives, and only once both Hora and Clima are actually
+    // feeding Core something to show.
+    if (_hasWeather && _timeText[0] != '\0' && strcmp(_timeText, _lastLoggedTimeText) != 0) {
+        strncpy(_lastLoggedTimeText, _timeText, TIME_TEXT_CAPACITY - 1);
+        _lastLoggedTimeText[TIME_TEXT_CAPACITY - 1] = '\0';
+
+        char line[MATRIX_LOG_LINE_CAPACITY];
+        snprintf(line, sizeof(line), "%s - %dC - %s", _timeText, _weatherTempC, conditionLabel(_weatherCondition));
+        pushLogLine(line);
     }
     _bedtimeMessage.updateTyping(now, MESSAGE_DURATION_MS);
 
@@ -378,6 +444,13 @@ FaceState Personality::currentState() const {
     state.weatherTempC = _weatherTempC;
     state.weatherCondition = _weatherCondition;
     state.timeText = _timeText;
+
+    state.theme = _theme;
+    state.logLineCount = _logCount;
+    for (int i = 0; i < _logCount; i++) {
+        state.logLines[i] = _log[i];
+    }
+
     return state;
 }
 

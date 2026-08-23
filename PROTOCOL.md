@@ -19,8 +19,11 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `MSG <texto>`  | Define o texto exibido abaixo dos olhos (resto da linha). `MSG` sem texto limpa a mensagem. |
 | `WEATHER <tempC> <condicao>` | Selo persistente de clima (canto superior esquerdo). `tempC` é inteiro (pode ser negativo). Condições: `CLEAR`, `CLOUDY`, `RAIN`, `STORM`, `SNOW`, `FOG`. `WEATHER` sem argumentos limpa o selo. |
 | `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. |
+| `THEME <nome>` | Estilo visual do display inteiro. Valores: `DEFAULT` (olhos + balão de mensagem, o padrão) ou `MATRIX` (olhos menores no canto inferior + log estilo console em verde no topo, ver abaixo). Persistente, como `WEATHER`/`TIME` — fica valendo até o próximo `THEME` chegar. |
 
-`WEATHER` e `TIME` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis até o próximo comando do mesmo tipo substituí-los.
+`WEATHER`, `TIME` e `THEME` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.
+
+**`THEME MATRIX`**: recolore tudo em verde e troca os selos de clima/relógio e o balão de mensagem por um log estilo terminal no topo da tela (linhas prefixadas com `> `, mais antigas saem conforme novas entram — até 6 linhas visíveis). Toda mensagem que normalmente apareceria no balão (IA, mídia, jogos, pausa, boa-noite) vira uma linha nova nesse log; clima+hora, quando ambos configurados, também viram uma linha combinada (`HH:MM - tempC - condição`) uma vez por minuto. Puramente visual — os comandos `FACE`/`MSG`/`WEATHER`/`TIME` continuam funcionando exatamente igual por baixo, só a forma de desenhar muda.
 
 `FACE`/`MSG` têm duas prioridades independentes, decididas pelo Core (nunca
 pelo app PC que envia o comando):
