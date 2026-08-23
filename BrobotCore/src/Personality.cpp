@@ -34,6 +34,49 @@ constexpr unsigned long TYPING_CHAR_INTERVAL_MS = 40; // typewriter reveal speed
 constexpr unsigned long FACE_OVERRIDE_DURATION_MS = 4000;
 constexpr unsigned long SLEEP_TIMEOUT_MS = 10UL * 60UL * 1000UL; // 10 minutes idle before sleeping
 
+// SLEEPY (drowsy, not yet the deep SLEEPING) kicks in purely off the clock,
+// independent of _lastInteractionAt — someone actively chatting with the AI
+// at 23h should still see MiMo get sleepy. Window spans midnight the same
+// way Face.cpp's own isNightHour does, since no separate "wake up" time was
+// specified — just reused that existing day/night boundary.
+constexpr int BEDTIME_START_HOUR = 22;
+constexpr int BEDTIME_END_HOUR = 6;
+
+// A slower, heavier-lidded blink while SLEEPY — see updateBlink — so it's
+// obviously not the same quick blink NEUTRAL uses.
+constexpr unsigned long BLINK_DURATION_SLEEPY_MS = 900;
+
+// One random pick every 30 minutes for as long as it stays bedtime, nudging
+// whoever's still up to go to sleep. Kept short (fits the 3-line message
+// window without its start scrolling off before typing finishes) and in the
+// same casual PT-BR voice as the rest of the AI-activity messages.
+constexpr unsigned long BEDTIME_MESSAGE_INTERVAL_MS = 30UL * 60UL * 1000UL;
+constexpr const char* BEDTIME_MESSAGES[] = {
+    "Eai? Terminou? Vamos dormir...",
+    "Ja passou da hora, hein! Bora descansar?",
+    "Psiu... seus olhos ja tao pesados. Hora de dormir!",
+    "To com sono so de te ver acordado ainda kkkk vai dormir",
+    "Amanha voce agradece. Bora pra cama!",
+    "22h ja foi! Desliga tudo e vem dormir comigo (eletronicamente)",
+    "Serio, ja e tarde. Seu travesseiro ta com saudade",
+    "Aviso final: vai dormir ou vai virar a noite de novo?",
+    "Zzz... eu ja to com sono so de pensar. E voce?",
+    "Bora, chefe. Amanha tem o dia inteiro pra terminar isso",
+};
+constexpr int BEDTIME_MESSAGE_COUNT = sizeof(BEDTIME_MESSAGES) / sizeof(BEDTIME_MESSAGES[0]);
+
+// True from BEDTIME_START_HOUR up to (not including) BEDTIME_END_HOUR the
+// next morning, based on the hour of the last TIME command Core received —
+// same reasoning as Face.cpp's isNightHour: Core has no clock of its own.
+// No TIME yet: default to "not bedtime" rather than guessing.
+bool isBedtimeHour(const char* timeText) {
+    if (timeText == nullptr || timeText[0] == '\0') {
+        return false;
+    }
+    int hour = (int)strtol(timeText, nullptr, 10);
+    return hour >= BEDTIME_START_HOUR || hour < BEDTIME_END_HOUR;
+}
+
 // Boot animation: eyes drop in from just above the frame and land with a
 // little bounce (BOOT_FALL_DURATION_MS), then settle into place with a
 // quick decaying side-to-side wobble (BOOT_WOBBLE_DURATION_MS) — "falling
@@ -75,7 +118,7 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "HAPPY") == 0) return Expression::HAPPY;
     if (strcmp(name, "SAD") == 0) return Expression::SAD;
     if (strcmp(name, "ANGRY") == 0) return Expression::ANGRY;
-    if (strcmp(name, "SLEEPY") == 0) return Expression::SLEEPY;
+    if (strcmp(name, "SLEEPING") == 0) return Expression::SLEEPING;
     if (strcmp(name, "MUSIC") == 0) return Expression::MUSIC;
     if (strcmp(name, "WATCHING") == 0) return Expression::WATCHING;
     if (strcmp(name, "ERROR") == 0) return Expression::FAILED;
@@ -83,6 +126,8 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "FINISHED") == 0) return Expression::FINISHED;
     if (strcmp(name, "THINKING") == 0) return Expression::THINKING;
     if (strcmp(name, "PLAYING") == 0) return Expression::PLAYING;
+    if (strcmp(name, "SLEEPY") == 0) return Expression::SLEEPY;
+    if (strcmp(name, "COFFEE") == 0) return Expression::COFFEE;
     return Expression::NEUTRAL;
 }
 
@@ -262,6 +307,23 @@ void Personality::update(unsigned long now) {
     _foregroundMessage.updateTyping(now, foregroundPersistMs);
     _backgroundMessage.updateTyping(now, 0);
 
+    // Bedtime reminder: fires the moment bedtime starts, then every
+    // BEDTIME_MESSAGE_INTERVAL_MS after that for as long as it stays
+    // bedtime — tracked independently of _renderExpression so the schedule
+    // stays aligned even while something else (AI activity, media) is
+    // occupying the screen instead of SLEEPY.
+    bool bedtime = isBedtimeHour(_timeText);
+    if (bedtime && !_wasBedtime) {
+        _nextBedtimeMessageAt = now;
+    }
+    _wasBedtime = bedtime;
+    if (bedtime && now >= _nextBedtimeMessageAt) {
+        int index = random(0, BEDTIME_MESSAGE_COUNT);
+        _bedtimeMessage.set(BEDTIME_MESSAGES[index], now);
+        _nextBedtimeMessageAt = now + BEDTIME_MESSAGE_INTERVAL_MS;
+    }
+    _bedtimeMessage.updateTyping(now, MESSAGE_DURATION_MS);
+
     unsigned long bootElapsed = now - _bootStartedAt;
     if (bootElapsed < BOOT_ANIMATION_DURATION_MS) {
         // Eyes are still dropping/settling into place — hold blink off and
@@ -273,14 +335,18 @@ void Personality::update(unsigned long now) {
         _blinkAmount = 0.0f;
         _looking = false;
         updateBootAnimation(bootElapsed);
-    } else if (_renderExpression == Expression::SLEEPY || _renderExpression == Expression::MUSIC
+    } else if (_renderExpression == Expression::SLEEPING || _renderExpression == Expression::MUSIC
         || _renderExpression == Expression::FAILED || _renderExpression == Expression::READING
-        || _renderExpression == Expression::THINKING) {
-        // Asleep, lost in the music, dead (FAILED), absorbed in reading, or
-        // lost in thought: hold still on the idle blink/look-around timers.
-        // MUSIC, READING, and THINKING still move — Face::render drives their
-        // sway/glitch itself from nowMs, same idea as the sleeping "Z Z Z"
-        // animating off nowMs instead of a Personality timer.
+        || _renderExpression == Expression::THINKING || _renderExpression == Expression::COFFEE) {
+        // Asleep, lost in the music, dead (FAILED), absorbed in reading, lost
+        // in thought, or on a coffee break: hold still on the idle
+        // blink/look-around timers. MUSIC, READING, THINKING, and COFFEE
+        // still move — Face::render drives their sway/glitch/steam itself
+        // from nowMs, same idea as the sleeping "Z Z Z" animating off nowMs
+        // instead of a Personality timer. COFFEE specifically needs this:
+        // its eyes are pinned to a fixed spot near the left edge (see
+        // Face::render), and look-around's offset would otherwise be able
+        // to push them past the screen edge.
         _blinking = false;
         _blinkAmount = 0.0f;
         _looking = false;
@@ -302,7 +368,11 @@ FaceState Personality::currentState() const {
     // below the eyes — a foreground message that's still "queued" behind an
     // active background render (or vice versa) stays hidden until its own
     // tier is the one on screen.
-    state.message = isBackgroundExpression(_renderExpression) ? _backgroundMessage.visible : _foregroundMessage.visible;
+    if (_renderExpression == Expression::SLEEPY) {
+        state.message = _bedtimeMessage.visible;
+    } else {
+        state.message = isBackgroundExpression(_renderExpression) ? _backgroundMessage.visible : _foregroundMessage.visible;
+    }
     state.nowMs = _currentNow;
     state.hasWeather = _hasWeather;
     state.weatherTempC = _weatherTempC;
@@ -327,13 +397,19 @@ Expression Personality::resolveExpression(unsigned long now) const {
         return _expression;
     }
     // Foreground has nothing active right now: fall back to whatever
-    // background (media/game) is stored before giving up to idle/SLEEPY —
+    // background (media/game) is stored before giving up to idle/SLEEPING —
     // this is what makes the paused media/game reappear once the AI message
     // that interrupted it goes away.
     if (_backgroundExpression != Expression::NEUTRAL) {
         return _backgroundExpression;
     }
     if (now - _lastInteractionAt > SLEEP_TIMEOUT_MS) {
+        return Expression::SLEEPING;
+    }
+    // Bedtime hours (see isBedtimeHour) win over plain NEUTRAL but lose to
+    // the 10-minute-idle SLEEPING check above — once actually asleep, the
+    // drowsy nudge stops making sense.
+    if (isBedtimeHour(_timeText)) {
         return Expression::SLEEPY;
     }
     return Expression::NEUTRAL;
@@ -349,15 +425,21 @@ void Personality::updateBlink(unsigned long now) {
         _blinkStartedAt = now;
     }
 
+    // Heavy-lidded, obviously-slower blink while SLEEPY (see
+    // BLINK_DURATION_SLEEPY_MS) — everything else about the blink cycle
+    // (interval, easing) stays the same, only the close/open motion itself
+    // drags out.
+    unsigned long blinkDuration = (_renderExpression == Expression::SLEEPY) ? BLINK_DURATION_SLEEPY_MS : BLINK_DURATION_MS;
+
     unsigned long elapsed = now - _blinkStartedAt;
-    if (elapsed >= BLINK_DURATION_MS) {
+    if (elapsed >= blinkDuration) {
         _blinking = false;
         _blinkAmount = 0.0f;
         _nextBlinkAt = now + random(BLINK_MIN_INTERVAL_MS, BLINK_MAX_INTERVAL_MS);
         return;
     }
 
-    float t = (float)elapsed / (float)BLINK_DURATION_MS;
+    float t = (float)elapsed / (float)blinkDuration;
     float triangular = (t < 0.5f) ? (t * 2.0f) : ((1.0f - t) * 2.0f);
     _blinkAmount = smoothstep(triangular);
 }

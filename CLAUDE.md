@@ -47,7 +47,7 @@ src/
                                      Simulator and Sender to reach Core (see Architecture below)
   Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
                                      Brobot: MainWindow is a card-based checklist (Conexão, Hora, Clima,
-                                     Atividade da IA, Mídia, Jogos — mostly checkboxes, except Atividade
+                                     Pausa, Atividade da IA, Mídia, Jogos — mostly checkboxes, except Atividade
                                      da IA which is an Instalar/Desinstalar button, see below).
                                      Connection setup lives inline in MainWindow's own Conexão card
                                      (WiFi/TCP only — no SettingsWindow, no Serial/USB, see below) rather
@@ -119,7 +119,7 @@ way. Control commands flow PC→Core, draw commands flow Core→PC (only when
 `vscreen=1`, or always in the native build):
 
 ```
-FACE <NEUTRAL|HAPPY|SAD|ANGRY|SLEEPY|MUSIC|WATCHING|ERROR|READING|FINISHED|THINKING|PLAYING|IDLE>
+FACE <NEUTRAL|HAPPY|SAD|ANGRY|SLEEPING|SLEEPY|COFFEE|MUSIC|WATCHING|ERROR|READING|FINISHED|THINKING|PLAYING|IDLE>
 MSG <text>                    (empty text clears the message)
 WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears the badge)
 TIME <HH:MM>                  (empty clears the clock)
@@ -135,8 +135,10 @@ PRESENT
 `FACE`/`MSG` are arbitrated by two independent priority tiers on Core, not
 by whichever PC app last happened to send one — see Personality.cpp below.
 **Foreground** (`THINKING`/`READING`/`FINISHED`/`HAPPY`/`SAD`/`ANGRY`/
-`SLEEPY`/`ERROR`/`NEUTRAL`, driven by Atividade da IA) always wins the
-render while active. **Background** (`MUSIC`/`WATCHING`/`PLAYING`, driven by
+`SLEEPING`/`SLEEPY`/`COFFEE`/`ERROR`/`NEUTRAL`) always wins the render while
+active — most of these are driven by Atividade da IA, but `SLEEPY` is
+autonomous (see below) and `COFFEE` is driven by Pausa's own two daily
+reminder times, not the AI. **Background** (`MUSIC`/`WATCHING`/`PLAYING`, driven by
 Mídia/Jogos) holds underneath it and reappears automatically — face and
 message both, with no resend needed — the moment foreground releases the
 screen. `FACE NEUTRAL` clears only foreground; `FACE IDLE` clears only
@@ -198,9 +200,13 @@ comment for the exact fallback logic. While the portal is open, the screen
 shows a static "connect to MiMo-Setup" `FACE FINISHED` message built
 directly as a `FaceState` (bypassing `Personality` entirely, since its
 FINISHED-tier message auto-expires after ~10s, which isn't wanted for a
-setup screen that needs to stay up indefinitely). Once connected, the IP
-shows on-screen for a few seconds (and prints over Serial) — that's the
-address to type into Brobot.Sender's Conexão card.
+setup screen that needs to stay up indefinitely). Once connected, `main.cpp`'s
+`loop()` shows a persistent "MiMo Configurado! IP: <ip>" message (same
+FaceState-bypass trick, and prints once over Serial) for as long as no PC
+app is connected over TCP — not just briefly at boot; if Brobot.Sender later
+disconnects, the message reappears until it (or another client) reconnects.
+That's the address to type into Brobot.Sender's Conexão card. Once a client
+connects, the screen reverts to Personality's own face on the very next frame.
 
 ### Local dev without an Arduino — the native BrobotCore build
 
@@ -265,7 +271,7 @@ builds never see it.
 - **`Face.cpp`**: eyes are two filled rounded-squares (42px, teal), corners faked
   with a 2-row "staircase" background cut (not a true circle — keeps serial
   bandwidth down). Eye size/position stay constant whether or not a message is
-  showing. Most expressions (HAPPY/SAD/ANGRY/SLEEPY) just tweak eye height/gap/offset,
+  showing. Most expressions (HAPPY/SAD/ANGRY/SLEEPING/SLEEPY) just tweak eye height/gap/offset,
   but a few replace the eye shape outright using the same "compose it from small
   `fillRect` blocks" trick: **FAILED** draws an X (`drawEyeX` — step half the block
   size, or the two diagonal strokes leave a gap exactly where they cross in the
@@ -296,6 +302,18 @@ builds never see it.
   `CORNER_ICON_Y_SHIFT` down from the top-left — pushed down out of the fixed
   strip the WEATHER/TIME badges occupy (see below); their x-range never overlaps
   the eyes regardless of expression, so the vertical push is the only constraint.
+  **COFFEE** (Sender's Pausa card) is the one expression that changes the eyes'
+  size/position instead of just their shape: `Face::render` swaps in
+  `COFFEE_EYE_SIZE`/`COFFEE_EYE_GAP` (smaller) and pins them to
+  `COFFEE_EYES_X` near the left edge rather than centering them, clearing
+  the whole right side of the frame for `drawCoffeeCup` — a saucer + hollowed-
+  out mug + handle stub (same cut-a-gap trick as everything else), with three
+  steam wisps that rise and sway on a continuous `nowMs % COFFEE_STEAM_CYCLE_MS`
+  loop rather than a bounded one-shot animation, since they need to keep
+  going for as long as the reminder message stays up. `Personality`'s
+  hold-still list includes COFFEE for a concrete reason, not just
+  consistency: with the eyes pinned to a near-fixed spot, an active
+  look-around offset could otherwise push them past the left edge.
   `drawWeatherBadge`/`drawClockBadge` draw those two badges independent of
   `state.expression` entirely — small procedural pictograms (sun/cloud/rain/
   storm/snow/fog), same block-composition style as everything else, deliberately
@@ -330,7 +348,7 @@ builds never see it.
   stored background can take over immediately instead of sitting through a
   redundant "showing NEUTRAL" wait. Once foreground's override lapses,
   `resolveExpression` falls back to `_backgroundExpression` (if set) before
-  falling further to idle/SLEEPY/NEUTRAL — that fallback, plus each tier
+  falling further to idle/SLEEPING/NEUTRAL — that fallback, plus each tier
   keeping its own message text, is what makes MUSIC/WATCHING/PLAYING (and
   their "now playing"/"Jogando X" label) reappear on their own once an
   interrupting AI message goes away, instead of the two racing to overwrite
@@ -369,6 +387,36 @@ builds never see it.
   polynomial/piecewise functions) since this file also has to compile against
   `BrobotCore/native`'s minimal `Arduino.h` shim, which doesn't wire up
   `<math.h>` — same reasoning as `smoothstep` above.
+  **`SLEEPY`** is a second, lighter sleep state, entirely clock-driven
+  (`isBedtimeHour`, 22h-6h) rather than idle-driven like `SLEEPING` — it wins
+  over plain `NEUTRAL` in `resolveExpression`'s fallback, but the 10-minute
+  idle `SLEEPING` check still takes priority over it (once actually asleep,
+  the drowsy nudge stops making sense). Visually it's `NEUTRAL`'s eye shape
+  just slightly squinted (`shapeFor`, no new Face.cpp render branch needed —
+  it falls through to the plain `drawEye` path, no icon, no "Z Z Z"), but the
+  blink itself runs on a much longer `BLINK_DURATION_SLEEPY_MS` (900ms vs the
+  normal 280ms) so it reads as an obviously heavy-lidded blink rather than
+  the quick NEUTRAL one — `updateBlink` picks the duration off
+  `_renderExpression` each call. Unlike `SLEEPING`/`FAILED`/`READING`/
+  `THINKING`/`MUSIC`, `SLEEPY` is *not* in `update()`'s hold-still list, so
+  ordinary blink/look-around keep running (just with that slower blink).
+  While it's bedtime hours, `Personality` also autonomously picks one of 10
+  hardcoded PT-BR "go to sleep" phrases (`BEDTIME_MESSAGES`) into its own
+  `_bedtimeMessage` (a third `TypedMessage`, alongside foreground/
+  background — not either of those tiers since no PC app is commanding this)
+  the moment bedtime starts, then again every `BEDTIME_MESSAGE_INTERVAL_MS`
+  (30 min) for as long as it stays bedtime, tracked independently of
+  whatever's actually rendering so the schedule doesn't drift if AI activity
+  or media is occupying the screen when a 30-minute mark passes. Each pick
+  auto-clears `MESSAGE_DURATION_MS` (10s) after typing finishes, same as a
+  normal foreground message, instead of sitting on screen for the full 30
+  minutes until the next one replaces it.
+  `currentState()` only shows `_bedtimeMessage` while `_renderExpression ==
+  SLEEPY`. All of this is driven off `_timeText` — the same field `TIME`
+  already populates for the weather badge's day/night icon (see
+  `isNightHour` in `Face.cpp`) — since Core still has no RTC of its own;
+  `FACE SLEEPY` is also accepted as an explicit command (`parseExpression`)
+  for testing without waiting on the clock.
 - **`WifiSetup.cpp`** (ESP32 only, see `WifiSetup.h`): `connectOrStartPortal()`
   tries saved credentials (`Preferences`/NVS) first, falling back to the
   "MiMo-Setup" config-portal AP on failure/no-saved-creds — see Build & run
@@ -539,6 +587,25 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   combined "Previsão do tempo e hora" box) — Hora only drives the clock
   `DispatcherTimer`, Clima only drives `WeatherMonitor`; nothing else ties
   them together, so either can run without the other.
+- **Pausa** is two `TextBox` fields ("Manhã"/"Tarde", free-typed `HH:mm`, no
+  WPF `TimePicker` control in play — same "just type it" pattern Conexão's
+  IP:porta field already uses) plus its own checkbox. `PausaCheckBox_CheckedChanged`
+  starts a plain 1s `DispatcherTimer` (`_breakTimer`, same cadence as Hora's
+  own clock timer — there's no "it's now HH:mm" event to react to, only wall-
+  clock polling) that compares `DateTime.Now` against both parsed times each
+  tick. `_breakMorningFiredOn`/`_breakAfternoonFiredOn` (`DateOnly?`) track
+  the date each slot last fired on, so a slot fires exactly once per day
+  instead of on every tick during that whole minute — and get reset to
+  `null` whenever the checkbox is (re)checked, so toggling it off and back on
+  the same day re-arms today's reminder instead of silently skipping it.
+  On a match, `SendBreakReminder` sends `FACE COFFEE` + a `MSG` randomly
+  picked from `PausaMessages` (10 hardcoded PT-BR phrases, e.g. "Bora
+  reabastecer o cafe!"). Unlike Clima's weather alert, no `FACE NEUTRAL`
+  trick is needed here — `FACE COFFEE` itself already claims the foreground
+  tier, so the `MSG` right after it is guaranteed to route there. `FACE
+  COFFEE` isn't sticky on Core (it auto-reverts like any other foreground
+  expression), so there's nothing to explicitly clear on uncheck, unlike
+  MUSIC/WATCHING/PLAYING/THINKING elsewhere in this file.
 - **"Atividade da IA"** (a provider `ComboBox`: Claude/Codex/Gemini/Cursor/
   Outro, plus an **Instalar**/**Desinstalar** button — no checkbox) is the
   per-tool-hooks → local endpoint → `FACE`/`MSG` bridge. Unlike every other
@@ -635,6 +702,26 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   every second (a 1-minute cadence left the displayed clock up to 59s stale
   right after checking the box, since Core only ever shows what it was last told).
   Unchecking either sends empty `WEATHER` or `TIME` to clear that badge (see PROTOCOL.md).
+  `MainWindow.OnWeatherUpdated` also tracks `_lastWeatherCondition` (separate
+  from `_lastWeatherReading`, which exists purely for the reconnect-resend
+  above) to catch an actual condition change between polls — sunny to rainy,
+  say — and when one happens, sends `FACE NEUTRAL` + a random caring PT-BR
+  heads-up from `WeatherAlerts` (`WeatherMonitor.cs`; 10 hardcoded messages
+  per `WeatherCondition`, e.g. "Vai sair? Nao esquece o guarda-chuva!" for
+  rain) *before* the routine `WEATHER` badge update. `FACE NEUTRAL` isn't
+  decorative here — a bare `MSG` with no preceding `FACE` routes to
+  whichever tier last sent one (`Personality::_lastCommandTier`, see
+  PROTOCOL.md), which Clima never otherwise touches, so without it the alert
+  could silently land in the background tier and never render if nothing's
+  currently playing. `_lastWeatherCondition` starts `null` so the first
+  reading after `Start()` never fires a false "changed" alert against
+  nothing, and both it and `_lastWeatherReading` reset to `null` when Clima
+  is unchecked so a later re-check starts a fresh baseline instead of
+  comparing against a stale condition from a previous session. This is
+  entirely a Sender-side feature — Core has no idea the weather changed,
+  it's just another `FACE`/`MSG` pair as far as Personality.cpp is
+  concerned; a per-condition Core expression/animation is a possible later
+  addition, not built yet.
 - **`GameMonitor.cs`**: polls `Process.GetProcesses()` every 5s against Discord's
   public "detectable applications" catalog (`GET
   https://discord.com/api/v10/applications/detectable`, the same executable-name

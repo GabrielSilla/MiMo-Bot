@@ -17,11 +17,13 @@ ExpressionShape shapeFor(Expression expression) {
         case Expression::HAPPY:  return {0.55f, 0, -2};
         case Expression::SAD:    return {0.45f, 0, 6};
         case Expression::ANGRY:  return {0.40f, -6, -2};
-        case Expression::SLEEPY: return {0.20f, 0, 4};
+        case Expression::SLEEPING: return {0.20f, 0, 4};
+        case Expression::SLEEPY: return {0.75f, 0, 2}; // near-NEUTRAL, just a light squint — the slow blink (see Personality.cpp) carries most of the "getting sleepy" read
         case Expression::MUSIC:  return {1.00f, 0, 0}; // eyes open — the dance bounce carries the expression
         case Expression::WATCHING: return {1.00f, 0, 0}; // eyes open and still — the play icon carries the expression
         case Expression::READING: return {1.00f, 0, 0}; // eyes open — the reading sweep carries the expression
         case Expression::PLAYING: return {1.00f, 0, 0}; // eyes open — the gamepad icon carries the expression
+        case Expression::COFFEE: return {1.00f, 0, 0}; // eyes open — Face::render shrinks/repositions them separately, the cup carries the rest
         case Expression::FINISHED: return {1.00f, 0, 0}; // eyes open — drawEyeCaret replaces the shape entirely
         case Expression::THINKING: return {1.00f, 0, 0}; // eyes open — drawEyeGlitch replaces the shape entirely
         case Expression::NEUTRAL:
@@ -33,6 +35,38 @@ constexpr uint8_t EYE_R = 0, EYE_G = 200, EYE_B = 190;
 constexpr uint8_t MSG_R = 255, MSG_G = 255, MSG_B = 255;
 constexpr uint8_t MSG_BOX_R = 40, MSG_BOX_G = 40, MSG_BOX_B = 40;
 constexpr uint8_t BG_R = 0, BG_G = 0, BG_B = 0;
+
+// How dim the whole frame reads while SLEEPING (see Face::render) — this
+// board's ST7735 clone ties its backlight LED straight to 3.3V with no GPIO
+// broken out to it, so there's no real PWM backlight to dim; scaling every
+// drawn color down instead works identically on the physical panel, the WPF
+// simulator, and the native build, with no hardware change needed.
+constexpr float SLEEP_DIM_FACTOR = 0.35f;
+
+// Forwards every draw call to another IDisplay with r/g/b scaled down by a
+// fixed factor — a decorator, not a real display of its own. width/height/
+// present pass straight through since they don't carry color.
+class DimmingDisplay : public IDisplay {
+public:
+    DimmingDisplay(IDisplay& inner, float factor) : _inner(inner), _factor(factor) {}
+
+    int width() const override { return _inner.width(); }
+    int height() const override { return _inner.height(); }
+
+    void clear(uint8_t r, uint8_t g, uint8_t b) override { _inner.clear(dim(r), dim(g), dim(b)); }
+    void drawPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawPixel(x, y, dim(r), dim(g), dim(b)); }
+    void drawRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawRect(x, y, w, h, dim(r), dim(g), dim(b)); }
+    void fillRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { _inner.fillRect(x, y, w, h, dim(r), dim(g), dim(b)); }
+    void drawRoundedRect(int x, int y, int w, int h, int radius, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawRoundedRect(x, y, w, h, radius, dim(r), dim(g), dim(b)); }
+    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b) override { _inner.drawText(text, x, y, dim(r), dim(g), dim(b)); }
+    void present() override { _inner.present(); }
+
+private:
+    IDisplay& _inner;
+    float _factor;
+
+    uint8_t dim(uint8_t c) const { return (uint8_t)((float)c * _factor); }
+};
 
 // Corner rounding: a small 2-row "staircase" cut (2px, then 1px) instead of
 // one flat diagonal chamfer. It approximates a quarter-circle of radius ~4,
@@ -49,6 +83,13 @@ constexpr int CORNER_MIN_SIZE = CORNER_ROWS * 3;
 constexpr int EYE_SIZE = 42;
 constexpr int EYE_GAP = 16;
 constexpr int EYE_Y = 24;
+
+// COFFEE overrides the normal centered eye geometry entirely: smaller eyes,
+// pinned to the left edge instead of centered, so the coffee cup (see
+// drawCoffeeCup) has the right side of the frame to itself.
+constexpr int COFFEE_EYE_SIZE = 22;
+constexpr int COFFEE_EYE_GAP = 8;
+constexpr int COFFEE_EYES_X = 10;
 
 constexpr int MESSAGE_LINE_HEIGHT = 9;    // 7px glyph + 2px between lines
 // The display area is a fixed 3-line window. Once the (still-typing) text
@@ -334,6 +375,46 @@ void drawGamepadIcon(IDisplay& display, unsigned long nowMs) {
     display.fillRect(baseX + 11, baseY + 4, 2, 2, BG_R, BG_G, BG_B); // face button
 }
 
+// COFFEE: a mug (saucer + hollowed-out body + a handle stub, same
+// "cut a gap from a filled block" trick as the book/gamepad above) sitting
+// in the right side of the frame — mirrors where the eyes shrink and pin to
+// the left (see Face::render) — with three steam wisps that rise and sway
+// on a continuous loop, unlike every other icon's bounded bob/sway, since
+// this one has to keep animating for as long as the message stays up
+// instead of settling back to a resting position.
+constexpr int COFFEE_CUP_X = 116;
+constexpr int COFFEE_CUP_Y = 58;
+constexpr int COFFEE_CUP_WIDTH = 20;
+constexpr int COFFEE_CUP_HEIGHT = 16;
+constexpr int COFFEE_STEAM_COUNT = 3;
+constexpr unsigned long COFFEE_STEAM_CYCLE_MS = 1400; // one wisp's full rise-and-loop
+constexpr int COFFEE_STEAM_RISE_PX = 18;
+
+void drawCoffeeCup(IDisplay& display, unsigned long nowMs) {
+    // Saucer, then the cup body, hollowed out on top so it reads as an open
+    // mug rather than a solid block.
+    display.fillRect(COFFEE_CUP_X - 3, COFFEE_CUP_Y + COFFEE_CUP_HEIGHT, COFFEE_CUP_WIDTH + 6, 2, EYE_R, EYE_G, EYE_B);
+    display.fillRect(COFFEE_CUP_X, COFFEE_CUP_Y, COFFEE_CUP_WIDTH, COFFEE_CUP_HEIGHT, EYE_R, EYE_G, EYE_B);
+    display.fillRect(COFFEE_CUP_X + 2, COFFEE_CUP_Y + 3, COFFEE_CUP_WIDTH - 4, COFFEE_CUP_HEIGHT - 4, BG_R, BG_G, BG_B);
+
+    // Handle: a small hooked stub on the cup's right edge.
+    display.fillRect(COFFEE_CUP_X + COFFEE_CUP_WIDTH, COFFEE_CUP_Y + 3, 4, 8, EYE_R, EYE_G, EYE_B);
+    display.fillRect(COFFEE_CUP_X + COFFEE_CUP_WIDTH + 1, COFFEE_CUP_Y + 5, 3, 4, BG_R, BG_G, BG_B);
+
+    // Three wisps, evenly staggered in phase so they never all rise/fade in
+    // lockstep, each drifting up and gently side to side as it climbs.
+    for (int i = 0; i < COFFEE_STEAM_COUNT; i++) {
+        unsigned long phaseOffset = (unsigned long)i * (COFFEE_STEAM_CYCLE_MS / COFFEE_STEAM_COUNT);
+        unsigned long t = (nowMs + phaseOffset) % COFFEE_STEAM_CYCLE_MS;
+        float progress = (float)t / (float)COFFEE_STEAM_CYCLE_MS; // 0..1 rise, then loops
+        int riseY = (int)(progress * (float)COFFEE_STEAM_RISE_PX);
+        int sway = (int)(sin(progress * 6.2832f * 2.0f) * 2.0f);
+        int sx = COFFEE_CUP_X + 5 + i * 6 + sway;
+        int sy = COFFEE_CUP_Y - 3 - riseY;
+        display.fillRect(sx, sy, 2, 2, EYE_R, EYE_G, EYE_B);
+    }
+}
+
 // Persistent top-corner badges (weather top-left, clock top-right) — unlike
 // every icon above, these don't depend on state.expression at all, so they
 // live in their own fixed strip (roughly y=0-13) rather than the corner
@@ -471,11 +552,19 @@ void drawSleepZzz(IDisplay& display, int rightEyeX, int eyeSize, int eyeTop, uns
 
 } // namespace
 
-void Face::render(IDisplay& display, const FaceState& state) {
+void Face::render(IDisplay& rawDisplay, const FaceState& state) {
+    // Everything below draws through `display`, which is either the real
+    // target or a DimmingDisplay wrapping it — picked once here so none of
+    // the drawing code below needs to know or care which.
+    DimmingDisplay dimmed(rawDisplay, SLEEP_DIM_FACTOR);
+    IDisplay& display = (state.expression == Expression::SLEEPING) ? static_cast<IDisplay&>(dimmed) : rawDisplay;
+
     bool hasMessage = state.message != nullptr && state.message[0] != '\0';
 
-    int eyeSize = EYE_SIZE;
-    int eyeGap = EYE_GAP;
+    bool isCoffee = state.expression == Expression::COFFEE;
+
+    int eyeSize = isCoffee ? COFFEE_EYE_SIZE : EYE_SIZE;
+    int eyeGap = isCoffee ? COFFEE_EYE_GAP : EYE_GAP;
     int eyeY = EYE_Y;
 
     ExpressionShape shape = shapeFor(state.expression);
@@ -483,7 +572,7 @@ void Face::render(IDisplay& display, const FaceState& state) {
     eyeY += shape.verticalShift + state.lookOffsetY;
 
     int totalWidth = eyeSize * 2 + eyeGap;
-    int leftX = (display.width() - totalWidth) / 2 + state.lookOffsetX;
+    int leftX = isCoffee ? COFFEE_EYES_X : (display.width() - totalWidth) / 2 + state.lookOffsetX;
     int rightX = leftX + eyeSize + eyeGap;
 
     float openFactor = shape.openFactor * (1.0f - state.blinkAmount);
@@ -520,7 +609,7 @@ void Face::render(IDisplay& display, const FaceState& state) {
         drawEye(display, rightX, eyeTop, eyeSize, eyeHeight);
     }
 
-    if (state.expression == Expression::SLEEPY) {
+    if (state.expression == Expression::SLEEPING) {
         drawSleepZzz(display, rightX, eyeSize, eyeTop, state.nowMs);
     } else if (state.expression == Expression::MUSIC) {
         drawMusicNote(display, state.nowMs);
@@ -530,6 +619,8 @@ void Face::render(IDisplay& display, const FaceState& state) {
         drawBookIcon(display, state.nowMs);
     } else if (state.expression == Expression::PLAYING) {
         drawGamepadIcon(display, state.nowMs);
+    } else if (state.expression == Expression::COFFEE) {
+        drawCoffeeCup(display, state.nowMs);
     }
 
     if (hasMessage) {

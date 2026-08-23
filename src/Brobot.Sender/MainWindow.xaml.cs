@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -40,7 +41,33 @@ public partial class MainWindow : Window
     private bool _gameFaceActive;
 
     private WeatherMonitor? _weatherMonitor;
+    private WeatherReading? _lastWeatherReading; // resent on reconnect (see UpdateConnectionStatus) instead of waiting out WeatherMonitor's own 30-min cycle
+    private WeatherCondition? _lastWeatherCondition; // null = no baseline yet, so the very first reading never fires a "changed" alert
+    private bool _wasConnected;
     private DispatcherTimer? _clockTimer;
+
+    private DispatcherTimer? _breakTimer;
+    private DateOnly? _breakMorningFiredOn; // date each slot last fired on, so it fires once per day instead of every tick during that whole minute
+    private DateOnly? _breakAfternoonFiredOn;
+
+    // Caring "go stretch your legs" nudges — one random pick per trigger,
+    // same flat-pool pattern as the bedtime messages in Personality.cpp,
+    // just Sender-side since this is plain wall-clock logic with no need
+    // for Core to know about it at all.
+    private static readonly string[] PausaMessages =
+    {
+        "Hora de esticar as pernas, bora pegar um cafe",
+        "Bora reabastecer o cafe!",
+        "Que tal uma pausinha? Levanta e da uma volta",
+        "Seus olhos merecem um descanso, bora cafe",
+        "Intervalo chegou! Estica essas pernas ai",
+        "Vai la, um cafezinho cai bem agora",
+        "Pausa estrategica: levanta, anda um pouco, hidrata",
+        "Cade aquele cafe? Hora de uma pausa",
+        "Corpo agradece: levanta e da uma esticada",
+        "Bora, um cafe rapido e volta com energia",
+    };
+    private static readonly Random PausaRng = new();
 
     private AiThoughtsListener? _aiThoughtsListener;
     private bool _aiThoughtFaceActive;
@@ -94,6 +121,17 @@ public partial class MainWindow : Window
         bool hasSomethingToDisconnect = connected || connecting;
         ConnectionButton.Content = hasSomethingToDisconnect ? "Desconectar" : "Conectar";
         ConnectionAddressTextBox.IsEnabled = !hasSomethingToDisconnect;
+
+        // A freshly (re)connected Core — e.g. just rebooted, or was off when
+        // this app started — has no idea what the weather badge should show
+        // until told. WeatherMonitor itself doesn't know or care about the
+        // connection at all (it just runs on its own 30-min timer), so
+        // without this the badge would stay blank for up to 30 minutes after
+        // a reconnect instead of picking up the last known reading right away.
+        if (connected && !_wasConnected && _lastWeatherReading is { } reading) {
+            _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
+        }
+        _wasConnected = connected;
     }
 
     private void ConnectionButton_Click(object sender, RoutedEventArgs e)
@@ -173,6 +211,8 @@ public partial class MainWindow : Window
         {
             _weatherMonitor?.Dispose();
             _weatherMonitor = null;
+            _lastWeatherReading = null; // otherwise a later reconnect would resend a badge the user just turned off
+            _lastWeatherCondition = null; // re-checking later should start a fresh baseline, not "changed" against a stale value
             ClimaStatusText.Text = string.Empty;
             _connection.SendCommand("WEATHER");
         }
@@ -188,6 +228,23 @@ public partial class MainWindow : Window
                 return; // StatusChanged already reported the failure; leave the last-good badge showing
             }
 
+            // Only alert on an actual change — _lastWeatherCondition is null
+            // on the very first reading after Start() (nothing to compare
+            // against yet), and most 30-min polls just confirm the same
+            // condition as before. FACE NEUTRAL claims the foreground tier
+            // so the MSG that follows is guaranteed to render (a bare MSG
+            // with no FACE routes to whichever tier last sent one — see
+            // Personality.cpp's _lastCommandTier — which Clima never
+            // otherwise touches) instead of risking landing silently behind
+            // whatever media/game happens to be in the background tier.
+            if (_lastWeatherCondition.HasValue && _lastWeatherCondition.Value != reading.Condition)
+            {
+                _connection.SendCommand("FACE NEUTRAL");
+                _connection.SendCommand($"MSG {WeatherAlerts.RandomFor(reading.Condition)}");
+            }
+            _lastWeatherCondition = reading.Condition;
+
+            _lastWeatherReading = reading;
             _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
         });
     }
@@ -196,6 +253,70 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() => ClimaStatusText.Text = status);
     }
+
+    private void PausaCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        if (PausaCheckBox.IsChecked == true)
+        {
+            // Re-armed every time the box is checked: today's morning/afternoon
+            // slot should still fire even if it was already checked (and
+            // fired) once earlier today, then toggled off and back on.
+            _breakMorningFiredOn = null;
+            _breakAfternoonFiredOn = null;
+
+            _breakTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _breakTimer.Tick += (_, _) => CheckBreakTime();
+            _breakTimer.Start();
+            PausaStatusText.Text = string.Empty;
+        }
+        else
+        {
+            _breakTimer?.Stop();
+            _breakTimer = null;
+            PausaStatusText.Text = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Ticks every second (TIME/clock's own cadence — there's no "it's now
+    /// HH:mm" event to react to) comparing wall-clock time against the two
+    /// configured slots. Each slot tracks the date it last fired on so it
+    /// fires exactly once per day instead of on every tick during that whole
+    /// minute. FACE COFFEE isn't sticky on Core (auto-reverts like any other
+    /// foreground expression), so there's nothing to explicitly clear here or
+    /// on uncheck, unlike MUSIC/WATCHING/PLAYING/THINKING.
+    /// </summary>
+    private void CheckBreakTime()
+    {
+        DateTime now = DateTime.Now;
+        DateOnly today = DateOnly.FromDateTime(now);
+        TimeOnly nowTime = TimeOnly.FromDateTime(now);
+
+        if (TryParseTime(PausaManhaTextBox.Text, out TimeOnly morning)
+            && _breakMorningFiredOn != today && nowTime >= morning)
+        {
+            _breakMorningFiredOn = today;
+            SendBreakReminder();
+        }
+
+        if (TryParseTime(PausaTardeTextBox.Text, out TimeOnly afternoon)
+            && _breakAfternoonFiredOn != today && nowTime >= afternoon)
+        {
+            _breakAfternoonFiredOn = today;
+            SendBreakReminder();
+        }
+    }
+
+    private void SendBreakReminder()
+    {
+        string message = PausaMessages[PausaRng.Next(PausaMessages.Length)];
+        _connection.SendCommand("FACE COFFEE");
+        _connection.SendCommand($"MSG {message}");
+        PausaStatusText.Text = $"Último lembrete: {message}";
+    }
+
+    private static bool TryParseTime(string text, out TimeOnly time) =>
+        TimeOnly.TryParseExact(text.Trim(), "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
 
     private async void MediaCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
     {
@@ -538,6 +659,15 @@ public partial class MainWindow : Window
         SenderSettings settings = SenderSettings.Load();
         settings.HoraEnabled = HoraCheckBox.IsChecked == true;
         settings.ClimaEnabled = ClimaCheckBox.IsChecked == true;
+        settings.PausaEnabled = PausaCheckBox.IsChecked == true;
+        if (TryParseTime(PausaManhaTextBox.Text, out _))
+        {
+            settings.PausaManha = PausaManhaTextBox.Text.Trim();
+        }
+        if (TryParseTime(PausaTardeTextBox.Text, out _))
+        {
+            settings.PausaTarde = PausaTardeTextBox.Text.Trim();
+        }
         settings.PensamentosIaProvider = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? "Claude";
         settings.MidiaEnabled = MediaCheckBox.IsChecked == true;
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
@@ -588,6 +718,11 @@ public partial class MainWindow : Window
 
         HoraCheckBox.IsChecked = settings.HoraEnabled;
         ClimaCheckBox.IsChecked = settings.ClimaEnabled;
+        // Text set before IsChecked — PausaCheckBox_CheckedChanged reads
+        // straight from these TextBoxes when it fires below.
+        PausaManhaTextBox.Text = settings.PausaManha;
+        PausaTardeTextBox.Text = settings.PausaTarde;
+        PausaCheckBox.IsChecked = settings.PausaEnabled;
         MediaCheckBox.IsChecked = settings.MidiaEnabled;
         GameCheckBox.IsChecked = settings.JogosEnabled;
 
@@ -647,6 +782,7 @@ public partial class MainWindow : Window
         _weatherMonitor?.Dispose();
         _aiThoughtsListener?.Dispose();
         _clockTimer?.Stop();
+        _breakTimer?.Stop();
         _connectionStatusTimer.Stop();
         _connection.Dispose();
         System.Windows.Application.Current.Shutdown();

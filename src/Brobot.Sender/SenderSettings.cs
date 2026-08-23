@@ -15,6 +15,9 @@ public sealed class SenderSettings
 {
     public bool HoraEnabled { get; set; }
     public bool ClimaEnabled { get; set; }
+    public bool PausaEnabled { get; set; }
+    public string PausaManha { get; set; } = "10:00";
+    public string PausaTarde { get; set; } = "15:30";
     public string PensamentosIaProvider { get; set; } = "Claude";
     public bool MidiaEnabled { get; set; }
     public bool JogosEnabled { get; set; }

@@ -11,7 +11,7 @@
 // enumerator of that name. The wire protocol command is still "FACE ERROR"
 // (see PROTOCOL.md) — Personality::parseExpression is what maps the string
 // to this enumerator, so the two names don't have to match.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPY, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING };
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE };
 
 // Weather pictograms shown in the persistent top-left badge (see WEATHER in
 // PROTOCOL.md). Deliberately small — just enough categories to read clearly

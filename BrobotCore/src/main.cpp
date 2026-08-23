@@ -23,6 +23,13 @@ ST7735PhysicalDisplay display(TFT_CS_PIN, TFT_DC_PIN, TFT_RST_PIN);
 #include <WiFi.h>
 WiFiServer protocolServer(PROTOCOL_TCP_PORT);
 WiFiClient protocolClient;
+
+// Built once after WiFi connects, shown (see loop()) any time no PC app is
+// currently connected over TCP — not just briefly at boot. Kept as a String
+// at file scope, not a temporary, since FaceState::message is a non-owning
+// const char*; the string is assigned once and never mutated afterward, so
+// its c_str() pointer stays valid for the rest of the program.
+String pcWaitingMessage;
 #endif
 
 Personality personality;
@@ -65,13 +72,12 @@ void setup() {
     Serial.print("WiFi connected, IP: ");
     Serial.println(WiFi.localIP());
 
-    // Briefly show the IP on the physical screen too, so Brobot.Sender's
-    // TCP host field can be filled in without needing a Serial monitor.
-    display.clear(0, 0, 0);
-    display.drawText("MiMo IP:", 10, 50, 255, 255, 255);
-    display.drawText(WiFi.localIP().toString().c_str(), 10, 65, 100, 220, 180);
-    display.present();
-    delay(3000);
+    // Rendered every frame by loop() for as long as no PC app is connected
+    // (see below) — not just briefly at boot — so the IP:port stays legible
+    // on the physical screen for however long it takes to open Brobot.Sender
+    // and fill in the Conexão card, no Serial monitor needed. Same "IP:porta"
+    // shape as that card's own text field, so it can be typed in verbatim.
+    pcWaitingMessage = "MiMo Configurado! IP: " + WiFi.localIP().toString() + ":" + String(PROTOCOL_TCP_PORT);
 #endif
 
     // Last thing before loop() takes over, on every path (portal or not) —
@@ -90,7 +96,8 @@ void loop() {
     if (!protocolClient || !protocolClient.connected()) {
         protocolClient = protocolServer.available();
     }
-    if (protocolClient && protocolClient.connected()) {
+    bool pcConnected = protocolClient && protocolClient.connected();
+    if (pcConnected) {
         protocol.poll(protocolClient, now);
     }
 #else
@@ -102,7 +109,26 @@ void loop() {
     if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
         lastFrameAt = now;
         display.clear(0, 0, 0);
+#if defined(ESP32)
+        if (!pcConnected) {
+            // No PC app connected right now (still waiting after boot, or
+            // Brobot.Sender dropped) — show the persistent IP message
+            // instead of Personality's own idle face, bypassing Personality
+            // entirely (same trick the config-portal screen in setup()
+            // uses): this has to stay up indefinitely, and with no PC
+            // connected there's no FACE/MSG command that could arrive to
+            // drive Personality's own message system anyway.
+            FaceState waitingState;
+            waitingState.expression = Expression::FINISHED;
+            waitingState.message = pcWaitingMessage.c_str();
+            waitingState.nowMs = now;
+            Face::render(display, waitingState);
+        } else {
+            Face::render(display, personality.currentState());
+        }
+#else
         Face::render(display, personality.currentState());
+#endif
         display.present();
     }
 }

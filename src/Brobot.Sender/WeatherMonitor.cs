@@ -149,3 +149,106 @@ public sealed class WeatherMonitor : IDisposable
         _ => WeatherCondition.Clear,
     };
 }
+
+/// <summary>
+/// Caring, casual PT-BR heads-up per weather condition — "going out? don't
+/// forget the umbrella" rather than a bare "the weather changed" — shown
+/// once by MainWindow.OnWeatherUpdated when a fresh reading's condition
+/// actually differs from the previous one, not on every 30-min poll.
+/// Deliberately accent-free, same convention as every other Core-bound
+/// message in this codebase (see mimo-claude-hook.ps1, Personality.cpp's
+/// BEDTIME_MESSAGES) — Font5x7 renders lowercase accents fine, but nothing
+/// else here uses them, so this doesn't either.
+/// </summary>
+public static class WeatherAlerts
+{
+    private static readonly Random Rng = new();
+
+    private static readonly Dictionary<WeatherCondition, string[]> Messages = new()
+    {
+        [WeatherCondition.Rain] = new[]
+        {
+            "Vai sair? Nao esquece o guarda-chuva!",
+            "Ei, vai chover... leva uma capa ai",
+            "Psiu, hora de guarda-chuva, hein",
+            "Cuidado la fora, o chao deve ficar escorregadio",
+            "Vai molhar sim, se prepara!",
+            "Bora com o guarda-chuva na mochila, vai chover",
+            "Aviso de amigo: leva algo pra chuva",
+            "Ta vindo chuva, nao esquece de se agasalhar tambem",
+            "Se for sair, nao esquece o guarda-chuva, viu?",
+            "Chuva chegando, fica esperto pra nao se molhar",
+        },
+        [WeatherCondition.Storm] = new[]
+        {
+            "Opa, vem tempestade! Melhor ficar em casa se der",
+            "Cuidado, temporal a caminho, evita sair se possivel",
+            "Vem chuva forte, desliga os aparelhos por seguranca",
+            "Fica de olho, tempestade rondando por ai",
+            "Se puder, adia a saida... vem temporal",
+            "Trovoada a vista, se cuida ai fora",
+            "Melhor carregar tudo antes que a luz falte, vem tempestade",
+            "Segura essa: vem tempestade forte, fica atento",
+            "Vai ser feio la fora, tempestade chegando",
+            "Se for sair, cuidado com o vento, vem temporal",
+        },
+        [WeatherCondition.Snow] = new[]
+        {
+            "Vai nevar! Agasalha bem antes de sair",
+            "Frio de neve chegando, nao esquece o casaco",
+            "Fica quentinho ai, vai nevar",
+            "Vai sair? Bota luva e cachecol, ta nevando",
+            "Neve a caminho, cuidado com o gelo no chao",
+            "Se abriga direitinho, vai nevar",
+            "Ta friozinho de neve, se agasalha bem",
+            "Vem neve, esquenta esse coracao (e o corpo tambem)",
+            "Nao esquece as botas, vai nevar la fora",
+            "Fica em casa se puder, ta nevando bonito",
+        },
+        [WeatherCondition.Cloudy] = new[]
+        {
+            "Vai ficar nublado, mas nada que te impeca de sair",
+            "Ceu meio cinza hoje, leva uma jaqueta leve",
+            "Nublou! Talvez de uma tregua no sol, aproveita",
+            "Vai ficar nublado, bom dia pra passear sem calor",
+            "Dia nublado chegando, clima bom pra ficar tranquilo",
+            "Sem sol forte hoje, mas fica de olho no tempo",
+            "Ceu fechou um pouco, nada grave por enquanto",
+            "Nublado por ai, leva um casaquinho por garantia",
+            "Tempo mudou pra nublado, dia mais ameno chegando",
+            "Ficou cinza o ceu, mas nada de chuva por enquanto",
+        },
+        [WeatherCondition.Clear] = new[]
+        {
+            "Vai fazer sol! Nao esquece o protetor solar",
+            "Sol chegando, leva agua pra se hidratar",
+            "Dia de sol! Bota o oculos escuro ai",
+            "Ta abrindo o tempo, aproveita pra tomar um solzinho",
+            "Vai fazer sol, boa desculpa pra sair um pouco",
+            "Sol a vista, nao esquece o bone",
+            "Ceu limpou! Otimo dia pra dar uma volta",
+            "Fazendo sol la fora, se hidrata bem",
+            "Abriu o sol, aproveita o dia bonito",
+            "Vai fazer sol, mas nao esquece de se cuidar do calor",
+        },
+        [WeatherCondition.Fog] = new[]
+        {
+            "Vai ficar com neblina, dirige com cuidado",
+            "Nevoa chegando, atencao redobrada se for sair de carro",
+            "Visibilidade baixa vindo ai, se cuida no transito",
+            "Ta enevoado, vai com calma se for sair",
+            "Neblina na area, liga o farol se for dirigir",
+            "Vixe, baixou a neblina, cuidado pra sair de casa",
+            "Tempo fechado de neblina, se cuida ai fora",
+            "Vem nevoa, reduz a velocidade se for de carro",
+            "Neblina chegando, fica esperto no caminho",
+            "Ta com pouca visibilidade la fora, atencao redobrada",
+        },
+    };
+
+    public static string RandomFor(WeatherCondition condition)
+    {
+        string[] pool = Messages[condition];
+        return pool[Rng.Next(pool.Length)];
+    }
+}

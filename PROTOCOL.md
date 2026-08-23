@@ -15,7 +15,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 
 | Comando        | Descrição                                              |
 |----------------|----------------------------------------------------------|
-| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPY`, `MUSIC`, `WATCHING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `IDLE` |
+| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `IDLE` |
 | `MSG <texto>`  | Define o texto exibido abaixo dos olhos (resto da linha). `MSG` sem texto limpa a mensagem. |
 | `WEATHER <tempC> <condicao>` | Selo persistente de clima (canto superior esquerdo). `tempC` é inteiro (pode ser negativo). Condições: `CLEAR`, `CLOUDY`, `RAIN`, `STORM`, `SNOW`, `FOG`. `WEATHER` sem argumentos limpa o selo. |
 | `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. |
@@ -26,9 +26,23 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 pelo app PC que envia o comando):
 
 - **Foreground (prioridade alta)** — `THINKING`, `READING`, `FINISHED`,
-  `HAPPY`, `SAD`, `ANGRY`, `SLEEPY`, `ERROR`, `NEUTRAL`. É o que Pensamentos
-  da IA usa. Sempre que ativo, cobre a tela inteira (rosto + mensagem),
-  independente do que estava sendo exibido antes.
+  `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `ERROR`, `NEUTRAL`.
+  É o que Pensamentos da IA usa. Sempre que ativo, cobre a tela inteira (rosto +
+  mensagem), independente do que estava sendo exibido antes.
+- **`SLEEPY`** também é escolhido automaticamente pelo Core (sem nenhum app
+  PC precisar mandar `FACE`), a partir das 22h até as 6h — baseado na última
+  hora recebida via `TIME` (Core não tem RTC próprio, ver acima). É o estado
+  de "com sono" (NEUTRAL com os olhos levemente semicerrados, piscada bem
+  mais lenta), diferente do `SLEEPING` (que só entra após 10 min sem nenhum
+  comando `FACE`/`MSG`, com os "Z Z Z"). Nesse período o Core também
+  sorteia, a cada 30 min, uma de 10 frases convidando a dormir e mostra como
+  mensagem — tudo autônomo, nenhum app PC participa disso.
+- **`COFFEE`** é um comando normal (não autônomo como `SLEEPY`/`SLEEPING`) —
+  quem manda é o card Pausa do Brobot.Sender, nos dois horários configurados
+  (manhã/tarde), sempre junto de um `MSG` sorteado entre 10 frases
+  convidando a esticar as pernas/tomar um café. Visualmente os olhos ficam
+  menores e presos no canto esquerdo da tela, com uma xícara de café
+  fumegante no canto direito.
 - **Background (prioridade baixa)** — `MUSIC`, `WATCHING`, `PLAYING`. É o
   que Mídia/Jogos usam. Fica "guardado" (rosto + mensagem) enquanto o
   foreground estiver ativo, e volta a aparecer automaticamente assim que o

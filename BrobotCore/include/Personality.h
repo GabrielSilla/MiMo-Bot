@@ -28,7 +28,7 @@ private:
     // releases (times out, or an explicit FACE NEUTRAL/new foreground
     // command), rendering falls back to BACKGROUND (MUSIC/WATCHING/PLAYING,
     // driven by Mídia/Jogos) if one is set, before falling further back to
-    // idle/NEUTRAL/SLEEPY. A background FACE command received while
+    // idle/NEUTRAL/SLEEPING. A background FACE command received while
     // foreground is active only updates the stored background state — it
     // doesn't interrupt what's currently showing.
     enum class Tier { FOREGROUND, BACKGROUND };
@@ -75,6 +75,16 @@ private:
 
     TypedMessage _foregroundMessage;
     TypedMessage _backgroundMessage;
+
+    // SLEEPY's own periodic "go to bed" nudge — not FOREGROUND (no PC app
+    // commanded it) or BACKGROUND (not media/game), so it gets its own
+    // TypedMessage rather than overloading either tier. Only ever shown
+    // while _renderExpression == SLEEPY (see currentState()); scheduling is
+    // driven entirely by _timeText (see isBedtimeHour in Personality.cpp),
+    // since Core has no RTC of its own.
+    TypedMessage _bedtimeMessage;
+    unsigned long _nextBedtimeMessageAt = 0;
+    bool _wasBedtime = false; // detects the moment bedtime starts, to fire the first message right away
 
     // Persistent overlays: unlike _message, these don't type in, expire, or
     // get pre-empted by anything — they just hold whatever was last sent
