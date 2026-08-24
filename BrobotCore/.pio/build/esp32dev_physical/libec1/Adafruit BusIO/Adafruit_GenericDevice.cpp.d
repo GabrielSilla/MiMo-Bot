@@ -1,7 +1,6 @@
-.pio/build/esp32dev_physical/lib412/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7789.cpp.o: \
- .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7789.cpp \
- .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7789.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST77xx.h \
+.pio/build/esp32dev_physical/libec1/Adafruit\ BusIO/Adafruit_GenericDevice.cpp.o: \
+ .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_GenericDevice.cpp \
+ .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_GenericDevice.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
@@ -163,16 +162,4 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/spi_flash/include/esp_spi_flash_counters.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/gfxfont.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_I2CDevice.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT_Macros.h
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h

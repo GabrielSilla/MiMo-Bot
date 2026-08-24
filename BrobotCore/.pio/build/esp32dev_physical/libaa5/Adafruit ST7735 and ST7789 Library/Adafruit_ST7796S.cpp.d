@@ -1,4 +1,4 @@
-.pio/build/esp32dev_physical/lib412/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7796S.cpp.o: \
+.pio/build/esp32dev_physical/libaa5/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7796S.cpp.o: \
  .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7796S.cpp \
  .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7796S.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST77xx.h \

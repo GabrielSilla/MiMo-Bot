@@ -1,14 +1,18 @@
 #pragma once
 
 #include <Arduino.h>
+#include "DeviceSettings.h"
 #include "Personality.h"
 
 // Reads control commands (FACE / MSG, see PROTOCOL.md) off a Stream one
-// byte at a time and dispatches complete lines to a Personality. Never
-// blocks — safe to call every loop() iteration.
+// byte at a time and dispatches complete lines to a Personality, or to a
+// DeviceSettings for the handful of commands (SOUND/SCANLINES) that aren't
+// about Brobot's expression/behavior state. Never blocks — safe to call
+// every loop() iteration.
 class Protocol {
 public:
-    explicit Protocol(Personality& personality) : _personality(personality) {}
+    Protocol(Personality& personality, DeviceSettings& deviceSettings)
+        : _personality(personality), _deviceSettings(deviceSettings) {}
 
     void poll(Stream& serial, unsigned long now);
 
@@ -25,6 +29,7 @@ private:
     size_t _length = 0;
     unsigned long _lastByteAt = 0;
     Personality& _personality;
+    DeviceSettings& _deviceSettings;
 
     void dispatch(char* line, unsigned long now);
 };

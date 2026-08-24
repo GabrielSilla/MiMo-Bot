@@ -1,5 +1,6 @@
-.pio/build/esp32dev_physical/src/Protocol.cpp.o: src/Protocol.cpp \
- include/Protocol.h \
+.pio/build/esp32dev_physical/libec1/Adafruit\ BusIO/Adafruit_I2CDevice.cpp.o: \
+ .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_I2CDevice.cpp \
+ .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_I2CDevice.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
@@ -162,5 +163,5 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- include/DeviceSettings.h include/Personality.h include/Face.h \
- include/IDisplay.h
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h

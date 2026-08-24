@@ -23,6 +23,7 @@
 
 #include "Arduino.h"
 #include "Config.h"
+#include "DeviceSettings.h"
 #include "Face.h"
 #include "Personality.h"
 #include "Protocol.h"
@@ -70,7 +71,8 @@ int main(int argc, char** argv) {
 
     SerialVirtualDisplay display(serial);
     Personality personality;
-    Protocol protocol(personality);
+    DeviceSettings deviceSettings;
+    Protocol protocol(personality, deviceSettings);
 
     personality.begin(nativeMillis());
 

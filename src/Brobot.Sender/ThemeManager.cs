@@ -13,13 +13,24 @@ namespace Brobot.Sender;
 /// </summary>
 public static class ThemeManager
 {
-    public sealed record ThemeInfo(string Key, string DisplayName, string ResourcePath);
+    /// <summary>
+    /// CoreTheme is the value this app's own "Tema" selection sends as
+    /// `THEME &lt;CoreTheme&gt;` to Core (see PROTOCOL.md) — a second,
+    /// unrelated system this same picker now also drives, alongside
+    /// ResourcePath's WPF skin. They just happen to both be "appearance".
+    /// </summary>
+    public sealed record ThemeInfo(string Key, string DisplayName, string ResourcePath, string CoreTheme);
 
     public const string DefaultTheme = "MiMoClassic";
 
     public static readonly IReadOnlyList<ThemeInfo> Available =
     [
-        new ThemeInfo(DefaultTheme, "MiMo Classic", "Themes/MiMoClassic.xaml"),
+        new ThemeInfo(DefaultTheme, "MiMo Classic", "Themes/MiMoClassic.xaml", "DEFAULT"),
+        // Reuses MiMoClassic.xaml — there's no dedicated Matrix WPF skin for
+        // this app's own UI yet, only for Core's display; selecting this
+        // entry doesn't change how Brobot.Sender itself looks, just what
+        // THEME command goes out to Core.
+        new ThemeInfo("MiMoMatrix", "MiMo Matrix", "Themes/MiMoClassic.xaml", "MATRIX"),
     ];
 
     private static ResourceDictionary? _activeThemeDictionary;

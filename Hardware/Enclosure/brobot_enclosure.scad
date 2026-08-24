@@ -25,12 +25,10 @@
 // flush against the inner front face, the ESP32 on top of it — before the
 // lid is pressed shut.
 //
-// WINDOW SIZE NOTE: 45.72mm is 1.8in x 25.4 — the DIAGONAL spec printed on
-// the board ("1.8 TFT"), not its actual width/height. The real visible glass
-// on this panel is roughly 28mm x 35mm. This file cuts the window at the
-// requested 35mm x 45.72mm anyway (nearly the size of the whole case) — that
-// exposes PCB/bezel around the actual screen, it's not a mistake, just a
-// deliberate choice confirmed by whoever specified these numbers.
+// WINDOW SIZE NOTE: the real visible glass on this panel is roughly 28mm x
+// 35mm. The window is cut at 30mm x 36mm — close to the actual glass, with
+// a little slack, after an earlier oversized attempt (35mm x 45.72mm) let
+// too much of the display's own frame/bezel show through the opening.
 //
 // HOW TO USE:
 //   1. Install OpenSCAD (free): https://openscad.org/downloads.html
@@ -74,8 +72,8 @@ disp_pcb_t    = 1.6;    // PCB thickness
 // Window opening in the front face — set exactly as requested: 35mm on the
 // case's width axis, 45.72mm on the case's length axis. Centered on the
 // board by default.
-window_w    = 35.0;
-window_l    = 45.72;
+window_w    = 30.0;
+window_l    = 36.0;
 window_off_x = 0;
 window_off_y = 0;
 

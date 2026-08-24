@@ -1,7 +1,7 @@
-.pio/build/esp32dev_physical/lib696/Adafruit\ GFX\ Library/Adafruit_GrayOLED.cpp.o: \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GrayOLED.cpp \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GrayOLED.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
+.pio/build/esp32dev_physical/libaa5/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7735.cpp.o: \
+ .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7735.cpp \
+ .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7735.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST77xx.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
@@ -165,10 +165,14 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/gfxfont.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_I2CDevice.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT_Macros.h

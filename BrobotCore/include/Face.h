@@ -34,7 +34,13 @@ enum class Theme : uint8_t { CLASSIC, MATRIX };
 // (which owns the actual ring buffer) and FaceState/Face::render (which
 // only ever sees read-only pointers into it), so the two can't drift apart.
 constexpr int MATRIX_LOG_LINES = 6;
-constexpr size_t MATRIX_LOG_LINE_CAPACITY = 34;
+// Sized so a single entry can word-wrap across a full 3 on-screen lines —
+// same visible-line budget CLASSIC's own message box gives one message
+// (MESSAGE_VISIBLE_LINES) — before Personality::pushLogLine truncates it,
+// rather than the previous 34, which cut a raw entry off well short of
+// even 2 wrapped lines at this display's width (see Face.cpp's
+// drawMatrixLog for the actual per-line wrap budget this is sized against).
+constexpr size_t MATRIX_LOG_LINE_CAPACITY = 74;
 
 struct FaceState {
     Expression expression = Expression::NEUTRAL;

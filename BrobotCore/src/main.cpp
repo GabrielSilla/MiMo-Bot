@@ -1,6 +1,8 @@
 #include <Arduino.h>
 
+#include "Buzzer.h"
 #include "Config.h"
+#include "DeviceSettings.h"
 #include "Face.h"
 #include "Personality.h"
 #include "Protocol.h"
@@ -33,9 +35,38 @@ String pcWaitingMessage;
 #endif
 
 Personality personality;
-Protocol protocol(personality);
+DeviceSettings deviceSettings;
+Protocol protocol(personality, deviceSettings);
+Buzzer buzzer;
 
 unsigned long lastFrameAt = 0;
+
+// Tracks the last expression a sound was triggered for, so
+// buzzer.playForExpression only fires on an actual *change* — see
+// Buzzer::playForExpression's own comment for why calling it every frame
+// would break both one-shot and looping cues.
+Expression lastSoundExpression = Expression::NEUTRAL;
+// Tracks deviceSettings.soundEnabled() across frames so a SOUND OFF -> ON
+// toggle re-triggers the current expression's cue even when the expression
+// itself hasn't changed (an expression-only check would otherwise stay
+// silent until the next expression change came along on its own).
+bool lastSoundEnabled = true;
+
+// Shared by both the ESP32 (pcConnected) and non-ESP32 render paths below —
+// factored out so the expression-change/sound-trigger logic only lives in
+// one place instead of being duplicated per platform.
+void renderPersonalityFrame(unsigned long now) {
+    FaceState state = personality.currentState();
+    bool soundEnabled = deviceSettings.soundEnabled();
+    if (!soundEnabled) {
+        buzzer.mute();
+    } else if (state.expression != lastSoundExpression || !lastSoundEnabled) {
+        buzzer.playForExpression(state.expression, now);
+    }
+    lastSoundExpression = state.expression;
+    lastSoundEnabled = soundEnabled;
+    Face::render(display, state);
+}
 
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
@@ -44,6 +75,8 @@ void setup() {
 #if !VSCREEN
     display.begin();
 #endif
+
+    buzzer.begin();
 
 #if defined(ESP32)
     WifiSetup::connectOrStartPortal([&]() {
@@ -105,6 +138,15 @@ void loop() {
 #endif
 
     personality.update(now);
+    buzzer.update(now);
+
+#if !VSCREEN
+    // Cheap bool set — fine to do every loop() iteration rather than only
+    // on change, and keeps this in the one place that already knows the
+    // concrete ST7735PhysicalDisplay type (setScanlinesEnabled isn't part
+    // of IDisplay — see its own comment).
+    display.setScanlinesEnabled(deviceSettings.scanlinesEnabled());
+#endif
 
     if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
         lastFrameAt = now;
@@ -124,10 +166,10 @@ void loop() {
             waitingState.nowMs = now;
             Face::render(display, waitingState);
         } else {
-            Face::render(display, personality.currentState());
+            renderPersonalityFrame(now);
         }
 #else
-        Face::render(display, personality.currentState());
+        renderPersonalityFrame(now);
 #endif
         display.present();
     }

@@ -23,6 +23,11 @@ constexpr uint8_t TFT_DC_PIN = 3;
 constexpr uint8_t TFT_SCK_PIN = 4;
 constexpr uint8_t TFT_MOSI_PIN = 6;
 
+// Passive piezo buzzer (Buzzer.h), driven via tone()/noTone() — the one
+// remaining pin from the same GPIO0/1/3/4/6/10 safe set above that isn't
+// already claimed by the display.
+constexpr uint8_t BUZZER_PIN = 0;
+
 constexpr unsigned long SERIAL_BAUD_RATE = 115200;
 
 // TCP port the ESP32 build's WiFi protocol server listens on for FACE/MSG/

@@ -1,6 +1,5 @@
-.pio/build/esp32dev_physical/lib8a6/Adafruit\ BusIO/Adafruit_SPIDevice.cpp.o: \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.cpp \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.h \
+.pio/build/esp32dev_physical/src/Buzzer.cpp.o: src/Buzzer.cpp \
+ include/Buzzer.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
@@ -163,5 +162,4 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h
+ include/Face.h include/IDisplay.h include/Config.h

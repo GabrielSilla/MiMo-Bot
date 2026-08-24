@@ -135,13 +135,26 @@ constexpr int COFFEE_EYE_GAP = 10;
 constexpr int COFFEE_EYE_Y = 42;
 constexpr int COFFEE_EYES_X = 10;
 
-// MATRIX pins the (full-size, centered) eyes to the bottom of the frame
-// instead of the usual upper-middle spot, freeing up the top of the screen
-// for the console log (see below). Margin keeps them clear of the very
-// bottom edge, same reasoning BOOT_FALL_START_OFFSET_Y_PX's comment in
-// Personality.cpp gives for the top edge.
+// MATRIX pins the (centered) eyes to the bottom of the frame instead of the
+// usual upper-middle spot, freeing up the top of the screen for the console
+// log (see below). Margin keeps them clear of the very bottom edge, same
+// reasoning BOOT_FALL_START_OFFSET_Y_PX's comment in Personality.cpp gives
+// for the top edge. Sized ~36% smaller than the normal EYE_SIZE/EYE_GAP (two
+// successive ~20% reductions) — at full size, pinned to the bottom edge,
+// they read as too large/heavy for this theme.
+constexpr int MATRIX_EYE_SIZE = 27;
+constexpr int MATRIX_EYE_GAP = 10;
 constexpr int MATRIX_EYE_BOTTOM_MARGIN = 8;
-constexpr int MATRIX_LOG_TOP_Y = 4;
+// The weather/clock badges occupy a fixed strip at the very top of the frame
+// (see TOP_BADGE_MARGIN's comment) and stay on in MATRIX same as CLASSIC —
+// the log starts below that strip (matches CORNER_ICON_Y_SHIFT, the same
+// clearance the expression icons use) instead of overlapping it.
+constexpr int MATRIX_LOG_TOP_Y = 14;
+// How much clearance the log's last visible line keeps above the (pinned)
+// eyes — computed from MATRIX_EYE_SIZE/MATRIX_EYE_BOTTOM_MARGIN rather than
+// the live, look-around-adjusted eyeY, so the log's own visible-line count
+// doesn't flicker as the eyes glance around.
+constexpr int MATRIX_LOG_BOTTOM_GAP = 2;
 constexpr int MATRIX_LOG_X = 4;
 
 constexpr int MESSAGE_LINE_HEIGHT = 9;    // 7px glyph + 2px between lines
@@ -603,19 +616,175 @@ void drawSleepZzz(IDisplay& display, int rightEyeX, int eyeSize, int eyeTop, uns
     }
 }
 
-// MATRIX's scrolling console log — plain top-anchored lines, oldest first,
-// each prefixed with "> " like a terminal prompt. No word-wrap/box like the
-// normal message system: Personality already caps each entry's length (see
-// MATRIX_LOG_LINE_CAPACITY) and older lines simply age out of the ring
-// buffer instead of scrolling within a fixed box, so a plain one-line-per-
-// entry draw is enough. Color is passed through RecoloringDisplay anyway —
-// MSG_R/G/B here is just "any non-black", not the literal color drawn.
-void drawMatrixLog(IDisplay& display, const FaceState& state) {
-    char line[MATRIX_LOG_LINE_CAPACITY + 3]; // + "> " prefix and the null terminator
+// THINKING's rain: while MATRIX is active and Core is THINKING, the console
+// log's region is swapped for a "digital rain" of characters rising through
+// it instead — messages come back the instant THINKING clears, since
+// resolveExpression falls through to whatever's next (see Personality.cpp)
+// and Face::render just goes back to calling drawMatrixLog every frame from
+// then on, same as any other foreground expression's icon disappearing.
+// There's no animation-start/stop state to track here at all: like
+// drawEyeGlitch, this is driven purely off nowMs.
+constexpr int MATRIX_RAIN_COLUMN_SPACING_PX = 12; // two glyph-widths apart, so columns read as distinct streams instead of smearing into a solid block
+constexpr unsigned long MATRIX_RAIN_TICK_MS = 90; // base speed a column's head advances one row at — deliberately not GLITCH_INTERVAL_MS, so the eyes and the rain don't move in lockstep
+constexpr int MATRIX_RAIN_TRAIL_LEN = 3; // characters drawn per column below the head, standing in for a fading trail — this display can't dim per-glyph once RecoloringDisplay has flattened every color to the same green
+const char MATRIX_RAIN_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+constexpr int MATRIX_RAIN_CHAR_COUNT = sizeof(MATRIX_RAIN_CHARS) - 1; // - the string's own null terminator
+
+// Same small hash shape as drawEyeGlitch's glitchHash, just taking two seeds
+// instead of three — kept separate rather than reused so the rain's timing
+// doesn't accidentally correlate with the eyes' glitch bands.
+unsigned long matrixRainHash(unsigned long a, unsigned long b) {
+    unsigned long h = a * 2654435761UL + b * 40503UL;
+    h ^= (h >> 13);
+    h *= 2246822519UL;
+    h ^= (h >> 16);
+    return h;
+}
+
+// topY/bottomY bound the same region drawMatrixLog would otherwise draw
+// into (see Face::render's call site) — the rain replaces the log there,
+// it doesn't add a new region of its own.
+void drawMatrixRain(IDisplay& display, unsigned long nowMs, int topY, int bottomY) {
+    int rowCount = (bottomY - topY) / MESSAGE_LINE_HEIGHT;
+    if (rowCount < 1) {
+        return;
+    }
+
+    // A trailing MATRIX_RAIN_TRAIL_LEN rows of run-in space below the
+    // visible bottom (and, symmetrically, run-out space above the visible
+    // top once headRow goes negative) is what makes each column's trail
+    // enter from the bottom edge and exit off the top instead of just
+    // popping in/out at the region's boundary.
+    unsigned long cycle = (unsigned long)(rowCount + MATRIX_RAIN_TRAIL_LEN);
+
+    char glyph[2] = {0, 0};
+    int columnCount = display.width() / MATRIX_RAIN_COLUMN_SPACING_PX;
+    for (int col = 0; col < columnCount; col++) {
+        unsigned long colSeed = matrixRainHash((unsigned long)col, 0);
+        // Each column ticks at its own speed and phase (both hashed from
+        // the column index) so columns don't all rise in lockstep.
+        unsigned long tickMs = MATRIX_RAIN_TICK_MS + (colSeed % MATRIX_RAIN_TICK_MS);
+        unsigned long tick = nowMs / tickMs;
+        unsigned long phase = (tick + matrixRainHash((unsigned long)col, 1)) % cycle;
+        // phase counts up over time; headRow counts down from it, so the
+        // head rises (decreasing row = higher on screen) as time passes,
+        // then wraps back below the bottom edge once phase resets to 0.
+        int headRow = (int)cycle - 1 - (int)phase;
+
+        for (int t = 0; t < MATRIX_RAIN_TRAIL_LEN; t++) {
+            int row = headRow - t;
+            if (row < 0 || row >= rowCount) {
+                continue;
+            }
+            unsigned long charHash = matrixRainHash((unsigned long)col, phase - (unsigned long)t);
+            glyph[0] = MATRIX_RAIN_CHARS[charHash % MATRIX_RAIN_CHAR_COUNT];
+            int x = col * MATRIX_RAIN_COLUMN_SPACING_PX;
+            int y = topY + row * MESSAGE_LINE_HEIGHT;
+            display.drawText(glyph, x, y, MSG_R, MSG_G, MSG_B);
+        }
+    }
+}
+
+// "> " prompt prefix — only the first physical line of each raw log entry
+// gets one; a wrapped continuation of the same entry is still the same
+// message, not a new prompt, so it draws flush left with no prefix.
+constexpr int MATRIX_LOG_LINE_PREFIX_CHARS = 2;
+
+// Upper bound on physical (wrapped) lines a single raw entry can produce —
+// MATRIX_LOG_LINE_CAPACITY chars can never wrap into more than this many
+// lines at any width this display could plausibly have (sized for its
+// intended 3, plus headroom for a pathological run of short space-separated
+// words forcing extra early breaks), so a fixed-size local array (no heap,
+// no dynamic growth — same constraint every other buffer in this file works
+// under) is safe.
+constexpr int MATRIX_LOG_MAX_WRAPPED_PER_ENTRY = 5;
+constexpr int MATRIX_LOG_MAX_WRAPPED_LINES = MATRIX_LOG_LINES * MATRIX_LOG_MAX_WRAPPED_PER_ENTRY;
+
+// MATRIX's scrolling console log — each raw entry from Personality's _log
+// (capped at MATRIX_LOG_LINE_CAPACITY chars there) is greedy word-wrapped
+// here to fit the screen width, same approach drawWrappedMessage already
+// uses for the normal message box: this used to draw one raw entry per
+// line unwrapped, which ran text for any message longer than a screen-width
+// off the right edge — invisible, not just cut off — instead of showing it.
+// Wrapping is purely a rendering concern (Personality doesn't need to know
+// about it), so it happens here rather than changing what gets stored.
+// Physical lines are top-anchored and oldest-first same as before; once
+// there isn't room for all of them above maxBottomY (the eyes' pinned
+// position), the oldest ones scroll off — same "oldest line drops off"
+// idea drawWrappedMessage uses for a single message, just applied to the
+// whole log instead of one entry.
+void drawMatrixLog(IDisplay& display, const FaceState& state, int maxBottomY) {
+    int maxCharsPerLine = (display.width() - 2 * MATRIX_LOG_X) / CHAR_ADVANCE_PX;
+    if (maxCharsPerLine > (int)MATRIX_LOG_LINE_CAPACITY) {
+        maxCharsPerLine = (int)MATRIX_LOG_LINE_CAPACITY;
+    }
+    if (maxCharsPerLine <= MATRIX_LOG_LINE_PREFIX_CHARS) {
+        return;
+    }
+
+    const char* wrapEntry[MATRIX_LOG_MAX_WRAPPED_LINES];
+    int wrapStart[MATRIX_LOG_MAX_WRAPPED_LINES];
+    int wrapLen[MATRIX_LOG_MAX_WRAPPED_LINES];
+    bool wrapIsFirst[MATRIX_LOG_MAX_WRAPPED_LINES];
+    int wrapCount = 0;
+
+    for (int e = 0; e < state.logLineCount; e++) {
+        const char* entry = state.logLines[e];
+        int len = (int)strlen(entry);
+        int pos = 0;
+        bool isFirst = true;
+        while (pos < len && wrapCount < MATRIX_LOG_MAX_WRAPPED_LINES) {
+            int budget = isFirst ? (maxCharsPerLine - MATRIX_LOG_LINE_PREFIX_CHARS) : maxCharsPerLine;
+            int remaining = len - pos;
+            int take = (remaining <= budget) ? remaining : budget;
+
+            if (take < remaining) {
+                // Forced to break mid-window: back up to the last space in
+                // it so a word doesn't get cut in half.
+                int breakAt = -1;
+                for (int k = take - 1; k >= 0; k--) {
+                    if (entry[pos + k] == ' ') {
+                        breakAt = k;
+                        break;
+                    }
+                }
+                if (breakAt > 0) {
+                    take = breakAt;
+                }
+            }
+
+            wrapEntry[wrapCount] = entry;
+            wrapStart[wrapCount] = pos;
+            wrapLen[wrapCount] = take;
+            wrapIsFirst[wrapCount] = isFirst;
+            wrapCount++;
+
+            pos += take;
+            while (pos < len && entry[pos] == ' ') {
+                pos++;
+            }
+            isFirst = false;
+        }
+    }
+
+    int maxVisibleLines = (maxBottomY - MATRIX_LOG_TOP_Y) / MESSAGE_LINE_HEIGHT;
+    if (maxVisibleLines < 1) {
+        maxVisibleLines = 1;
+    }
+    int visibleStart = (wrapCount > maxVisibleLines) ? (wrapCount - maxVisibleLines) : 0;
+
+    char lineBuffer[MATRIX_LOG_LINE_CAPACITY + MATRIX_LOG_LINE_PREFIX_CHARS + 1];
     int y = MATRIX_LOG_TOP_Y;
-    for (int i = 0; i < state.logLineCount; i++) {
-        snprintf(line, sizeof(line), "> %s", state.logLines[i]);
-        display.drawText(line, MATRIX_LOG_X, y, MSG_R, MSG_G, MSG_B);
+    for (int i = visibleStart; i < wrapCount; i++) {
+        int offset = 0;
+        if (wrapIsFirst[i]) {
+            lineBuffer[0] = '>';
+            lineBuffer[1] = ' ';
+            offset = MATRIX_LOG_LINE_PREFIX_CHARS;
+        }
+        memcpy(lineBuffer + offset, wrapEntry[i] + wrapStart[i], wrapLen[i]);
+        lineBuffer[offset + wrapLen[i]] = '\0';
+        display.drawText(lineBuffer, MATRIX_LOG_X, y, MSG_R, MSG_G, MSG_B);
         y += MESSAGE_LINE_HEIGHT;
     }
 }
@@ -637,10 +806,10 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
 
     bool isCoffee = state.expression == Expression::COFFEE;
 
-    int eyeSize = isCoffee ? COFFEE_EYE_SIZE : EYE_SIZE;
-    int eyeGap = isCoffee ? COFFEE_EYE_GAP : EYE_GAP;
+    int eyeSize = isCoffee ? COFFEE_EYE_SIZE : (isMatrix ? MATRIX_EYE_SIZE : EYE_SIZE);
+    int eyeGap = isCoffee ? COFFEE_EYE_GAP : (isMatrix ? MATRIX_EYE_GAP : EYE_GAP);
     int eyeY = isCoffee ? COFFEE_EYE_Y
-        : (isMatrix ? (display.height() - EYE_SIZE - MATRIX_EYE_BOTTOM_MARGIN) : EYE_Y);
+        : (isMatrix ? (display.height() - eyeSize - MATRIX_EYE_BOTTOM_MARGIN) : EYE_Y);
 
     ExpressionShape shape = shapeFor(state.expression);
     eyeGap += shape.gapDelta;
@@ -684,11 +853,19 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         drawEye(display, rightX, eyeTop, eyeSize, eyeHeight);
     }
 
-    // MATRIX drops every corner icon and badge — their info already lives
-    // in the console log below (see Personality::update/onMessageCommand),
-    // and the icons' usual Y range (roughly 14-70px down) would otherwise
-    // collide with the log's own top-anchored lines.
-    if (!isMatrix) {
+    // MATRIX drops every corner icon EXCEPT the coffee cup — their info
+    // already lives in the console log below (see
+    // Personality::update/onMessageCommand), and the icons' usual Y range
+    // (roughly 14-70px down) would otherwise collide with the log's own
+    // top-anchored lines. COFFEE is the odd one out: unlike every other
+    // expression, it already repositions the eyes themselves (see
+    // isCoffee above, which takes precedence over Matrix's own bottom-pin
+    // regardless of theme) specifically to clear room for this cup — hiding
+    // just the cup while still applying that repositioning left the eyes
+    // shrunk into the top-left corner for no visible reason, a real bug,
+    // fixed once. The weather/clock badges are a separate fixed strip above
+    // this range and stay on below, same as CLASSIC.
+    if (!isMatrix || state.expression == Expression::COFFEE) {
         if (state.expression == Expression::SLEEPING) {
             drawSleepZzz(display, rightX, eyeSize, eyeTop, state.nowMs);
         } else if (state.expression == Expression::MUSIC) {
@@ -710,16 +887,30 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     }
 
     // Persistent overlays: drawn last (on top), always in the same two
-    // corners regardless of expression or message — see the badge functions'
-    // comment above for why they don't share the expression icons' spot.
-    if (state.hasWeather && !isMatrix) {
+    // corners regardless of expression, message, or theme — see the badge
+    // functions' comment above for why they don't share the expression
+    // icons' spot. Unlike those icons, MATRIX doesn't suppress these: Hora/
+    // Clima stay fixed at the top exactly as in CLASSIC.
+    if (state.hasWeather) {
         drawWeatherBadge(display, state.weatherTempC, state.weatherCondition, state.timeText);
     }
-    if (state.timeText != nullptr && state.timeText[0] != '\0' && !isMatrix) {
+    if (state.timeText != nullptr && state.timeText[0] != '\0') {
         drawClockBadge(display, state.timeText);
     }
 
-    if (isMatrix) {
-        drawMatrixLog(display, state);
+    // COFFEE's own eyes+cup layout (see isCoffee above) sits well inside the
+    // log's usual region (roughly x:4-156, y:14-86) rather than tucked below
+    // it like every other expression, so — same as THINKING swapping the
+    // log for the rain — the log is skipped entirely here instead of
+    // drawing on top of (or getting drawn over by) the cup; it comes back
+    // on its own the instant COFFEE clears, no extra state needed, exactly
+    // like THINKING's rain.
+    if (isMatrix && state.expression != Expression::COFFEE) {
+        int logBottomY = display.height() - MATRIX_EYE_SIZE - MATRIX_EYE_BOTTOM_MARGIN - MATRIX_LOG_BOTTOM_GAP;
+        if (state.expression == Expression::THINKING) {
+            drawMatrixRain(display, state.nowMs, MATRIX_LOG_TOP_Y, logBottomY);
+        } else {
+            drawMatrixLog(display, state, logBottomY);
+        }
     }
 }

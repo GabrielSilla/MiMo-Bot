@@ -35,7 +35,15 @@ public:
     void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b) override;
     void present() override;
 
+    // Toggles the whole CRT post-FX pass in present() (chromatic fringing +
+    // warm tint + rolling scanline + vignette — see PROTOCOL.md's SCANLINES
+    // command). Not part of IDisplay: this is a hardware-only rendering
+    // choice with no analogue on the WPF simulator, so it doesn't belong in
+    // the interface both displays mirror (see CLAUDE.md).
+    void setScanlinesEnabled(bool enabled) { _scanlinesEnabled = enabled; }
+
 private:
     Adafruit_ST7735 _tft;
     GFXcanvas16 _canvas;
+    bool _scanlinesEnabled = true;
 };

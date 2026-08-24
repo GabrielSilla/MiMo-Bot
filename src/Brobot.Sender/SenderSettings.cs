@@ -18,11 +18,19 @@ public sealed class SenderSettings
     public bool PausaEnabled { get; set; }
     public string PausaManha { get; set; } = "10:00";
     public string PausaTarde { get; set; } = "15:30";
-    public bool MatrixThemeEnabled { get; set; }
     public string PensamentosIaProvider { get; set; } = "Claude";
     public bool MidiaEnabled { get; set; }
     public bool JogosEnabled { get; set; }
     public string Theme { get; set; } = ThemeManager.DefaultTheme;
+
+    // Unlike the checkboxes above (opt-in monitors, off by default), Sons
+    // and Scanlines toggle features MiMo already has on by default (see
+    // DeviceSettings.h's SOUND/SCANLINES) — defaulting these to true keeps
+    // a fresh install's checkboxes matching what the device already does,
+    // instead of silently muting/flattening it the first time this settings
+    // file is created.
+    public bool SonsEnabled { get; set; } = true;
+    public bool ScanlinesEnabled { get; set; } = true;
 
     // MiMo's IP on the local network — this app only ever reaches Core over
     // WiFi (see MainWindow's Conexão card); Brobot.Display.Simulator still

@@ -49,6 +49,10 @@ void Protocol::dispatch(char* line, unsigned long now) {
         _personality.onTimeCommand(args, now);
     } else if (commandLength == 5 && strncmp(line, "THEME", 5) == 0) {
         _personality.onThemeCommand(args, now);
+    } else if (commandLength == 5 && strncmp(line, "SOUND", 5) == 0) {
+        _deviceSettings.onSoundCommand(args);
+    } else if (commandLength == 9 && strncmp(line, "SCANLINES", 9) == 0) {
+        _deviceSettings.onScanlinesCommand(args);
     }
     // Unknown commands are ignored.
 }

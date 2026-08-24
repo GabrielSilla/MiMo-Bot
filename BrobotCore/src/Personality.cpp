@@ -30,6 +30,14 @@ constexpr int8_t LOOK_DIRECTIONS[8][2] = {
 };
 constexpr uint8_t LOOK_DIRECTION_COUNT = 8;
 
+// MATRIX pins the eyes near the bottom edge (see Face.cpp's
+// MATRIX_EYE_BOTTOM_MARGIN) — there's little clearance left to look further
+// down there, so down/down-left/down-right are dropped from the pool while
+// this theme is active. Indices into LOOK_DIRECTIONS rather than a separate
+// offset table, so both pools stay in sync with LOOK_OFFSET_X_PX/Y_PX.
+constexpr uint8_t LOOK_DIRECTIONS_NO_DOWN[5] = {0, 1, 2, 4, 5};
+constexpr uint8_t LOOK_DIRECTIONS_NO_DOWN_COUNT = 5;
+
 constexpr unsigned long MESSAGE_DURATION_MS = 10000; // how long a MSG stays on screen before clearing itself
 constexpr unsigned long TYPING_CHAR_INTERVAL_MS = 40; // typewriter reveal speed
 constexpr unsigned long FACE_OVERRIDE_DURATION_MS = 4000;
@@ -139,22 +147,6 @@ WeatherCondition parseWeatherCondition(const char* name) {
     if (strcmp(name, "SNOW") == 0) return WeatherCondition::SNOW;
     if (strcmp(name, "FOG") == 0) return WeatherCondition::FOG;
     return WeatherCondition::CLEAR;
-}
-
-// PT-BR one-word label for MATRIX's periodic "HH:MM - tempC - condicao" log
-// line (see Personality::update) — separate from CoreConditionName on the
-// Sender/C# side, which is the wire protocol's own English enum name, not
-// display text.
-const char* conditionLabel(WeatherCondition condition) {
-    switch (condition) {
-        case WeatherCondition::CLOUDY: return "Nublado";
-        case WeatherCondition::RAIN: return "Chuva";
-        case WeatherCondition::STORM: return "Tempestade";
-        case WeatherCondition::SNOW: return "Neve";
-        case WeatherCondition::FOG: return "Neblina";
-        case WeatherCondition::CLEAR:
-        default: return "Sol";
-    }
 }
 
 // Eases the 0..1 travel fraction so motion accelerates in and decelerates
@@ -376,18 +368,6 @@ void Personality::update(unsigned long now) {
         _nextBedtimeMessageAt = now + BEDTIME_MESSAGE_INTERVAL_MS;
     }
 
-    // MATRIX's periodic "HH:MM - tempC - condicao" line — once per minute
-    // (gated on _timeText actually changing), not once per second the way
-    // TIME itself arrives, and only once both Hora and Clima are actually
-    // feeding Core something to show.
-    if (_hasWeather && _timeText[0] != '\0' && strcmp(_timeText, _lastLoggedTimeText) != 0) {
-        strncpy(_lastLoggedTimeText, _timeText, TIME_TEXT_CAPACITY - 1);
-        _lastLoggedTimeText[TIME_TEXT_CAPACITY - 1] = '\0';
-
-        char line[MATRIX_LOG_LINE_CAPACITY];
-        snprintf(line, sizeof(line), "%s - %dC - %s", _timeText, _weatherTempC, conditionLabel(_weatherCondition));
-        pushLogLine(line);
-    }
     _bedtimeMessage.updateTyping(now, MESSAGE_DURATION_MS);
 
     unsigned long bootElapsed = now - _bootStartedAt;
@@ -526,7 +506,9 @@ void Personality::updateLook(unsigned long now) {
         }
         _looking = true;
         _lookStartedAt = now;
-        int dir = random(0, LOOK_DIRECTION_COUNT);
+        int dir = (_theme == Theme::MATRIX)
+            ? LOOK_DIRECTIONS_NO_DOWN[random(0, LOOK_DIRECTIONS_NO_DOWN_COUNT)]
+            : random(0, LOOK_DIRECTION_COUNT);
         _lookDirX = LOOK_DIRECTIONS[dir][0];
         _lookDirY = LOOK_DIRECTIONS[dir][1];
         _lookHoldDuration = random(LOOK_HOLD_MIN_MS, LOOK_HOLD_MAX_MS);

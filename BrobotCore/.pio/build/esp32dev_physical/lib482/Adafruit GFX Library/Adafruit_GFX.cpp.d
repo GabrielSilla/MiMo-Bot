@@ -1,6 +1,6 @@
-.pio/build/esp32dev_physical/lib8a6/Adafruit\ BusIO/Adafruit_GenericDevice.cpp.o: \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_GenericDevice.cpp \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_GenericDevice.h \
+.pio/build/esp32dev_physical/lib482/Adafruit\ GFX\ Library/Adafruit_GFX.cpp.o: \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.cpp \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
@@ -162,4 +162,13 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/spi_flash/include/esp_spi_flash_counters.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/gfxfont.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_I2CDevice.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/glcdfont.c

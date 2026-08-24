@@ -1,5 +1,6 @@
-.pio/build/esp32dev_physical/lib696/Adafruit\ GFX\ Library/Adafruit_GFX.cpp.o: \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.cpp \
+.pio/build/esp32dev_physical/lib482/Adafruit\ GFX\ Library/Adafruit_GrayOLED.cpp.o: \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GrayOLED.cpp \
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GrayOLED.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
@@ -170,5 +171,4 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/glcdfont.c
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h

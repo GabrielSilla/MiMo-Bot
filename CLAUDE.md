@@ -47,7 +47,7 @@ src/
                                      Simulator and Sender to reach Core (see Architecture below)
   Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
                                      Brobot: MainWindow is a card-based checklist (Conexão, Hora, Clima,
-                                     Pausa, Atividade da IA, Mídia, Jogos, Tela do MiMo — mostly checkboxes,
+                                     Pausa, Atividade da IA, Mídia, Jogos, Tema — mostly checkboxes,
                                      except Atividade da IA which is an Instalar/Desinstalar button, see below).
                                      Connection setup lives inline in MainWindow's own Conexão card
                                      (WiFi/TCP only — no SettingsWindow, no Serial/USB, see below) rather
@@ -62,7 +62,9 @@ hooks/                               mimo-claude-hook.ps1 — the Claude Code ho
 BrobotCore/                         PlatformIO project (Arduino/C++)
   include/, src/                    Config, IDisplay, SerialVirtualDisplay, ST7735PhysicalDisplay,
                                      WifiSetup (ESP32 only — WiFi provisioning, see below),
-                                     Face, Personality, Protocol, main.cpp
+                                     Buzzer (R2D2-style beeps, see below — firmware-only, not part
+                                     of the native build's shared source list), Face, Personality,
+                                     Protocol, main.cpp
   platformio.ini                    envs: uno, uno_physical, esp32dev, esp32dev_physical
                                      (esp32* envs use board=esp32-c3-devkitm-1 — the actual
                                      hardware in hand is an ESP32-C3 SuperMini clone board)
@@ -293,7 +295,10 @@ builds never see it.
   bottom-anchored; once a 4th line would be needed the oldest visible line scrolls
   off, like a terminal. Sleeping shows a bobbing "Z Z Z" near the right eye.
   THINKING has no corner icon — the glitch eyes plus the "Pensando..." message
-  carry the expression on their own. **PLAYING** (Sender's Jogos card) keeps
+  carry the expression on their own (in `THEME MATRIX`, see `drawMatrixRain`
+  below, THINKING additionally swaps the console log for a rising-character
+  "digital rain" animation in that same region — messages come back the
+  moment THINKING clears). **PLAYING** (Sender's Jogos card) keeps
   eyes fully open like MUSIC/WATCHING/READING — no shape change — and a small
   bobbing gamepad icon (`drawGamepadIcon`) carries the expression instead: one
   solid body block plus a d-pad cross and two face buttons cut out of it in
@@ -321,7 +326,7 @@ builds never see it.
   not PNG/bitmap (see PROTOCOL.md's `DrawBitmap` note — at this resolution a
   downscaled bitmap would look worse, not better, and needs a whole asset/wire
   pipeline this doesn't).
-  **`Theme::MATRIX`** (Sender's Tela do MiMo card, `THEME MATRIX`/`THEME
+  **`Theme::MATRIX`** (Sender's Tema card, "MiMo Matrix" entry, `THEME MATRIX`/`THEME
   DEFAULT` — named `CLASSIC` in the `Theme` enum, not `DEFAULT`, since
   `<Arduino.h>` `#define`s `DEFAULT` as a macro, same class of problem as
   `Expression::FAILED` not being named `ERROR`) is a whole-frame reskin
@@ -332,37 +337,98 @@ builds never see it.
   the same way it already composes `DimmingDisplay` for `SLEEPING`, with
   `RecoloringDisplay` innermost so a simultaneous `SLEEPING` dims the theme's
   green instead of un-recoloring it back to teal. While `MATRIX` is active,
-  every corner icon/badge is suppressed (`drawWeatherBadge`/`drawClockBadge`/
-  the music-note-through-gamepad-through-coffee-cup icons, even Sleeping's
-  "Z Z Z") — their info now lives in the console log below instead, and
-  their usual Y-range would otherwise collide with it — and the (still
-  full-size, still expression-shaped) eyes get pinned to the bottom of the
-  frame instead of the usual upper-middle spot (`COFFEE`'s own bottom-left
-  pin still takes precedence over Matrix's bottom-center one, same "coffee's
+  every *expression* corner icon is suppressed (the music-note-through-
+  gamepad icons, even Sleeping's "Z Z Z") — their info now lives in the
+  console log below instead, and their usual Y-range would otherwise
+  collide with it. The one exception is `COFFEE`'s cup: unlike every other
+  expression, `COFFEE` already repositions the eyes themselves (small,
+  pinned to the left — see below) specifically to make room for the cup,
+  regardless of theme, so suppressing just the icon while still applying
+  that repositioning left the eyes shrunk into the corner for no visible
+  reason on screen — a real bug, fixed once — rather than a case where
+  suppressing the icon and letting the log stand in for it actually made
+  sense the way it does for every other expression. Since `COFFEE`'s
+  eyes+cup layout sits inside the log's own region rather than tucked below
+  it, `Face::render` skips the log there entirely instead of drawing over
+  (or getting drawn over by) the cup — same "swap it for something else
+  while this expression is active, no extra state needed" idea `THINKING`'s
+  rain already uses (see below); the log reappears on its own the instant
+  `COFFEE` clears. `drawWeatherBadge`/`drawClockBadge` are *not* suppressed
+  either — Hora/Clima stay fixed at the top exactly as in `CLASSIC`, so the
+  log starts below that strip (`MATRIX_LOG_TOP_Y`, matching
+  `CORNER_ICON_Y_SHIFT`) instead of overlapping it. The eyes — still
+  expression-shaped, but ~36% smaller than `CLASSIC` (`MATRIX_EYE_SIZE`/
+  `MATRIX_EYE_GAP` — two successive ~20% reductions, tuned by eye rather
+  than a single formula; at full size, pinned to the bottom edge, they read
+  as too large/heavy for this theme) — get pinned to the bottom of the frame
+  instead of the usual upper-middle spot (`COFFEE`'s own left-pinned layout
+  still takes precedence over Matrix's bottom-center one, same "coffee's
   layout wins" precedence order the geometry code already had). The freed-up
-  top of the frame renders `Personality`'s own scrolling log (`_log`,
-  `MATRIX_LOG_LINES` = 6 entries, `MATRIX_LOG_LINE_CAPACITY` = 34 chars each,
-  in `Face.h` since both `Personality` and `FaceState` need the same
-  capacity) — a plain shift-and-append array, not a wraparound ring buffer,
-  since the capacity is tiny and this keeps rendering a simple 0..count
-  chronological loop with `> ` prefixed per line, no index math.
+  top-middle of the frame (below the badge strip) renders `Personality`'s
+  own scrolling log (`_log`, `MATRIX_LOG_LINES` = 6 entries,
+  `MATRIX_LOG_LINE_CAPACITY` = 74 chars each — sized so one entry can
+  word-wrap across a full 3 on-screen lines, the same visible-line budget
+  CLASSIC's own message box gives a single message — in `Face.h` since both
+  `Personality` and `FaceState` need the same capacity) — a plain
+  shift-and-append array, not a wraparound ring buffer, since the capacity
+  is tiny and this keeps `Personality` handing out a simple 0..count
+  chronological list with no index math. `Personality` only stores the raw
+  (unwrapped) entries; `Face.cpp`'s `drawMatrixLog` is the one that greedy
+  word-wraps each entry to fit the screen width (same algorithm
+  `drawWrappedMessage` already uses for the normal message box) and draws
+  the `> ` prompt prefix only on an entry's *first* physical line — a
+  wrapped continuation is still the same message, not a new prompt, so it
+  draws flush left with no prefix. This replaced an earlier version that
+  drew each raw entry as exactly one unwrapped line: any entry longer than
+  the screen width just ran off the right edge and was never seen at all,
+  rather than merely getting cut off — a real bug, fixed once. Wrapping is
+  purely `Face.cpp`'s concern, not `Personality`'s, matching the project's
+  "PC-side/render layer renders, Core's logic layer decides" split one level
+  down. Physical (wrapped) lines scroll off the *top* of the log, oldest
+  first, once there are more than fit above the pinned eyes
+  (`MATRIX_LOG_BOTTOM_GAP` below `MATRIX_EYE_SIZE`'s position) — the same
+  "oldest visible line drops off" idea `drawWrappedMessage` already uses for
+  a single message, just applied across the whole log instead of one entry.
+  While `state.expression == THINKING`, `Face::render` calls `drawMatrixRain`
+  into this same region instead of `drawMatrixLog` — a grid of columns
+  (`MATRIX_RAIN_COLUMN_SPACING_PX` apart) each showing a short
+  `MATRIX_RAIN_TRAIL_LEN`-character run of random `MATRIX_RAIN_CHARS` that
+  rises (decreasing row) and wraps back in from the bottom edge once it
+  exits off the top, each column at its own hashed speed/phase so they don't
+  move in lockstep — same "no persistent state, driven purely off nowMs"
+  approach `drawEyeGlitch` already uses, via its own `matrixRainHash` (kept
+  separate from `glitchHash` so the two effects' timings don't correlate).
+  Because this only swaps what gets drawn into the log's region for exactly
+  as long as `resolveExpression` keeps reporting THINKING, there's no
+  animation-start/stop state to track: the log reappears on its own, with
+  no special-casing, the instant THINKING clears and rendering falls back to
+  `drawMatrixLog` again next frame.
+  This log only ever carries the
+  "prompt"-style messages (AI activity, media, games, Pausa, bedtime) — it's
+  unchanged by this; the messages that do show there render exactly as
+  before. It deliberately does *not* carry a time/weather line — Hora/Clima
+  already render as their own persistent badges (see `Face::render` below),
+  so a periodic log entry restating the same values would just be noise now
+  that both are on screen at once; an earlier version of MATRIX did log a
+  once-a-minute `"HH:MM - tempC - condicao"` line here, back when the
+  badges were suppressed in this theme and the log was the only way to see
+  that info, but it was removed once the badges came back.
   `Personality::pushLogLine` is called from exactly two places: once inside
   `onMessageCommand` (covers every message that already flows through there
   — AI hook text, media "now playing", "Jogando X", weather alerts, Pausa's
   coffee reminders — with a single call site, since the log doesn't care
   which tier a message is headed for) and once for each freshly-picked
-  bedtime message. A third source, the periodic `"HH:MM - tempC -
-  condicao"` line, is composed directly in `Personality::update` (using a
-  small `conditionLabel` PT-BR lookup, separate from the wire protocol's own
-  English `CoreConditionName`) and gated on `_timeText` actually changing
-  since the last log push — TIME arrives every second from Sender's Hora
-  card, so logging on every tick would flood the log with near-duplicate
-  timestamps; once a minute matches how often the display value actually
-  changes anyway.
+  bedtime message.
 - **`Personality.cpp`**: blink and look-around use eased (smoothstep) transitions
   spread over enough frames to look smooth at ~20fps, not instant jumps. Look-around
   picks randomly from 8 directions (incl. diagonals) and swings close to the
-  screen edges. Falls asleep after `SLEEP_TIMEOUT_MS` (10 min) idle; blink/look
+  screen edges — except while `THEME MATRIX` is active, where the 3 downward
+  ones (down, down-left, down-right; `LOOK_DIRECTIONS_NO_DOWN`, indices into
+  the same `LOOK_DIRECTIONS` table so both pools stay in sync with
+  `LOOK_OFFSET_X_PX`/`Y_PX`) are excluded from the pool — MATRIX pins the
+  eyes near the bottom edge (see `MATRIX_EYE_BOTTOM_MARGIN` in `Face.cpp`),
+  leaving too little clearance to look further down without crowding or
+  crossing that edge. Falls asleep after `SLEEP_TIMEOUT_MS` (10 min) idle; blink/look
   pause entirely while asleep (also while FAILED/READING/THINKING hold still, or
   MUSIC dances — those drive their own motion off `nowMs` in Face.cpp instead;
   PLAYING is *not* in that hold-still list, same as WATCHING — the gamepad icon
@@ -464,6 +530,67 @@ builds never see it.
   `FaceState` directly) while the portal's blocking `WebServer::handleClient()`
   loop runs, without `WifiSetup.cpp` itself needing to know about
   `Face`/`Personality`/`IDisplay` at all.
+- **`Buzzer.cpp`** (`BUZZER_PIN` = GPIO0 on the ESP32-C3 SuperMini — the one
+  pin left over from `Config.h`'s already-vetted GPIO0/1/3/4/6/10 safe set
+  once the display claims the rest): R2D2-style beeps via `tone()`/
+  `noTone()`, adapted from an early breadboard test sketch (`buzzer_test.ino`,
+  outside this repo) whose `sweep()`/`trill()` helpers stepped through
+  frequencies with `delay()` between each one — fine standalone, but that
+  would freeze the ~60fps render loop and stop `Protocol::poll` from reading
+  incoming commands for as long as a sound played, so this is a rewrite of
+  the same sound shapes as a small non-blocking state machine instead, driven
+  purely off `nowMs` (`Buzzer::update`, called every `loop()` iteration same
+  as `Personality::update`) — same "no `delay()`" approach every other timed
+  effect in this codebase already uses. `update()` steps through a single
+  current `SoundSegment` (`SWEEP`/`TRILL`/`TONE`/`SILENCE`), only
+  re-triggering `tone()` when a sub-step actually changes (tracked via
+  `_lastStepIndex`) rather than on every call, and — once that segment's
+  `durationMs` elapses — asks a `SegmentSupplier` function pointer for the
+  next one; `update()`'s own stepping logic doesn't care which supplier is
+  feeding it, so it's written exactly once. `main.cpp`'s
+  `renderPersonalityFrame` compares `state.expression` against a
+  `lastSoundExpression` it tracks across frames and calls
+  `Buzzer::playForExpression` only on an actual *change* — calling it every
+  frame while the expression stays the same would keep restarting a
+  still-playing cue from its first segment, so a one-shot cue would never
+  finish and THINKING's chatter (see below) would never be allowed to
+  actually vary.
+
+  Two suppliers exist, matching two different fidelity needs against the
+  original test sketch: `nextFixedSegment` walks a plain declarative
+  `SoundSegment[]` table (the same shape `BEDTIME_MESSAGES`/`PausaMessages`
+  already use elsewhere) and returns false once it's exhausted, ending the
+  cue — used for `FINISHED` (a triumphant rising sweep, adapted from
+  `sayTerminei()`, matching its own "Terminei!" message), `FAILED` (three
+  quick high trills, adapted from `sayAtencao()`, an "uh-oh"), and
+  `READING` (an up-then-down curious chirp, adapted from `sayOlhaAqui()`) —
+  all one-shot, playing once when that expression starts. `THINKING` uses
+  `nextChatterSegment` instead: the original `sayPensando()` picked a fresh
+  random chirp (an up-sweep, a down-sweep, a trill, or a bare blip, each
+  with randomized frequencies/duration) every time through a 3-second
+  `while`/`delay` loop, and a static table couldn't reproduce that
+  "muttering to itself" quality — an early version of this feature tried a
+  fixed, identically-repeating motif instead, and it read as far too
+  mechanical/repetitive compared to the original, a real regression, fixed
+  once. `nextChatterSegment` instead directly ports `sayPensando()`'s same
+  random branch-picking (`_chatterInGap` alternates a chirp with a
+  `random(100,250)`ms silent gap between chirps, same shape the original's
+  trailing `delay()` had) and, unlike `nextFixedSegment`, never returns
+  false — it keeps generating new random chirps for as long as THINKING
+  stays the active expression, how ever long the AI actually takes, rather
+  than a fixed-length clip. Every expression without a mapped cue falls to
+  `playForExpression`'s `default:`, which calls `stop()`; this matters
+  specifically for THINKING's endless chatter, since without it a switch
+  away from THINKING would leave the muttering going forever, with nothing
+  left to ever tell it to stop. The original sketch's `sayAlarme()` (a 20s
+  siren) was deliberately left unported — nothing in Core's current
+  expression vocabulary represents a sustained alarm, and 20s is far too
+  long to fire automatically off a single expression change; easy to wire
+  up later (e.g. a future `WEATHER STORM` alert) if wanted.
+  Firmware-only: unlike `Face`/`Personality`/`Protocol`, `Buzzer.cpp` isn't
+  in `native/build.ps1`'s explicit source list, so the native dev build
+  (no speaker on a dev PC) simply never compiles or references it — same
+  "PlatformIO-only" treatment `ST7735PhysicalDisplay`/`WifiSetup` already get.
 - **`Protocol.cpp`**: byte-at-a-time line reader. If more than `LINE_STALE_TIMEOUT_MS`
   (300ms) passes mid-line, the partial buffer is discarded before continuing —
   otherwise a stray disconnect/noise byte can silently corrupt the next real command.
@@ -645,14 +772,26 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   COFFEE` isn't sticky on Core (it auto-reverts like any other foreground
   expression), so there's nothing to explicitly clear on uncheck, unlike
   MUSIC/WATCHING/PLAYING/THINKING elsewhere in this file.
-- **Tela do MiMo** is a single checkbox (`MatrixThemeCheckBox`) sending
-  `THEME MATRIX`/`THEME DEFAULT` — deliberately a separate card from Tema
-  above, which only changes this app's own light/dark WPF colors and has no
-  idea Core's display even exists. Like Clima's `WEATHER` badge, `THEME` is
-  a persistent flag Core forgets across its own reboot, so `UpdateConnectionStatus`
-  resends `THEME MATRIX` on reconnect the same way it resends the last
-  weather reading — but only the on-branch: there's no equivalent need to
-  resend `THEME DEFAULT`, since that's already Core's own boot default.
+- **Tema** is a `ComboBox` (`TemaComboBox`, `ThemeManager.Available`) picking
+  between "MiMo Classic" and "MiMo Matrix" — one control driving two
+  unrelated systems: `ThemeManager.Apply` swaps this app's own WPF skin
+  (`ThemeInfo.ResourcePath`), and `TemaComboBox_SelectionChanged` also sends
+  Core its own `THEME <CoreTheme>` command (`ThemeInfo.CoreTheme`,
+  `DEFAULT`/`MATRIX` — see PROTOCOL.md), which changes how Core itself draws
+  the display. They just happen to both be about "appearance", and from the
+  user's point of view MiMo Classic/MiMo Matrix reads as one choice, not
+  two — this used to be two separate cards (Tema for the WPF skin, a "Tela
+  do MiMo" checkbox for Core's `THEME`), folded into this one picker
+  instead. "MiMo Matrix" reuses the same `MiMoClassic.xaml` resource as
+  "MiMo Classic" — there's no dedicated Matrix WPF skin for this app's own
+  UI (yet), only for Core's display, so selecting it changes what Core shows
+  without changing how Brobot.Sender itself looks. Like Clima's `WEATHER`
+  badge, `THEME` is a persistent flag Core forgets across its own reboot, so
+  `UpdateConnectionStatus` resends `THEME MATRIX` on reconnect (checking
+  `TemaComboBox`'s currently-selected `ThemeInfo.CoreTheme`) the same way it
+  resends the last weather reading — but only that branch: there's no
+  equivalent need to resend `THEME DEFAULT`, since that's already Core's own
+  boot default.
 - **"Atividade da IA"** (a provider `ComboBox`: Claude/Codex/Gemini/Cursor/
   Outro, plus an **Instalar**/**Desinstalar** button — no checkbox) is the
   per-tool-hooks → local endpoint → `FACE`/`MSG` bridge. Unlike every other

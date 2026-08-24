@@ -132,9 +132,22 @@ public partial class MainWindow : Window
             _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
         }
         // Same reasoning as the weather resend above — THEME is another
-        // persistent flag Core forgets on its own after a reboot.
-        if (connected && !_wasConnected && MatrixThemeCheckBox.IsChecked == true) {
+        // persistent flag Core forgets on its own after a reboot. Only the
+        // MATRIX branch needs resending; DEFAULT is already Core's own boot
+        // default, same as the "Tela do MiMo" checkbox this replaced.
+        if (connected && !_wasConnected && TemaComboBox.SelectedItem is ThemeManager.ThemeInfo currentTheme
+            && currentTheme.CoreTheme == "MATRIX") {
             _connection.SendCommand("THEME MATRIX");
+        }
+        // SOUND/SCANLINES are persistent flags too, and both default to ON
+        // on Core (same as THEME's DEFAULT) — only the OFF case needs
+        // resending after a reconnect, since ON is already what a freshly
+        // booted/reconnected Core assumes on its own.
+        if (connected && !_wasConnected && SonsCheckBox.IsChecked == false) {
+            _connection.SendCommand("SOUND OFF");
+        }
+        if (connected && !_wasConnected && ScanlinesCheckBox.IsChecked == false) {
+            _connection.SendCommand("SCANLINES OFF");
         }
         _wasConnected = connected;
     }
@@ -510,6 +523,15 @@ public partial class MainWindow : Window
         RefreshAiThoughtsInstallUi();
     }
 
+    /// <summary>
+    /// Drives two unrelated systems from one picker: ThemeManager.Apply
+    /// changes this app's own WPF skin, and the SendCommand below changes
+    /// how Core itself draws the display (see PROTOCOL.md's THEME command)
+    /// — they just happen to both be about "appearance". This used to be a
+    /// separate "Tela do MiMo" checkbox card; folded in here instead, since
+    /// from the user's point of view MiMo Classic/MiMo Matrix is a single
+    /// choice, not two.
+    /// </summary>
     private void TemaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsInitialized || TemaComboBox.SelectedItem is not ThemeManager.ThemeInfo theme)
@@ -518,27 +540,34 @@ public partial class MainWindow : Window
         }
 
         ThemeManager.Apply(theme.Key);
+        _connection.SendCommand($"THEME {theme.CoreTheme}");
 
         SenderSettings settings = SenderSettings.Load();
         settings.Theme = theme.Key;
         settings.Save();
     }
 
+    /// <summary>
+    /// SOUND is a persistent device flag, same shape as THEME — Core just
+    /// remembers whatever was last sent, with no expiry/typewriter/priority
+    /// logic to worry about, so there's nothing to explicitly clear on
+    /// uncheck (unlike FACE MUSIC/WATCHING/PLAYING/THINKING elsewhere here).
+    /// </summary>
+    private void SonsCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        _connection.SendCommand(SonsCheckBox.IsChecked == true ? "SOUND ON" : "SOUND OFF");
+    }
+
+    /// <summary>Same shape as SonsCheckBox_CheckedChanged — SCANLINES is the other persistent device flag (see PROTOCOL.md).</summary>
+    private void ScanlinesCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        _connection.SendCommand(ScanlinesCheckBox.IsChecked == true ? "SCANLINES ON" : "SCANLINES OFF");
+    }
+
     private void SyncTemaComboBoxSelection(SenderSettings settings)
     {
         TemaComboBox.SelectedItem = ThemeManager.Available.FirstOrDefault(t => t.Key == settings.Theme)
             ?? ThemeManager.Available.First(t => t.Key == ThemeManager.DefaultTheme);
-    }
-
-    /// <summary>
-    /// A separate concept from the "Tema" card above: that one only changes
-    /// this app's own light/dark colors, this one sends a new THEME command
-    /// that changes how Core itself draws the display (see PROTOCOL.md) —
-    /// unrelated systems that just happen to both be about "appearance".
-    /// </summary>
-    private void MatrixThemeCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
-    {
-        _connection.SendCommand(MatrixThemeCheckBox.IsChecked == true ? "THEME MATRIX" : "THEME DEFAULT");
     }
 
     private void PensamentosIaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -706,10 +735,11 @@ public partial class MainWindow : Window
         {
             settings.PausaTarde = PausaTardeTextBox.Text.Trim();
         }
-        settings.MatrixThemeEnabled = MatrixThemeCheckBox.IsChecked == true;
         settings.PensamentosIaProvider = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? "Claude";
         settings.MidiaEnabled = MediaCheckBox.IsChecked == true;
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
+        settings.SonsEnabled = SonsCheckBox.IsChecked == true;
+        settings.ScanlinesEnabled = ScanlinesCheckBox.IsChecked == true;
         if (TryParseAddress(ConnectionAddressTextBox.Text, out string host, out int port))
         {
             settings.TcpHost = host;
@@ -762,9 +792,10 @@ public partial class MainWindow : Window
         PausaManhaTextBox.Text = settings.PausaManha;
         PausaTardeTextBox.Text = settings.PausaTarde;
         PausaCheckBox.IsChecked = settings.PausaEnabled;
-        MatrixThemeCheckBox.IsChecked = settings.MatrixThemeEnabled;
         MediaCheckBox.IsChecked = settings.MidiaEnabled;
         GameCheckBox.IsChecked = settings.JogosEnabled;
+        SonsCheckBox.IsChecked = settings.SonsEnabled;
+        ScanlinesCheckBox.IsChecked = settings.ScanlinesEnabled;
 
         TemaComboBox.ItemsSource = ThemeManager.Available;
         SyncTemaComboBoxSelection(settings);

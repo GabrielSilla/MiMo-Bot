@@ -102,7 +102,6 @@ private:
     Theme _theme = Theme::CLASSIC;
     char _log[MATRIX_LOG_LINES][MATRIX_LOG_LINE_CAPACITY] = {{0}};
     int _logCount = 0; // number of filled slots, index 0 = oldest
-    char _lastLoggedTimeText[TIME_TEXT_CAPACITY] = {0}; // last "HH:MM" a time+weather line was logged for, so it's once per minute, not once per second
 
     void updateBlink(unsigned long now);
     void updateLook(unsigned long now);

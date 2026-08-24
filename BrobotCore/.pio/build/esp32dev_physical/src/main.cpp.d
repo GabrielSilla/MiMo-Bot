@@ -161,8 +161,9 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- include/Config.h include/Face.h include/IDisplay.h include/Personality.h \
- include/Protocol.h include/ST7735PhysicalDisplay.h \
+ include/Buzzer.h include/Face.h include/IDisplay.h include/Config.h \
+ include/DeviceSettings.h include/Personality.h include/Protocol.h \
+ include/ST7735PhysicalDisplay.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/gfxfont.h \
