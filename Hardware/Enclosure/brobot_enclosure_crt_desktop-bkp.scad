@@ -31,7 +31,7 @@
 // "assembled" = body (incl. keyboard deck) + lid in place (visual check)
 // "exploded"  = the two parts pulled apart along Z (visual check)
 // "body"      = body + deck as one piece, oriented for printing (print this)
-// "lid"       = tapered CRT back alone, oriented for printing (print this)
+// "lid"       = domed back alone, oriented for printing (print this)
 render_part = "exploded"; // ["assembled","exploded","body","lid"]
 
 $fn = 64;
@@ -129,37 +129,8 @@ inner_corner_r = 1.0;
 // unprintable sliver (or a hole) at the recess floor. The bezel is now flat,
 // uniformly `wall` thick, same as everywhere else.
 
-// ---- CRT back shell ----------------------------------------------------
-// Replaces an earlier solid ellipsoid dome, which read as a smooth blob
-// rather than as a monitor. A 2000s CRT back is a strongly TAPERED box with
-// heavily rounded edges — wide at the screen, narrowing to a small rear
-// face, the profile bowing rather than running straight, with a grille on
-// the side slopes. That silhouette is what carries the look; surface detail
-// is secondary. The old dome had none of it, and no amount of tuning its
-// height was going to produce it — changing the shape was the fix, not
-// changing its parameters.
-//
-// It is also HOLLOW, which the dome was not: an ellipsoid intersection is
-// solid all the way through, and it was the most material-hungry part here.
-
-crt_back_h      = 22.0;  // how far the back extends behind the body. 30 matches the
-                         // reference photo's proportions most closely, at 52mm total
-                         // depth; 22 keeps the CRT silhouette without doubling the box.
-crt_rear_frac_w = 0.62;  // rear face size as a fraction of case_w
-crt_rear_frac_l = 0.55;  // ... and of case_l
-crt_rear_r      = 7.0;   // corner radius at the rear face (the front uses corner_r)
-crt_taper_pow   = 1.3;   // >1 stays wide near the screen, then curves in. 1.7 held the
-                         // width too long and read as a loaf rather than a monitor.
-crt_rear_drop_x = 2.0;   // rear face shifted toward the real bottom (-X)
-crt_shell_t     = 1.6;   // wall thickness of the hollow shell
-crt_slices      = 28;    // smoothness of the swept taper
-
-crt_vents       = true;  // grille slots on the side slopes, as on the real thing
-crt_vent_count  = 5;
-crt_vent_w      = 1.2;   // slot height (Z)
-crt_vent_len    = 18.0;  // slot length (X)
-crt_vent_pitch  = 2.0;
-crt_vent_z0     = 3.5;   // height of the lowest slot
+dome_inset = 6.0;
+dome_h     = 8.0; // shallower — case_d + dome_h now totals 30mm, the monitor's target depth
 
 // side control knobs (2 round dials + 1 small square accent button),
 // offset in Y (real-horizontal) to sit beside the screen, stacked via X
@@ -202,7 +173,7 @@ key_margin_y = 5.0;
 
 case_w = window_w + top_bezel + bottom_chin;  // 40 — real-vertical extent, MATCHES MiMo
 case_l = window_l + 2*side_bezel;             // 62 — real-horizontal extent (58mm board + walls + clearance)
-case_d = 22.0;                                 // depth of the monitor box, front face to lid — + crt_back_h(22) = 44mm total
+case_d = 22.0;                                 // depth of the monitor box, front face to lid — + dome_h(8) = 30mm total
 
 wall  = 1.0; // thin, but no longer load-bearing for the fit — case_l carries that now
 lid_t = 1.0;
@@ -212,7 +183,7 @@ spigot_len       = 3.0;
 spigot_clearance = 0.3;
 
 base_span_y      = case_l; // the deck's extent along Y (real-horizontal) — matches the monitor exactly, no overhang
-base_back_reach  = body_depth; // covers the whole main box for support, stops there — doesn't chase the taper's rear
+base_back_reach  = body_depth; // covers the whole main box for support, stops there — doesn't chase the dome's tip
 
 // ============================================================================
 // HELPERS
@@ -311,73 +282,21 @@ module body() {
 }
 
 // ============================================================================
-// LID — press-fit mating ring + hollow tapered CRT back shell
+// LID — flat press-fit plate + bulging CRT dome, same as the plain CRT variant
 // ============================================================================
 
-// Built as a stack of rounded-rect slices hulled pairwise, rather than as one
-// extrusion or a scaled solid, for one reason: this lets BOTH the footprint
-// and the corner radius vary along the taper. The rear of a CRT is far more
-// rounded than the front, and a linear_extrude with scale= can only change
-// the size.
-function crt_ease(t) = pow(t, crt_taper_pow);
-
-// One horizontal slice of the shell. t: 0 = mating face, 1 = rear face.
-// inset shrinks it in XY, h scales the height — together those two are what
-// produce the inner surface for hollowing.
-module crt_slice(t, inset, h) {
-    e = crt_ease(t);
-    w = case_w - case_w * (1 - crt_rear_frac_w) * e - 2*inset;
-    l = case_l - case_l * (1 - crt_rear_frac_l) * e - 2*inset;
-    r = corner_r + (crt_rear_r - corner_r) * e;
-    translate([-crt_rear_drop_x * e, 0, h * t])
-        linear_extrude(height = 0.01)
-            rounded_rect(w, l, min(r, min(w, l)/2 - 0.01));
-}
-
-module crt_back_solid(inset, h) {
-    for (i = [0 : crt_slices - 1])
-        hull() {
-            crt_slice(i / crt_slices, inset, h);
-            crt_slice((i + 1) / crt_slices, inset, h);
-        }
-}
-
-// Grille slots. Cut straight through in Y, so one pass makes the matching
-// pair of slots on both side slopes.
-module crt_vent_cuts() {
-    for (i = [0 : crt_vent_count - 1])
-        translate([0, 0, crt_vent_z0 + i * crt_vent_pitch])
-            cube([crt_vent_len, case_l + 4, crt_vent_w], center = true);
-}
-
-module crt_back() {
-    difference() {
-        crt_back_solid(0, crt_back_h);
-
-        // Hollow. The inner surface is the same taper inset by the wall
-        // thickness AND stopped crt_shell_t short of the top, so the rear
-        // face keeps its thickness instead of thinning to nothing. Starting
-        // it below z=0 leaves the shell open at the mating face — no sealed
-        // void for the slicer to bridge over, and the interior becomes usable
-        // room for the ESP32 and wiring.
-        translate([0, 0, -0.01])
-            crt_back_solid(crt_shell_t, crt_back_h - crt_shell_t);
-
-        if (crt_vents) crt_vent_cuts();
+module dome() {
+    rx = (case_w - 2*dome_inset) / 2;
+    ry = (case_l - 2*dome_inset) / 2;
+    intersection() {
+        scale([rx, ry, dome_h]) sphere(r = 1);
+        translate([-case_w, -case_l, 0])
+            cube([2*case_w, 2*case_l, dome_h + 1]);
     }
 }
 
 module lid() {
-    // Mating face is a RING, not a full plate: the shell's interior opens
-    // straight into the body's cavity. That is what a real monitor's back
-    // cover is, and it is what makes this part actually hollow instead of
-    // merely capped — a plate here would seal the taper into a closed void.
-    difference() {
-        rounded_box(case_w, case_l, lid_t, corner_r);
-        translate([0, 0, -0.5])
-            linear_extrude(height = lid_t + 1)
-                rounded_rect(case_w - 2*crt_shell_t, case_l - 2*crt_shell_t, inner_corner_r);
-    }
+    rounded_box(case_w, case_l, lid_t, corner_r);
 
     translate([0, 0, -spigot_len])
         linear_extrude(height = spigot_len)
@@ -387,7 +306,7 @@ module lid() {
             }
 
     translate([0, 0, lid_t])
-        crt_back();
+        dome();
 }
 
 // ============================================================================
@@ -408,10 +327,5 @@ if (render_part == "assembled") {
         rotate([0, -90, 0])
             body();
 } else if (render_part == "lid") {
-    // Prints mating-face-down: the spigot ring lands on the bed, the flange
-    // sits on it, and the taper rises from there. Every layer of the taper is
-    // SMALLER than the one below, so the whole shell is self-supporting — no
-    // supports and no overhangs anywhere. Do not flip this: the old
-    // orientation put the (then solid) dome's tip against the bed.
-    translate([0, 0, spigot_len]) lid();
+    translate([0, 0, lid_t]) rotate([180, 0, 0]) lid();
 }

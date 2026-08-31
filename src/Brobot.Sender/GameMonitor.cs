@@ -93,7 +93,26 @@ public sealed class GameMonitor : IDisposable
 
         if (needsRefresh)
         {
-            await RefreshFromNetworkAsync(token);
+            // Belt and braces around the refresh: polling has to start even if
+            // updating the catalog goes wrong in a way RefreshFromNetworkAsync
+            // didn't anticipate. This method is fire-and-forget
+            // (`_ = RunAsync(...)` in Start), so anything escaping here is an
+            // unobserved exception that silently ends the loop — GameChanged
+            // then never fires again for the life of the app, with no error
+            // surfaced anywhere. That exact failure has now happened twice in
+            // different spots; the cached catalog is a perfectly good
+            // fallback, so nothing about a failed refresh is worth stopping
+            // for.
+            try
+            {
+                await RefreshFromNetworkAsync(token);
+            }
+            catch (Exception) when (!token.IsCancellationRequested)
+            {
+                StatusChanged?.Invoke(_knownGames.Count > 0
+                    ? $"Falha ao atualizar catálogo ({_knownGames.Count} jogos salvos localmente)"
+                    : "Falha ao baixar catálogo de jogos");
+            }
         }
         else
         {
@@ -184,6 +203,22 @@ public sealed class GameMonitor : IDisposable
             _cacheFetchedAt = DateTime.UtcNow;
             SaveCache(games);
             StatusChanged?.Invoke($"{games.Count} jogos catalogados");
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        {
+            // HttpClient throws TaskCanceledException — which *is* an
+            // OperationCanceledException — when its own 100s timeout expires,
+            // and that has nothing to do with the token passed in here.
+            // Filtering on "is not OperationCanceledException" alone therefore
+            // let an ordinary slow download escape and kill the polling loop:
+            // the catalog is a ~12MB payload, so hitting that timeout on a
+            // cold start is unremarkable, not exotic. Only a cancellation that
+            // really came from `token` means "stop"; anything else falls back
+            // to whatever the cache already holds. This was a real bug, fixed
+            // once.
+            StatusChanged?.Invoke(_knownGames.Count > 0
+                ? $"Tempo esgotado ao baixar catálogo ({_knownGames.Count} jogos salvos localmente)"
+                : "Tempo esgotado ao baixar catálogo de jogos");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

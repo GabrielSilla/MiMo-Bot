@@ -32,6 +32,13 @@
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="6.2.1" />
+    <!-- Game Mode's CPU/GPU/RAM sensors (see SystemStatsMonitor). 0.9.6 or
+         later specifically: that's the release that swapped the WinRing0
+         driver for PawnIO. Neither is installed here, and neither needs to be
+         — the four figures MiMo actually reads from this library (CPU load,
+         RAM load, GPU load, GPU temperature) all come from sources that need
+         no kernel driver at all. -->
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -55,7 +62,7 @@
     <Product>MiMo Sender</Product>
     <AssemblyTitle>MiMo Sender</AssemblyTitle>
     <Description>Envia hora, clima, mídia e atividade de IA para o seu Brobot</Description>
-    <Version>1.0.1</Version>
+    <Version>1.0.3</Version>
     <NeutralLanguage>pt-BR</NeutralLanguage>
 
     <!-- The app's own UI has no other language, but WPF/WinForms still ship a

@@ -177,4 +177,5 @@
  .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST77xx.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT.h \
  .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT_Macros.h
+ .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT_Macros.h \
+ include/AurebeshGFXFont.h

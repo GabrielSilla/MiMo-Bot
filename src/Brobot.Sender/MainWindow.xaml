@@ -56,6 +56,18 @@
             <Setter Property="Margin" Value="0,3,0,0"/>
         </Style>
 
+        <!-- A standing caveat about a card, as opposed to CardStatusStyle's
+             live readout: dimmer and italic so it reads as fine print rather
+             than as something currently happening. -->
+        <Style x:Key="CardNoteStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="Opacity" Value="0.85"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+
         <Style x:Key="CardStatusStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontFamily" Value="Consolas"/>
@@ -194,8 +206,9 @@
             </Setter>
         </Style>
 
-        <!-- Rounded TextBox matching the ComboBox/Button chrome above, for the
-             Conexão card's host/port fields -->
+        <!-- Rounded TextBox matching the ComboBox/Button chrome above. Only the
+             Pausa card's two time fields use it now — the Conexão card's
+             address stopped being typeable and became a plain readout. -->
         <Style x:Key="MimoTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
@@ -279,11 +292,17 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Conexão" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Endereço IP do MiMo na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="O MiMo é encontrado sozinho na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="ConnectionStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <TextBox x:Name="ConnectionAddressTextBox" Grid.Column="2" Width="140" VerticalAlignment="Center" Margin="0,0,10,0"
-                             Style="{StaticResource MimoTextBoxStyle}"/>
+                    <!-- A display, not a field: MiMo's address is discovered (see
+                         MimoDiscovery), never typed. During a sweep this ticks
+                         through the addresses being probed, so the search is
+                         visibly doing something rather than just spinning. -->
+                    <TextBlock x:Name="ConnectionAddressText" Grid.Column="2" Width="150" VerticalAlignment="Center"
+                               Margin="0,0,10,0" TextAlignment="Right" FontFamily="Consolas" FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource InkBrush}"/>
                     <Button x:Name="ConnectionButton" Grid.Column="3" Content="Conectar" VerticalAlignment="Center"
                             Style="{StaticResource InstallButtonStyle}" Click="ConnectionButton_Click"/>
                 </Grid>
@@ -432,7 +451,18 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Jogos" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Avisa o MiMo quando você está jogando" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Avisa o MiMo quando você está jogando e mostra CPU, GPU e RAM na tela dele"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <!-- Names only what actually depends on Afterburner. Saying
+                             "as estatísticas" would be wrong and would push people
+                             into installing an overclocking utility they don't need:
+                             CPU/GPU/RAM usage and GPU temperature all come from
+                             sources that need no extra software (see
+                             SystemStatsMonitor). CPU temperature is the lone
+                             exception, and the reason is not the user's problem to
+                             understand — only the requirement is. -->
+                        <TextBlock Text="Para a temperatura da CPU, é preciso ter o MSI Afterburner instalado e aberto. As outras estatísticas não dependem dele."
+                                   Style="{StaticResource CardNoteStyle}"/>
                         <TextBlock x:Name="GameStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
                     <CheckBox x:Name="GameCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"

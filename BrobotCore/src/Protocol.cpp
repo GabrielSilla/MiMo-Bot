@@ -2,6 +2,11 @@
 
 #include <string.h>
 
+// Answer to PING. The trailing number is the protocol revision, so a future
+// PC app can tell an old board from a new one without a second round trip;
+// bump it only for changes a client would actually need to branch on.
+static const char* IDENTITY_REPLY = "MIMO 1";
+
 void Protocol::poll(Stream& serial, unsigned long now) {
     while (serial.available() > 0) {
         if (_length > 0 && (now - _lastByteAt) > LINE_STALE_TIMEOUT_MS) {
@@ -17,7 +22,7 @@ void Protocol::poll(Stream& serial, unsigned long now) {
 
         if (c == '\n') {
             _line[_length] = '\0';
-            dispatch(_line, now);
+            dispatch(serial, _line, now);
             _length = 0;
             continue;
         }
@@ -30,7 +35,7 @@ void Protocol::poll(Stream& serial, unsigned long now) {
     }
 }
 
-void Protocol::dispatch(char* line, unsigned long now) {
+void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
     if (line[0] == '\0' || line[0] == '#') {
         return;
     }
@@ -53,6 +58,18 @@ void Protocol::dispatch(char* line, unsigned long now) {
         _deviceSettings.onSoundCommand(args);
     } else if (commandLength == 9 && strncmp(line, "SCANLINES", 9) == 0) {
         _deviceSettings.onScanlinesCommand(args);
+    } else if (commandLength == 6 && strncmp(line, "NOTIFY", 6) == 0) {
+        _personality.onNotifyCommand(args, now);
+    } else if (commandLength == 5 && strncmp(line, "STATS", 5) == 0) {
+        _personality.onStatsCommand(args, now);
+    } else if (commandLength == 4 && strncmp(line, "PING", 4) == 0) {
+        // The only command Core answers. Exists so a PC app sweeping the
+        // local network for MiMo's (DHCP-assigned, therefore moving) IP can
+        // tell an actual MiMo apart from anything else that merely happens
+        // to be listening on PROTOCOL_TCP_PORT — see Brobot.Connection's
+        // MimoDiscovery. Deliberately not routed through Personality: it
+        // says nothing about Brobot, only about the link.
+        serial.println(IDENTITY_REPLY);
     }
     // Unknown commands are ignored.
 }

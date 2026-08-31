@@ -122,13 +122,17 @@ public sealed class SimulatorDisplay : IDisplay
         DrawOperationCount++;
     }
 
-    public void DrawText(string text, int x, int y, DisplayColor color)
+    public void DrawText(string text, int x, int y, DisplayColor color, TextFont font = TextFont.Latin)
     {
         int penX = x;
 
         foreach (char c in text)
         {
-            byte[]? glyph = Font5x7.GetGlyph(c);
+            // AurebeshFont only covers A-Z/0-9 (see its own comment) — falls
+            // back to the normal Latin glyph for anything it doesn't map
+            // (space, punctuation, lowercase), same as Font5x7's own
+            // missing-glyph convention.
+            byte[]? glyph = font == TextFont.Aurebesh ? AurebeshFont.GetGlyph(c) ?? Font5x7.GetGlyph(c) : Font5x7.GetGlyph(c);
             if (glyph != null)
             {
                 for (int col = 0; col < Font5x7.GlyphWidth; col++)

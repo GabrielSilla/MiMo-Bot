@@ -40,6 +40,11 @@ public partial class MainWindow : Window
     private GameMonitor? _gameMonitor;
     private bool _gameFaceActive;
 
+    // Only runs while a game is actually detected — Game Mode is the one
+    // screen these numbers appear on, and polling hardware sensors every two
+    // seconds for a display nobody is looking at would be pure waste.
+    private SystemStatsMonitor? _statsMonitor;
+
     private WeatherMonitor? _weatherMonitor;
     private WeatherReading? _lastWeatherReading; // resent on reconnect (see UpdateConnectionStatus) instead of waiting out WeatherMonitor's own 30-min cycle
     private WeatherCondition? _lastWeatherCondition; // null = no baseline yet, so the very first reading never fires a "changed" alert
@@ -73,6 +78,63 @@ public partial class MainWindow : Window
     private bool _aiThoughtFaceActive;
 
     private readonly DispatcherTimer _connectionStatusTimer;
+
+    // MiMo's IP comes from the router's DHCP server, so it moves on its own —
+    // a power cycle (MiMo's or the router's) can hand it a different address,
+    // and the one saved in the Conexão card then points at nothing. Rather
+    // than making that the user's problem, a failing connection eventually
+    // triggers a sweep of the local network for MiMo (see MimoDiscovery), and
+    // whatever it finds replaces the saved address.
+    //
+    // Long enough that an ordinary blip (MiMo still booting, WiFi
+    // reassociating, the router's DHCP renewing) resolves itself on
+    // ConnectTcp's own 500ms retry loop first — sweeping is for the case
+    // where the address is genuinely wrong, not for every hiccup.
+    private static readonly TimeSpan SweepAfterFailingFor = TimeSpan.FromSeconds(8);
+
+    // MiMo simply being switched off looks exactly like MiMo having moved,
+    // and there's no way to tell them apart without sweeping. This is what
+    // keeps that case from sweeping the network back-to-back forever.
+    private static readonly TimeSpan SweepCooldown = TimeSpan.FromSeconds(30);
+
+    // Where MiMo is, as far as this app knows — the source of truth the
+    // Conexão card merely displays. It used to be the text in an editable
+    // field, which is exactly what broke every time DHCP moved MiMo: the
+    // address was only ever as right as whatever someone last typed. Now it
+    // comes from settings on startup and from the sweep after that, and null
+    // means "nowhere known yet", which is a cue to go looking rather than an
+    // error.
+    private string? _coreHost;
+    private int _corePort = MimoDiscovery.DefaultPort;
+
+    private DateTime? _connectingSince;
+    private DateTime? _lastSweepFinishedAt;
+    private CancellationTokenSource? _sweepCts;
+    private bool _sweepRunning;
+
+    // What the card shows while a sweep runs. Held as fields (rather than
+    // written straight to the controls) so UpdateConnectionStatus stays the
+    // single place that touches them — the same reason the status text has
+    // one writer instead of being set optimistically from everywhere, which
+    // is a bug this card already had once.
+    private string _sweepProgressText = "Procurando MiMo na rede...";
+    private string _sweepProbeAddress = "";
+
+    // A sweep finishes ~254 probes in a couple of seconds; repainting on every
+    // one is an unreadable blur. Repainting on a fixed clock instead of on
+    // each report is what makes the count climb evenly: probes complete in
+    // bursts (64 run at once, and unreachable addresses all time out
+    // together), so a report-driven repaint inherits that lumpiness, while a
+    // steady tick just shows wherever the sweep has got to.
+    private static readonly TimeSpan SweepProgressTickInterval = TimeSpan.FromMilliseconds(333);
+    private DispatcherTimer? _sweepProgressTimer;
+
+    // A one-off message (bad address, sweep found nothing) that has to
+    // survive _connectionStatusTimer's next tick — which is 200ms away and
+    // would otherwise overwrite it with the polled status before anyone
+    // could read it.
+    private string _transientStatus = "";
+    private DateTime _transientStatusUntil = DateTime.MinValue;
 
     public MainWindow()
     {
@@ -113,14 +175,53 @@ public partial class MainWindow : Window
         bool connected = _connection.IsConnected;
         bool connecting = _connection.IsConnectingTcp;
 
-        ConnectionStatusText.Text = connected ? "Conectado" : (connecting ? "Conectando..." : "Desconectado");
+        if (DateTime.Now < _transientStatusUntil)
+        {
+            ConnectionStatusText.Text = _transientStatus;
+        }
+        else if (connected)
+        {
+            ConnectionStatusText.Text = "Conectado";
+        }
+        else if (_sweepRunning)
+        {
+            // Takes precedence over "Conectando...": while a sweep runs, the
+            // retry loop is usually still hammering an address already known
+            // to be wrong, and the sweep is the part actually making progress.
+            ConnectionStatusText.Text = _sweepProgressText;
+        }
+        else
+        {
+            ConnectionStatusText.Text = connecting ? "Conectando..." : "Desconectado";
+        }
 
-        // While connecting (retrying), the button still reads "Desconectar" —
-        // clicking it calls Disconnect(), which cancels the retry loop, same
-        // as it would cancel an actual live connection.
-        bool hasSomethingToDisconnect = connected || connecting;
-        ConnectionButton.Content = hasSomethingToDisconnect ? "Desconectar" : "Conectar";
-        ConnectionAddressTextBox.IsEnabled = !hasSomethingToDisconnect;
+        // The address is a readout, never an input — MiMo's IP comes from the
+        // sweep, and a stale hand-typed one is the whole problem this replaced.
+        // It only ever shows an address that means something *right now*:
+        // during a sweep, the one being probed; while connected, the one that
+        // actually reached MiMo. Every other state shows nothing at all,
+        // because the only address available then is one that is either
+        // unproven or known not to work — and printing a dead address next to
+        // "Conectando..." reads as if that address were the live one.
+        ConnectionAddressText.Text = _sweepRunning
+            ? _sweepProbeAddress
+            : (connected && _coreHost != null ? $"{_coreHost}:{_corePort}" : "");
+
+        TryStartNetworkSweep(connected, connecting);
+
+        // The label tracks *connected*, and nothing else. It used to read
+        // "Desconectar" while merely connecting or sweeping too, on the
+        // reasoning that those are things a click could call off — but
+        // ConnectTcp retries forever, so a failed search left the button
+        // saying "Desconectar" indefinitely with nothing connected to
+        // disconnect from. Now anything short of a live connection reads
+        // "Conectar", and clicking it means "try now" (see the click handler),
+        // so the label and the action agree in every state.
+        ConnectionButton.Content = connected ? "Desconectar" : "Conectar";
+        // Disabled only while a sweep is actually in flight — it's the one
+        // state where a second click would stack a duplicate search, and it
+        // lasts a few seconds.
+        ConnectionButton.IsEnabled = !_sweepRunning;
 
         // A freshly (re)connected Core — e.g. just rebooted, or was off when
         // this app started — has no idea what the weather badge should show
@@ -132,12 +233,12 @@ public partial class MainWindow : Window
             _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
         }
         // Same reasoning as the weather resend above — THEME is another
-        // persistent flag Core forgets on its own after a reboot. Only the
-        // MATRIX branch needs resending; DEFAULT is already Core's own boot
-        // default, same as the "Tela do MiMo" checkbox this replaced.
+        // persistent flag Core forgets on its own after a reboot. Any
+        // non-DEFAULT selection needs resending; DEFAULT is already Core's
+        // own boot default, same as the "Tela do MiMo" checkbox this replaced.
         if (connected && !_wasConnected && TemaComboBox.SelectedItem is ThemeManager.ThemeInfo currentTheme
-            && currentTheme.CoreTheme == "MATRIX") {
-            _connection.SendCommand("THEME MATRIX");
+            && currentTheme.CoreTheme != "DEFAULT") {
+            _connection.SendCommand($"THEME {currentTheme.CoreTheme}");
         }
         // SOUND/SCANLINES are persistent flags too, and both default to ON
         // on Core (same as THEME's DEFAULT) — only the OFF case needs
@@ -152,46 +253,234 @@ public partial class MainWindow : Window
         _wasConnected = connected;
     }
 
+    /// <summary>
+    /// Starts a network sweep once the connection has been failing long
+    /// enough that the saved address itself is the likely problem (see
+    /// SweepAfterFailingFor). Called from the status poll rather than from a
+    /// failure callback because BrobotConnection has no "gave up" event —
+    /// ConnectTcp retries forever by design, so "how long has this been
+    /// getting nowhere" is something only the poller can notice.
+    /// </summary>
+    private void TryStartNetworkSweep(bool connected, bool connecting)
+    {
+        if (connected)
+        {
+            _connectingSince = null;
+            return;
+        }
+
+        if (!connecting)
+        {
+            // Disconnected on purpose — nothing is trying, so there's nothing
+            // failing to recover from.
+            _connectingSince = null;
+            return;
+        }
+
+        _connectingSince ??= DateTime.Now;
+
+        if (_sweepRunning
+            || DateTime.Now - _connectingSince.Value < SweepAfterFailingFor
+            || (_lastSweepFinishedAt is { } lastSweep && DateTime.Now - lastSweep < SweepCooldown))
+        {
+            return;
+        }
+
+        // Mid-session recovery: whatever address this was using was reaching
+        // MiMo until moments ago, so it's worth probing first.
+        StartNetworkSweep(trustPreviousAddress: true);
+    }
+
+    /// <summary>
+    /// Sweeps the local network for MiMo and, if it finds one, repoints the
+    /// connection (and the saved address) at it. async void because it's
+    /// driven by UI events/timers exactly like a click handler is; everything
+    /// after each await is back on the UI thread, so touching controls and
+    /// _connection here is safe.
+    /// </summary>
+    /// <param name="trustPreviousAddress">
+    /// Whether the address currently in use gets probed first and, if it
+    /// answers but won't identify itself, accepted anyway (see MimoDiscovery).
+    /// True for a mid-session recovery, where that address was demonstrably
+    /// MiMo moments ago. False at startup: the app may have been closed for
+    /// days, MiMo may have moved, and DHCP may well have handed that address
+    /// to something else entirely — in which case trusting it would mean
+    /// adopting a stranger. A clean startup sweep costs ~2.5s and can't make
+    /// that mistake.
+    /// </param>
+    private async void StartNetworkSweep(bool trustPreviousAddress)
+    {
+        _sweepRunning = true;
+        _sweepCts = new CancellationTokenSource();
+        CancellationToken token = _sweepCts.Token;
+        _sweepProgressText = "Procurando MiMo na rede...";
+        _sweepProbeAddress = "";
+        _sweepProgressTimer = new DispatcherTimer { Interval = SweepProgressTickInterval };
+        _sweepProgressTimer.Tick += (_, _) => UpdateConnectionStatus();
+        _sweepProgressTimer.Start();
+        UpdateConnectionStatus();
+
+        // The port comes from whatever MiMo was last reached on, so a device
+        // set up on a non-default port keeps being found there; a fresh
+        // install with nothing known falls back to Core's own default. The
+        // port survives even an untrusted startup sweep — an address goes
+        // stale on its own, a port doesn't.
+        string? previousHost = trustPreviousAddress ? _coreHost : null;
+        int port = _corePort > 0 ? _corePort : MimoDiscovery.DefaultPort;
+
+        // Constructed on the UI thread, so it marshals every report back here
+        // by itself — the sweep reports from whichever thread pool thread
+        // finished a probe, and none of them may touch these fields directly.
+        var progress = new Progress<MimoDiscovery.SweepProgress>(OnSweepProgress);
+
+        string? found = null;
+        bool sweepCancelled;
+        try
+        {
+            found = await MimoDiscovery.FindAsync(port, previousHost, progress, token);
+        }
+        catch (Exception)
+        {
+            // A sweep failing outright (an adapter yanked mid-scan, say) is
+            // just a sweep that found nothing — never a reason to take down
+            // the tray app.
+        }
+        finally
+        {
+            // Read before disposing the source: a CancellationToken whose
+            // CancellationTokenSource has already been disposed is not safe to
+            // keep querying.
+            sweepCancelled = token.IsCancellationRequested;
+            _sweepRunning = false;
+            _lastSweepFinishedAt = DateTime.Now;
+            _sweepCts?.Dispose();
+            _sweepCts = null;
+            _sweepProgressTimer?.Stop();
+            _sweepProgressTimer = null;
+        }
+
+        if (sweepCancelled)
+        {
+            // The user hit Desconectar while this was running; acting on the
+            // result now would reconnect behind their back.
+            return;
+        }
+
+        if (found == null)
+        {
+            ShowTransientStatus("MiMo não encontrado na rede");
+            return;
+        }
+
+        _coreHost = found;
+        _corePort = port;
+        _connection.ConnectTcp(found, port);
+        // The retry clock restarts with the new address — without this, the
+        // elapsed time from the old one carries over and the cooldown is all
+        // that stands between this and an immediate second sweep.
+        _connectingSince = null;
+        PersistDiscoveredAddress(found, port);
+        UpdateConnectionStatus();
+    }
+
+    /// <summary>
+    /// Records where the sweep has got to, without painting anything — the
+    /// 3-times-a-second tick below is what puts it on screen. Always called on
+    /// the UI thread (see the Progress&lt;T&gt; that feeds it), so these fields
+    /// need no locking against the tick that reads them.
+    /// </summary>
+    private void OnSweepProgress(MimoDiscovery.SweepProgress progress)
+    {
+        if (!_sweepRunning)
+        {
+            // A cancelled sweep's last few probes can still report after the
+            // card has moved on to showing something else.
+            return;
+        }
+
+        _sweepProbeAddress = progress.Address.ToString();
+        _sweepProgressText = $"Procurando MiMo... {progress.Completed}/{progress.Total}";
+    }
+
+    private void CancelNetworkSweep()
+    {
+        _sweepCts?.Cancel();
+        _sweepRunning = false;
+        _sweepProgressTimer?.Stop();
+        _sweepProgressTimer = null;
+    }
+
+    private void ShowTransientStatus(string text)
+    {
+        _transientStatus = text;
+        _transientStatusUntil = DateTime.Now.AddSeconds(4);
+        ConnectionStatusText.Text = text;
+    }
+
+    /// <summary>
+    /// Writes a swept-out address straight to the settings file, without
+    /// waiting for "Salvar configurações". Unlike every other setting there,
+    /// this isn't a preference the user chose — it's a fact about where MiMo
+    /// currently is, and leaving it unsaved would mean re-sweeping the whole
+    /// network on every launch. Load-then-mutate-then-save, so the checkbox
+    /// state already on disk is carried through untouched rather than
+    /// overwritten with whatever the UI happens to show right now.
+    /// </summary>
+    private static void PersistDiscoveredAddress(string host, int port)
+    {
+        try
+        {
+            SenderSettings settings = SenderSettings.Load();
+            settings.TcpHost = host;
+            settings.TcpPort = port;
+            settings.Save();
+        }
+        catch (Exception)
+        {
+            // Worst case the address is swept for again next launch — not
+            // worth interrupting a connection that just started working.
+        }
+    }
+
     private void ConnectionButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_connection.IsConnected || _connection.IsConnectingTcp)
+        if (_connection.IsConnected)
         {
+            CancelNetworkSweep();
             _connection.Disconnect();
+            _connectingSince = null;
             UpdateConnectionStatus();
             return;
         }
 
-        if (!TryParseAddress(ConnectionAddressTextBox.Text, out string host, out int port))
+        if (_sweepRunning)
         {
-            ConnectionStatusText.Text = "Endereço inválido (formato IP:porta)";
+            // The button is disabled in this state; this only guards against a
+            // click that slipped through between a sweep starting and the
+            // status poll repainting.
             return;
         }
 
-        // ConnectTcp retries on its own every 500ms until it reaches Core or
-        // Disconnect() is called — never throws synchronously, so nothing is
-        // set optimistically here; UpdateConnectionStatus's own polling (see
-        // above) is what actually reflects the real state, including this
-        // new attempt's "Conectando..." phase.
-        _connection.ConnectTcp(host, port);
-        UpdateConnectionStatus();
-    }
-
-    /// <summary>Splits "host:port" from a single field — on the last ':' rather than the first, so a literal IPv6 address wouldn't break this if one's ever typed here.</summary>
-    private static bool TryParseAddress(string text, out string host, out int port)
-    {
-        host = "";
-        port = 0;
-
-        int separatorIndex = text.LastIndexOf(':');
-        if (separatorIndex <= 0 || separatorIndex == text.Length - 1)
+        if (_coreHost != null && !_connection.IsConnectingTcp)
         {
-            return false;
+            // A known address and nothing currently trying it — worth one
+            // direct shot before searching the whole network. This is the
+            // reconnect-after-Desconectar path, where the address was reaching
+            // MiMo minutes ago. ConnectTcp retries on its own every 500ms and
+            // never throws synchronously, so nothing is set optimistically
+            // here; if the address has gone stale, TryStartNetworkSweep turns
+            // those retries into a sweep after SweepAfterFailingFor.
+            _connection.ConnectTcp(_coreHost, _corePort);
+            UpdateConnectionStatus();
+            return;
         }
 
-        host = text[..separatorIndex].Trim();
-        return host.Length > 0
-            && int.TryParse(text[(separatorIndex + 1)..].Trim(), out port)
-            && port is > 0 and <= 65535;
+        // Either nothing is known, or the known address is already being
+        // retried and getting nowhere — in both cases the useful meaning of
+        // "Conectar" is "search now", skipping the wait TryStartNetworkSweep
+        // would otherwise impose. Untrusting on purpose: if that address were
+        // going to work, the retry loop would already have connected.
+        StartNetworkSweep(trustPreviousAddress: false);
     }
 
     private void HoraCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
@@ -336,11 +625,22 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Sends one NOTIFY line rather than the FACE+MSG pair this used to,
+    /// which is what puts the reminder on Core's top-priority notification
+    /// tier: it takes the whole screen for a few seconds, outranks even AI
+    /// activity, and expires by itself (see PROTOCOL.md's NOTIFY). Atomic
+    /// on purpose — a two-command form could be caught half-applied, and a
+    /// lone MSG would route by Core's _lastCommandTier instead.
+    ///
+    /// Note this app still doesn't decide what a break reminder *looks*
+    /// like: it says "this is a notification, the expression is COFFEE,
+    /// here's the text", and Core owns the screen it turns into.
+    /// </summary>
     private void SendBreakReminder()
     {
         string message = PausaMessages[PausaRng.Next(PausaMessages.Length)];
-        _connection.SendCommand("FACE COFFEE");
-        _connection.SendCommand($"MSG {message}");
+        _connection.SendCommand($"NOTIFY COFFEE {message}");
         PausaStatusText.Text = $"Último lembrete: {message}";
     }
 
@@ -398,10 +698,12 @@ public partial class MainWindow : Window
     /// unlike most expressions which auto-revert after a few seconds. So
     /// when media stops (or the checkbox is unchecked) while one of them is
     /// showing, it has to be explicitly cleared or Brobot would be stuck
-    /// dancing/watching forever. Sends FACE IDLE, not FACE NEUTRAL — IDLE
-    /// clears only this background/media-or-game expression on Core, so it
-    /// can't stomp an unrelated AI message/notification that happens to be
+    /// dancing/watching forever. Sends FACE IDLE_MEDIA, not FACE NEUTRAL —
+    /// NEUTRAL would stomp an unrelated AI message that happens to be
     /// showing at the same time (see PROTOCOL.md's FACE priority notes).
+    /// IDLE_MEDIA rather than plain IDLE because Jogos and Mídia are two
+    /// separate tiers on Core now: bare IDLE clears both, so stopping the
+    /// music would also wipe a game that is still very much open.
     /// </summary>
     private void ClearMediaFaceIfActive()
     {
@@ -410,7 +712,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        _connection.SendCommand("FACE IDLE");
+        _connection.SendCommand("FACE IDLE_MEDIA");
         _connection.SendCommand("MSG");
         _mediaFaceActive = false;
     }
@@ -425,11 +727,12 @@ public partial class MainWindow : Window
             // previous session left Core stuck (e.g. crashed mid-detection),
             // nothing would ever notice it needs clearing. Force a known
             // baseline every time monitoring starts, rather than trusting
-            // in-memory state that resets on every launch. FACE IDLE, not
-            // FACE NEUTRAL — this is resetting *this* app's own background
+            // in-memory state that resets on every launch. FACE IDLE_GAME,
+            // not FACE NEUTRAL — this is resetting *this* app's own game
             // expression, and must not clear an unrelated AI message that
-            // happens to be showing (see PROTOCOL.md's FACE priority notes).
-            _connection.SendCommand("FACE IDLE");
+            // happens to be showing (see PROTOCOL.md's FACE priority notes),
+            // nor the media tier, which is now separate from this one.
+            _connection.SendCommand("FACE IDLE_GAME");
             _connection.SendCommand("MSG");
             _gameFaceActive = false;
 
@@ -464,6 +767,7 @@ public partial class MainWindow : Window
             _connection.SendCommand("FACE PLAYING");
             _connection.SendCommand($"MSG Jogando {game}");
             _gameFaceActive = true;
+            StartStatsMonitor();
         });
     }
 
@@ -477,7 +781,8 @@ public partial class MainWindow : Window
     /// FACE PLAYING is sticky on Core, same as MUSIC/WATCHING — if the game
     /// closes (or the checkbox is unchecked) while it's showing, it has to be
     /// explicitly cleared or Brobot would be stuck "playing" forever. Sends
-    /// FACE IDLE, not FACE NEUTRAL — see ClearMediaFaceIfActive's comment.
+    /// FACE IDLE_GAME, not FACE NEUTRAL and not bare IDLE — see
+    /// ClearMediaFaceIfActive's comment for both halves of that.
     /// </summary>
     private void ClearGameFaceIfActive()
     {
@@ -486,9 +791,54 @@ public partial class MainWindow : Window
             return;
         }
 
-        _connection.SendCommand("FACE IDLE");
+        _connection.SendCommand("FACE IDLE_GAME");
         _connection.SendCommand("MSG");
         _gameFaceActive = false;
+        StopStatsMonitor();
+    }
+
+    private void StartStatsMonitor()
+    {
+        if (_statsMonitor != null)
+        {
+            return;
+        }
+
+        _statsMonitor = new SystemStatsMonitor();
+        _statsMonitor.StatsUpdated += OnStatsUpdated;
+        _statsMonitor.Start();
+    }
+
+    private void StopStatsMonitor()
+    {
+        if (_statsMonitor == null)
+        {
+            return;
+        }
+
+        _statsMonitor.StatsUpdated -= OnStatsUpdated;
+        _statsMonitor.Dispose();
+        _statsMonitor = null;
+
+        // STATS is persistent on Core, exactly like WEATHER/TIME — nothing
+        // times it out — so leaving without clearing would freeze the last
+        // reading on screen forever (see PROTOCOL.md).
+        _connection.SendCommand("STATS");
+    }
+
+    private void OnStatsUpdated(SystemStatsReading reading)
+    {
+        // SystemStatsMonitor raises this from a thread-pool timer, not the UI thread.
+        Dispatcher.Invoke(() =>
+        {
+            // -1 for anything with no source, which Core renders as "--"
+            // rather than as a zero nobody should believe (see Face.h).
+            static int Field(int? value) => value ?? -1;
+
+            _connection.SendCommand(
+                $"STATS {Field(reading.CpuLoadPercent)} {Field(reading.CpuTempC)} " +
+                $"{Field(reading.GpuLoadPercent)} {Field(reading.GpuTempC)} {Field(reading.RamLoadPercent)}");
+        });
     }
 
     /// <summary>
@@ -740,10 +1090,14 @@ public partial class MainWindow : Window
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
         settings.SonsEnabled = SonsCheckBox.IsChecked == true;
         settings.ScanlinesEnabled = ScanlinesCheckBox.IsChecked == true;
-        if (TryParseAddress(ConnectionAddressTextBox.Text, out string host, out int port))
+        // Carried through rather than read off the UI: the address isn't
+        // typed any more, and the sweep already writes it here the moment it
+        // finds MiMo (see PersistDiscoveredAddress). This only matters for not
+        // wiping it when the user saves the rest of the checklist.
+        if (_coreHost != null)
         {
-            settings.TcpHost = host;
-            settings.TcpPort = port;
+            settings.TcpHost = _coreHost;
+            settings.TcpPort = _corePort;
         }
 
         settings.Save();
@@ -769,11 +1123,16 @@ public partial class MainWindow : Window
     {
         SenderSettings settings = SenderSettings.Load();
 
-        ConnectionAddressTextBox.Text = string.IsNullOrWhiteSpace(settings.TcpHost) ? "" : $"{settings.TcpHost}:{settings.TcpPort}";
-        if (!string.IsNullOrWhiteSpace(settings.TcpHost))
-        {
-            _connection.ConnectTcp(settings.TcpHost, settings.TcpPort);
-        }
+        // The saved address is loaded for display and for SaveSettings to
+        // carry through, but is deliberately NOT connected to: every launch
+        // starts with a fresh sweep instead. Between one run and the next the
+        // app may have been closed for days — long enough for MiMo to have
+        // been given a different address, and for its old one to have been
+        // handed to some other device. Asking the network beats trusting a
+        // note from last time, and it costs ~2.5s once at startup.
+        _coreHost = string.IsNullOrWhiteSpace(settings.TcpHost) ? null : settings.TcpHost;
+        _corePort = settings.TcpPort > 0 ? settings.TcpPort : MimoDiscovery.DefaultPort;
+        StartNetworkSweep(trustPreviousAddress: false);
         UpdateConnectionStatus();
 
         foreach (ComboBoxItem item in PensamentosIaComboBox.Items)
@@ -850,11 +1209,15 @@ public partial class MainWindow : Window
         _trayIcon.Dispose();
         _mediaMonitor?.Dispose();
         _gameMonitor?.Dispose();
+        _statsMonitor?.Dispose();
         _weatherMonitor?.Dispose();
         _aiThoughtsListener?.Dispose();
         _clockTimer?.Stop();
         _breakTimer?.Stop();
         _connectionStatusTimer.Stop();
+        // A sweep in flight holds up to MaxConcurrentProbes sockets open;
+        // cancelling lets them close instead of lingering past shutdown.
+        CancelNetworkSweep();
         _connection.Dispose();
         System.Windows.Application.Current.Shutdown();
     }

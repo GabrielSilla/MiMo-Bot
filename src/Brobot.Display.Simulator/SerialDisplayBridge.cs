@@ -88,7 +88,7 @@ public sealed class SerialDisplayBridge : IDisposable
                     _display.DrawRoundedRect(ParseInt(parts[1]), ParseInt(parts[2]), ParseInt(parts[3]), ParseInt(parts[4]), ParseInt(parts[5]), ParseColor(parts, 6));
                     break;
                 case "TEXT":
-                    _display.DrawText(ExtractTextArgument(line), ParseInt(parts[1]), ParseInt(parts[2]), ParseColor(parts, 3));
+                    _display.DrawText(ExtractTextArgument(line), ParseInt(parts[1]), ParseInt(parts[2]), ParseColor(parts, 3), ParseFont(parts[6]));
                     break;
                 case "PRESENT":
                     _display.Present();
@@ -108,11 +108,13 @@ public sealed class SerialDisplayBridge : IDisposable
         byte.Parse(parts[startIndex + 1], CultureInfo.InvariantCulture),
         byte.Parse(parts[startIndex + 2], CultureInfo.InvariantCulture));
 
-    /// <summary>TEXT x y r g b &lt;text...&gt; — the text itself may contain spaces, so it's taken verbatim after the 6th token.</summary>
+    private static TextFont ParseFont(string token) => token == "AUREBESH" ? TextFont.Aurebesh : TextFont.Latin;
+
+    /// <summary>TEXT x y r g b font &lt;text...&gt; — the text itself may contain spaces, so it's taken verbatim after the 7th token.</summary>
     private static string ExtractTextArgument(string line)
     {
         int index = 0;
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 7; i++)
         {
             index = line.IndexOf(' ', index);
             if (index < 0)

@@ -142,7 +142,7 @@ inner_corner_r = 1.0;
 // It is also HOLLOW, which the dome was not: an ellipsoid intersection is
 // solid all the way through, and it was the most material-hungry part here.
 
-crt_back_h      = 22.0;  // how far the back extends behind the body. 30 matches the
+crt_back_h      = 13.0;  // how far the back extends behind the body. 30 matches the
                          // reference photo's proportions most closely, at 52mm total
                          // depth; 22 keeps the CRT silhouette without doubling the box.
 crt_rear_frac_w = 0.62;  // rear face size as a fraction of case_w
@@ -155,7 +155,7 @@ crt_shell_t     = 1.6;   // wall thickness of the hollow shell
 crt_slices      = 28;    // smoothness of the swept taper
 
 crt_vents       = true;  // grille slots on the side slopes, as on the real thing
-crt_vent_count  = 5;
+crt_vent_count  = 3;
 crt_vent_w      = 1.2;   // slot height (Z)
 crt_vent_len    = 18.0;  // slot length (X)
 crt_vent_pitch  = 2.0;

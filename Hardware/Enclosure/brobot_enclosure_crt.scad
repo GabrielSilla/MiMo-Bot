@@ -8,8 +8,9 @@
 // a bulging dome on the back (the "tube"), and a round pedestal stand —
 // MOLDED INTO the body as one piece. Only the back lid is separate.
 //
-// Sized to match MiMo's own footprint: 40mm x 60mm for the monitor box
+// Sized close to MiMo's own footprint: 40mm x 63mm for the monitor box
 // itself (the stand adds a bit more on top of that — see OUTPUT below).
+// The 63mm (not 60mm) is deliberate — see the BOARD CLEARANCE note below.
 //
 // PRINTING NOTE: because the stand is now part of the body, "body" prints
 // lying on the stand's flat face (not front-face-down like a plain box) —
@@ -66,17 +67,31 @@ usb_cut_z_offset = 0;
 // (the shorter, 34mm-driven axis) is the real VERTICAL axis — top/bottom
 // decorations go on X faces. Y is real-horizontal — side decorations go on Y.
 
-// SIZE-LOCKED TO MiMo: case_w x case_l below must land on exactly 40mm x
-// 60mm (MiMo's own footprint) with the screen opening held fixed — see the
-// values chosen below. Walls and every decorative element were scaled down
-// to fit; there's very little slack left (this was a deliberate "go to the
-// limit" tradeoff), so don't grow window_w/window_l without redoing the math.
+// BOARD CLEARANCE — read before shrinking anything here.
+// This case was originally size-locked to MiMo's 40mm x 60mm footprint, and
+// at that size the display PCB physically does not fit. Same two causes as
+// brobot_enclosure_crt_desktop.scad (which is where the printed failure
+// actually showed up); see that file's BOARD CLEARANCE note for the full
+// numbers. Short version: 58.0mm of cavity for a 58.0mm board, and the
+// cavity reusing the outer 4.0mm corner radius, which necks the usable
+// width down to 30mm at the ends and fouls the board's square corners.
+//
+// Fixed the same way: side_bezel 12.0 -> 13.5 (case_l 60 -> 63) plus a
+// separate, smaller inner_corner_r for the cavity. Clearance here is
+// 0.64mm/side rather than the desktop variant's 1.14mm, because this
+// variant's asymmetric top_bezel/bottom_chin (4/6, for the stand) puts the
+// board 1mm off-center in X — left alone deliberately, that's a styling
+// choice and 0.64mm is enough.
 
 top_bezel    = 4.0;  // real top (X), above the screen
-side_bezel   = 12.0; // real left/right (Y), both sides of the screen
+side_bezel   = 13.5; // real left/right (Y), both sides of the screen
 bottom_chin  = 6.0;  // real bottom (X), below the screen, for the stand
 
 corner_r = 4.0; // soft corners, scaled down for the smaller case
+// Radius of the INNER cavity (and the lid's matching spigot) — deliberately
+// smaller than corner_r so the fillets clear the display PCB's square
+// corners. See the BOARD CLEARANCE note above.
+inner_corner_r = 2.0;
 
 // NOTE: the recessed dark screen surround from the bigger version is gone —
 // at wall=1mm there was no room left for a step without leaving an
@@ -98,10 +113,10 @@ stand_thickness = 3.0;  // thin disc, lying flat (horizontal), not a tall blade
 // ============================================================================
 
 case_w = window_w + top_bezel + bottom_chin;    // 40 — real-vertical extent, MATCHES MiMo
-case_l = window_l + 2*side_bezel;               // 60 — real-horizontal extent, MATCHES MiMo
+case_l = window_l + 2*side_bezel;               // 63 — real-horizontal extent (58mm board + walls + clearance)
 case_d = 45.0;                                   // depth of the main body, before the dome adds more — unchanged, not part of this request
 
-wall  = 1.0; // thin — this is the "go to the limit" tradeoff: the 58mm board needs almost the full 60mm case_l
+wall  = 1.0; // thin, but no longer load-bearing for the fit — case_l carries that now
 lid_t = 1.0;
 body_depth = case_d - lid_t;
 

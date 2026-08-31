@@ -1,4 +1,5 @@
 #include "ST7735PhysicalDisplay.h"
+#include "AurebeshGFXFont.h"
 #include <SPI.h>
 
 // A cheap, integer-only take on the "Nostalgia CRT" style shader used on the
@@ -67,11 +68,51 @@ void ST7735PhysicalDisplay::drawRoundedRect(int x, int y, int w, int h, int radi
     _canvas.drawRoundRect(x, y, w, h, radius, _tft.color565(r, g, b));
 }
 
-void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+namespace {
+// AurebeshGFXFont only covers '0'-'9' and 'A'-'Z' (see its own header
+// comment) — anything else (space, punctuation, lowercase/accented PT-BR
+// text) falls back to the built-in font even when the caller asked for
+// AUREBESH, same "missing glyph degrades gracefully" convention the
+// Simulator's own AurebeshFont.GetGlyph fallback uses.
+bool isAurebeshCovered(char c) {
+    char upper = (char)toupper((unsigned char)c);
+    return (upper >= '0' && upper <= '9') || (upper >= 'A' && upper <= 'Z');
+}
+}  // namespace
+
+void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, TextFont font) {
     _canvas.setTextColor(_tft.color565(r, g, b));
     _canvas.setTextWrap(false);
-    _canvas.setCursor(x, y);
-    _canvas.print(text);
+
+    // Drawn one character at a time (rather than one _canvas.print(text)
+    // call) so a run can freely mix AUREBESH-covered and uncovered
+    // characters, switching Adafruit_GFX's active font per glyph. Advances
+    // by a flat 6px either way — AurebeshGFXGlyph::xAdvance is 6 and the
+    // built-in font already advances 6px/char at textSize 1 (5px glyph + 1px
+    // gap), matching CHAR_ADVANCE_PX (see Face.cpp) so MI2MO2's per-character
+    // word-wrap math stays correct on this display too.
+    int penX = x;
+    for (const char* p = text; *p != '\0'; p++) {
+        char c = *p;
+        if (font == TextFont::AUREBESH && isAurebeshCovered(c)) {
+            // A custom GFXfont draws relative to the text *baseline*, unlike
+            // the built-in font's top-left cursor (which every other
+            // drawText call in this codebase assumes) — shift the cursor
+            // down by the glyph's full height (7px, baked into the font's
+            // yOffset=-7) so the glyph's top still lands on the caller's own
+            // top-left `y`, keeping it level with any LATIN characters
+            // drawn right before/after it in the same message.
+            _canvas.setFont(&AurebeshGFXFont);
+            _canvas.setCursor(penX, y + 7);
+            _canvas.write((uint8_t)toupper((unsigned char)c));
+        } else {
+            _canvas.setFont(nullptr);
+            _canvas.setCursor(penX, y);
+            _canvas.write((uint8_t)c);
+        }
+        penX += 6;
+    }
+    _canvas.setFont(nullptr);  // leave the canvas in its normal default-font state for every other drawText caller
 }
 
 void ST7735PhysicalDisplay::present() {

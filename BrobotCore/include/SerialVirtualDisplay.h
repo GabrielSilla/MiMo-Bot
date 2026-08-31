@@ -40,10 +40,11 @@ public:
         printColor(r, g, b);
     }
 
-    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
+    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, TextFont font = TextFont::LATIN) override {
         _serial.print(F("TEXT "));
         _serial.print(x); _serial.print(' '); _serial.print(y); _serial.print(' ');
         _serial.print(r); _serial.print(' '); _serial.print(g); _serial.print(' '); _serial.print(b); _serial.print(' ');
+        _serial.print(font == TextFont::AUREBESH ? F("AUREBESH") : F("LATIN")); _serial.print(' ');
         _serial.println(text);
     }
 

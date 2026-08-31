@@ -1,6 +1,19 @@
 namespace Brobot.Display.Abstractions;
 
 /// <summary>
+/// Which glyph set <see cref="IDisplay.DrawText"/> renders with. Mirrors
+/// BrobotCore's <c>TextFont</c> (IDisplay.h) — see that file's comment for
+/// why <see cref="Aurebesh"/> only actually applies to characters the
+/// target display has a glyph for (this Simulator's own AurebeshFont only
+/// covers A-Z/0-9, same as the physical build's AurebeshGFXFont).
+/// </summary>
+public enum TextFont
+{
+    Latin,
+    Aurebesh,
+}
+
+/// <summary>
 /// Represents the graphical capabilities of a display device, independent of
 /// whatever backend renders it (a virtual simulator today, physical hardware
 /// such as an ST7735S in the future).
@@ -33,7 +46,7 @@ public interface IDisplay
     void DrawRoundedRect(int x, int y, int width, int height, int radius, DisplayColor color);
 
     /// <summary>Draws text with its top-left corner at (x, y).</summary>
-    void DrawText(string text, int x, int y, DisplayColor color);
+    void DrawText(string text, int x, int y, DisplayColor color, TextFont font = TextFont.Latin);
 
     /// <summary>
     /// Draws a bitmap image with its top-left corner at (x, y).

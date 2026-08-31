@@ -38,9 +38,23 @@ constexpr uint8_t LOOK_DIRECTION_COUNT = 8;
 constexpr uint8_t LOOK_DIRECTIONS_NO_DOWN[5] = {0, 1, 2, 4, 5};
 constexpr uint8_t LOOK_DIRECTIONS_NO_DOWN_COUNT = 5;
 
+// MI2MO2 doesn't move an eye at all — it slides a reflection across a fixed
+// lens (see Face.cpp's drawMi2Mo2Lens). That glint rests up and left of the
+// lens center, so up-left is the one direction whose offset carries it off
+// the edge of the glass; every other direction stays within the disc. Same
+// index-into-LOOK_DIRECTIONS trick as the MATRIX pool above — index 4 is
+// {-1, -1}.
+constexpr uint8_t LOOK_DIRECTIONS_NO_UP_LEFT[7] = {0, 1, 2, 3, 5, 6, 7};
+constexpr uint8_t LOOK_DIRECTIONS_NO_UP_LEFT_COUNT = 7;
+
 constexpr unsigned long MESSAGE_DURATION_MS = 10000; // how long a MSG stays on screen before clearing itself
-constexpr unsigned long TYPING_CHAR_INTERVAL_MS = 40; // typewriter reveal speed
+// TYPING_CHAR_INTERVAL_MS lives in Face.h now — Face.cpp's MI2MO2 rendering
+// needs the same reveal-speed value to work out each character's own age.
 constexpr unsigned long FACE_OVERRIDE_DURATION_MS = 4000;
+// How long a notification owns the whole screen (see Personality::Tier).
+// Short on purpose: it is an interruption, not a state, and everything it
+// covers up is still sitting there waiting underneath it.
+constexpr unsigned long NOTIFICATION_DURATION_MS = 7000;
 constexpr unsigned long SLEEP_TIMEOUT_MS = 10UL * 60UL * 1000UL; // 10 minutes idle before sleeping
 
 // SLEEPY (drowsy, not yet the deep SLEEPING) kicks in purely off the clock,
@@ -52,8 +66,11 @@ constexpr int BEDTIME_START_HOUR = 22;
 constexpr int BEDTIME_END_HOUR = 6;
 
 // A slower, heavier-lidded blink while SLEEPY — see updateBlink — so it's
-// obviously not the same quick blink NEUTRAL uses.
-constexpr unsigned long BLINK_DURATION_SLEEPY_MS = 900;
+// obviously not the same quick blink NEUTRAL uses. Raised from an earlier
+// 900: in MI2MO2 a blink is the logic display switching off and back on
+// (see Face.cpp's drawMi2Mo2LogicDisplay) rather than an eyelid closing, and
+// at 900ms that read as merely a dip in brightness, not a drowsy blink.
+constexpr unsigned long BLINK_DURATION_SLEEPY_MS = 1500;
 
 // One random pick every 30 minutes for as long as it stays bedtime, nudging
 // whoever's still up to go to sleep. Kept short (fits the 3-line message
@@ -198,8 +215,39 @@ void Personality::TypedMessage::updateTyping(unsigned long now, unsigned long pe
     visible[revealed] = '\0';
 }
 
+bool Personality::isGameExpression(Expression e) {
+    return e == Expression::PLAYING;
+}
+
+bool Personality::isMediaExpression(Expression e) {
+    return e == Expression::MUSIC || e == Expression::WATCHING;
+}
+
+// "Belongs to one of the two lower tiers" — still one question in plenty of
+// places (which log tab, which message), even though the two now rank
+// against each other rather than sharing a slot.
 bool Personality::isBackgroundExpression(Expression e) {
-    return e == Expression::MUSIC || e == Expression::WATCHING || e == Expression::PLAYING;
+    return isGameExpression(e) || isMediaExpression(e);
+}
+
+bool Personality::notificationActive(unsigned long now) const {
+    return _notificationUntil != 0 && now < _notificationUntil;
+}
+
+// The one entry point for raising a notification, shared by the NOTIFY
+// command and by Core's own bedtime nudge — which has no PC app behind it
+// at all, and is exactly why this isn't folded into onNotifyCommand.
+void Personality::raiseNotification(Expression e, const char* text, unsigned long now) {
+    _notificationExpression = e;
+    _notificationMessage.set(text, now);
+    _notificationStartedAt = now;
+    _notificationUntil = now + NOTIFICATION_DURATION_MS;
+    // Deliberately does NOT touch _lastInteractionAt: a notification is
+    // MiMo interrupting you, not you interacting with MiMo, and counting it
+    // would mean a machine left alone overnight could never fall asleep —
+    // the bedtime nudge fires every 30 minutes and would keep resetting the
+    // idle timer forever. Same reasoning WEATHER/TIME/STATS already follow.
+    pushLogLine(text, LogTab::AI);
 }
 
 void Personality::begin(unsigned long now) {
@@ -221,19 +269,39 @@ void Personality::begin(unsigned long now) {
 void Personality::onFaceCommand(const char* name, unsigned long now) {
     _lastInteractionAt = now;
 
-    if (strcmp(name, "IDLE") == 0) {
-        _backgroundExpression = Expression::NEUTRAL;
-        _lastCommandTier = Tier::BACKGROUND;
+    // IDLE clears the lower tiers. Plain "IDLE" clears both, which is what
+    // it has always meant and what a client that predates the game/media
+    // split still intends by it; the two qualified forms clear exactly one,
+    // and are what Brobot.Sender sends now that Jogos outranks Mídia —
+    // otherwise stopping the music would also wipe a game that's still open.
+    if (strcmp(name, "IDLE") == 0 || strcmp(name, "IDLE_GAME") == 0) {
+        _gameExpression = Expression::NEUTRAL;
+        _gameMessage.set("", now);
+        _lastCommandTier = Tier::GAME;
+        if (strcmp(name, "IDLE_GAME") == 0) {
+            return;
+        }
+    }
+    if (strcmp(name, "IDLE") == 0 || strcmp(name, "IDLE_MEDIA") == 0) {
+        _mediaExpression = Expression::NEUTRAL;
+        _mediaMessage.set("", now);
+        _lastCommandTier = Tier::MEDIA;
         return;
     }
 
     Expression e = parseExpression(name);
-    if (isBackgroundExpression(e)) {
-        // Doesn't touch the foreground expression/override at all — if AI
-        // foreground is currently showing, this just gets stored and takes
-        // over once foreground releases (see resolveExpression).
-        _backgroundExpression = e;
-        _lastCommandTier = Tier::BACKGROUND;
+    // Neither of these touches the foreground expression/override at all —
+    // if AI activity (or a notification) is currently showing, this just
+    // gets stored and takes over once the higher tier releases (see
+    // resolveExpression).
+    if (isGameExpression(e)) {
+        _gameExpression = e;
+        _lastCommandTier = Tier::GAME;
+        return;
+    }
+    if (isMediaExpression(e)) {
+        _mediaExpression = e;
+        _lastCommandTier = Tier::MEDIA;
         return;
     }
 
@@ -247,18 +315,31 @@ void Personality::onFaceCommand(const char* name, unsigned long now) {
 
 void Personality::onMessageCommand(const char* text, unsigned long now) {
     _lastInteractionAt = now;
-    // Logged once here regardless of which tier it's about to land in below
-    // — covers AI hook messages, media "now playing", "Jogando X", weather
-    // alerts, and Pausa's coffee reminders, all in one place, since they all
-    // flow through this same command.
-    pushLogLine(text);
+    // Logged into whichever tab this message belongs to — covers AI hook
+    // messages, media "now playing", "Jogando X", weather alerts, and Pausa's
+    // coffee reminders in one place, since they all flow through this same
+    // command. Keeping the tabs apart is what stops them interleaving into a
+    // single unreadable stream (see _foregroundLog/_backgroundLog/_gameLog).
+    // A game is told apart from music/video by the background expression set
+    // alongside it, since all three arrive on the same tier.
+    LogTab tab = LogTab::AI;
+    if (_lastCommandTier == Tier::GAME) {
+        tab = LogTab::MONITOR;
+    } else if (_lastCommandTier == Tier::MEDIA) {
+        tab = LogTab::MEDIA;
+    }
+    pushLogLine(text, tab);
 
     // A lone MSG (no FACE on the same "turn", e.g. a Notification hook
     // event) routes to whichever tier the last FACE command belonged to —
     // Notifications always follow a THINKING/READING from the same AI
     // session, so this lands on the foreground message as intended.
-    if (_lastCommandTier == Tier::BACKGROUND) {
-        _backgroundMessage.set(text, now);
+    if (_lastCommandTier == Tier::GAME) {
+        _gameMessage.set(text, now);
+        return;
+    }
+    if (_lastCommandTier == Tier::MEDIA) {
+        _mediaMessage.set(text, now);
         return;
     }
 
@@ -311,8 +392,104 @@ void Personality::onTimeCommand(const char* args, unsigned long now) {
 // never touches _lastInteractionAt, and just holds whatever theme was last
 // sent until replaced.
 void Personality::onThemeCommand(const char* name, unsigned long now) {
+    if (strcmp(name, "MATRIX") == 0) {
+        _theme = Theme::MATRIX;
+    } else if (strcmp(name, "MI2MO2") == 0) {
+        _theme = Theme::MI2MO2;
+    } else if (strcmp(name, "MI84") == 0) {
+        _theme = Theme::MI84;
+    } else {
+        _theme = Theme::CLASSIC;
+    }
+
+    // Stamped on every THEME command, not only on an actual change of
+    // value, and this is deliberate: MI84's boot sequence is meant to play
+    // whenever a PC app announces the theme, and Brobot.Sender re-announces
+    // it on each reconnect (see MainWindow's UpdateConnectionStatus). Core
+    // has no "a client just connected" signal of its own down here — the
+    // THEME command arriving *is* that signal, since it's the first thing
+    // sent once the link is up — so anchoring on the command rather than on
+    // a change is what makes "boot when MiMo connects to the PC" work at
+    // all. It costs nothing in the other themes, which don't read it.
+    _themeChangedAt = now;
+}
+
+// "NOTIFY <EXPRESSION> <text>" — one atomic line rather than the usual
+// FACE-then-MSG pair, and deliberately so: this is the highest-priority
+// thing the display can show, and a two-command form could be caught
+// half-applied between the two (or have a lone MSG routed elsewhere by
+// _lastCommandTier). Everything a notification needs arrives together or
+// not at all.
+//
+// Note it never touches _lastCommandTier: a bare MSG arriving afterwards
+// still routes to whatever tier the last FACE meant, so an AI session's
+// Notification hook events keep working across an interrupting Pausa
+// reminder instead of being swallowed by a notification that has already
+// expired.
+void Personality::onNotifyCommand(const char* args, unsigned long now) {
+    if (args[0] == '\0') {
+        return;
+    }
+
+    // Split on the first space: expression token, then the rest as text.
+    const char* space = strchr(args, ' ');
+    char nameBuf[16];
+    const char* text = "";
+    if (space == nullptr) {
+        strncpy(nameBuf, args, sizeof(nameBuf) - 1);
+        nameBuf[sizeof(nameBuf) - 1] = '\0';
+    } else {
+        size_t nameLen = (size_t)(space - args);
+        if (nameLen >= sizeof(nameBuf)) {
+            nameLen = sizeof(nameBuf) - 1;
+        }
+        memcpy(nameBuf, args, nameLen);
+        nameBuf[nameLen] = '\0';
+        text = space + 1;
+    }
+
+    raiseNotification(parseExpression(nameBuf), text, now);
+}
+
+// Machine load for Game Mode: "STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC>
+// <ram%>", every field an integer, -1 where the PC app had no source for it
+// (see FaceState's own note on why -1 rather than 0). "STATS" with nothing
+// after it clears them, the same convention empty MSG/WEATHER/TIME use.
+//
+// Like onWeatherCommand/onTimeCommand — and unlike every FACE/MSG path — this
+// deliberately never touches _lastInteractionAt. It's passive telemetry
+// arriving every couple of seconds for as long as a game is open; counting it
+// as interaction would mean MiMo could never fall asleep during a long
+// session, which is exactly when it should.
+void Personality::onStatsCommand(const char* args, unsigned long now) {
     (void)now;
-    _theme = (strcmp(name, "MATRIX") == 0) ? Theme::MATRIX : Theme::CLASSIC;
+
+    if (args[0] == '\0') {
+        _hasStats = false;
+        return;
+    }
+
+    int values[5] = {-1, -1, -1, -1, -1};
+    const char* cursor = args;
+    for (int i = 0; i < 5 && cursor != nullptr && *cursor != '\0'; i++) {
+        char* end = nullptr;
+        long parsed = strtol(cursor, &end, 10);
+        if (end == cursor) {
+            break; // not a number where one was expected — keep the rest at -1
+        }
+        values[i] = (int)parsed;
+        cursor = end;
+        while (*cursor == ' ') {
+            cursor++;
+        }
+    }
+
+    _statsCpuLoad = values[0];
+    _statsCpuTempC = values[1];
+    _statsGpuLoad = values[2];
+    _statsGpuTempC = values[3];
+    _statsRamLoad = values[4];
+    _hasStats = true;
 }
 
 // Appends to MATRIX's console log, dropping the oldest line once full — a
@@ -320,26 +497,49 @@ void Personality::onThemeCommand(const char* name, unsigned long now) {
 // MATRIX_LOG_LINES is tiny (6) and this keeps currentState() able to just
 // hand out _log[0..count) in chronological order with no index math.
 // Empty text is a no-op: clearing a message shouldn't leave a blank log line.
-void Personality::pushLogLine(const char* text) {
+void Personality::pushLogLine(const char* text, LogTab tab) {
     if (text == nullptr || text[0] == '\0') {
         return;
     }
 
-    if (_logCount == MATRIX_LOG_LINES) {
-        for (int i = 1; i < MATRIX_LOG_LINES; i++) {
-            strncpy(_log[i - 1], _log[i], MATRIX_LOG_LINE_CAPACITY);
-        }
-        _logCount--;
+    // The tabs differ only in how deep they are (see MATRIX_MEDIA_LOG_LINES
+    // in Face.h): the AI tab scrolls a history, while media and monitor each
+    // keep just their current line. Everything below is written once against
+    // whichever capacity applies — at 1, the shift loop doesn't run and the
+    // lone slot is simply overwritten.
+    char (*log)[MATRIX_LOG_LINE_CAPACITY] = _foregroundLog;
+    int* count = &_foregroundLogCount;
+    int capacity = MATRIX_LOG_LINES;
+    if (tab == LogTab::MEDIA) {
+        log = _backgroundLog;
+        count = &_backgroundLogCount;
+        capacity = MATRIX_MEDIA_LOG_LINES;
+    } else if (tab == LogTab::MONITOR) {
+        log = _gameLog;
+        count = &_gameLogCount;
+        capacity = MATRIX_MEDIA_LOG_LINES;
     }
 
-    strncpy(_log[_logCount], text, MATRIX_LOG_LINE_CAPACITY - 1);
-    _log[_logCount][MATRIX_LOG_LINE_CAPACITY - 1] = '\0';
-    _logCount++;
+    if (*count == capacity) {
+        for (int i = 1; i < capacity; i++) {
+            strncpy(log[i - 1], log[i], MATRIX_LOG_LINE_CAPACITY);
+        }
+        (*count)--;
+    }
+
+    strncpy(log[*count], text, MATRIX_LOG_LINE_CAPACITY - 1);
+    log[*count][MATRIX_LOG_LINE_CAPACITY - 1] = '\0';
+    (*count)++;
 }
 
 void Personality::update(unsigned long now) {
     _currentNow = now;
-    _renderExpression = resolveExpression(now);
+
+    Expression resolved = resolveExpression(now);
+    if (resolved != _renderExpression) {
+        _renderExpression = resolved;
+        _renderExpressionStartedAt = now;
+    }
 
     // Background messages (MUSIC/WATCHING/PLAYING "now playing" labels)
     // never auto-expire — they hold until replaced or the background is
@@ -349,7 +549,13 @@ void Personality::update(unsigned long now) {
     // does.
     unsigned long foregroundPersistMs = (_expression == Expression::THINKING) ? 0 : MESSAGE_DURATION_MS;
     _foregroundMessage.updateTyping(now, foregroundPersistMs);
-    _backgroundMessage.updateTyping(now, 0);
+    _gameMessage.updateTyping(now, 0);
+    _mediaMessage.updateTyping(now, 0);
+    // The notification's own text never expires on the message's clock —
+    // the tier's NOTIFICATION_DURATION_MS window is what ends it, and the
+    // two running independently would let the words vanish a moment before
+    // the screen holding them did.
+    _notificationMessage.updateTyping(now, 0);
 
     // Bedtime reminder: fires the moment bedtime starts, then every
     // BEDTIME_MESSAGE_INTERVAL_MS after that for as long as it stays
@@ -363,12 +569,15 @@ void Personality::update(unsigned long now) {
     _wasBedtime = bedtime;
     if (bedtime && now >= _nextBedtimeMessageAt) {
         int index = random(0, BEDTIME_MESSAGE_COUNT);
-        _bedtimeMessage.set(BEDTIME_MESSAGES[index], now);
-        pushLogLine(BEDTIME_MESSAGES[index]);
+        // Raised as a normal notification — same tier, same 7s window, same
+        // dedicated screen a Pausa reminder gets. This one just has no PC
+        // app behind it: Core decides entirely on its own that it's time to
+        // say something, which is why raiseNotification exists separately
+        // from onNotifyCommand. It also pushes the log line, so nothing
+        // extra is needed here.
+        raiseNotification(Expression::SLEEPY, BEDTIME_MESSAGES[index], now);
         _nextBedtimeMessageAt = now + BEDTIME_MESSAGE_INTERVAL_MS;
     }
-
-    _bedtimeMessage.updateTyping(now, MESSAGE_DURATION_MS);
 
     unsigned long bootElapsed = now - _bootStartedAt;
     if (bootElapsed < BOOT_ANIMATION_DURATION_MS) {
@@ -412,23 +621,68 @@ FaceState Personality::currentState() const {
     state.lookOffsetY = _lookOffsetY;
     // Whichever tier is actually being rendered owns the message shown
     // below the eyes — a foreground message that's still "queued" behind an
-    // active background render (or vice versa) stays hidden until its own
+    // active game/media render (or vice versa) stays hidden until its own
     // tier is the one on screen.
-    if (_renderExpression == Expression::SLEEPY) {
-        state.message = _bedtimeMessage.visible;
+    if (notificationActive(_currentNow)) {
+        state.isNotification = true;
+        state.notificationStartedMs = _notificationStartedAt;
+        state.message = _notificationMessage.visible;
+        state.messageTypingStartedMs = _notificationMessage.typingStartedAt;
+    } else if (isGameExpression(_renderExpression)) {
+        state.message = _gameMessage.visible;
+        state.messageTypingStartedMs = _gameMessage.typingStartedAt;
+    } else if (isMediaExpression(_renderExpression)) {
+        state.message = _mediaMessage.visible;
+        state.messageTypingStartedMs = _mediaMessage.typingStartedAt;
     } else {
-        state.message = isBackgroundExpression(_renderExpression) ? _backgroundMessage.visible : _foregroundMessage.visible;
+        state.message = _foregroundMessage.visible;
+        state.messageTypingStartedMs = _foregroundMessage.typingStartedAt;
     }
+    state.expressionStartedMs = _renderExpressionStartedAt;
     state.nowMs = _currentNow;
     state.hasWeather = _hasWeather;
     state.weatherTempC = _weatherTempC;
     state.weatherCondition = _weatherCondition;
     state.timeText = _timeText;
 
+    state.hasStats = _hasStats;
+    state.statsCpuLoad = _statsCpuLoad;
+    state.statsCpuTempC = _statsCpuTempC;
+    state.statsGpuLoad = _statsGpuLoad;
+    state.statsGpuTempC = _statsGpuTempC;
+    state.statsRamLoad = _statsRamLoad;
+
     state.theme = _theme;
-    state.logLineCount = _logCount;
-    for (int i = 0; i < _logCount; i++) {
-        state.logLines[i] = _log[i];
+    state.themeStartedMs = _themeChangedAt;
+    // Which of MATRIX's log tabs is on screen follows exactly what the face
+    // itself is doing: a game rendering shows the monitor tab, other
+    // background (media) expressions show the media log, and otherwise — AI
+    // activity showing, or nothing at all — the AI log. So an AI message
+    // takes over the log for as long as it's up and the game/media line
+    // reappears underneath it, untouched, the moment it clears; and with
+    // nothing stored, resolveExpression never reports a background
+    // expression, so the AI tab simply stays up. No extra state tracks this.
+    LogTab tab = LogTab::AI;
+    if (isGameExpression(_renderExpression)) {
+        tab = LogTab::MONITOR;
+    } else if (isMediaExpression(_renderExpression)) {
+        tab = LogTab::MEDIA;
+    }
+
+    const char (*visibleLog)[MATRIX_LOG_LINE_CAPACITY] = _foregroundLog;
+    int visibleCount = _foregroundLogCount;
+    if (tab == LogTab::MEDIA) {
+        visibleLog = _backgroundLog;
+        visibleCount = _backgroundLogCount;
+    } else if (tab == LogTab::MONITOR) {
+        visibleLog = _gameLog;
+        visibleCount = _gameLogCount;
+    }
+
+    state.logTab = tab;
+    state.logLineCount = visibleCount;
+    for (int i = 0; i < visibleCount; i++) {
+        state.logLines[i] = visibleLog[i];
     }
 
     return state;
@@ -443,18 +697,29 @@ Expression Personality::resolveExpression(unsigned long now) const {
     // Tier comment in Personality.h), which is what lets foreground
     // (AI messages/notifications) take over the screen without permanently
     // losing track of them.
+    // A notification outranks everything, AI included — it is the whole
+    // point of the tier. It ends on its own clock, and because no lower
+    // tier was touched to make room for it, whatever it interrupted is
+    // simply there again on the next frame with nothing to restore.
+    if (notificationActive(now)) {
+        return _notificationExpression;
+    }
     if (_expression == Expression::THINKING) {
         return _expression;
     }
     if (now < _expressionOverrideUntil) {
         return _expression;
     }
-    // Foreground has nothing active right now: fall back to whatever
-    // background (media/game) is stored before giving up to idle/SLEEPING —
-    // this is what makes the paused media/game reappear once the AI message
-    // that interrupted it goes away.
-    if (_backgroundExpression != Expression::NEUTRAL) {
-        return _backgroundExpression;
+    // Foreground has nothing active right now: fall back to a game first,
+    // then media, before giving up to idle/SLEEPING. A game outranks media
+    // because music playing in the background of a game session is the
+    // normal case, and the game is what you're actually doing — this is
+    // also why the two are separate tiers rather than one slot.
+    if (_gameExpression != Expression::NEUTRAL) {
+        return _gameExpression;
+    }
+    if (_mediaExpression != Expression::NEUTRAL) {
+        return _mediaExpression;
     }
     if (now - _lastInteractionAt > SLEEP_TIMEOUT_MS) {
         return Expression::SLEEPING;
@@ -506,9 +771,18 @@ void Personality::updateLook(unsigned long now) {
         }
         _looking = true;
         _lookStartedAt = now;
-        int dir = (_theme == Theme::MATRIX)
-            ? LOOK_DIRECTIONS_NO_DOWN[random(0, LOOK_DIRECTIONS_NO_DOWN_COUNT)]
-            : random(0, LOOK_DIRECTION_COUNT);
+        int dir;
+        // MI84 pins its eyes to the bottom exactly like MATRIX does (same
+        // MATRIX_EYE_* geometry — see Face.cpp), so it needs the same
+        // downward directions excluded for the same reason: there isn't
+        // enough clearance below them to look further down.
+        if (_theme == Theme::MATRIX || _theme == Theme::MI84) {
+            dir = LOOK_DIRECTIONS_NO_DOWN[random(0, LOOK_DIRECTIONS_NO_DOWN_COUNT)];
+        } else if (_theme == Theme::MI2MO2) {
+            dir = LOOK_DIRECTIONS_NO_UP_LEFT[random(0, LOOK_DIRECTIONS_NO_UP_LEFT_COUNT)];
+        } else {
+            dir = random(0, LOOK_DIRECTION_COUNT);
+        }
         _lookDirX = LOOK_DIRECTIONS[dir][0];
         _lookDirY = LOOK_DIRECTIONS[dir][1];
         _lookHoldDuration = random(LOOK_HOLD_MIN_MS, LOOK_HOLD_MAX_MS);

@@ -9,6 +9,10 @@
 // DeviceSettings for the handful of commands (SOUND/SCANLINES) that aren't
 // about Brobot's expression/behavior state. Never blocks — safe to call
 // every loop() iteration.
+//
+// PING is the one command answered here rather than forwarded anywhere:
+// it's about the link itself, not about Brobot, so there's no Personality
+// or DeviceSettings state for it to touch.
 class Protocol {
 public:
     Protocol(Personality& personality, DeviceSettings& deviceSettings)
@@ -31,5 +35,8 @@ private:
     Personality& _personality;
     DeviceSettings& _deviceSettings;
 
-    void dispatch(char* line, unsigned long now);
+    // Takes the Stream (rather than only poll() holding it) purely so PING
+    // can write its reply back to whoever asked — every other command is
+    // one-way PC->Core.
+    void dispatch(Stream& serial, char* line, unsigned long now);
 };

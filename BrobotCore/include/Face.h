@@ -27,8 +27,32 @@ enum class WeatherCondition : uint8_t { CLEAR, CLOUDY, RAIN, STORM, SNOW, FOG };
 // ERROR; Personality::onThemeCommand is what maps the two names together).
 // MATRIX pins the eyes to the bottom of the frame, recolors everything
 // green, and replaces the badges/message box with a scrolling console log
-// (see FaceState::logLines below).
-enum class Theme : uint8_t { CLASSIC, MATRIX };
+// (see FaceState::logLines below). MI2MO2 is much smaller a change: same
+// layout as CLASSIC (badges, corner icons, message bubble all untouched),
+// just a solid red circle in place of the usual rounded-square eye, red
+// message text instead of white, and — its own R2D2-flavored touch — each
+// message character renders in AUREBESH (see IDisplay.h's TextFont) right
+// after being revealed, then flips to the normal LATIN font a moment later
+// (see Face.cpp's drawWrappedMessageMi2Mo2), reading as the message
+// "translating" from alien script into Portuguese in real time. Works on
+// both the Brobot Virtual Display/native build and the physical ST7735
+// build — see IDisplay.h's TextFont comment for how each one covers only
+// A-Z/0-9 and falls back to LATIN for anything else.
+// MI84 is a 1984 amber-CRT terminal: black frame, everything drawn in one
+// amber, a fixed text header/status/tab chrome at the top and MATRIX's own
+// bottom-pinned eyes below it. It reuses MATRIX's log/tab machinery
+// wholesale (same FaceState::logLines/logTab, same Personality side) and
+// differs only in how that gets drawn — plus a boot sequence played once
+// each time the theme is selected (see FaceState::themeStartedMs).
+enum class Theme : uint8_t { CLASSIC, MATRIX, MI2MO2, MI84 };
+
+// Typewriter reveal speed — shared between Personality (which paces
+// TypedMessage::updateTyping off it) and Face (which needs the same value
+// to work out, purely from nowMs and a message's typingStartedAt, how long
+// ago each individual character was revealed — see MI2MO2's translation
+// effect above). Living here rather than duplicated in both .cpp files
+// keeps the two from silently drifting apart.
+constexpr unsigned long TYPING_CHAR_INTERVAL_MS = 40;
 
 // Fixed capacity for MATRIX's console log — shared between Personality
 // (which owns the actual ring buffer) and FaceState/Face::render (which
@@ -41,6 +65,23 @@ constexpr int MATRIX_LOG_LINES = 6;
 // even 2 wrapped lines at this display's width (see Face.cpp's
 // drawMatrixLog for the actual per-line wrap budget this is sized against).
 constexpr size_t MATRIX_LOG_LINE_CAPACITY = 74;
+// The media tab keeps only what's playing right now, not a history: once a
+// track or game ends its line is stale, and the tab exists to answer "what
+// is on?" rather than "what was on?". The AI tab still scrolls
+// MATRIX_LOG_LINES deep, where earlier lines are the context for the
+// current one. Expressed as a capacity rather than a special case in
+// Personality::pushLogLine, so the same shift-and-append handles both: at
+// capacity 1 the shift loop simply does nothing and the single slot is
+// overwritten.
+constexpr int MATRIX_MEDIA_LOG_LINES = 1;
+
+// MATRIX's log tabs. AI activity and media "now playing" lines were
+// interleaving into one unreadable stream, which is why they were split; the
+// header marks whichever is currently showing. MONITOR is the game tab: a game
+// used to log into MEDIA alongside music and video, but it's the one tab whose
+// entry gets machine stats drawn under it (see FaceState::hasStats), so it
+// stands on its own rather than sharing with media that has no stats to show.
+enum class LogTab : uint8_t { AI, MEDIA, MONITOR };
 
 struct FaceState {
     Expression expression = Expression::NEUTRAL;
@@ -48,6 +89,43 @@ struct FaceState {
     int lookOffsetX = 0;           // horizontal shift for autonomous "look around"
     int lookOffsetY = 0;           // vertical shift for autonomous "look around"
     const char* message = nullptr; // nullptr/empty = no message shown
+    // When the currently-shown message's typewriter reveal started — only
+    // meaningful alongside `message` (see Personality::currentState, which
+    // copies whichever TypedMessage's typingStartedAt matches `message`).
+    // Combined with TYPING_CHAR_INTERVAL_MS above, this is what lets
+    // MI2MO2's drawWrappedMessageMi2Mo2 work out each character's own
+    // reveal age without Personality needing to track per-character state.
+    unsigned long messageTypingStartedMs = 0;
+    // When the currently-rendered expression became the rendered one (see
+    // Personality::update). Face::render is stateless, so a *bounded*
+    // animation — one that has to run a fixed number of times and then
+    // stop, rather than loop off nowMs forever like the glitch/rain/steam
+    // effects — needs this anchor to measure its own elapsed time from.
+    // MI2MO2's three-flash ERROR is the first such animation.
+    unsigned long expressionStartedMs = 0;
+    // When the current theme was last selected (see
+    // Personality::onThemeCommand). Same reason expressionStartedMs exists:
+    // MI84's boot sequence is a *bounded* animation — it runs once and
+    // stops, rather than looping off nowMs forever like the glitch/rain/
+    // steam effects — so a stateless Face::render needs an anchor to
+    // measure its own elapsed time from.
+    unsigned long themeStartedMs = 0;
+
+    // A notification is the one thing that takes the whole screen: while
+    // this is set, Face::render draws nothing but the dedicated
+    // notification layout for `expression` plus `message` (see
+    // drawNotificationScreen) — no eyes, no badges, no log, no message box.
+    // It's the top priority tier (see Personality::Tier), above even AI
+    // activity, and clears itself after NOTIFICATION_DURATION_MS, at which
+    // point rendering falls straight back to whatever was underneath with
+    // nothing to restore by hand.
+    bool isNotification = false;
+    // When the current notification was raised — its screen's animations are
+    // bounded (they play for the notification's own lifetime), so a
+    // stateless Face::render needs the anchor, same as themeStartedMs and
+    // expressionStartedMs above.
+    unsigned long notificationStartedMs = 0;
+
     unsigned long nowMs = 0;       // clock time, used to animate the sleeping "Z Z Z"
 
     // Persistent overlays (top corners) — independent of expression/message,
@@ -60,12 +138,33 @@ struct FaceState {
     WeatherCondition weatherCondition = WeatherCondition::CLEAR;
     const char* timeText = nullptr; // "HH:MM", nullptr/empty = no clock shown
 
+    // Machine load, set via STATS by whichever PC app is connected (Core has
+    // no way to know any of this itself). Persistent and independent of
+    // expression/message, exactly like hasWeather/timeText above — but only
+    // *drawn* while a game is being played, which is the one situation anyone
+    // wants to read them in. -1 in any field means "no source could supply
+    // this", and renders as "--" rather than as a made-up zero: a CPU
+    // temperature of 0 C would be a lie, a dash is honest.
+    bool hasStats = false;
+    int statsCpuLoad = -1;
+    int statsCpuTempC = -1;
+    int statsGpuLoad = -1;
+    int statsGpuTempC = -1;
+    int statsRamLoad = -1;
+
     Theme theme = Theme::CLASSIC;
-    // Only meaningful (and only drawn) while theme == MATRIX — oldest entry
+    // Only meaningful (and only drawn) while theme == MATRIX or MI84 —
+    // the two log-based themes; see Theme above. Oldest entry
     // at index 0, newest at logLineCount-1. Pointers into Personality's own
     // ring buffer, same non-owning convention as message/timeText above.
     const char* logLines[MATRIX_LOG_LINES] = {nullptr};
     int logLineCount = 0;
+    // Which of the log tabs the lines above came from (see Personality's
+    // _foregroundLog/_backgroundLog/_gameLog). Face only uses it to mark the
+    // active tab in the log's header and, for MONITOR, to draw the machine
+    // stats under the game's name; the lines themselves are already the right
+    // ones by the time they get here.
+    LogTab logTab = LogTab::AI;
 };
 
 // Draws two eyes (and an optional message below them) onto an IDisplay.

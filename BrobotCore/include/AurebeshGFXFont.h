@@ -1,0 +1,96 @@
+#pragma once
+
+#include <Adafruit_GFX.h>
+#include <Arduino.h>
+
+// Adafruit_GFX custom font for MI2MO2's Aurebesh typing effect (see
+// PROTOCOL.md's THEME MI2MO2 section and ST7735PhysicalDisplay::drawText).
+// Firmware-only, same as Buzzer.cpp/ST7735PhysicalDisplay.h — Adafruit_GFX
+// isn't part of the native dev build, so this header is only ever included
+// from ST7735PhysicalDisplay.cpp.
+//
+// Covers '0'-'9' and 'A'-'Z' (contiguous ASCII 0x30-0x5A) — the punctuation
+// range in between ':;<=>?@' gets blank placeholder glyphs purely so the
+// range stays contiguous (a single GFXfont can't easily express two
+// disjoint ranges); ST7735PhysicalDisplay::drawText never actually
+// requests this font for anything outside A-Z/0-9 (see its
+// isAurebeshCovered), so those placeholders are never drawn.
+//
+// Generated, not hand-drawn: same script/approach as AurebeshFont.cs on the
+// Simulator side (rasterize each glyph from the real Aurebesh.otf at high
+// resolution, then reduce each 5x7 cell to the *darkest* source pixel
+// rather than a smooth resize, so thin strokes like the digit '7' survive)
+// — just repacked into Adafruit_GFX's row-major/MSB-first bitmap format
+// instead of Font5x7's column-major one. Each glyph's yOffset is -7 (the
+// full glyph height): a GFXfont draws relative to the text baseline, not
+// a top-left corner like every other IDisplay draw call in this codebase,
+// so ST7735PhysicalDisplay::drawText shifts its cursor y down by that same
+// 7px before switching to this font, to land the glyph's top back at the
+// caller's own top-left `y` — see that function's own comment.
+const uint8_t AurebeshGFXBitmaps[] PROGMEM = {
+    0x07, 0xFF, 0xFF, 0xFF, 0xE0, 0x07, 0x38, 0xC6, 0x7F, 0xE0, 0x07, 0xFE, 0x3F, 0xFF, 0xE0, 0x07,
+    0xFF, 0xFF, 0xFF, 0xC0, 0x04, 0xE7, 0xFF, 0x8C, 0x60, 0x07, 0xFF, 0xF9, 0xFF, 0xC0, 0x07, 0xFF,
+    0xF9, 0xFF, 0xC0, 0x07, 0xFE, 0x31, 0x8C, 0x60, 0x07, 0xFF, 0xFF, 0xFF, 0xE0, 0x07, 0xFF, 0x3F,
+    0xFF, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x7F, 0xFF, 0xE6, 0x20, 0x07, 0xFF, 0xEF, 0xFF, 0xC0, 0x00,
+    0x85, 0xEF, 0x63, 0x00, 0x07, 0xFF, 0xE7, 0x38, 0xC0, 0x06, 0xFF, 0xFF, 0x5A, 0xC0, 0x03, 0x39,
+    0xF7, 0xFF, 0xE0, 0x07, 0xFF, 0x9C, 0xFD, 0xE0, 0x07, 0xFF, 0xEF, 0x7F, 0xE0, 0x03, 0x1C, 0xC6,
+    0x31, 0x80, 0x04, 0x31, 0xFF, 0xBD, 0xE0, 0x07, 0xFF, 0x08, 0xFF, 0xE0, 0x04, 0x21, 0x7F, 0x72,
+    0x00, 0x07, 0x38, 0x63, 0x7F, 0xE0, 0x03, 0xFF, 0xDF, 0xDE, 0xE0, 0x07, 0xBF, 0xB9, 0xFF, 0xE0,
+    0x05, 0xEF, 0x39, 0xFF, 0xC0, 0x07, 0xFE, 0x10, 0x9C, 0xE0, 0x07, 0xFF, 0xC6, 0x38, 0xC0, 0x04,
+    0xEF, 0xEF, 0xFE, 0x80, 0x03, 0x19, 0xFF, 0xF9, 0x80, 0x07, 0x7B, 0x18, 0xFF, 0xE0, 0x04, 0xFE,
+    0xE6, 0x31, 0x80, 0x07, 0xFE, 0x10, 0xFF, 0xE0, 0x03, 0x1D, 0xED, 0xFF, 0xE0, 0x05, 0xFF, 0xFF,
+    0x39, 0x80, 0x04, 0x3D, 0x38, 0xFF, 0xE0,
+};
+
+const GFXglyph AurebeshGFXGlyphs[] PROGMEM = {
+    {0, 5, 7, 6, 0, -7},   // '0' (0x30)
+    {5, 5, 7, 6, 0, -7},   // '1' (0x31)
+    {10, 5, 7, 6, 0, -7},  // '2' (0x32)
+    {15, 5, 7, 6, 0, -7},  // '3' (0x33)
+    {20, 5, 7, 6, 0, -7},  // '4' (0x34)
+    {25, 5, 7, 6, 0, -7},  // '5' (0x35)
+    {30, 5, 7, 6, 0, -7},  // '6' (0x36)
+    {35, 5, 7, 6, 0, -7},  // '7' (0x37)
+    {40, 5, 7, 6, 0, -7},  // '8' (0x38)
+    {45, 5, 7, 6, 0, -7},  // '9' (0x39)
+    {50, 5, 7, 6, 0, -7},  // ':' (0x3A) — blank placeholder, never drawn
+    {55, 5, 7, 6, 0, -7},  // ';' (0x3B) — blank placeholder, never drawn
+    {60, 5, 7, 6, 0, -7},  // '<' (0x3C) — blank placeholder, never drawn
+    {65, 5, 7, 6, 0, -7},  // '=' (0x3D) — blank placeholder, never drawn
+    {70, 5, 7, 6, 0, -7},  // '>' (0x3E) — blank placeholder, never drawn
+    {75, 5, 7, 6, 0, -7},  // '?' (0x3F) — blank placeholder, never drawn
+    {80, 5, 7, 6, 0, -7},  // '@' (0x40) — blank placeholder, never drawn
+    {85, 5, 7, 6, 0, -7},  // 'A' (0x41)
+    {90, 5, 7, 6, 0, -7},  // 'B' (0x42)
+    {95, 5, 7, 6, 0, -7},  // 'C' (0x43)
+    {100, 5, 7, 6, 0, -7}, // 'D' (0x44)
+    {105, 5, 7, 6, 0, -7}, // 'E' (0x45)
+    {110, 5, 7, 6, 0, -7}, // 'F' (0x46)
+    {115, 5, 7, 6, 0, -7}, // 'G' (0x47)
+    {120, 5, 7, 6, 0, -7}, // 'H' (0x48)
+    {125, 5, 7, 6, 0, -7}, // 'I' (0x49)
+    {130, 5, 7, 6, 0, -7}, // 'J' (0x4A)
+    {135, 5, 7, 6, 0, -7}, // 'K' (0x4B)
+    {140, 5, 7, 6, 0, -7}, // 'L' (0x4C)
+    {145, 5, 7, 6, 0, -7}, // 'M' (0x4D)
+    {150, 5, 7, 6, 0, -7}, // 'N' (0x4E)
+    {155, 5, 7, 6, 0, -7}, // 'O' (0x4F)
+    {160, 5, 7, 6, 0, -7}, // 'P' (0x50)
+    {165, 5, 7, 6, 0, -7}, // 'Q' (0x51)
+    {170, 5, 7, 6, 0, -7}, // 'R' (0x52)
+    {175, 5, 7, 6, 0, -7}, // 'S' (0x53)
+    {180, 5, 7, 6, 0, -7}, // 'T' (0x54)
+    {185, 5, 7, 6, 0, -7}, // 'U' (0x55)
+    {190, 5, 7, 6, 0, -7}, // 'V' (0x56)
+    {195, 5, 7, 6, 0, -7}, // 'W' (0x57)
+    {200, 5, 7, 6, 0, -7}, // 'X' (0x58)
+    {205, 5, 7, 6, 0, -7}, // 'Y' (0x59)
+    {210, 5, 7, 6, 0, -7}, // 'Z' (0x5A)
+};
+
+const GFXfont AurebeshGFXFont PROGMEM = {
+    (uint8_t*)AurebeshGFXBitmaps, (GFXglyph*)AurebeshGFXGlyphs,
+    0x30, 0x5A, 9
+};

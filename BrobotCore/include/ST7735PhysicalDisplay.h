@@ -32,7 +32,7 @@ public:
     void drawRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override;
     void fillRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override;
     void drawRoundedRect(int x, int y, int w, int h, int radius, uint8_t r, uint8_t g, uint8_t b) override;
-    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b) override;
+    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, TextFont font = TextFont::LATIN) override;
     void present() override;
 
     // Toggles the whole CRT post-FX pass in present() (chromatic fringing +
