@@ -907,9 +907,19 @@ void drawCoffeeCupAt(IDisplay& display, unsigned long nowMs, int cupX, int cupY,
     display.fillRect(cupX, cupY, cupW, cupH, r, g, b);
     display.fillRect(cupX + wall / 2, cupY + wall - 1, cupW - wall, cupH - wall, bgR, bgG, bgB);
 
-    // Handle: a hooked stub on the cup's right edge.
+    // Handle: a closed loop on the cup's right edge, hollowed out from the
+    // top, bottom and right but left open where it meets the body.
+    //
+    // The inner cut used to start at cupX + cupW + 1 with width handleW - 1,
+    // which put its right edge exactly on the outer block's right edge --
+    // erasing the whole right wall, so the "handle" was really just a top
+    // and a bottom prong with nothing joining them. A real bug, fixed once:
+    // the cut is now inset by handleT on that side too, which is what
+    // actually closes the loop.
+    int handleT = (cupW >= 32) ? 3 : 2; // stroke thickness of the loop
     display.fillRect(cupX + cupW, cupY + wall - 1, handleW, handleH, r, g, b);
-    display.fillRect(cupX + cupW + 1, cupY + wall + 1, handleW - 1, handleH - 4, bgR, bgG, bgB);
+    display.fillRect(cupX + cupW, cupY + wall - 1 + handleT,
+                     handleW - handleT, handleH - 2 * handleT, bgR, bgG, bgB);
 
     // Three wisps, evenly staggered in phase so they never all rise/fade in
     // lockstep, each drifting up and gently side to side as it climbs.
@@ -2035,20 +2045,71 @@ float sleepyNotificationOpen(unsigned long sinceStartMs) {
 // already proven to read well with a cup beside a face.
 constexpr int NOTIF_COFFEE_EYE_SIZE = 28;
 constexpr int NOTIF_COFFEE_EYE_GAP = 10;
-constexpr int NOTIF_COFFEE_EYE_Y = 40;
+// The eyes sit above the cup's resting line rather than level with it, so
+// the cup has somewhere to travel *up to* when it lifts -- the raise only
+// reads as drinking if it ends near the face.
+constexpr int NOTIF_COFFEE_EYE_Y = 28;
 constexpr int NOTIF_COFFEE_EYES_CENTER_X = 46;
 constexpr int NOTIF_COFFEE_CUP_X = 96;
 constexpr int NOTIF_COFFEE_CUP_W = 36;
 constexpr int NOTIF_COFFEE_CUP_H = 28;
-constexpr int NOTIF_COFFEE_CUP_Y = 40;
+constexpr int NOTIF_COFFEE_CUP_Y = 48;
 constexpr int NOTIF_COFFEE_STEAM_RISE_PX = 26;
+
+// MiMo taking a sip: the cup rises and drifts toward the face, is held
+// there for a beat, and comes back down to the saucer line. Purely
+// positional -- there is no rotation available at this resolution, and a
+// tilted mug composed of fillRects reads as a broken mug rather than a
+// tipped one, so the travel itself carries the gesture.
+//
+// Driven off nowMs like the steam it moves with, not off the notification's
+// start: unlike SLEEPY's doze, there is no "wrong" phase to open on, and
+// keeping it on the free clock means the sip and the wisps stay in the same
+// relationship no matter when the notification appears.
+constexpr unsigned long COFFEE_SIP_CYCLE_MS = 2800;
+constexpr unsigned long COFFEE_SIP_RAISE_END_MS = 600;
+constexpr unsigned long COFFEE_SIP_HOLD_END_MS = 1250;
+constexpr unsigned long COFFEE_SIP_LOWER_END_MS = 1850;
+constexpr int COFFEE_SIP_LIFT_PX = 17; // up toward the eyes
+constexpr int COFFEE_SIP_DRAW_PX = 11; // and inward, toward the face
+
+// Smoothstep, hand-written for the same reason Personality.cpp writes its
+// own easing: this file also has to compile against the native build's
+// minimal Arduino.h, which wires up no <math.h> helpers beyond sin.
+float coffeeSipEase(float k) {
+    return k * k * (3.0f - 2.0f * k);
+}
+
+void coffeeSipOffset(unsigned long nowMs, int* outDx, int* outDy) {
+    unsigned long t = nowMs % COFFEE_SIP_CYCLE_MS;
+    float lift;
+
+    if (t < COFFEE_SIP_RAISE_END_MS) {
+        lift = coffeeSipEase((float)t / (float)COFFEE_SIP_RAISE_END_MS);
+    } else if (t < COFFEE_SIP_HOLD_END_MS) {
+        lift = 1.0f;
+    } else if (t < COFFEE_SIP_LOWER_END_MS) {
+        float k = (float)(t - COFFEE_SIP_HOLD_END_MS)
+                / (float)(COFFEE_SIP_LOWER_END_MS - COFFEE_SIP_HOLD_END_MS);
+        lift = 1.0f - coffeeSipEase(k);
+    } else {
+        lift = 0.0f; // resting on the saucer between sips
+    }
+
+    *outDx = -(int)(lift * (float)COFFEE_SIP_DRAW_PX);
+    *outDy = -(int)(lift * (float)COFFEE_SIP_LIFT_PX);
+}
 
 void drawCoffeeNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
                             float openFactor) {
     drawNotificationEyes(display, NOTIF_COFFEE_EYES_CENTER_X, NOTIF_COFFEE_EYE_Y,
                          NOTIF_COFFEE_EYE_SIZE, NOTIF_COFFEE_EYE_GAP, openFactor,
                          p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
-    drawCoffeeCupAt(display, state.nowMs, NOTIF_COFFEE_CUP_X, NOTIF_COFFEE_CUP_Y,
+
+    int sipDx = 0, sipDy = 0;
+    coffeeSipOffset(state.nowMs, &sipDx, &sipDy);
+    drawCoffeeCupAt(display, state.nowMs,
+                    NOTIF_COFFEE_CUP_X + sipDx, NOTIF_COFFEE_CUP_Y + sipDy,
                     NOTIF_COFFEE_CUP_W, NOTIF_COFFEE_CUP_H, NOTIF_COFFEE_STEAM_RISE_PX,
                     p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
 }

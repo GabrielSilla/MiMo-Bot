@@ -23,7 +23,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `SOUND <ON\|OFF>` | Liga/desliga os sons do buzzer (bipes R2D2 por expressão, ver Buzzer.cpp). Persistente — fica valendo até o próximo `SOUND` chegar. Padrão do Core: `ON`. Texto não reconhecido é ignorado (mantém o valor atual). |
 | `SCANLINES <ON\|OFF>` | Liga/desliga o filtro CRT completo da tela física (scanline rolante + chromatic fringing + tint quente + vinheta — ver ST7735PhysicalDisplay.cpp). Sem efeito no Brobot Virtual Display/build nativo, que nunca aplicam esse pós-processamento. Persistente — fica valendo até o próximo `SCANLINES` chegar. Padrão do Core: `ON`. |
 | `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o MiMo nunca mais dormiria. |
-| `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 7s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
+| `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 10s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
 | `PING` | **O único comando que o Core responde** — devolve a linha `MIMO <revisão>` (hoje `MIMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o MiMo na rede (ver abaixo). |
 
 `WEATHER`, `TIME`, `THEME`, `SOUND` e `SCANLINES` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.
@@ -209,7 +209,7 @@ São as coisas pelas quais o MiMo **interrompe** você: os lembretes de pausa
 (card Pausa), os alertas de mudança do clima (card Clima) e os avisos de
 hora de dormir. Diferente de todo o resto, uma notificação **toma a tela
 inteira** — sem olhos, sem selos, sem log, sem balão — mostra uma animação
-dedicada mais o texto, e **expira sozinha depois de 7s**.
+dedicada mais o texto, e **expira sozinha depois de 10s**.
 
 Nada precisa ser restaurado quando ela sai: nenhum tier abaixo é tocado para
 abrir espaço, então o frame seguinte simplesmente desenha o que já estava
@@ -234,13 +234,17 @@ num card genérico — uma moldura vazia que ninguém entendia, porque não
 representava nada. Fazer do rosto a constante e da arte o opcional eliminou
 a necessidade de placeholder.
 
-- **`COFFEE`** (Pausa): olhos pequenos à esquerda, xícara com vapor à
-  direita, mensagem embaixo — a mesma divisão de tela que a expressão
-  `COFFEE` do `DEFAULT` já fazia. A xícara é a mesma função de desenho do
-  ícone de canto, com a geometria parametrizada, e não uma cópia.
+- **`COFFEE`** (Pausa): olhos à esquerda e **acima** da linha de repouso da
+  xícara, que fica à direita, com a mensagem embaixo. A cada ~2,8s a xícara
+  **sobe e se aproxima do rosto**, fica um instante lá em cima e desce de
+  volta ao pires — o MiMo tomando um gole. É só deslocamento, sem rotação:
+  nesta resolução uma caneca inclinada composta de retângulos lê como caneca
+  quebrada, não como caneca tombada, então quem carrega o gesto é o
+  trajeto. A xícara é a mesma função de desenho do ícone de canto, com a
+  geometria parametrizada, e não uma cópia.
 - **`SLEEPY`** (aviso de dormir): aqui os olhos *são* a animação, e por isso
   esta notificação não precisa de ícone. Ciclo de 3,6s, que roda ~2x dentro
-  dos 7s: as pálpebras caem devagar como quem cochila (curva quadrática —
+  dos 10s: as pálpebras caem devagar como quem cochila (curva quadrática —
   quase paradas no começo, cedendo depois), ficam um instante quase
   fechadas, **abrem de susto** passando do tamanho normal, e então piscam
   três vezes rápido antes de recomeçar. Medida a partir de

@@ -133,7 +133,7 @@ FACE <NEUTRAL|HAPPY|SAD|ANGRY|SLEEPING|SLEEPY|COFFEE|MUSIC|WATCHING|ERROR|READIN
 MSG <text>                    (empty text clears the message)
 WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears the badge)
 TIME <HH:MM>                  (empty clears the clock)
-NOTIFY <FACE> <text>          (top-priority full-screen interruption, auto-clears after 7s)
+NOTIFY <FACE> <text>          (top-priority full-screen interruption, auto-clears after 10s)
 THEME <DEFAULT|MATRIX|MI2MO2|MI84> (persistent, like WEATHER/TIME — see Face.cpp's theme notes)
 SOUND <ON|OFF>                (persistent; buzzer cues, see Buzzer.cpp)
 SCANLINES <ON|OFF>            (persistent; physical display's CRT post-FX only)
@@ -166,15 +166,24 @@ Pausa's break reminders, Clima's weather-change alerts, the bedtime nudges.
 They outrank everything including AI activity, take the entire frame (no
 badges, no log, no message box — see `FaceState::isNotification` and
 `drawNotificationScreen`), and expire on their own after
-`NOTIFICATION_DURATION_MS` (7s).
+`NOTIFICATION_DURATION_MS` (10s — raised from 7 because the message types
+itself in inside that same window, so a long phrase spent most of a 7s one
+still appearing, and because both dedicated animations want room to play
+more than once).
 
 MiMo's **face stays visible in every notification**. An earlier version gave
 the whole frame to the artwork, so a notification with no illustration of
 its own fell back to an empty framed card — unreadable, because it wasn't
 depicting anything. Making the eyes the constant and the artwork the
 optional extra removed the need for a placeholder at all. `COFFEE` puts
-small eyes left and the steaming cup right (the same split CLASSIC's own
-COFFEE expression already makes); `SLEEPY` makes the eyes *be* the
+small eyes left and slightly *above* the cup's resting line, with the
+steaming mug to the right; every ~2.8s that mug rises and drifts toward the
+face, holds, and settles back onto the saucer — MiMo taking a sip. The
+gesture is pure translation: there is no rotation at this resolution, and a
+tilted mug built from fillRects reads as a broken one rather than a tipped
+one. (Its handle was also wrong until now — the inner cut's right edge
+landed exactly on the outer block's, erasing the whole right wall, so the
+"handle" was two prongs with nothing joining them. A real bug, fixed once.) `SLEEPY` makes the eyes *be* the
 animation — a 3.6s cycle of lids sagging shut on a squared curve, a beat
 held nearly closed, a startled snap open past normal size, then three quick
 blinks — anchored on `FaceState::notificationStartedMs` rather than raw
@@ -1206,7 +1215,7 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   `null` whenever the checkbox is (re)checked, so toggling it off and back on
   the same day re-arms today's reminder instead of silently skipping it.
   On a match, `SendBreakReminder` sends one `NOTIFY COFFEE <msg>` line —
-  Core's top-priority notification tier, which takes the whole screen for 7s
+  Core's top-priority notification tier, which takes the whole screen for 10s
   and expires by itself (see PROTOCOL.md) — with the message randomly
   picked from `PausaMessages` (10 hardcoded PT-BR phrases, e.g. "Bora
   reabastecer o cafe!"). Unlike Clima's weather alert, no `FACE NEUTRAL`

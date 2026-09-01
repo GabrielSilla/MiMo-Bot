@@ -52,9 +52,14 @@ constexpr unsigned long MESSAGE_DURATION_MS = 10000; // how long a MSG stays on 
 // needs the same reveal-speed value to work out each character's own age.
 constexpr unsigned long FACE_OVERRIDE_DURATION_MS = 4000;
 // How long a notification owns the whole screen (see Personality::Tier).
-// Short on purpose: it is an interruption, not a state, and everything it
-// covers up is still sitting there waiting underneath it.
-constexpr unsigned long NOTIFICATION_DURATION_MS = 7000;
+// Bounded on purpose: it is an interruption, not a state, and everything it
+// covers up is still sitting there waiting underneath it. Ten seconds
+// rather than the original seven because the message types itself in at
+// TYPING_CHAR_INTERVAL_MS inside this same window -- a long phrase spent
+// most of a 7s window still appearing, leaving little of it actually
+// readable -- and because both dedicated animations (COFFEE's sip,
+// SLEEPY's doze-and-startle) want room to play more than once.
+constexpr unsigned long NOTIFICATION_DURATION_MS = 10000;
 constexpr unsigned long SLEEP_TIMEOUT_MS = 10UL * 60UL * 1000UL; // 10 minutes idle before sleeping
 
 // SLEEPY (drowsy, not yet the deep SLEEPING) kicks in purely off the clock,

@@ -16,7 +16,7 @@ de `Personality::Tier` em `BrobotCore/include/Personality.h`.
 - Comando `NOTIFY <EXPRESSION> <texto>` — uma linha atômica, para a
   notificação de maior prioridade nunca ser pega meio aplicada entre um
   `FACE` e um `MSG`.
-- Expira sozinha em 7s (`NOTIFICATION_DURATION_MS`) e o que estava embaixo
+- Expira sozinha em 10s (`NOTIFICATION_DURATION_MS`) e o que estava embaixo
   reaparece sem nenhum reenvio, porque nenhum tier inferior é tocado.
 - Tela dedicada: frame inteiro, sem selos, sem log, sem balão — mas **com o
   rosto do MiMo sempre visível**. Segue a paleta do tema ativo
@@ -63,7 +63,7 @@ token de clima. Ao migrar, dá para remover o comentário do `FACE NEUTRAL`
 que só existia para forçar o roteamento de tier.
 
 Enquanto não migra, o alerta de clima aparece como mensagem normal — com
-rosto, mas sem prioridade e sem os 7s.
+rosto, mas sem prioridade e sem os 10s.
 
 ## 3. ~~Card genérico ininteligível~~ (resolvido)
 
@@ -75,9 +75,11 @@ piscando com a mensagem embaixo, que já se explica sozinho.
 
 Estado por expressão:
 
-- **`COFFEE`** — olhos pequenos à esquerda, xícara com vapor à direita,
-  mensagem embaixo. Mesma divisão de tela que a expressão COFFEE do CLASSIC
-  já usava.
+- **`COFFEE`** — olhos à esquerda e acima da linha de repouso da xícara,
+  que fica à direita com vapor, mensagem embaixo. A cada ~2,8s a xícara sobe
+  em direção ao rosto, segura e volta ao pires (o MiMo tomando um gole).
+  A alça também foi corrigida: o recorte interno apagava a parede direita
+  inteira, então ela era duas hastes sem nada fechando o laço.
 - **`SLEEPY`** — os olhos *são* a animação (ver item 4).
 - **Qualquer outra** — rosto centralizado piscando normalmente.
 
@@ -88,7 +90,7 @@ maior, ao lado do rosto.
 ## 4. ~~Bedtime sem animação própria~~ (resolvido)
 
 O nudge de sono agora tem animação própria, em ciclo de 3,6s que roda ~2x
-dentro dos 7s: os olhos **caem devagar** como quem cochila (curva quadrática,
+dentro dos 10s: os olhos **caem devagar** como quem cochila (curva quadrática,
 quase parados no começo e depois cedendo), ficam ~300ms quase fechados,
 **abrem de susto** ultrapassando o tamanho normal, e então **piscam três
 vezes** rápido antes de recomeçar.
@@ -102,7 +104,7 @@ susto (repouso é 39), e as três piscadas fechando em 14, 4 e 13 px.
 
 **Continua em aberto:** o painel `SYSTEM NOTICE` do MiMo-84
 (`drawMi84SleepNotice`) segue existindo para quando `SLEEPY` é a expressão
-*fora* de uma notificação. Durante os 7s do nudge quem manda é a animação.
+*fora* de uma notificação. Durante os 10s do nudge quem manda é a animação.
 Decidir se o painel do tema deveria ser a arte do MiMo-84 nessa notificação,
 em vez dos olhos genéricos.
 
@@ -113,12 +115,14 @@ em vez dos olhos genéricos.
 Sendo a coisa de maior prioridade da tela, provavelmente deveria ter um som
 curto. É uma entrada nova na tabela de `SoundSegment`.
 
-## 6. Os 7s incluem o tempo de digitação
+## 6. A janela inclui o tempo de digitação (atenuado)
 
 A mensagem digita a `TYPING_CHAR_INTERVAL_MS` (40ms/caractere) dentro da
-mesma janela de 7s. Uma frase de 40 caracteres gasta ~1,6s digitando e sobra
-~5,4s de leitura; frases mais longas sobram menos. Considerar começar a
-contar os 7s **depois** que o texto termina de aparecer.
+mesma janela da notificação. A janela subiu de 7s para 10s, o que dá folga
+suficiente na prática — uma frase de 40 caracteres gasta ~1,6s digitando e
+sobram ~8,4s de leitura. Segue valendo que frases muito longas comem mais
+tempo; se voltar a incomodar, a correção é começar a contar **depois** que o
+texto termina de aparecer, em vez de aumentar a janela de novo.
 
 Relacionado: `NOTIFICATION_DURATION_MS` é fixa no firmware. Se for para
 virar ajustável pelo usuário, precisa de comando próprio ou parâmetro no
