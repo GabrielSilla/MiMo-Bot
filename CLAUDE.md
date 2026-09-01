@@ -190,9 +190,12 @@ with no per-drop collision test. Its wire token is just `WEATHER`: the
 artwork is chosen from `FaceState::weatherCondition`, which the `WEATHER`
 command already keeps current for the badge, so the alert and the badge
 cannot disagree and each further condition costs one `case` rather than a
-command and an enumerator of its own (only RAIN/STORM have art today; the
-rest show him alone and centred, since an umbrella beside a "clear skies"
-alert would contradict it). This is also why `Brobot.Sender` sends `WEATHER`
+command and an enumerator of its own (RAIN/STORM get the umbrella; CLEAR gets a
+sun turning in the top-right corner — a stepped disc plus 8 three-block
+rays placed by angle, one turn every 6s, using only `sin` with the cosine
+taken as `sin(t + pi/2)` since the native build's `Arduino.h` shim never
+wires up `<math.h>`; the rest show him alone and centred, since an umbrella
+beside a "clear skies" alert would contradict it). This is also why `Brobot.Sender` sends `WEATHER`
 *before* the `NOTIFY WEATHER` — the other order would illustrate the alert
 with the previous condition. `SLEEPY` makes the eyes *be* the
 animation — a 3.6s cycle of lids sagging shut on a squared curve, a beat

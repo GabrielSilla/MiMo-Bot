@@ -2194,34 +2194,97 @@ void drawUmbrella(IDisplay& display, uint8_t r, uint8_t g, uint8_t b) {
     display.fillRect(NOTIF_UMBRELLA_CX - 8, NOTIF_UMBRELLA_SHAFT_BOTTOM_Y - 6, 2, 5, r, g, b);
 }
 
+// CLEAR's artwork: a small sun turning slowly in the top-right corner.
+//
+// Only sinf is used, with the cosine taken as sin(theta + pi/2), because
+// this file also compiles against BrobotCore/native's minimal Arduino.h,
+// which never wires up <math.h> — sin already reaches it transitively on
+// the MSVC build, cos is not worth betting on. Same caution that made
+// Personality.cpp hand-write its own easing curves.
+constexpr int SUN_CX = 134;
+constexpr int SUN_CY = 26;
+constexpr int SUN_DISC_R = 8;
+// Half-width of the disc for each |dy| from 0 to SUN_DISC_R, so the body is
+// a stepped circle rather than a square — same composition style as the
+// umbrella's dome, mirrored on both axes instead of one.
+constexpr int SUN_DISC_HALF_W[SUN_DISC_R + 1] = {8, 8, 8, 7, 7, 6, 5, 4, 2};
+
+constexpr int SUN_RAY_COUNT = 8;
+constexpr int SUN_RAY_INNER_R = 12;   // first block clears the disc
+constexpr int SUN_RAY_STEP_PX = 4;
+constexpr int SUN_RAY_BLOCKS = 3;
+constexpr int SUN_RAY_BLOCK_PX = 2;
+constexpr unsigned long SUN_SPIN_PERIOD_MS = 6000; // one full turn
+constexpr float SUN_TWO_PI = 6.2832f;
+constexpr float SUN_HALF_PI = 1.5708f;
+
+void drawSun(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    for (int dy = -SUN_DISC_R; dy <= SUN_DISC_R; dy++) {
+        int halfW = SUN_DISC_HALF_W[dy < 0 ? -dy : dy];
+        display.fillRect(SUN_CX - halfW, SUN_CY + dy, halfW * 2, 1, r, g, b);
+    }
+
+    // Rays are blocks stepping outward along each angle rather than drawn
+    // lines: every primitive here is axis-aligned, so a diagonal has to be
+    // approximated, and three spaced blocks read as a tapering ray while a
+    // dense run of them would just read as a fat wedge.
+    float spin = SUN_TWO_PI * (float)(nowMs % SUN_SPIN_PERIOD_MS) / (float)SUN_SPIN_PERIOD_MS;
+    for (int i = 0; i < SUN_RAY_COUNT; i++) {
+        float theta = spin + SUN_TWO_PI * (float)i / (float)SUN_RAY_COUNT;
+        float sinT = sin(theta);
+        float cosT = sin(theta + SUN_HALF_PI);
+
+        for (int k = 0; k < SUN_RAY_BLOCKS; k++) {
+            float radius = (float)(SUN_RAY_INNER_R + k * SUN_RAY_STEP_PX);
+            int x = SUN_CX + (int)(radius * cosT) - SUN_RAY_BLOCK_PX / 2;
+            int y = SUN_CY + (int)(radius * sinT) - SUN_RAY_BLOCK_PX / 2;
+            display.fillRect(x, y, SUN_RAY_BLOCK_PX, SUN_RAY_BLOCK_PX, r, g, b);
+        }
+    }
+}
+
 constexpr int NOTIF_WEATHER_EYE_SIZE = 28;
 constexpr int NOTIF_WEATHER_EYE_GAP = 10;
 constexpr int NOTIF_WEATHER_EYE_Y = 44;
 constexpr int NOTIF_WEATHER_EYES_CENTER_X = 44;
+// CLEAR's sun only claims the top-right corner, not a whole column, so he
+// shifts left far less than the umbrella asks for — just enough to leave a
+// readable gap before the outermost ray.
+constexpr int NOTIF_WEATHER_SUNNY_EYES_CENTER_X = 70;
 
 void drawWeatherNotification(IDisplay& display, const FaceState& state,
                              const NotificationPalette& p, float openFactor) {
-    // Only the wet conditions get the umbrella-and-rain treatment. The rest
-    // have no artwork of their own yet and fall back to MiMo on his own with
-    // the message below — which is the honest thing to show: an umbrella
-    // standing next to a "clear skies" alert would actively contradict it.
+    // Each condition brings its own scenery; the ones with none yet fall
+    // back to MiMo on his own with the message below, which is the honest
+    // thing to show — an umbrella standing next to a "clear skies" alert
+    // would actively contradict it.
     bool wet = state.weatherCondition == WeatherCondition::RAIN
             || state.weatherCondition == WeatherCondition::STORM;
+    bool sunny = state.weatherCondition == WeatherCondition::CLEAR;
 
     // Rain first, so the canopy and the eyes paint over it.
     if (wet) {
         drawRainfall(display, state.nowMs, p.inkR, p.inkG, p.inkB);
     }
 
-    // Centred when he's alone on screen, pushed left when the umbrella needs
-    // the right-hand side.
-    int eyesCenterX = wet ? NOTIF_WEATHER_EYES_CENTER_X : display.width() / 2;
+    // Pushed left whenever there is scenery to make room for. CLEAR needs
+    // it too, though less: centred, his right eye ends at x=113 and the
+    // sun's leftmost ray starts at 114 — technically not overlapping, but
+    // one pixel apart reads as cramped on the real panel.
+    int eyesCenterX = display.width() / 2;
+    if (wet) {
+        eyesCenterX = NOTIF_WEATHER_EYES_CENTER_X;
+    } else if (sunny) {
+        eyesCenterX = NOTIF_WEATHER_SUNNY_EYES_CENTER_X;
+    }
     drawNotificationEyes(display, eyesCenterX, NOTIF_WEATHER_EYE_Y,
                          NOTIF_WEATHER_EYE_SIZE, NOTIF_WEATHER_EYE_GAP, openFactor,
                          p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
 
     if (wet) {
         drawUmbrella(display, p.inkR, p.inkG, p.inkB);
+    } else if (sunny) {
+        drawSun(display, state.nowMs, p.inkR, p.inkG, p.inkB);
     }
 }
 

@@ -254,7 +254,13 @@ a necessidade de placeholder.
   um `case`, não um comando e uma expressão novos. Hoje só `RAIN` e `STORM`
   têm arte; as outras mostram o MiMo sozinho e centralizado, porque um
   guarda-chuva ao lado de um alerta de tempo bom contradiria o próprio
-  aviso. **Ordem importa:** o app do PC precisa mandar o `WEATHER` antes do
+  aviso. **`CLEAR`** tem a sua: um solzinho girando no canto superior
+  direito — disco redondo montado em linhas (mesmo estilo do domo do
+  guarda-chuva, espelhado nos dois eixos) e 8 raios de 3 blocos cada,
+  posicionados por ângulo e girando uma volta a cada 6s. Só `sin` é usado,
+  com o cosseno tirado de `sin(t + pi/2)`: o shim de `Arduino.h` do build
+  nativo não liga `<math.h>`, o `sin` chega lá por inclusão transitiva e
+  não vale apostar no `cos`. **Ordem importa:** o app do PC precisa mandar o `WEATHER` antes do
   `NOTIFY WEATHER`, senão o alerta é ilustrado com a condição anterior.
 - **`SLEEPY`** (aviso de dormir): aqui os olhos *são* a animação, e por isso
   esta notificação não precisa de ícone. Ciclo de 3,6s, que roda ~2x dentro

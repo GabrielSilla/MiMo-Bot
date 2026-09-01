@@ -27,7 +27,7 @@ de `Personality::Tier` em `BrobotCore/include/Personality.h`.
 - Pausa (Sender) migrada para `NOTIFY COFFEE`.
 - Bedtime (Core) migrado para `raiseNotification(SLEEPY, ...)`.
 - Clima (Sender) migrado para `NOTIFY WEATHER`, com chuva e guarda-chuva
-  para `RAIN`/`STORM`.
+  para `RAIN`/`STORM` e sol girando para `CLEAR`.
 
 Verificado com 11/11 checagens no protocolo cru contra o Core nativo, e
 13/13 de regressão nos quatro temas.
@@ -65,8 +65,15 @@ expressão nova (`Expression::WEATHER`) em vez de seis, e o alerta não tem
 como discordar do selo. **A ordem de envio virou parte do contrato:**
 `WEATHER` antes do `NOTIFY WEATHER`, senão a arte usa a condição anterior.
 
-Falta arte para `CLEAR`, `CLOUDY`, `SNOW` e `FOG` — hoje elas mostram o MiMo
-sozinho e centralizado. Cada uma é um `case` em `drawWeatherNotification`.
+`CLEAR` ganhou a sua: um sol girando no canto superior direito. Falta arte
+para `CLOUDY`, `SNOW` e `FOG` — hoje elas mostram o MiMo sozinho e
+centralizado. Cada uma é um `case` em `drawWeatherNotification`.
+
+Detalhe de composição que vale reaproveitar: o quanto o MiMo desloca para a
+esquerda depende do que a cena ocupa. O guarda-chuva pede uma coluna inteira
+(centro em x=44); o sol só o canto (x=70); sem cena, ele fica centralizado
+(x=80). Com ele centralizado o olho direito terminava em 113 e o primeiro
+raio começava em 114 — não sobrepunha, mas 1px lê como espremido.
 
 ## 3. ~~Card genérico ininteligível~~ (resolvido)
 
