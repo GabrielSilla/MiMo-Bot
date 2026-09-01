@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Brobot.Connection;
 using Drawing = System.Drawing;
@@ -50,6 +51,19 @@ public partial class MainWindow : Window
     private WeatherCondition? _lastWeatherCondition; // null = no baseline yet, so the very first reading never fires a "changed" alert
     private bool _wasConnected;
     private DispatcherTimer? _clockTimer;
+
+    // "Modo teste" — hidden behind a gesture on the wordmark rather than
+    // shown as another card, because this app ships to whoever assembled a
+    // Brobot and a raw command box in the middle of the checklist invites
+    // breaking things. Clicks have to land within TestModeUnlockWindow of
+    // each other, so ordinary stray clicks on the logo never accumulate
+    // into an unlock.
+    private const int TestModeUnlockClicks = 5;
+    private static readonly TimeSpan TestModeUnlockWindow = TimeSpan.FromSeconds(2);
+    private int _logoClickCount;
+    private DateTime _lastLogoClick = DateTime.MinValue;
+    private readonly List<string> _testCommandHistory = new();
+    private int _testHistoryIndex = -1; // -1 = not currently browsing history
 
     private DispatcherTimer? _breakTimer;
     private DateOnly? _breakMorningFiredOn; // date each slot last fired on, so it fires once per day instead of every tick during that whole minute
@@ -174,6 +188,16 @@ public partial class MainWindow : Window
     {
         bool connected = _connection.IsConnected;
         bool connecting = _connection.IsConnectingTcp;
+
+        // Modo teste follows the same single source of truth as the Conexão
+        // button rather than tracking the link itself — a parallel notion of
+        // "are we connected" is exactly what left that button stuck reading
+        // "Desconectar" once already.
+        if (TesteCard.Visibility == Visibility.Visible)
+        {
+            TesteEnviarButton.IsEnabled = connected;
+            TesteAtalhosPanel.IsEnabled = connected;
+        }
 
         if (DateTime.Now < _transientStatusUntil)
         {
@@ -535,24 +559,32 @@ public partial class MainWindow : Window
                 return; // StatusChanged already reported the failure; leave the last-good badge showing
             }
 
+            // The badge update goes out FIRST, before any alert. Core picks
+            // the alert's artwork from the WeatherCondition this command
+            // stores (see Face.cpp's drawWeatherNotification) rather than
+            // from anything on the NOTIFY line, so sending them the other
+            // way round would illustrate the alert with the *previous*
+            // condition — raining while the umbrella screen still showed
+            // yesterday's sun.
+            _lastWeatherReading = reading;
+            _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
+
             // Only alert on an actual change — _lastWeatherCondition is null
             // on the very first reading after Start() (nothing to compare
             // against yet), and most 30-min polls just confirm the same
-            // condition as before. FACE NEUTRAL claims the foreground tier
-            // so the MSG that follows is guaranteed to render (a bare MSG
-            // with no FACE routes to whichever tier last sent one — see
-            // Personality.cpp's _lastCommandTier — which Clima never
-            // otherwise touches) instead of risking landing silently behind
-            // whatever media/game happens to be in the background tier.
+            // condition as before.
+            //
+            // This used to be a FACE NEUTRAL + MSG pair, which landed in the
+            // same tier as AI activity and so could be buried by it. It's a
+            // notification now: top priority, its own full-screen artwork,
+            // and it clears itself — which also retires the FACE NEUTRAL,
+            // whose only job was to claim a tier so the MSG wouldn't be
+            // routed somewhere else by _lastCommandTier.
             if (_lastWeatherCondition.HasValue && _lastWeatherCondition.Value != reading.Condition)
             {
-                _connection.SendCommand("FACE NEUTRAL");
-                _connection.SendCommand($"MSG {WeatherAlerts.RandomFor(reading.Condition)}");
+                _connection.SendCommand($"NOTIFY WEATHER {WeatherAlerts.RandomFor(reading.Condition)}");
             }
             _lastWeatherCondition = reading.Condition;
-
-            _lastWeatherReading = reading;
-            _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
         });
     }
 
@@ -1067,6 +1099,170 @@ public partial class MainWindow : Window
     // Checkboxes take effect immediately (the monitors above start/stop the
     // moment you click one), but are only remembered across restarts once
     // "Salvar configurações" is pressed.
+    /// <summary>
+    /// Reveals the hidden "Modo teste" card after TestModeUnlockClicks
+    /// clicks on the wordmark. Deliberately silent until it fires: a
+    /// progress hint would turn a hidden gesture into a visible one.
+    /// </summary>
+    private void LogoImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (TesteCard.Visibility == Visibility.Visible)
+        {
+            return;
+        }
+
+        DateTime now = DateTime.Now;
+        _logoClickCount = (now - _lastLogoClick) <= TestModeUnlockWindow ? _logoClickCount + 1 : 1;
+        _lastLogoClick = now;
+
+        if (_logoClickCount < TestModeUnlockClicks)
+        {
+            return;
+        }
+
+        _logoClickCount = 0;
+        ShowTestMode();
+
+        // Persisted immediately rather than waiting for "Salvar
+        // configurações": the gesture is the act of enabling it, and having
+        // to also remember to save would just mean doing it again next launch.
+        SenderSettings settings = SenderSettings.Load();
+        settings.TestModeUnlocked = true;
+        settings.Save();
+    }
+
+    private void ShowTestMode()
+    {
+        TesteCard.Visibility = Visibility.Visible;
+        UpdateConnectionStatus(); // sets the buttons' enabled state for the current link
+    }
+
+    /// <summary>
+    /// Sends one raw PROTOCOL.md line. Only the command token is upper-cased:
+    /// Core matches commands with strncmp against uppercase literals (see
+    /// Protocol::dispatch), so "face happy" would otherwise do nothing at
+    /// all — but the rest of the line is message text and has to survive as
+    /// typed, accents and casing included.
+    /// </summary>
+    private void SendTestCommand(string raw)
+    {
+        string command = raw.Trim();
+        if (command.Length == 0)
+        {
+            return;
+        }
+
+        if (!_connection.IsConnected)
+        {
+            ShowTestStatus("Sem conexão com o MiMo.");
+            return;
+        }
+
+        int space = command.IndexOf(' ');
+        string normalized = space < 0
+            ? command.ToUpperInvariant()
+            : command[..space].ToUpperInvariant() + command[space..];
+
+        _connection.SendCommand(normalized);
+
+        if (_testCommandHistory.Count == 0 || _testCommandHistory[^1] != normalized)
+        {
+            _testCommandHistory.Add(normalized);
+        }
+        _testHistoryIndex = -1;
+
+        ShowTestStatus("Enviado: " + normalized);
+    }
+
+    private void ShowTestStatus(string text) => TesteStatusText.Text = text;
+
+    private void TesteEnviarButton_Click(object sender, RoutedEventArgs e)
+    {
+        SendTestCommand(TesteComandoTextBox.Text);
+        TesteComandoTextBox.Clear();
+    }
+
+    private void TesteAtalho_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: string command })
+        {
+            SendTestCommand(command);
+        }
+    }
+
+    /// <summary>
+    /// The escape hatch for the sticky tiers. Typing FACE MUSIC or FACE
+    /// PLAYING by hand leaves that tier set on Core until something clears
+    /// it, and this app's own _mediaFaceActive/_gameFaceActive tracking has
+    /// no idea it happened — so nothing would ever clear it. IDLE (the plain
+    /// form) clears both lower tiers at once, and NEUTRAL releases the
+    /// foreground one; see PROTOCOL.md's FACE priority notes.
+    /// </summary>
+    private void TesteLimpar_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_connection.IsConnected)
+        {
+            ShowTestStatus("Sem conexão com o MiMo.");
+            return;
+        }
+
+        _connection.SendCommand("FACE NEUTRAL");
+        _connection.SendCommand("FACE IDLE");
+        _connection.SendCommand("MSG ");
+        ShowTestStatus("Estado limpo (FACE NEUTRAL + FACE IDLE + MSG vazio).");
+    }
+
+    /// <summary>
+    /// Enter sends; Up/Down walks the history, which is what makes repeating
+    /// a command with small variations bearable.
+    /// </summary>
+    private void TesteComandoTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            SendTestCommand(TesteComandoTextBox.Text);
+            TesteComandoTextBox.Clear();
+            e.Handled = true;
+            return;
+        }
+
+        if (_testCommandHistory.Count == 0)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Up)
+        {
+            _testHistoryIndex = _testHistoryIndex < 0
+                ? _testCommandHistory.Count - 1
+                : Math.Max(0, _testHistoryIndex - 1);
+        }
+        else if (e.Key == Key.Down)
+        {
+            if (_testHistoryIndex < 0)
+            {
+                return;
+            }
+            _testHistoryIndex++;
+            if (_testHistoryIndex >= _testCommandHistory.Count)
+            {
+                // Walked off the newest entry: back to an empty prompt.
+                _testHistoryIndex = -1;
+                TesteComandoTextBox.Clear();
+                e.Handled = true;
+                return;
+            }
+        }
+        else
+        {
+            return;
+        }
+
+        TesteComandoTextBox.Text = _testCommandHistory[_testHistoryIndex];
+        TesteComandoTextBox.CaretIndex = TesteComandoTextBox.Text.Length;
+        e.Handled = true;
+    }
+
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         // Load-then-mutate rather than constructing a fresh SenderSettings:
@@ -1155,6 +1351,11 @@ public partial class MainWindow : Window
         GameCheckBox.IsChecked = settings.JogosEnabled;
         SonsCheckBox.IsChecked = settings.SonsEnabled;
         ScanlinesCheckBox.IsChecked = settings.ScanlinesEnabled;
+
+        if (settings.TestModeUnlocked)
+        {
+            ShowTestMode();
+        }
 
         TemaComboBox.ItemsSource = ThemeManager.Available;
         SyncTemaComboBoxSelection(settings);

@@ -242,6 +242,20 @@ a necessidade de placeholder.
   quebrada, não como caneca tombada, então quem carrega o gesto é o
   trajeto. A xícara é a mesma função de desenho do ícone de canto, com a
   geometria parametrizada, e não uma cópia.
+- **`WEATHER`** (alerta de clima): o MiMo ao lado de um guarda-chuva, com
+  chuva caindo atrás dos dois. A chuva é desenhada **antes** do domo e dos
+  olhos, então as gotas que cairiam sobre o guarda-chuva simplesmente não
+  aparecem — lê como abrigo sem precisar de nenhum teste de colisão por
+  gota. Cada coluna tem posição, velocidade e fase próprias, tiradas de um
+  hash do índice da coluna, mesmo truque sem-estado da chuva do Matrix.
+  **O token no fio é só `WEATHER`**: qual arte aparece vem da
+  `WeatherCondition` que o comando `WEATHER` já guardou para o selo. Isso
+  impede o alerta e o selo de discordarem, e faz cada condição nova custar
+  um `case`, não um comando e uma expressão novos. Hoje só `RAIN` e `STORM`
+  têm arte; as outras mostram o MiMo sozinho e centralizado, porque um
+  guarda-chuva ao lado de um alerta de tempo bom contradiria o próprio
+  aviso. **Ordem importa:** o app do PC precisa mandar o `WEATHER` antes do
+  `NOTIFY WEATHER`, senão o alerta é ilustrado com a condição anterior.
 - **`SLEEPY`** (aviso de dormir): aqui os olhos *são* a animação, e por isso
   esta notificação não precisa de ícone. Ciclo de 3,6s, que roda ~2x dentro
   dos 10s: as pálpebras caem devagar como quem cochila (curva quadrática —

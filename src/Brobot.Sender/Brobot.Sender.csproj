@@ -62,7 +62,7 @@
     <Product>MiMo Sender</Product>
     <AssemblyTitle>MiMo Sender</AssemblyTitle>
     <Description>Envia hora, clima, mídia e atividade de IA para o seu Brobot</Description>
-    <Version>1.0.3</Version>
+    <Version>1.2.0</Version>
     <NeutralLanguage>pt-BR</NeutralLanguage>
 
     <!-- The app's own UI has no other language, but WPF/WinForms still ship a

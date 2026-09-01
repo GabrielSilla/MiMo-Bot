@@ -183,7 +183,18 @@ gesture is pure translation: there is no rotation at this resolution, and a
 tilted mug built from fillRects reads as a broken one rather than a tipped
 one. (Its handle was also wrong until now — the inner cut's right edge
 landed exactly on the outer block's, erasing the whole right wall, so the
-"handle" was two prongs with nothing joining them. A real bug, fixed once.) `SLEEPY` makes the eyes *be* the
+"handle" was two prongs with nothing joining them. A real bug, fixed once.) `WEATHER` puts him beside an umbrella with rain
+falling behind both — drawn before the canopy and the eyes, so drops that
+would land on the umbrella are simply painted over, which reads as shelter
+with no per-drop collision test. Its wire token is just `WEATHER`: the
+artwork is chosen from `FaceState::weatherCondition`, which the `WEATHER`
+command already keeps current for the badge, so the alert and the badge
+cannot disagree and each further condition costs one `case` rather than a
+command and an enumerator of its own (only RAIN/STORM have art today; the
+rest show him alone and centred, since an umbrella beside a "clear skies"
+alert would contradict it). This is also why `Brobot.Sender` sends `WEATHER`
+*before* the `NOTIFY WEATHER` — the other order would illustrate the alert
+with the previous condition. `SLEEPY` makes the eyes *be* the
 animation — a 3.6s cycle of lids sagging shut on a squared curve, a beat
 held nearly closed, a startled snap open past normal size, then three quick
 blinks — anchored on `FaceState::notificationStartedMs` rather than raw

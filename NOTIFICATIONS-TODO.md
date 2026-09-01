@@ -1,10 +1,10 @@
 # Sistema de notificações — o que falta
 
 Estado em 30/08/2026. O tier de notificação funciona ponta a ponta e o rosto
-do MiMo aparece em todas as notificações. Pausa e aviso de dormir já estão
-migrados e têm arte/animação própria; **o Clima ainda não foi migrado**.
-Itens 1, 3 e 4 já foram resolvidos e ficam registrados por causa do que
-ensinaram; o que resta começa no item 2 e no 5.
+do MiMo aparece em todas as notificações. As três fontes (Pausa, aviso de
+dormir e Clima) já estão migradas. Itens 1 a 4 e 10 já foram resolvidos e
+ficam registrados por causa do que ensinaram; o que resta de verdade começa
+no item 5, mais a arte das condições de clima que ainda não têm (item 2).
 
 Contexto de arquitetura: ver `PROTOCOL.md` (comando `NOTIFY`) e o comentário
 de `Personality::Tier` em `BrobotCore/include/Personality.h`.
@@ -26,6 +26,8 @@ de `Personality::Tier` em `BrobotCore/include/Personality.h`.
   (o `FACE IDLE` puro segue limpando os dois, por compatibilidade).
 - Pausa (Sender) migrada para `NOTIFY COFFEE`.
 - Bedtime (Core) migrado para `raiseNotification(SLEEPY, ...)`.
+- Clima (Sender) migrado para `NOTIFY WEATHER`, com chuva e guarda-chuva
+  para `RAIN`/`STORM`.
 
 Verificado com 11/11 checagens no protocolo cru contra o Core nativo, e
 13/13 de regressão nos quatro temas.
@@ -49,21 +51,22 @@ para todos os chamadores existentes não mudarem.
 **Regra que fica:** qualquer arte nova de notificação recebe a cor de fundo
 por parâmetro. Não assuma preto.
 
-## 2. Clima ainda não foi migrado
+## 2. ~~Clima não migrado~~ (resolvido)
 
-`MainWindow.OnWeatherUpdated` continua no caminho antigo: manda
-`FACE NEUTRAL` + `MSG <alerta>`, que cai no tier da IA, não no de
-notificação. Ou seja, o alerta de mudança de clima **não** tem prioridade
-máxima nem tela dedicada hoje.
+`OnWeatherUpdated` agora manda `NOTIFY WEATHER <alerta>` em vez do par
+`FACE NEUTRAL` + `MSG`. Com isso o alerta ganhou prioridade máxima, tela
+dedicada e os 10s — e o `FACE NEUTRAL` pôde sair, já que a única função dele
+era reivindicar um tier para o `MSG` não ser roteado para outro lugar pelo
+`_lastCommandTier`.
 
-Migrar para `NOTIFY`. Decidir qual expressão mandar — hoje as condições
-(`CLEAR/CLOUDY/RAIN/STORM/SNOW/FOG`) não têm expressão correspondente, então
-ou se escolhe uma existente por condição, ou o `NOTIFY` passa a aceitar um
-token de clima. Ao migrar, dá para remover o comentário do `FACE NEUTRAL`
-que só existia para forçar o roteamento de tier.
+A decisão que vale lembrar: **o token no fio é só `WEATHER`**, e a arte se
+escolhe pela `WeatherCondition` que o comando `WEATHER` já guarda. Uma
+expressão nova (`Expression::WEATHER`) em vez de seis, e o alerta não tem
+como discordar do selo. **A ordem de envio virou parte do contrato:**
+`WEATHER` antes do `NOTIFY WEATHER`, senão a arte usa a condição anterior.
 
-Enquanto não migra, o alerta de clima aparece como mensagem normal — com
-rosto, mas sem prioridade e sem os 10s.
+Falta arte para `CLEAR`, `CLOUDY`, `SNOW` e `FOG` — hoje elas mostram o MiMo
+sozinho e centralizado. Cada uma é um `case` em `drawWeatherNotification`.
 
 ## 3. ~~Card genérico ininteligível~~ (resolvido)
 
@@ -148,12 +151,12 @@ notificações.
 do tema. Sai um `CLR` a mais por frame no protocolo (só afeta builds
 `VSCREEN=1`, onde os draws viajam pela serial). Cosmético.
 
-## 10. Versão do app não acompanha a do instalador
+## 10. ~~Versão do app não acompanha a do instalador~~ (resolvido)
 
-Não é do sistema de notificações, mas foi notado agora: subi
-`MyAppVersion` para `1.1.0` no `installer/BrobotSenderSetup.iss`, mas o
-csproj do `Brobot.Sender` não foi bumpado, então o .exe instalado continua
-reportando `1.0.3.0` nas propriedades do Windows.
+`MyAppVersion` no `.iss` e `<Version>` no csproj do `Brobot.Sender` foram
+subidos juntos para `1.2.0`, então o .exe instalado passou a reportar
+`1.2.0.0` nas propriedades do Windows em vez de um número parado no
+`1.0.3.0`. Vale manter os dois em sincronia nos próximos bumps.
 
 ## 11. `.gitignore` não cobre este projeto
 

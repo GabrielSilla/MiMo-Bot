@@ -268,10 +268,19 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Image Grid.Row="0" Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
-                   Height="48" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,14"/>
+            <!-- Wrapped in a transparent Border, not handled on the Image
+                 itself: Image has no Background property, and the Border is
+                 what makes the whole logo area hit-testable rather than only
+                 where the bitmap happens to be opaque. -->
+            <Border Grid.Row="0" Background="Transparent" HorizontalAlignment="Center"
+                    Margin="0,0,0,14" MouseLeftButtonUp="LogoImage_MouseLeftButtonUp">
+                <Image x:Name="LogoImage"
+                       Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
+                       Height="48" VerticalAlignment="Top"/>
+            </Border>
             <TextBlock Grid.Row="1" Text="Escolha as informações que o MiMo pode receber"
                        HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,0,0,24"/>
 
@@ -564,7 +573,68 @@
                 </StackPanel>
             </Border>
 
-            <Button Grid.Row="13" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+            <!-- Modo teste: hidden until the wordmark is clicked
+                 TestModeUnlockClicks times (see LogoImage_MouseLeftButtonUp).
+                 Sends raw PROTOCOL.md lines straight to Core, which is only
+                 possible from inside this app: the ESP32 accepts one TCP
+                 client at a time, so an external script can't reach MiMo
+                 without closing Brobot.Sender first. -->
+            <Border Grid.Row="13" x:Name="TesteCard" Style="{StaticResource CardStyle}"
+                    Visibility="Collapsed" Margin="0,4,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}" VerticalAlignment="Top">
+                        <iconPacks:PackIconMaterial Kind="Console" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                        <TextBlock Text="Modo teste" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Envia um comando do protocolo direto para o MiMo"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="TesteComandoTextBox" Grid.Column="0"
+                                     Style="{StaticResource MimoTextBoxStyle}"
+                                     KeyDown="TesteComandoTextBox_KeyDown"/>
+                            <Button x:Name="TesteEnviarButton" Grid.Column="1" Content="Enviar"
+                                    Style="{StaticResource InstallButtonStyle}" Margin="8,0,0,0"
+                                    Click="TesteEnviarButton_Click"/>
+                        </Grid>
+
+                        <TextBlock x:Name="TesteStatusText" Style="{StaticResource CardDescriptionStyle}"
+                                   Margin="0,8,0,0" TextWrapping="Wrap"/>
+
+                        <WrapPanel x:Name="TesteAtalhosPanel" Margin="0,10,0,0">
+                            <Button Content="NOTIFY COFFEE" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Tag="NOTIFY COFFEE Bora reabastecer o cafe!"
+                                    Click="TesteAtalho_Click"/>
+                            <Button Content="NOTIFY SLEEPY" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Tag="NOTIFY SLEEPY Ja passou da hora de dormir!"
+                                    Click="TesteAtalho_Click"/>
+                            <Button Content="THINKING" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Tag="FACE THINKING" Click="TesteAtalho_Click"/>
+                            <Button Content="PING" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Tag="PING" Click="TesteAtalho_Click"/>
+                            <Button x:Name="TesteLimparButton" Content="Limpar estado"
+                                    Style="{StaticResource InstallButtonStyle}" Margin="0,0,6,6"
+                                    Click="TesteLimpar_Click"/>
+                        </WrapPanel>
+
+                        <TextBlock Style="{StaticResource CardDescriptionStyle}" Margin="0,6,0,0"
+                                   TextWrapping="Wrap"
+                                   Text="Enter envia; seta para cima/baixo percorre o histórico. Comando desconhecido é ignorado pelo MiMo sem aviso. Hora, Clima e Jogos sobrescrevem o que você mandar na mão."/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Button Grid.Row="14" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
                     Click="SaveButton_Click"/>
         </Grid>
     </ScrollViewer>

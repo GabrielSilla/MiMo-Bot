@@ -2114,6 +2114,117 @@ void drawCoffeeNotification(IDisplay& display, const FaceState& state, const Not
                     p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
 }
 
+// Weather alerts. One notification screen serves every condition: the token
+// on the wire is just WEATHER, and which artwork gets drawn comes from
+// FaceState::weatherCondition — the same value the WEATHER command already
+// keeps current for the top-left badge. That keeps the alert and the badge
+// incapable of disagreeing, and means a new condition is a `case` here
+// rather than a new command.
+//
+// MiMo stands to the left of an umbrella with rain falling behind both. The
+// rain is drawn first so the canopy and the eyes paint over it: drops that
+// would fall through the umbrella simply never show, which reads as the
+// umbrella sheltering him without any per-drop collision test.
+constexpr int NOTIF_RAIN_COLUMNS = 18;
+constexpr int NOTIF_RAIN_TOP_Y = 4;
+constexpr int NOTIF_RAIN_BOTTOM_Y = 90;
+constexpr int NOTIF_RAIN_DROP_H = 6;
+constexpr unsigned long NOTIF_RAIN_BASE_FALL_MS = 820;
+constexpr unsigned long NOTIF_RAIN_FALL_SPREAD_MS = 420; // per-column speed variation
+
+void drawRainfall(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    int span = NOTIF_RAIN_BOTTOM_Y - NOTIF_RAIN_TOP_Y;
+    int colSpacing = display.width() / NOTIF_RAIN_COLUMNS;
+    if (colSpacing < 1) {
+        return;
+    }
+
+    for (int i = 0; i < NOTIF_RAIN_COLUMNS; i++) {
+        // Same stateless approach the Matrix rain and the eye glitch use: a
+        // hash of the column index stands in for stored per-drop state, so
+        // every column gets its own x jitter, speed and phase without
+        // Face::render having to remember anything between frames.
+        unsigned long h = glitchHash((unsigned long)i, 3, 11);
+        int x = i * colSpacing + (int)(h % (unsigned long)colSpacing);
+        unsigned long fallMs = NOTIF_RAIN_BASE_FALL_MS + (h % NOTIF_RAIN_FALL_SPREAD_MS);
+        unsigned long t = (nowMs + (h % fallMs)) % fallMs;
+
+        int travel = span + NOTIF_RAIN_DROP_H;
+        int y = NOTIF_RAIN_TOP_Y + (int)((unsigned long)travel * t / fallMs) - NOTIF_RAIN_DROP_H;
+
+        int top = y < NOTIF_RAIN_TOP_Y ? NOTIF_RAIN_TOP_Y : y;
+        int bottom = y + NOTIF_RAIN_DROP_H;
+        if (bottom > NOTIF_RAIN_BOTTOM_Y) {
+            bottom = NOTIF_RAIN_BOTTOM_Y;
+        }
+        if (bottom > top) {
+            display.fillRect(x, top, 1, bottom - top, r, g, b);
+        }
+    }
+}
+
+// The umbrella: a stepped dome, a shaft, and a hooked handle. Built from
+// stacked fillRects like every other shape here rather than a real arc —
+// at this size the steps read as a curve, and it keeps the same
+// composition style as the coffee cup and the eyes.
+constexpr int NOTIF_UMBRELLA_CX = 114;
+constexpr int NOTIF_UMBRELLA_TOP_Y = 28;
+constexpr int NOTIF_UMBRELLA_SHAFT_BOTTOM_Y = 74;
+constexpr int NOTIF_UMBRELLA_ROWS = 7;
+// Half-widths, top row first — doubled when drawn, so the dome stays
+// symmetric about NOTIF_UMBRELLA_CX no matter what these are tuned to.
+constexpr int NOTIF_UMBRELLA_HALF_W[NOTIF_UMBRELLA_ROWS] = {4, 8, 13, 17, 20, 22, 23};
+constexpr int NOTIF_UMBRELLA_ROW_H = 3;
+
+void drawUmbrella(IDisplay& display, uint8_t r, uint8_t g, uint8_t b) {
+    int y = NOTIF_UMBRELLA_TOP_Y;
+    for (int row = 0; row < NOTIF_UMBRELLA_ROWS; row++) {
+        int halfW = NOTIF_UMBRELLA_HALF_W[row];
+        display.fillRect(NOTIF_UMBRELLA_CX - halfW, y, halfW * 2, NOTIF_UMBRELLA_ROW_H, r, g, b);
+        y += NOTIF_UMBRELLA_ROW_H;
+    }
+
+    // Shaft, from just under the canopy down to the handle.
+    int shaftTop = y - NOTIF_UMBRELLA_ROW_H;
+    display.fillRect(NOTIF_UMBRELLA_CX - 1, shaftTop, 2,
+                     NOTIF_UMBRELLA_SHAFT_BOTTOM_Y - shaftTop, r, g, b);
+
+    // Hooked handle: a "J" curling left off the bottom of the shaft.
+    display.fillRect(NOTIF_UMBRELLA_CX - 8, NOTIF_UMBRELLA_SHAFT_BOTTOM_Y - 2, 9, 2, r, g, b);
+    display.fillRect(NOTIF_UMBRELLA_CX - 8, NOTIF_UMBRELLA_SHAFT_BOTTOM_Y - 6, 2, 5, r, g, b);
+}
+
+constexpr int NOTIF_WEATHER_EYE_SIZE = 28;
+constexpr int NOTIF_WEATHER_EYE_GAP = 10;
+constexpr int NOTIF_WEATHER_EYE_Y = 44;
+constexpr int NOTIF_WEATHER_EYES_CENTER_X = 44;
+
+void drawWeatherNotification(IDisplay& display, const FaceState& state,
+                             const NotificationPalette& p, float openFactor) {
+    // Only the wet conditions get the umbrella-and-rain treatment. The rest
+    // have no artwork of their own yet and fall back to MiMo on his own with
+    // the message below — which is the honest thing to show: an umbrella
+    // standing next to a "clear skies" alert would actively contradict it.
+    bool wet = state.weatherCondition == WeatherCondition::RAIN
+            || state.weatherCondition == WeatherCondition::STORM;
+
+    // Rain first, so the canopy and the eyes paint over it.
+    if (wet) {
+        drawRainfall(display, state.nowMs, p.inkR, p.inkG, p.inkB);
+    }
+
+    // Centred when he's alone on screen, pushed left when the umbrella needs
+    // the right-hand side.
+    int eyesCenterX = wet ? NOTIF_WEATHER_EYES_CENTER_X : display.width() / 2;
+    drawNotificationEyes(display, eyesCenterX, NOTIF_WEATHER_EYE_Y,
+                         NOTIF_WEATHER_EYE_SIZE, NOTIF_WEATHER_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+
+    if (wet) {
+        drawUmbrella(display, p.inkR, p.inkG, p.inkB);
+    }
+}
+
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     NotificationPalette p = notificationPalette(state.theme);
     display.clear(p.bgR, p.bgG, p.bgB);
@@ -2124,6 +2235,8 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
         // Ordinary blinking, straight off Personality's own blink clock —
         // no separate animation needed for a face that's simply awake.
         drawCoffeeNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::WEATHER) {
+        drawWeatherNotification(display, state, p, 1.0f - state.blinkAmount);
     } else if (state.expression == Expression::SLEEPY) {
         drawNotificationEyes(display, display.width() / 2, NOTIF_EYE_Y,
                              NOTIF_EYE_SIZE, NOTIF_EYE_GAP,

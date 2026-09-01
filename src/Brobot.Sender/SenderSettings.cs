@@ -32,6 +32,12 @@ public sealed class SenderSettings
     public bool SonsEnabled { get; set; } = true;
     public bool ScanlinesEnabled { get; set; } = true;
 
+    // Whether the hidden "Modo teste" card has been unlocked (see
+    // MainWindow's LogoImage_MouseLeftButtonUp). Persisted so the gesture is
+    // a one-time thing per install rather than something to repeat on every
+    // launch; it stays off for anyone who never performs it.
+    public bool TestModeUnlocked { get; set; }
+
     // MiMo's IP on the local network — this app only ever reaches Core over
     // WiFi (see MainWindow's Conexão card); Brobot.Display.Simulator still
     // supports Serial, but this app doesn't need it.

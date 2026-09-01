@@ -11,7 +11,16 @@
 // enumerator of that name. The wire protocol command is still "FACE ERROR"
 // (see PROTOCOL.md) — Personality::parseExpression is what maps the string
 // to this enumerator, so the two names don't have to match.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE };
+// WEATHER is the odd one out: it names no mood at all, and only ever
+// reaches the notification tier (NOTIFY WEATHER <text>). It exists so a
+// weather alert can pick its own artwork *without* one enumerator per
+// condition — drawNotificationScreen reads FaceState::weatherCondition,
+// which the WEATHER command already keeps current for the badge, so the
+// remaining conditions cost one `case` each rather than a new command and
+// a new enumerator each. Everywhere else it falls through to NEUTRAL's
+// shape and no cue, which is exactly right for something that never
+// renders as a face.
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER };
 
 // Weather pictograms shown in the persistent top-left badge (see WEATHER in
 // PROTOCOL.md). Deliberately small — just enough categories to read clearly

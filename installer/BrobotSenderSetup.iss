@@ -10,7 +10,7 @@
 ; before installing/uninstalling, instead of failing on a locked .exe.
 
 #define MyAppName "MiMo Sender"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "Brobot"
 #define MyAppExeName "Brobot.Sender.exe"
 #define MyPublishDir "publish"

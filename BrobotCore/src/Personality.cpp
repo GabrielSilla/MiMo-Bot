@@ -159,6 +159,7 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "PLAYING") == 0) return Expression::PLAYING;
     if (strcmp(name, "SLEEPY") == 0) return Expression::SLEEPY;
     if (strcmp(name, "COFFEE") == 0) return Expression::COFFEE;
+    if (strcmp(name, "WEATHER") == 0) return Expression::WEATHER;
     return Expression::NEUTRAL;
 }
 
