@@ -228,11 +228,34 @@ A tela **segue a paleta do tema ativo**: teal no `DEFAULT`, verde no
 esse é o único tema cujo fundo não é preto, e cair para preto ali leria como
 a tela ter desligado, não como o MiMo falando.
 
-Por enquanto só o `COFFEE` (Pausa) tem arte própria: a xícara com vapor,
-desenhada no meio da tela com cerca do dobro do tamanho do ícone de canto —
-é a mesma função de desenho, com a geometria parametrizada, e não uma cópia.
-As demais caem num card genérico enquanto não ganham a sua, para uma
-notificação sempre parecer uma notificação em vez de a tela ficar vazia.
+**O rosto do MiMo aparece em todas as notificações.** Uma versão anterior
+dava o frame inteiro para a arte, e quem não tinha ilustração própria caía
+num card genérico — uma moldura vazia que ninguém entendia, porque não
+representava nada. Fazer do rosto a constante e da arte o opcional eliminou
+a necessidade de placeholder.
+
+- **`COFFEE`** (Pausa): olhos pequenos à esquerda, xícara com vapor à
+  direita, mensagem embaixo — a mesma divisão de tela que a expressão
+  `COFFEE` do `DEFAULT` já fazia. A xícara é a mesma função de desenho do
+  ícone de canto, com a geometria parametrizada, e não uma cópia.
+- **`SLEEPY`** (aviso de dormir): aqui os olhos *são* a animação, e por isso
+  esta notificação não precisa de ícone. Ciclo de 3,6s, que roda ~2x dentro
+  dos 7s: as pálpebras caem devagar como quem cochila (curva quadrática —
+  quase paradas no começo, cedendo depois), ficam um instante quase
+  fechadas, **abrem de susto** passando do tamanho normal, e então piscam
+  três vezes rápido antes de recomeçar. Medida a partir de
+  `notificationStartedMs`, e não de `nowMs` solto, para o ciclo sempre
+  começar acordado — de um relógio livre ele poderia abrir no meio da queda,
+  o que lê como falha e não como sono.
+- **Qualquer outra**: o rosto centralizado, piscando no ritmo normal do
+  `Personality`, com a mensagem embaixo.
+
+Toda arte de notificação recebe a **cor de fundo por parâmetro** em vez de
+assumir preto. Isso não é estilo: o truque de "recortar um buraco" usado no
+projeto inteiro pinta o recorte da cor do fundo, e no `MI2MO2` o fundo é a
+chapa clara — assumindo preto, a caneca ganhava dois buracos pretos e cada
+olho, quatro pontinhos escuros nos cantos. Foram dois bugs reais, corrigidos
+uma vez.
 
 `FACE`/`MSG` têm duas prioridades independentes, decididas pelo Core (nunca
 pelo app PC que envia o comando):

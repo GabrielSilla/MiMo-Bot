@@ -164,9 +164,28 @@ NOTIFICATION  >  FOREGROUND (AI)  >  GAME  >  MEDIA
 **Notifications** (`NOTIFY`) are the things MiMo interrupts you *for* —
 Pausa's break reminders, Clima's weather-change alerts, the bedtime nudges.
 They outrank everything including AI activity, take the entire frame (no
-eyes, no badges, no log, no message box — see `FaceState::isNotification`
-and `drawNotificationScreen`), and expire on their own after
-`NOTIFICATION_DURATION_MS` (7s). Nothing is restored afterwards because
+badges, no log, no message box — see `FaceState::isNotification` and
+`drawNotificationScreen`), and expire on their own after
+`NOTIFICATION_DURATION_MS` (7s).
+
+MiMo's **face stays visible in every notification**. An earlier version gave
+the whole frame to the artwork, so a notification with no illustration of
+its own fell back to an empty framed card — unreadable, because it wasn't
+depicting anything. Making the eyes the constant and the artwork the
+optional extra removed the need for a placeholder at all. `COFFEE` puts
+small eyes left and the steaming cup right (the same split CLASSIC's own
+COFFEE expression already makes); `SLEEPY` makes the eyes *be* the
+animation — a 3.6s cycle of lids sagging shut on a squared curve, a beat
+held nearly closed, a startled snap open past normal size, then three quick
+blinks — anchored on `FaceState::notificationStartedMs` rather than raw
+`nowMs` so it always begins awake; everything else just blinks normally.
+Every notification drawing takes the **background color as a parameter**
+rather than assuming black: the "cut a gap" trick this codebase uses
+everywhere fills the cut with the background, and MI2MO2's ground is R2's
+light plate, so assuming black gave the mug two black holes and each eye
+four dark specks at its corners. Two real bugs, fixed once — `drawEye`/
+`fillRoundedRect` now default those parameters to black so no existing
+caller changed. Nothing is restored afterwards because
 nothing was displaced: no lower tier is touched to make room, so the frame
 after expiry just draws what was always underneath. They arrive as one
 atomic line rather than the usual `FACE`+`MSG` pair precisely because they

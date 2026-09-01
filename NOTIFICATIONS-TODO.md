@@ -1,8 +1,10 @@
 # Sistema de notificações — o que falta
 
-Estado em 30/08/2026. O tier de notificação existe e funciona ponta a ponta,
-mas só a Pausa foi migrada para ele e só o `COFFEE` tem tela própria. Este
-arquivo lista o que ficou pendente, em ordem aproximada de importância.
+Estado em 30/08/2026. O tier de notificação funciona ponta a ponta e o rosto
+do MiMo aparece em todas as notificações. Pausa e aviso de dormir já estão
+migrados e têm arte/animação própria; **o Clima ainda não foi migrado**.
+Itens 1, 3 e 4 já foram resolvidos e ficam registrados por causa do que
+ensinaram; o que resta começa no item 2 e no 5.
 
 Contexto de arquitetura: ver `PROTOCOL.md` (comando `NOTIFY`) e o comentário
 de `Personality::Tier` em `BrobotCore/include/Personality.h`.
@@ -16,8 +18,10 @@ de `Personality::Tier` em `BrobotCore/include/Personality.h`.
   `FACE` e um `MSG`.
 - Expira sozinha em 7s (`NOTIFICATION_DURATION_MS`) e o que estava embaixo
   reaparece sem nenhum reenvio, porque nenhum tier inferior é tocado.
-- Tela dedicada: frame inteiro, sem olhos, sem selos, sem log, sem balão.
-  Segue a paleta do tema ativo (`notificationPalette`).
+- Tela dedicada: frame inteiro, sem selos, sem log, sem balão — mas **com o
+  rosto do MiMo sempre visível**. Segue a paleta do tema ativo
+  (`notificationPalette`).
+- `SLEEPY` tem animação própria (cochila, acorda de susto, pisca).
 - `GAME` separado de `MEDIA`, com `FACE IDLE_GAME` / `FACE IDLE_MEDIA`
   (o `FACE IDLE` puro segue limpando os dois, por compatibilidade).
 - Pausa (Sender) migrada para `NOTIFY COFFEE`.
@@ -28,34 +32,22 @@ Verificado com 11/11 checagens no protocolo cru contra o Core nativo, e
 
 ---
 
-## 1. Bug: vazados da xícara ficam pretos no Mi2-Mo2
+## 1. ~~Vazados pretos em fundo claro~~ (resolvido)
 
-**Confirmado por leitura do protocolo, não corrigido.**
+Era mais fundo do que parecia. `drawCoffeeCupAt` pintava os recortes com
+`BG_R/G/B` (preto), o que quebrava no Mi2-Mo2, cujo fundo é a chapa clara do
+R2 — a caneca saía com dois buracos pretos. Corrigido passando a cor de
+fundo como parâmetro.
 
-`drawCoffeeCupAt` pinta os recortes (interior da caneca e o vão da alça) com
-`BG_R/G/B`, ou seja, preto — o truque de "recortar um buraco" usado no
-projeto inteiro assume fundo preto. O Mi2-Mo2 é o único tema cujo fundo não
-é preto: a notificação lá limpa para a chapa clara do R2 (`226 227 231`), e
-os recortes saem como dois buracos pretos no meio da xícara em vez de uma
-caneca aberta.
+Ao colocar o rosto em todas as notificações, **a mesma classe de bug
+apareceu um nível abaixo**: `fillRoundedRect` recortava os cantos dos olhos
+também em preto, deixando quatro pontinhos escuros por olho sobre a chapa.
+Só surgiu agora porque o Mi2-Mo2 nunca tinha desenhado olhos gêmeos — ele
+desenha uma lente. Corrigido do mesmo jeito, com `BG_*` como valor padrão
+para todos os chamadores existentes não mudarem.
 
-Frame real capturado:
-
-```
-CLR 226 227 231
-FILLRECT 56 38 40 30 26 42 96     <- corpo da xicara, navy
-FILLRECT 58 41 36 26 0 0 0        <- interior: PRETO, deveria ser a chapa
-FILLRECT 97 43 6 12 0 0 0         <- vao da alca: idem
-```
-
-**Correção:** dar a `drawCoffeeCupAt` parâmetros de cor de fundo e passar
-`p.bgR/G/B` a partir de `drawCoffeeNotification`; o chamador do ícone de
-canto continua passando `BG_R/G/B`. São ~4 linhas. Foi escrita e revertida
-por não ter sido compilada/testada — não commitar sem build.
-
-Vale checar se o mesmo padrão aparece em qualquer arte futura de
-notificação: **toda arte nova precisa receber a cor de fundo, não assumir
-preto.**
+**Regra que fica:** qualquer arte nova de notificação recebe a cor de fundo
+por parâmetro. Não assuma preto.
 
 ## 2. Clima ainda não foi migrado
 
@@ -70,29 +62,49 @@ ou se escolhe uma existente por condição, ou o `NOTIFY` passa a aceitar um
 token de clima. Ao migrar, dá para remover o comentário do `FACE NEUTRAL`
 que só existia para forçar o roteamento de tier.
 
-## 3. Só o COFFEE tem arte; o resto cai no card genérico
+Enquanto não migra, o alerta de clima aparece como mensagem normal — com
+rosto, mas sem prioridade e sem os 7s.
 
-`drawNotificationScreen` despacha por expressão e tudo que não é `COFFEE`
-usa `drawGenericNotification` — uma moldura arredondada vazia. Falta arte
-para:
+## 3. ~~Card genérico ininteligível~~ (resolvido)
 
-- **`SLEEPY`** (bedtime) — é a mais visível hoje, porque o Core já dispara
-  esse nudge sozinho a cada 30 min durante a madrugada.
-- **Clima**, depois do item 2 — provavelmente reaproveitando os pictogramas
-  que `drawWeatherBadge` já desenha, em escala maior.
+O fallback era uma moldura arredondada vazia, que não representava nada e
+por isso não se entendia o que era. Foi removido inteiro. Agora **o rosto do
+MiMo aparece em toda notificação** e a arte extra é o opcional, não o
+contrário — então uma notificação sem ilustração própria mostra o MiMo
+piscando com a mensagem embaixo, que já se explica sozinho.
 
-## 4. O bedtime deslocou o painel `SYSTEM NOTICE` do MiMo-84
+Estado por expressão:
 
-Efeito colateral real da migração, notado no teste. O MiMo-84 tem um painel
-próprio de sono (`drawMi84SleepNotice`: `SYSTEM NOTICE` / `HUMAN ACTIVITY:
-LOW` / frase / prompt `>Z..Z..Z...`) que renderiza quando `SLEEPY` é a
-expressão. Como o nudge agora sobe como notificação, durante os 7s de cada
-nudge o que aparece é o **card genérico**, e o painel do tema só volta entre
-um nudge e outro.
+- **`COFFEE`** — olhos pequenos à esquerda, xícara com vapor à direita,
+  mensagem embaixo. Mesma divisão de tela que a expressão COFFEE do CLASSIC
+  já usava.
+- **`SLEEPY`** — os olhos *são* a animação (ver item 4).
+- **Qualquer outra** — rosto centralizado piscando normalmente.
 
-Decidir qual dos dois deve mandar. Opções: dar ao `SLEEPY` uma arte de
-notificação por tema (o painel viraria a arte no MiMo-84), ou deixar o
-bedtime fora do tier de notificação e voltá-lo ao comportamento anterior.
+Falta arte dedicada só para o clima, junto do item 2 — provavelmente
+reaproveitando os pictogramas que `drawWeatherBadge` já desenha, em escala
+maior, ao lado do rosto.
+
+## 4. ~~Bedtime sem animação própria~~ (resolvido)
+
+O nudge de sono agora tem animação própria, em ciclo de 3,6s que roda ~2x
+dentro dos 7s: os olhos **caem devagar** como quem cochila (curva quadrática,
+quase parados no começo e depois cedendo), ficam ~300ms quase fechados,
+**abrem de susto** ultrapassando o tamanho normal, e então **piscam três
+vezes** rápido antes de recomeçar.
+
+Ancorada em `FaceState::notificationStartedMs`, não em `nowMs` solto, para o
+ciclo sempre começar acordado — de um relógio livre ele poderia abrir no
+meio da queda, o que lê como falha e não como sono.
+
+Medido no protocolo: altura do olho 39 → 4 px na queda, salto para 44 px no
+susto (repouso é 39), e as três piscadas fechando em 14, 4 e 13 px.
+
+**Continua em aberto:** o painel `SYSTEM NOTICE` do MiMo-84
+(`drawMi84SleepNotice`) segue existindo para quando `SLEEPY` é a expressão
+*fora* de uma notificação. Durante os 7s do nudge quem manda é a animação.
+Decidir se o painel do tema deveria ser a arte do MiMo-84 nessa notificação,
+em vez dos olhos genéricos.
 
 ## 5. Notificação não faz som
 

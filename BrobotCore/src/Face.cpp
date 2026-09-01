@@ -358,7 +358,15 @@ constexpr int MIN_EYE_HEIGHT = 2;
 // staircase from each corner. IDisplay only offers a rounded-rect *outline*,
 // not a filled one, so this composes what's already there instead of adding
 // a new primitive just for this.
-void fillRoundedRect(IDisplay& display, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) {
+// bgR/G/B is what the corner staircase is cut with. Defaulted to black
+// because that is the ground in every theme but MI2MO2, whose notification
+// screen draws on R2's light plate — there the cut has to be the plate, or
+// each eye picks up four dark specks at its corners instead of looking
+// rounded. Same class of bug as the coffee cup's punch-outs, one level
+// down, and it only surfaced once notifications put twin eyes on a light
+// ground for the first time.
+void fillRoundedRect(IDisplay& display, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b,
+                     uint8_t bgR = BG_R, uint8_t bgG = BG_G, uint8_t bgB = BG_B) {
     display.fillRect(x, y, w, h, r, g, b);
 
     if (h < CORNER_MIN_SIZE || w < CORNER_MIN_SIZE) {
@@ -367,10 +375,10 @@ void fillRoundedRect(IDisplay& display, int x, int y, int w, int h, uint8_t r, u
 
     for (int row = 0; row < CORNER_ROWS; row++) {
         int cut = CORNER_CUT_WIDTH[row];
-        display.fillRect(x, y + row, cut, 1, BG_R, BG_G, BG_B);                   // top-left
-        display.fillRect(x + w - cut, y + row, cut, 1, BG_R, BG_G, BG_B);         // top-right
-        display.fillRect(x, y + h - 1 - row, cut, 1, BG_R, BG_G, BG_B);           // bottom-left
-        display.fillRect(x + w - cut, y + h - 1 - row, cut, 1, BG_R, BG_G, BG_B); // bottom-right
+        display.fillRect(x, y + row, cut, 1, bgR, bgG, bgB);                   // top-left
+        display.fillRect(x + w - cut, y + row, cut, 1, bgR, bgG, bgB);         // top-right
+        display.fillRect(x, y + h - 1 - row, cut, 1, bgR, bgG, bgB);           // bottom-left
+        display.fillRect(x + w - cut, y + h - 1 - row, cut, 1, bgR, bgG, bgB); // bottom-right
     }
 }
 
@@ -549,8 +557,9 @@ void drawWrappedMessageMi2Mo2(IDisplay& display, const char* message,
     }
 }
 
-void drawEye(IDisplay& display, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) {
-    fillRoundedRect(display, x, y, w, h, r, g, b);
+void drawEye(IDisplay& display, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b,
+             uint8_t bgR = BG_R, uint8_t bgG = BG_G, uint8_t bgB = BG_B) {
+    fillRoundedRect(display, x, y, w, h, r, g, b, bgR, bgG, bgB);
 }
 
 // MI2MO2's eye shape: a plain filled ellipse (a circle whenever w == h,
@@ -878,8 +887,15 @@ constexpr int COFFEE_STEAM_RISE_PX = 18;
 // in-frame icon is unchanged. Proportions that read as "a mug" — the rim
 // inset, the handle, the wisp spacing — scale off the passed width/height
 // instead of being fixed pixel counts.
+// bgR/G/B is the color the hollow punch-outs are filled with. It's a
+// parameter rather than BG_R/G/B because MI2MO2 doesn't draw on black: its
+// ground is R2's off-white plate, and punching the mug's interior and the
+// handle's gap in black there left two black holes in the cup instead of an
+// open mug. A real bug, fixed once. Every other theme passes the black it
+// already had.
 void drawCoffeeCupAt(IDisplay& display, unsigned long nowMs, int cupX, int cupY, int cupW, int cupH,
-                     int steamRisePx, uint8_t r, uint8_t g, uint8_t b) {
+                     int steamRisePx, uint8_t r, uint8_t g, uint8_t b,
+                     uint8_t bgR, uint8_t bgG, uint8_t bgB) {
     int wall = (cupW >= 32) ? 4 : 2;        // rim/wall thickness
     int saucerH = (cupH >= 28) ? 3 : 2;
     int handleW = (cupW >= 32) ? 7 : 4;
@@ -889,11 +905,11 @@ void drawCoffeeCupAt(IDisplay& display, unsigned long nowMs, int cupX, int cupY,
     // mug rather than a solid block.
     display.fillRect(cupX - wall, cupY + cupH, cupW + 2 * wall, saucerH, r, g, b);
     display.fillRect(cupX, cupY, cupW, cupH, r, g, b);
-    display.fillRect(cupX + wall / 2, cupY + wall - 1, cupW - wall, cupH - wall, BG_R, BG_G, BG_B);
+    display.fillRect(cupX + wall / 2, cupY + wall - 1, cupW - wall, cupH - wall, bgR, bgG, bgB);
 
     // Handle: a hooked stub on the cup's right edge.
     display.fillRect(cupX + cupW, cupY + wall - 1, handleW, handleH, r, g, b);
-    display.fillRect(cupX + cupW + 1, cupY + wall + 1, handleW - 1, handleH - 4, BG_R, BG_G, BG_B);
+    display.fillRect(cupX + cupW + 1, cupY + wall + 1, handleW - 1, handleH - 4, bgR, bgG, bgB);
 
     // Three wisps, evenly staggered in phase so they never all rise/fade in
     // lockstep, each drifting up and gently side to side as it climbs.
@@ -913,7 +929,7 @@ void drawCoffeeCupAt(IDisplay& display, unsigned long nowMs, int cupX, int cupY,
 
 void drawCoffeeCup(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
     drawCoffeeCupAt(display, nowMs, COFFEE_CUP_X, COFFEE_CUP_Y, COFFEE_CUP_WIDTH, COFFEE_CUP_HEIGHT,
-                    COFFEE_STEAM_RISE_PX, r, g, b);
+                    COFFEE_STEAM_RISE_PX, r, g, b, BG_R, BG_G, BG_B);
 }
 
 
@@ -1881,7 +1897,7 @@ NotificationPalette notificationPalette(Theme theme) {
 }
 
 constexpr int NOTIFICATION_TEXT_LINES = 3;
-constexpr int NOTIFICATION_TEXT_TOP_Y = 82;
+constexpr int NOTIFICATION_TEXT_TOP_Y = 95; // bottom third; the face owns everything above
 constexpr int NOTIFICATION_TEXT_MAX_CHARS = 26; // 160px / CHAR_ADVANCE_PX
 
 // Greedy word-wrap, centered per line. Centering is what makes this its own
@@ -1934,43 +1950,132 @@ void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_
     }
 }
 
-// Pausa's break reminder, at roughly double the corner icon's size and
-// centered — the cup is the whole point of the screen here, rather than a
-// small marker beside a face. Its handle sticks out to the right, so the
-// body is offset left by half that to keep the silhouette centered.
-constexpr int NOTIF_COFFEE_CUP_W = 40;
-constexpr int NOTIF_COFFEE_CUP_H = 30;
-constexpr int NOTIF_COFFEE_CUP_Y = 38;
-constexpr int NOTIF_COFFEE_HANDLE_W = 7;
-constexpr int NOTIF_COFFEE_STEAM_RISE_PX = 28;
+// MiMo's face stays on screen for *every* notification. An earlier version
+// gave the whole frame to the artwork, which meant a notification with no
+// dedicated illustration of its own fell back to an empty framed card —
+// unreadable, because it wasn't meant to depict anything. Making the eyes
+// the constant and the artwork the optional extra removed the need for a
+// placeholder at all.
+constexpr int NOTIF_EYE_SIZE = 40;
+constexpr int NOTIF_EYE_GAP = 16;
+constexpr int NOTIF_EYE_Y = 30;
 
-void drawCoffeeNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p) {
-    int cupX = (display.width() - (NOTIF_COFFEE_CUP_W + NOTIF_COFFEE_HANDLE_W)) / 2;
-    drawCoffeeCupAt(display, state.nowMs, cupX, NOTIF_COFFEE_CUP_Y,
-                    NOTIF_COFFEE_CUP_W, NOTIF_COFFEE_CUP_H, NOTIF_COFFEE_STEAM_RISE_PX,
-                    p.inkR, p.inkG, p.inkB);
+void drawNotificationEyes(IDisplay& display, int centerX, int topY, int size, int gap,
+                          float openFactor, uint8_t r, uint8_t g, uint8_t b,
+                          uint8_t bgR, uint8_t bgG, uint8_t bgB) {
+    int h = (int)(size * openFactor);
+    if (h < MIN_EYE_HEIGHT) {
+        h = MIN_EYE_HEIGHT;
+    }
+    int totalWidth = size * 2 + gap;
+    int leftX = centerX - totalWidth / 2;
+    // Grows and shrinks about its own middle, so a blink closes toward the
+    // centre line instead of sliding the eye up the screen.
+    int top = topY + (size - h) / 2;
+    drawEye(display, leftX, top, size, h, r, g, b, bgR, bgG, bgB);
+    drawEye(display, leftX + size + gap, top, size, h, r, g, b, bgR, bgG, bgB);
 }
 
-// The fallback artwork, used by any notification whose expression has no
-// dedicated screen of its own yet (today: everything except COFFEE). A
-// plain framed card, so a notification always reads as a notification even
-// before its own illustration exists — rather than the screen going blank.
-void drawGenericNotification(IDisplay& display, const NotificationPalette& p) {
-    int w = 96, h = 34;
-    int x = (display.width() - w) / 2;
-    int y = 34;
-    display.drawRoundedRect(x, y, w, h, 4, p.inkR, p.inkG, p.inkB);
-    display.drawRoundedRect(x + 3, y + 3, w - 6, h - 6, 3, p.inkR, p.inkG, p.inkB);
+// SLEEPY's animation, and the reason this notification needs no icon: the
+// eyes *are* the message. They sag slowly shut as if nodding off, hang
+// nearly closed for a moment, snap wide open with a start, and then blink
+// three times quickly before it all begins again.
+//
+// Measured from FaceState::notificationStartedMs rather than raw nowMs so
+// the cycle always begins at "wide awake" when the notification appears —
+// off a free-running clock it could open mid-droop, which reads as a
+// glitch rather than as falling asleep.
+constexpr unsigned long SLEEPY_NOTIF_CYCLE_MS = 3600;
+constexpr unsigned long SLEEPY_NOTIF_DROOP_END_MS = 1800; // lids sagging shut
+constexpr unsigned long SLEEPY_NOTIF_NOD_END_MS = 2100;   // held nearly closed
+constexpr unsigned long SLEEPY_NOTIF_SNAP_END_MS = 2200;  // startled awake
+constexpr float SLEEPY_NOTIF_NEARLY_SHUT = 0.12f;
+constexpr float SLEEPY_NOTIF_STARTLED_OPEN = 1.25f; // overshoots past normal, eyes wide
+constexpr float SLEEPY_NOTIF_ALERT_OPEN = 1.10f;    // still a little wide from the fright
+// Three quick blinks after the start, as {from, to} windows inside the cycle.
+constexpr int SLEEPY_NOTIF_BLINK_COUNT = 3;
+constexpr unsigned long SLEEPY_NOTIF_BLINKS[SLEEPY_NOTIF_BLINK_COUNT][2] = {
+    {2380, 2540}, {2700, 2860}, {3020, 3180},
+};
+
+float sleepyNotificationOpen(unsigned long sinceStartMs) {
+    unsigned long t = sinceStartMs % SLEEPY_NOTIF_CYCLE_MS;
+
+    if (t < SLEEPY_NOTIF_DROOP_END_MS) {
+        // Squared rather than linear: the lids barely move at first and then
+        // give way, which is what dozing off actually looks like.
+        float k = (float)t / (float)SLEEPY_NOTIF_DROOP_END_MS;
+        return 1.0f - (k * k) * (1.0f - SLEEPY_NOTIF_NEARLY_SHUT);
+    }
+    if (t < SLEEPY_NOTIF_NOD_END_MS) {
+        return SLEEPY_NOTIF_NEARLY_SHUT;
+    }
+    if (t < SLEEPY_NOTIF_SNAP_END_MS) {
+        float k = (float)(t - SLEEPY_NOTIF_NOD_END_MS)
+                / (float)(SLEEPY_NOTIF_SNAP_END_MS - SLEEPY_NOTIF_NOD_END_MS);
+        return SLEEPY_NOTIF_NEARLY_SHUT + k * (SLEEPY_NOTIF_STARTLED_OPEN - SLEEPY_NOTIF_NEARLY_SHUT);
+    }
+
+    for (int i = 0; i < SLEEPY_NOTIF_BLINK_COUNT; i++) {
+        unsigned long from = SLEEPY_NOTIF_BLINKS[i][0];
+        unsigned long to = SLEEPY_NOTIF_BLINKS[i][1];
+        if (t >= from && t < to) {
+            // Shut and open again inside the window: 1 -> 0 -> 1.
+            float k = (float)(t - from) / (float)(to - from);
+            float triangle = 1.0f - 2.0f * ((k < 0.5f) ? k : (1.0f - k));
+            return 0.08f + triangle * 0.92f;
+        }
+    }
+    return SLEEPY_NOTIF_ALERT_OPEN;
+}
+
+// Pausa's break reminder: eyes pinned left, cup on the right. Same division
+// of the frame CLASSIC's own COFFEE expression already makes (see
+// COFFEE_EYES_X), just at notification scale — it's a layout that was
+// already proven to read well with a cup beside a face.
+constexpr int NOTIF_COFFEE_EYE_SIZE = 28;
+constexpr int NOTIF_COFFEE_EYE_GAP = 10;
+constexpr int NOTIF_COFFEE_EYE_Y = 40;
+constexpr int NOTIF_COFFEE_EYES_CENTER_X = 46;
+constexpr int NOTIF_COFFEE_CUP_X = 96;
+constexpr int NOTIF_COFFEE_CUP_W = 36;
+constexpr int NOTIF_COFFEE_CUP_H = 28;
+constexpr int NOTIF_COFFEE_CUP_Y = 40;
+constexpr int NOTIF_COFFEE_STEAM_RISE_PX = 26;
+
+void drawCoffeeNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                            float openFactor) {
+    drawNotificationEyes(display, NOTIF_COFFEE_EYES_CENTER_X, NOTIF_COFFEE_EYE_Y,
+                         NOTIF_COFFEE_EYE_SIZE, NOTIF_COFFEE_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+    drawCoffeeCupAt(display, state.nowMs, NOTIF_COFFEE_CUP_X, NOTIF_COFFEE_CUP_Y,
+                    NOTIF_COFFEE_CUP_W, NOTIF_COFFEE_CUP_H, NOTIF_COFFEE_STEAM_RISE_PX,
+                    p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
 }
 
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     NotificationPalette p = notificationPalette(state.theme);
     display.clear(p.bgR, p.bgG, p.bgB);
 
+    unsigned long sinceStart = state.nowMs - state.notificationStartedMs;
+
     if (state.expression == Expression::COFFEE) {
-        drawCoffeeNotification(display, state, p);
+        // Ordinary blinking, straight off Personality's own blink clock —
+        // no separate animation needed for a face that's simply awake.
+        drawCoffeeNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::SLEEPY) {
+        drawNotificationEyes(display, display.width() / 2, NOTIF_EYE_Y,
+                             NOTIF_EYE_SIZE, NOTIF_EYE_GAP,
+                             sleepyNotificationOpen(sinceStart),
+                             p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
     } else {
-        drawGenericNotification(display, p);
+        // Any notification without artwork of its own: just MiMo, blinking,
+        // with the message below. There is deliberately no placeholder
+        // graphic — an empty frame said nothing and only raised the
+        // question of what it was supposed to be.
+        drawNotificationEyes(display, display.width() / 2, NOTIF_EYE_Y,
+                             NOTIF_EYE_SIZE, NOTIF_EYE_GAP, 1.0f - state.blinkAmount,
+                             p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
     }
 
     drawNotificationText(display, state.message, p.textR, p.textG, p.textB);
