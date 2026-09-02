@@ -20,7 +20,7 @@
 // a new enumerator each. Everywhere else it falls through to NEUTRAL's
 // shape and no cue, which is exactly right for something that never
 // renders as a face.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER };
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE };
 
 // Weather pictograms shown in the persistent top-left badge (see WEATHER in
 // PROTOCOL.md). Deliberately small — just enough categories to read clearly

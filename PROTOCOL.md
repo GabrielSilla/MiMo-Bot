@@ -15,7 +15,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 
 | Comando        | Descrição                                              |
 |----------------|----------------------------------------------------------|
-| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `IDLE` |
+| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `BYE`, `IDLE` |
 | `MSG <texto>`  | Define o texto exibido abaixo dos olhos (resto da linha). `MSG` sem texto limpa a mensagem. |
 | `WEATHER <tempC> <condicao>` | Selo persistente de clima (canto superior esquerdo). `tempC` é inteiro (pode ser negativo). Condições: `CLEAR`, `CLOUDY`, `RAIN`, `STORM`, `SNOW`, `FOG`. `WEATHER` sem argumentos limpa o selo. |
 | `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. |
@@ -106,6 +106,36 @@ funcionava.
 O olhar em volta também é diferente: em vez de deslocar o olho, desliza o ponto branco de reflexo pela lente — numa lente preta lisa, o reflexo é a única coisa capaz de mostrar que ela girou. A diagonal superior-esquerda é excluída do sorteio de direções neste tema (é a única cujo deslocamento levaria o reflexo pra fora do vidro). Selos de clima/hora ficam azul-marinho (o fundo claro apaga as cores dos outros temas) e os ícones de canto (música/vídeo/livro/jogos/café/"Z Z Z") ficam vermelhos como a bolinha. O balão de mensagem continua cinza escuro com texto branco, igual ao `DEFAULT`.
 
 Referência ao R2D2 no texto: cada caractere da mensagem, assim que revelado pelo efeito de digitação normal, aparece por um instante em **Aurebesh vermelho** antes de virar a **fonte latina branca** — fonte e cor trocam juntas, no relógio individual de cada caractere, então a frase mostra uma "frente de decodificação" atravessando a linha, com o começo já resolvido em branco e o fim ainda alienígena em vermelho. Funciona tanto no Brobot Virtual Display/build nativo (fonte bitmap própria, `AurebeshFont.cs`) quanto no firmware físico (ST7735, `GFXfont` própria, `AurebeshGFXFont.h`) — cobre só `A-Z`/`0-9` nos dois lados; qualquer outro caractere (espaço, pontuação, minúsculas/acentos) sempre desenha na fonte latina, mesmo que `AUREBESH` seja pedido.
+
+**`FACE BYE`**: a despedida, e a única expressão em que o MiMo tem **mão**.
+Uma mão só, à esquerda, com o rosto ao lado dela: dois dedos erguidos em V,
+a palma e o polegar apontando para dentro.
+
+Cada peça da mão é um quadrilátero dado pelos quatro cantos, e o aceno é uma
+**rotação de verdade em torno do pulso** — os cantos são transformados e o
+quadrilátero resultante é preenchido por scanline (achando onde cada linha
+cruza as arestas). A primeira versão usava cisalhamento, deslocando cada
+linha em proporção à altura, e o resultado *tomba* em vez de girar: a linha
+do pulso fica parada, o que nesse tamanho lê claramente como o movimento
+errado. Custa 16 pontos transformados por frame e nada por pixel.
+
+Duas coisas que o giro exige e que a versão parada não exigia. A mão girando
+varre uma caixa bem maior — os cantos chegam a ~26px de um lado e ~29px do
+outro do pulso — então o pivô precisa dessa distância tanto da borda quanto
+do rosto. E o `BYE` entra na lista de "ficar parado" do `Personality`: com os
+olhos fixados ao lado da mão, o look-around os empurraria contra ela, o mesmo
+motivo pelo qual o `COFFEE` já está nessa lista.
+
+Como essa lista também zera a piscada normal, o `BYE` desenha **uma piscada
+própria**, 1,4s após começar, ancorada em `FaceState::expressionStartedMs` —
+um rosto de olhar fixo durante a despedida inteira lê como travado.
+
+Lado e tamanho são aplicados na transformação (`BYE_HAND_FLIP_X`,
+`BYE_HAND_SCALE`), não na tabela de cantos: os quads continuam legíveis como
+a mão que saiu da referência, e ajustar vira dois números em vez de dezesseis
+coordenadas. A mão sai **na cor que o tema dá aos olhos**. No `MATRIX` e no
+`MI84` a expressão cede a área de conteúdo do tema, igual ao `COFFEE`, porque
+o log é desenhado por último e imprimiria por cima da mão.
 
 **`THEME MI84`**: um terminal CRT âmbar de 1984 — preto e uma única cor de
 tinta (âmbar `255,176,0`, mais um âmbar escuro só para o "cromo": réguas,
@@ -251,17 +281,50 @@ a necessidade de placeholder.
   **O token no fio é só `WEATHER`**: qual arte aparece vem da
   `WeatherCondition` que o comando `WEATHER` já guardou para o selo. Isso
   impede o alerta e o selo de discordarem, e faz cada condição nova custar
-  um `case`, não um comando e uma expressão novos. Hoje só `RAIN` e `STORM`
-  têm arte; as outras mostram o MiMo sozinho e centralizado, porque um
-  guarda-chuva ao lado de um alerta de tempo bom contradiria o próprio
-  aviso. **`CLEAR`** tem a sua: um solzinho girando no canto superior
-  direito — disco redondo montado em linhas (mesmo estilo do domo do
-  guarda-chuva, espelhado nos dois eixos) e 8 raios de 3 blocos cada,
-  posicionados por ângulo e girando uma volta a cada 6s. Só `sin` é usado,
-  com o cosseno tirado de `sin(t + pi/2)`: o shim de `Arduino.h` do build
-  nativo não liga `<math.h>`, o `sin` chega lá por inclusão transitiva e
-  não vale apostar no `cos`. **Ordem importa:** o app do PC precisa mandar o `WEATHER` antes do
-  `NOTIFY WEATHER`, senão o alerta é ilustrado com a condição anterior.
+  um `case`, não um comando e uma expressão novos. Um guarda-chuva ao lado de
+  um alerta de tempo bom contradiria o próprio aviso, então cada condição traz
+  a sua cena:
+  - **`RAIN`**: o MiMo ao lado de um guarda-chuva, com chuva caindo atrás dos
+    dois. As gotas são desenhadas antes da copa e dos olhos, então as que
+    cairiam sobre o guarda-chuva são simplesmente pintadas por cima — lê como
+    abrigo, sem nenhum teste de colisão por gota.
+  - **`STORM`**: o `RAIN` mais um raio e o clarão. O clarão **inverte a
+    paleta** por alguns frames — o fundo vira a cor do tema e tudo o que
+    estava desenhado vira a cor do fundo — em vez de pintar um retângulo
+    claro por cima, que esconderia a cena inteira. Como toda a arte já recebe
+    fundo e tinta por parâmetro, uma troca silhueta chuva, guarda-chuva,
+    olhos e mensagem de uma vez. São dois piscos por ciclo de 2,6s, porque
+    relâmpago tremula em vez de dar um pulso só. O raio fica inteiro **acima
+    dos olhos**: estar "atrás" não vale nada quando os dois são da mesma cor,
+    e sobrepondo ele fundia com o olho.
+  - **`CLEAR`**: um solzinho girando no canto superior direito — disco redondo
+    montado em linhas (mesmo estilo do domo do guarda-chuva, espelhado nos
+    dois eixos) e 8 raios de 2 blocos cada, posicionados por ângulo e girando
+    uma volta a cada 6s. Só `sin` é usado, com o cosseno tirado de
+    `sin(t + pi/2)`: o shim de `Arduino.h` do build nativo não liga
+    `<math.h>`, o `sin` chega lá por inclusão transitiva e não vale apostar
+    no `cos`.
+  - **`CLOUDY`**: duas nuvens compridas à deriva acima do rosto, cada uma com
+    base reta e três calombos no topo, em alturas e velocidades diferentes
+    (8-12s para atravessar) e uma delas espelhada. A base reta é o detalhe que
+    faz a forma ler como nuvem em vez de mancha. Deliberadamente **não** é uma
+    nuvem passando na frente do sol: as duas seriam da cor da tinta, então a
+    nuvem não cobriria o sol, ela se fundiria com ele.
+  - **`FOG`**: faixas horizontais à deriva em **duas passadas** — metade em
+    tinta, atrás do MiMo, para algo visivelmente passar; metade na cor do
+    fundo, na frente dele, para ele ser comido e voltar. Nenhuma funciona
+    sozinha: só tinta lê como listras na tela, só fundo lê como falha de
+    renderização. As da frente são mais finas que as de trás (2-3px contra
+    3-6px); iguais, elas levavam três quartos do MiMo junto. Bem lenta de
+    propósito — 15 a 25s para atravessar, o efeito mais lento do projeto.
+  - **`SNOW`** não tem arte e fica no fallback do MiMo sozinho e
+    centralizado, por decisão: no Brasil não neva.
+
+  O quanto o MiMo desloca para a esquerda depende do que a cena ocupa: o
+  guarda-chuva pede uma coluna inteira, o sol só o canto, e névoa/nuvens
+  nenhum deslocamento. **Ordem importa:** o app do PC precisa mandar o
+  `WEATHER` antes do `NOTIFY WEATHER`, senão o alerta é ilustrado com a
+  condição anterior.
 - **`SLEEPY`** (aviso de dormir): aqui os olhos *são* a animação, e por isso
   esta notificação não precisa de ícone. Ciclo de 3,6s, que roda ~2x dentro
   dos 10s: as pálpebras caem devagar como quem cochila (curva quadrática —

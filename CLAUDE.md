@@ -129,7 +129,7 @@ way. Control commands flow PC→Core, draw commands flow Core→PC (only when
 `vscreen=1`, or always in the native build):
 
 ```
-FACE <NEUTRAL|HAPPY|SAD|ANGRY|SLEEPING|SLEEPY|COFFEE|MUSIC|WATCHING|ERROR|READING|FINISHED|THINKING|PLAYING|IDLE|IDLE_GAME|IDLE_MEDIA>
+FACE <NEUTRAL|HAPPY|SAD|ANGRY|SLEEPING|SLEEPY|COFFEE|MUSIC|WATCHING|ERROR|READING|FINISHED|THINKING|PLAYING|BYE|IDLE|IDLE_GAME|IDLE_MEDIA>
 MSG <text>                    (empty text clears the message)
 WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears the badge)
 TIME <HH:MM>                  (empty clears the clock)
@@ -190,7 +190,14 @@ with no per-drop collision test. Its wire token is just `WEATHER`: the
 artwork is chosen from `FaceState::weatherCondition`, which the `WEATHER`
 command already keeps current for the badge, so the alert and the badge
 cannot disagree and each further condition costs one `case` rather than a
-command and an enumerator of its own (RAIN/STORM get the umbrella; CLEAR gets a
+command and an enumerator of its own (RAIN gets the umbrella; STORM adds a bolt
+and a full-frame flash done by *swapping* the palette's ink and background
+for a few frames, which silhouettes the whole scene at once instead of hiding
+it under a bright rectangle; FOG drifts horizontal bands in two passes, ink
+ones behind him and thinner background ones in front so he is eaten into and
+comes back; CLOUDY drifts two flat-bottomed clouds above him — deliberately
+not a cloud crossing the sun, since both are ink and would fuse rather than
+occlude; SNOW has none, by decision. CLEAR gets a
 sun turning in the top-right corner — a stepped disc plus 8 three-block
 rays placed by angle, one turn every 6s, using only `sin` with the cosine
 taken as `sin(t + pi/2)` since the native build's `Arduino.h` shim never
@@ -378,7 +385,15 @@ builds never see it.
   bandwidth down). Eye size/position stay constant whether or not a message is
   showing. Most expressions (HAPPY/SAD/ANGRY/SLEEPING/SLEEPY) just tweak eye height/gap/offset,
   but a few replace the eye shape outright using the same "compose it from small
-  `fillRect` blocks" trick: **FAILED** draws an X (`drawEyeX` — step half the block
+  `fillRect` blocks" trick: **HAPPY** and **FINISHED** both draw a "^" caret
+  per eye (`drawEyeCaret`) — HAPPY used to be a plain rectangle at 55% height,
+  which put it on the same "how shut is the eye" scale as SLEEPY (0.75) and
+  SLEEPING (0.20) and so read as drowsy rather than as an emotion; a caret's
+  apex sits at the top with the strokes falling away, which is what a smiling
+  eye does when the cheek pushes the lower lid up. The two share the shape and
+  are told apart by motion: HAPPY bounces gently, FINISHED holds still.
+  **BYE** is the one expression where MiMo has a hand, waving by real
+  rotation about the wrist (see PROTOCOL.md). **FAILED** draws an X (`drawEyeX` — step half the block
   size, or the two diagonal strokes leave a gap exactly where they cross in the
   middle), **FINISHED** draws a "^" caret per eye (`drawEyeCaret`, self-centered in
   the eye box, since a squint alone reads as closed/sleepy rather than happy), and

@@ -65,9 +65,16 @@ expressão nova (`Expression::WEATHER`) em vez de seis, e o alerta não tem
 como discordar do selo. **A ordem de envio virou parte do contrato:**
 `WEATHER` antes do `NOTIFY WEATHER`, senão a arte usa a condição anterior.
 
-`CLEAR` ganhou a sua: um sol girando no canto superior direito. Falta arte
-para `CLOUDY`, `SNOW` e `FOG` — hoje elas mostram o MiMo sozinho e
-centralizado. Cada uma é um `case` em `drawWeatherNotification`.
+Todas as condições relevantes têm arte agora: `CLEAR` (sol girando),
+`CLOUDY` (nuvens à deriva), `RAIN` (guarda-chuva e chuva), `STORM` (chuva mais
+raio e clarão por inversão de paleta) e `FOG` (faixas em duas passadas). Só
+`SNOW` fica no fallback, por decisão: no Brasil não neva.
+
+**A lição que se repetiu três vezes:** duas formas da mesma cor não se
+sobrepõem, elas se fundem. Aconteceu com o raio sobre os olhos, com a ideia
+de nuvem cobrindo o sol, e com a mão espelhada do `BYE`. Sempre que uma cena
+nova tiver duas peças que precisam ler como separadas, ou elas não se tocam,
+ou uma delas precisa de um recorte de fundo em volta.
 
 Detalhe de composição que vale reaproveitar: o quanto o MiMo desloca para a
 esquerda depende do que a cena ocupa. O guarda-chuva pede uma coluna inteira

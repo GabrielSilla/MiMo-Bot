@@ -1138,16 +1138,21 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Sends one raw PROTOCOL.md line. Only the command token is upper-cased:
-    /// Core matches commands with strncmp against uppercase literals (see
-    /// Protocol::dispatch), so "face happy" would otherwise do nothing at
-    /// all — but the rest of the line is message text and has to survive as
-    /// typed, accents and casing included.
+    /// Sends one or more raw PROTOCOL.md lines, separated by '|'. Sequences
+    /// are the common case when testing — a weather alert is a WEATHER
+    /// followed by a NOTIFY, and the order between them is part of the
+    /// contract (see OnWeatherUpdated) — and typing them one at a time makes
+    /// that awkward to reproduce. SendCommand writes and flushes per line, so
+    /// they reach Core in the order given.
+    ///
+    /// '|' is therefore reserved and cannot appear inside a message; there is
+    /// no escape for it. That is a fair trade in a dev-only box, where
+    /// sending a literal pipe to MiMo has no use and sending a sequence has
+    /// plenty.
     /// </summary>
-    private void SendTestCommand(string raw)
+    private void SendTestInput(string raw)
     {
-        string command = raw.Trim();
-        if (command.Length == 0)
+        if (string.IsNullOrWhiteSpace(raw))
         {
             return;
         }
@@ -1158,27 +1163,53 @@ public partial class MainWindow : Window
             return;
         }
 
-        int space = command.IndexOf(' ');
-        string normalized = space < 0
-            ? command.ToUpperInvariant()
-            : command[..space].ToUpperInvariant() + command[space..];
-
-        _connection.SendCommand(normalized);
-
-        if (_testCommandHistory.Count == 0 || _testCommandHistory[^1] != normalized)
+        var sent = new List<string>();
+        foreach (string part in raw.Split('|'))
         {
-            _testCommandHistory.Add(normalized);
+            string command = part.Trim();
+            if (command.Length == 0)
+            {
+                continue; // tolerate a trailing pipe, or "a || b"
+            }
+
+            // Only the command token is upper-cased: Core matches commands
+            // with strncmp against uppercase literals (see Protocol::dispatch),
+            // so "face happy" would otherwise do nothing at all — but the rest
+            // of the line is message text and has to survive as typed, accents
+            // and casing included.
+            int space = command.IndexOf(' ');
+            string normalized = space < 0
+                ? command.ToUpperInvariant()
+                : command[..space].ToUpperInvariant() + command[space..];
+
+            _connection.SendCommand(normalized);
+            sent.Add(normalized);
+        }
+
+        if (sent.Count == 0)
+        {
+            return;
+        }
+
+        // The history keeps what was typed, pipes and all, so recalling a
+        // sequence brings back the whole sequence rather than its last line.
+        string entry = string.Join(" | ", sent);
+        if (_testCommandHistory.Count == 0 || _testCommandHistory[^1] != entry)
+        {
+            _testCommandHistory.Add(entry);
         }
         _testHistoryIndex = -1;
 
-        ShowTestStatus("Enviado: " + normalized);
+        ShowTestStatus(sent.Count == 1
+            ? "Enviado: " + sent[0]
+            : $"Enviados {sent.Count} comandos: {entry}");
     }
 
     private void ShowTestStatus(string text) => TesteStatusText.Text = text;
 
     private void TesteEnviarButton_Click(object sender, RoutedEventArgs e)
     {
-        SendTestCommand(TesteComandoTextBox.Text);
+        SendTestInput(TesteComandoTextBox.Text);
         TesteComandoTextBox.Clear();
     }
 
@@ -1186,7 +1217,7 @@ public partial class MainWindow : Window
     {
         if (sender is System.Windows.Controls.Button { Tag: string command })
         {
-            SendTestCommand(command);
+            SendTestInput(command);
         }
     }
 
@@ -1220,7 +1251,7 @@ public partial class MainWindow : Window
     {
         if (e.Key == Key.Enter)
         {
-            SendTestCommand(TesteComandoTextBox.Text);
+            SendTestInput(TesteComandoTextBox.Text);
             TesteComandoTextBox.Clear();
             e.Handled = true;
             return;

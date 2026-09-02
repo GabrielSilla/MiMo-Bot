@@ -14,7 +14,14 @@ struct ExpressionShape {
 
 ExpressionShape shapeFor(Expression expression) {
     switch (expression) {
-        case Expression::HAPPY:  return {0.55f, 0, -2};
+        // Full height, because drawEyeCaret replaces the shape entirely (see
+        // Face::render). It used to be {0.55f, 0, -2} — a plain rectangle at
+        // 55% height, which put it squarely on the same "how shut is the eye"
+        // scale as SLEEPY (0.75) and SLEEPING (0.20) and so read as drowsy
+        // rather than as an emotion. A caret's apex sits at the top with the
+        // strokes falling away to the sides, which is what a smiling eye
+        // actually does when the cheek pushes the lower lid up.
+        case Expression::HAPPY:  return {1.00f, 0, 0};
         case Expression::SAD:    return {0.45f, 0, 6};
         case Expression::ANGRY:  return {0.40f, -6, -2};
         case Expression::SLEEPING: return {0.20f, 0, 4};
@@ -24,6 +31,7 @@ ExpressionShape shapeFor(Expression expression) {
         case Expression::READING: return {1.00f, 0, 0}; // eyes open — the reading sweep carries the expression
         case Expression::PLAYING: return {1.00f, 0, 0}; // eyes open — the gamepad icon carries the expression
         case Expression::COFFEE: return {1.00f, 0, 0}; // eyes open — Face::render shrinks/repositions them separately, the cup carries the rest
+        case Expression::BYE: return {1.00f, 0, 0}; // eyes open — the waving hands carry the expression
         case Expression::FINISHED: return {1.00f, 0, 0}; // eyes open — drawEyeCaret replaces the shape entirely
         case Expression::THINKING: return {1.00f, 0, 0}; // eyes open — drawEyeGlitch replaces the shape entirely
         case Expression::NEUTRAL:
@@ -351,6 +359,171 @@ constexpr int STATS_ROWS = 3;
 constexpr int GAME_EYE_SIZE = 26;
 constexpr int GAME_EYE_GAP = 12;
 constexpr int GAME_EYE_Y = 18;
+
+// MiMo's hand, which only ever appears for BYE. One hand — the right —
+// waving, with his face beside it.
+//
+// Each of the four pieces (palm, thumb, two raised fingers) is a quad given
+// by its four corners in *hand-local* coordinates: x right, y **up** from
+// the wrist, so the shape reads the way it is drawn and only the renderer
+// deals with the screen's downward y.
+//
+// The wave is a real rotation about the wrist, not a shear. A shear
+// displaces each row sideways in proportion to its height, which leans the
+// hand over — it topples rather than turns, and at this size that reads
+// plainly as the wrong motion. Rotating instead means the four corners are
+// transformed and the resulting quad is filled by scanline, which costs 16
+// transformed points per frame rather than any per-pixel work.
+struct HandQuad {
+    float x[4], y[4]; // corners, counter-clockwise in local space
+};
+
+constexpr int BYE_HAND_QUAD_COUNT = 4;
+const HandQuad BYE_HAND[BYE_HAND_QUAD_COUNT] = {
+    // palm
+    {{-18.0f, 10.0f, 11.0f, -17.0f}, {0.0f, 0.0f, 17.0f, 17.0f}},
+    // thumb, angling out and tapering. Starts at x=14 rather than at the
+    // palm's own right edge (x=10) for the same reason the fingers start
+    // above it: the reference separates every piece, and pieces that touch
+    // merge into one silhouette at this size.
+    {{14.0f, 26.0f, 23.0f, 14.0f}, {5.0f, 7.0f, 13.0f, 14.0f}},
+    // The two raised fingers, starting at y=23 rather than at the palm's own
+    // top edge (y=17): the reference has a clear gap there, and butting them
+    // straight onto the palm made the whole thing read as one solid blob.
+    // left finger, leaning further left as it rises
+    {{-16.0f, -6.0f, -10.0f, -20.0f}, {23.0f, 23.0f, 38.0f, 36.0f}},
+    // right finger, leaning right — the two open into a V
+    {{1.0f, 11.0f, 16.0f, 6.0f}, {23.0f, 23.0f, 37.0f, 39.0f}},
+};
+
+// Mirrored and shrunk at transform time rather than by rewriting the corner
+// table: the quads stay readable as the hand that was drawn from the
+// reference, and side and size become two numbers to tune instead of
+// sixteen coordinates to recompute.
+constexpr float BYE_HAND_SCALE = 0.70f;
+// Not mirrored: which side of the frame the hand sits on is the pivot's job,
+// and mirroring as well turned it into the other hand, with the thumb
+// pointing away from the face instead of in.
+constexpr float BYE_HAND_FLIP_X = 1.0f;
+
+constexpr float BYE_WAVE_MAX_ANGLE = 0.46f;  // ~26 degrees each way
+constexpr float BYE_WAVE_PERIOD_MS = 118.0f; // sin takes radians, so ~740ms per wave
+constexpr float BYE_HALF_PI = 1.5708f;
+
+// Fills one convex quad given in screen coordinates. For each scanline it
+// collects where the four edges cross it and spans between the outermost
+// two — the standard convex-polygon fill, and the only way to draw a shape
+// at an arbitrary angle out of axis-aligned rectangles.
+void fillQuad(IDisplay& display, const float* xs, const float* ys,
+              uint8_t r, uint8_t g, uint8_t b) {
+    float minYf = ys[0], maxYf = ys[0];
+    for (int i = 1; i < 4; i++) {
+        if (ys[i] < minYf) minYf = ys[i];
+        if (ys[i] > maxYf) maxYf = ys[i];
+    }
+
+    int minY = (int)minYf;
+    int maxY = (int)maxYf + 1;
+    if (minY < 0) minY = 0;
+    if (maxY > display.height()) maxY = display.height();
+
+    for (int y = minY; y < maxY; y++) {
+        float scan = (float)y + 0.5f;
+        float lo = 0.0f, hi = 0.0f;
+        bool any = false;
+
+        for (int i = 0; i < 4; i++) {
+            int j = (i + 1) & 3;
+            float ay = ys[i], by = ys[j];
+            // Half-open test, so a vertex shared by two edges is counted once
+            // rather than twice or not at all.
+            if ((ay <= scan && by > scan) || (by <= scan && ay > scan)) {
+                float t = (scan - ay) / (by - ay);
+                float x = xs[i] + t * (xs[j] - xs[i]);
+                if (!any) {
+                    lo = hi = x;
+                    any = true;
+                } else if (x < lo) {
+                    lo = x;
+                } else if (x > hi) {
+                    hi = x;
+                }
+            }
+        }
+
+        if (!any || hi <= lo) {
+            continue;
+        }
+        int x0 = (int)lo;
+        int x1 = (int)hi + 1;
+        if (x0 < 0) x0 = 0;
+        if (x1 > display.width()) x1 = display.width();
+        if (x1 > x0) {
+            display.fillRect(x0, y, x1 - x0, 1, r, g, b);
+        }
+    }
+}
+
+// A rotating hand sweeps a much wider box than an upright one — at full
+// swing its corners reach ~26px one way and ~29px the other from the wrist,
+// so the pivot has to sit that far clear of both the frame edge and the
+// face.
+// One blink, partway through the wave, because a face that holds a fixed
+// stare for the whole goodbye reads as frozen rather than as waving.
+// BYE is on Personality's hold-still list (its eyes are pinned beside the
+// hand, so an idle look-around offset would walk them into it), which also
+// zeroes the ordinary blink — so this one is drawn here instead, off
+// FaceState::expressionStartedMs. Same anchor MI2MO2's three-flash FAILED
+// uses, and for the same reason: it happens once and stops, rather than
+// looping off nowMs forever.
+constexpr unsigned long BYE_BLINK_AT_MS = 1400;
+constexpr unsigned long BYE_BLINK_MS = 240;
+
+float byeBlinkAmount(unsigned long sinceStartMs) {
+    if (sinceStartMs < BYE_BLINK_AT_MS) {
+        return 0.0f;
+    }
+    unsigned long t = sinceStartMs - BYE_BLINK_AT_MS;
+    if (t >= BYE_BLINK_MS) {
+        return 0.0f;
+    }
+    // Shut and open again: a triangle peaking halfway through the window.
+    float k = (float)t / (float)BYE_BLINK_MS;
+    float d = 2.0f * k - 1.0f;
+    return 1.0f - (d < 0.0f ? -d : d);
+}
+
+constexpr int BYE_HAND_PIVOT_X = 34;
+constexpr int BYE_HAND_PIVOT_Y = 78; // the wrist; the hand stands above it
+
+void drawByeHand(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    float angle = BYE_WAVE_MAX_ANGLE * sin((float)nowMs / BYE_WAVE_PERIOD_MS);
+    float sinA = sin(angle);
+    float cosA = sin(angle + BYE_HALF_PI); // cos is not wired up in the native shim
+
+    for (int q = 0; q < BYE_HAND_QUAD_COUNT; q++) {
+        const HandQuad& quad = BYE_HAND[q];
+        float sx[4], sy[4];
+        for (int i = 0; i < 4; i++) {
+            float lx = quad.x[i] * BYE_HAND_SCALE * BYE_HAND_FLIP_X;
+            float ly = quad.y[i] * BYE_HAND_SCALE;
+            // Rotate about the wrist, then place on screen. The y negation is
+            // what turns hand-local "up" into the display's downward axis.
+            sx[i] = (float)BYE_HAND_PIVOT_X + (lx * cosA - ly * sinA);
+            sy[i] = (float)BYE_HAND_PIVOT_Y - (lx * sinA + ly * cosA);
+        }
+        fillQuad(display, sx, sy, r, g, b);
+    }
+}
+
+// BYE puts the face beside the hand: hand on the left, eyes to its right and
+// a little smaller than normal. Same rearrangement COFFEE and Game Mode
+// already make for their own scenery.
+constexpr int BYE_EYE_SIZE = 36;
+constexpr int BYE_EYE_GAP = 12;
+constexpr int BYE_EYE_Y = 26;
+constexpr int BYE_EYES_CENTER_X = 112;
+
 
 constexpr int MIN_EYE_HEIGHT = 2;
 
@@ -797,6 +970,15 @@ constexpr int CORNER_ICON_Y_SHIFT = 14;
 constexpr int DANCE_ARC_X_PX = 8;
 constexpr int DANCE_ARC_Y_PX = 5;
 constexpr float DANCE_ARC_PERIOD_MS = 250.0f;
+
+// HAPPY borrows FINISHED's caret eyes, so something else has to tell the two
+// apart: this gentle bob. Being pleased is an energetic state and being done
+// is not, and motion separates them far more clearly at this resolution than
+// two slightly different curve shapes ever could. Same "divide nowMs to get
+// radians" idiom as DANCE_ARC_PERIOD_MS above — the real period is 2*pi times
+// this, so ~440ms per bounce.
+constexpr float HAPPY_BOUNCE_PERIOD_MS = 70.0f;
+constexpr int HAPPY_BOUNCE_Y_PX = 4;
 
 // The expression icons take an explicit origin rather than hardcoding one,
 // because two themes place them very differently: CLASSIC/MI2MO2 put them
@@ -2203,16 +2385,16 @@ void drawUmbrella(IDisplay& display, uint8_t r, uint8_t g, uint8_t b) {
 // Personality.cpp hand-write its own easing curves.
 constexpr int SUN_CX = 134;
 constexpr int SUN_CY = 26;
-constexpr int SUN_DISC_R = 8;
+constexpr int SUN_DISC_R = 13;
 // Half-width of the disc for each |dy| from 0 to SUN_DISC_R, so the body is
 // a stepped circle rather than a square — same composition style as the
 // umbrella's dome, mirrored on both axes instead of one.
-constexpr int SUN_DISC_HALF_W[SUN_DISC_R + 1] = {8, 8, 8, 7, 7, 6, 5, 4, 2};
+constexpr int SUN_DISC_HALF_W[SUN_DISC_R + 1] = {13, 13, 13, 13, 12, 12, 11, 11, 10, 9, 8, 7, 5, 2};
 
 constexpr int SUN_RAY_COUNT = 8;
-constexpr int SUN_RAY_INNER_R = 12;   // first block clears the disc
+constexpr int SUN_RAY_INNER_R = 17;   // first block clears the disc
 constexpr int SUN_RAY_STEP_PX = 4;
-constexpr int SUN_RAY_BLOCKS = 3;
+constexpr int SUN_RAY_BLOCKS = 2;
 constexpr int SUN_RAY_BLOCK_PX = 2;
 constexpr unsigned long SUN_SPIN_PERIOD_MS = 6000; // one full turn
 constexpr float SUN_TWO_PI = 6.2832f;
@@ -2226,7 +2408,7 @@ void drawSun(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8
 
     // Rays are blocks stepping outward along each angle rather than drawn
     // lines: every primitive here is axis-aligned, so a diagonal has to be
-    // approximated, and three spaced blocks read as a tapering ray while a
+    // approximated, and a couple of spaced blocks read as a ray while a
     // dense run of them would just read as a fat wedge.
     float spin = SUN_TWO_PI * (float)(nowMs % SUN_SPIN_PERIOD_MS) / (float)SUN_SPIN_PERIOD_MS;
     for (int i = 0; i < SUN_RAY_COUNT; i++) {
@@ -2239,6 +2421,210 @@ void drawSun(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8
             int x = SUN_CX + (int)(radius * cosT) - SUN_RAY_BLOCK_PX / 2;
             int y = SUN_CY + (int)(radius * sinT) - SUN_RAY_BLOCK_PX / 2;
             display.fillRect(x, y, SUN_RAY_BLOCK_PX, SUN_RAY_BLOCK_PX, r, g, b);
+        }
+    }
+}
+
+// STORM is RAIN plus lightning: a bolt struck behind the scene, and the
+// whole frame flashing.
+//
+// The flash is done by *swapping* the palette's ink and background for those
+// few frames rather than painting a bright rectangle over everything. Every
+// piece of notification art already takes both colours as parameters (see
+// the note on drawCoffeeCupAt), so one swap silhouettes the entire scene —
+// rain, umbrella, eyes and message all at once — which is what a real
+// lightning flash does to anything in front of it. Painting over the top
+// would instead have hidden the scene completely.
+constexpr unsigned long STORM_CYCLE_MS = 2600;
+constexpr unsigned long STORM_BOLT_MS = 300;       // how long the bolt itself stays struck
+constexpr unsigned long STORM_FLASH_A_END_MS = 70; // lightning flickers rather than flashing once,
+constexpr unsigned long STORM_FLASH_B_BEGIN_MS = 130;
+constexpr unsigned long STORM_FLASH_B_END_MS = 195; // so this is a double blink, not a single pulse
+
+bool stormFlashActive(unsigned long nowMs) {
+    unsigned long t = nowMs % STORM_CYCLE_MS;
+    return t < STORM_FLASH_A_END_MS
+        || (t >= STORM_FLASH_B_BEGIN_MS && t < STORM_FLASH_B_END_MS);
+}
+
+bool stormBoltStruck(unsigned long nowMs) {
+    return (nowMs % STORM_CYCLE_MS) < STORM_BOLT_MS;
+}
+
+// The bolt: two slanted strokes that kink into each other, drawn with the
+// same convex-quad fill the waving hand uses (see fillQuad) — the only way
+// to get a diagonal out of axis-aligned rectangles.
+constexpr int STORM_BOLT_QUADS = 2;
+const HandQuad STORM_BOLT[STORM_BOLT_QUADS] = {
+    // Kept entirely above the eyes (which start at NOTIF_WEATHER_EYE_Y=44):
+    // being drawn behind them counts for nothing when both are the same
+    // colour, so an overlapping bolt simply fused into the eye instead of
+    // passing behind it. Lightning belongs in the sky anyway.
+    // upper stroke, falling down and to the left
+    {{86.0f, 98.0f, 76.0f, 64.0f}, {2.0f, 2.0f, 24.0f, 24.0f}},
+    // lower stroke, kicking back to the right and tapering to a point
+    {{68.0f, 84.0f, 77.0f, 70.0f}, {20.0f, 20.0f, 42.0f, 42.0f}},
+};
+
+void drawLightningBolt(IDisplay& display, uint8_t r, uint8_t g, uint8_t b) {
+    for (int i = 0; i < STORM_BOLT_QUADS; i++) {
+        // Already in screen coordinates — unlike the hand this never rotates,
+        // so there is no local space to transform out of.
+        fillQuad(display, STORM_BOLT[i].x, STORM_BOLT[i].y, r, g, b);
+    }
+}
+
+// FOG. The hard part is that fog is an *absence of contrast* and this
+// display has two colours, so it has to be suggested rather than shaded.
+//
+// The trick is drawing bands in both colours: half of them in ink, behind
+// MiMo, so something is visibly rolling past; and half in the background
+// colour, in front of him, so he is eaten into and comes back. Neither half
+// works alone — ink-only reads as stripes on the screen, background-only as
+// a rendering fault. Together they read as air thick enough to lose him in.
+//
+// Deliberately very slow: a band takes 15-25s to cross, which is far slower
+// than anything else in this file. Fog that scrolls at a readable speed
+// looks like a wipe transition; fog that barely moves is unsettling, which
+// is the intent.
+constexpr int FOG_BAND_COUNT = 9;
+constexpr int FOG_TOP_Y = 6;
+constexpr int FOG_BOTTOM_Y = 90;
+constexpr unsigned long FOG_DRIFT_MIN_MS_PER_PX = 95;
+constexpr unsigned long FOG_DRIFT_SPREAD_MS = 65;
+
+// Bands wrap around the frame, so one can need drawing as two pieces.
+void drawFogBand(IDisplay& display, int y, int h, int len, int offset,
+                 uint8_t r, uint8_t g, uint8_t b) {
+    int w = display.width();
+    int x = offset % w;
+    if (x < 0) {
+        x += w;
+    }
+
+    int firstPiece = (x + len > w) ? (w - x) : len;
+    display.fillRect(x, y, firstPiece, h, r, g, b);
+    if (firstPiece < len) {
+        display.fillRect(0, y, len - firstPiece, h, r, g, b);
+    }
+}
+
+// frontPass picks which half gets drawn: the caller runs this once before
+// the eyes with the ink colour, and once after them with the background,
+// which is what puts some bands behind MiMo and some in front.
+void drawFogBands(IDisplay& display, unsigned long nowMs, bool frontPass,
+                  uint8_t r, uint8_t g, uint8_t b) {
+    int span = FOG_BOTTOM_Y - FOG_TOP_Y;
+    int step = span / FOG_BAND_COUNT;
+
+    for (int i = 0; i < FOG_BAND_COUNT; i++) {
+        // Alternating rather than random, so the two passes always interleave
+        // vertically instead of occasionally stacking all of one colour.
+        if (((i & 1) != 0) != frontPass) {
+            continue;
+        }
+
+        // Same stateless hash-per-index approach the rain columns use: each
+        // band gets its own thickness, length, speed and direction with
+        // nothing stored between frames.
+        unsigned long h = glitchHash((unsigned long)i, 5, 13);
+        int y = FOG_TOP_Y + i * step + (int)(h % 3);
+        // The front bands are deliberately thinner than the back ones. They
+        // are the ones that erase, and at equal thickness four of them took
+        // roughly three quarters of MiMo with them — which reads as him
+        // being deleted rather than as fog drifting past. Thick banks
+        // behind, thin wisps in front.
+        int thickness = frontPass ? (2 + (int)((h >> 8) % 2))   // 2..3px
+                                  : (3 + (int)((h >> 8) % 4));  // 3..6px
+        int len = 44 + (int)((h >> 16) % 72);           // 44..115px
+        unsigned long msPerPx = FOG_DRIFT_MIN_MS_PER_PX + ((h >> 4) % FOG_DRIFT_SPREAD_MS);
+        int drift = (int)((nowMs / msPerPx) % (unsigned long)display.width());
+        if ((h & 1) != 0) {
+            drift = -drift; // half the bands drift the other way
+        }
+
+        drawFogBand(display, y, thickness, len, drift, r, g, b);
+    }
+}
+
+// CLOUDY: a few clouds drifting across the sky above MiMo.
+//
+// Deliberately *not* a cloud sliding over the sun, which was the obvious
+// idea. Both would be drawn in the theme's ink, so the cloud would not cover
+// the sun — the two would fuse into one blob, the same trap that had the
+// lightning bolt merging into the eyes. Covering one ink shape with another
+// needs a background-coloured outline cut around it, which is a lot of
+// machinery for a story the clouds already tell on their own.
+//
+// A cloud is a flat-bottomed slab with two humps on top. The flat bottom is
+// what does most of the work: without it the shape reads as a blob, and with
+// it as a cloud. It also keeps clouds clearly distinct from FOG's bands,
+// which matters when both are the same colour — bands cross *through* MiMo,
+// clouds are objects sitting above him.
+struct CloudRect {
+    int dx, dy, w, h;
+};
+
+constexpr int CLOUD_W = 60;
+constexpr int CLOUD_H = 14;
+constexpr int CLOUD_RECT_COUNT = 8;
+constexpr CloudRect CLOUD_SHAPE[CLOUD_RECT_COUNT] = {
+    {10,  0, 12, 3},  // left hump, crown
+    {28,  1, 11, 2},  // middle hump, crown (lower, so they aren't triplets)
+    {44,  0, 10, 3},  // right hump, crown
+    { 6,  3, 20, 3},  // left hump, shoulders
+    {25,  3, 18, 3},  // middle hump, shoulders
+    {40,  3, 18, 3},  // right hump, shoulders
+    { 3,  6, 54, 4},  // body
+    { 0, 10, 60, 4},  // flat bottom
+};
+
+// Two rows rather than three, of longer clouds: fewer, wider shapes read as
+// overcast sky, where three short ones read as three separate puffs.
+constexpr int CLOUD_COUNT = 2;
+constexpr int CLOUD_TOP_Y = 6;
+constexpr int CLOUD_ROW_SPACING = 18;
+// Faster than fog (which takes 15-25s to cross) and slower than anything
+// else here: clouds move, mist hangs.
+constexpr unsigned long CLOUD_DRIFT_MIN_MS_PER_PX = 55;
+constexpr unsigned long CLOUD_DRIFT_SPREAD_MS = 42;
+
+// Wraps around the frame like the fog bands do, so a cloud leaving one edge
+// is already entering the other.
+void drawCloudRect(IDisplay& display, int x, int y, int w, int h,
+                   uint8_t r, uint8_t g, uint8_t b) {
+    int frameW = display.width();
+    int wrapped = x % frameW;
+    if (wrapped < 0) {
+        wrapped += frameW;
+    }
+
+    int firstPiece = (wrapped + w > frameW) ? (frameW - wrapped) : w;
+    display.fillRect(wrapped, y, firstPiece, h, r, g, b);
+    if (firstPiece < w) {
+        display.fillRect(0, y, w - firstPiece, h, r, g, b);
+    }
+}
+
+void drawClouds(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    for (int i = 0; i < CLOUD_COUNT; i++) {
+        unsigned long hash = glitchHash((unsigned long)i, 7, 17);
+
+        // Rows are laid out rather than hashed, so the clouds never stack on
+        // one another; only the drift, the start offset and the flip vary.
+        int y = CLOUD_TOP_Y + i * CLOUD_ROW_SPACING;
+        unsigned long msPerPx = CLOUD_DRIFT_MIN_MS_PER_PX + ((hash >> 4) % CLOUD_DRIFT_SPREAD_MS);
+        int drift = (int)((nowMs / msPerPx) % (unsigned long)display.width());
+        int x = (int)((hash >> 12) % (unsigned long)display.width()) + drift;
+        bool flipped = (hash & 1) != 0;
+
+        for (int k = 0; k < CLOUD_RECT_COUNT; k++) {
+            const CloudRect& piece = CLOUD_SHAPE[k];
+            // Mirroring every other cloud is free variety — with one shape
+            // and three copies on screen, the repetition is otherwise
+            // obvious.
+            int dx = flipped ? (CLOUD_W - piece.dx - piece.w) : piece.dx;
+            drawCloudRect(display, x + dx, y + piece.dy, piece.w, piece.h, r, g, b);
         }
     }
 }
@@ -2261,10 +2647,23 @@ void drawWeatherNotification(IDisplay& display, const FaceState& state,
     bool wet = state.weatherCondition == WeatherCondition::RAIN
             || state.weatherCondition == WeatherCondition::STORM;
     bool sunny = state.weatherCondition == WeatherCondition::CLEAR;
+    bool foggy = state.weatherCondition == WeatherCondition::FOG;
+    bool cloudy = state.weatherCondition == WeatherCondition::CLOUDY;
 
-    // Rain first, so the canopy and the eyes paint over it.
+    // The bolt is furthest back of all — behind even the rain, so the drops
+    // fall in front of it.
+    if (state.weatherCondition == WeatherCondition::STORM && stormBoltStruck(state.nowMs)) {
+        drawLightningBolt(display, p.inkR, p.inkG, p.inkB);
+    }
+
+    // Rain next, so the canopy and the eyes paint over it.
     if (wet) {
         drawRainfall(display, state.nowMs, p.inkR, p.inkG, p.inkB);
+    }
+
+    // Fog's back half, in ink, before the eyes.
+    if (foggy) {
+        drawFogBands(display, state.nowMs, false, p.inkR, p.inkG, p.inkB);
     }
 
     // Pushed left whenever there is scenery to make room for. CLEAR needs
@@ -2285,11 +2684,34 @@ void drawWeatherNotification(IDisplay& display, const FaceState& state,
         drawUmbrella(display, p.inkR, p.inkG, p.inkB);
     } else if (sunny) {
         drawSun(display, state.nowMs, p.inkR, p.inkG, p.inkB);
+    } else if (foggy) {
+        // Fog's front half, in the background colour, *after* the eyes — this
+        // is the pass that eats into him.
+        drawFogBands(display, state.nowMs, true, p.bgR, p.bgG, p.bgB);
+    } else if (cloudy) {
+        // Clouds sit above the eyes and never reach them, so unlike the
+        // umbrella or the sun this needs no rearranging of the face.
+        drawClouds(display, state.nowMs, p.inkR, p.inkG, p.inkB);
     }
 }
 
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     NotificationPalette p = notificationPalette(state.theme);
+
+    // A storm's flash inverts the whole palette for a few frames: the ground
+    // becomes the theme's own colour and everything drawn on it becomes the
+    // ground. Done here, before the clear, so every later draw inherits it
+    // without knowing anything about lightning.
+    if (state.expression == Expression::WEATHER
+        && state.weatherCondition == WeatherCondition::STORM
+        && stormFlashActive(state.nowMs)) {
+        NotificationPalette lit = p;
+        lit.bgR = p.inkR; lit.bgG = p.inkG; lit.bgB = p.inkB;
+        lit.inkR = p.bgR; lit.inkG = p.bgG; lit.inkB = p.bgB;
+        lit.textR = p.bgR; lit.textG = p.bgG; lit.textB = p.bgB;
+        p = lit;
+    }
+
     display.clear(p.bgR, p.bgG, p.bgB);
 
     unsigned long sinceStart = state.nowMs - state.notificationStartedMs;
@@ -2420,23 +2842,35 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // constants, not a copy - which is also why Personality filters its
     // look-around pool with the same LOOK_DIRECTIONS_NO_DOWN.
     bool bottomPinnedEyes = isMatrix || isMi84;
+    // BYE needs the lower half of the frame for the hands, so it lifts and
+    // shrinks the eyes — but only where the theme has not already claimed
+    // that decision (MATRIX/MI84 pin them to the bottom; COFFEE pins them
+    // left), same precedence order the geometry below already follows.
+    bool byeEyes = state.expression == Expression::BYE && !isCoffee && !bottomPinnedEyes;
     int eyeSize = isCoffee ? COFFEE_EYE_SIZE
-        : (bottomPinnedEyes ? MATRIX_EYE_SIZE : (gameEyes ? GAME_EYE_SIZE : EYE_SIZE));
+        : (bottomPinnedEyes ? MATRIX_EYE_SIZE
+                            : (byeEyes ? BYE_EYE_SIZE : (gameEyes ? GAME_EYE_SIZE : EYE_SIZE)));
     int eyeGap = isCoffee ? COFFEE_EYE_GAP
-        : (bottomPinnedEyes ? MATRIX_EYE_GAP : (gameEyes ? GAME_EYE_GAP : EYE_GAP));
+        : (bottomPinnedEyes ? MATRIX_EYE_GAP
+                            : (byeEyes ? BYE_EYE_GAP : (gameEyes ? GAME_EYE_GAP : EYE_GAP)));
     int eyeY = isCoffee ? COFFEE_EYE_Y
         : (bottomPinnedEyes ? (display.height() - eyeSize - MATRIX_EYE_BOTTOM_MARGIN)
-                            : (gameEyes ? GAME_EYE_Y : EYE_Y));
+                            : (byeEyes ? BYE_EYE_Y : (gameEyes ? GAME_EYE_Y : EYE_Y)));
 
     ExpressionShape shape = shapeFor(state.expression);
     eyeGap += shape.gapDelta;
     eyeY += shape.verticalShift + state.lookOffsetY;
 
     int totalWidth = eyeSize * 2 + eyeGap;
-    int leftX = isCoffee ? COFFEE_EYES_X : (display.width() - totalWidth) / 2 + state.lookOffsetX;
+    int leftX = isCoffee ? COFFEE_EYES_X
+        : (byeEyes ? (BYE_EYES_CENTER_X - totalWidth / 2 + state.lookOffsetX)
+                   : ((display.width() - totalWidth) / 2 + state.lookOffsetX));
     int rightX = leftX + eyeSize + eyeGap;
 
     float openFactor = shape.openFactor * (1.0f - state.blinkAmount);
+    if (state.expression == Expression::BYE) {
+        openFactor *= 1.0f - byeBlinkAmount(state.nowMs - state.expressionStartedMs);
+    }
     int eyeHeight = (int)(eyeSize * openFactor);
     if (eyeHeight < MIN_EYE_HEIGHT) {
         eyeHeight = MIN_EYE_HEIGHT;
@@ -2489,6 +2923,8 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         leftX += (int)(DANCE_ARC_X_PX * s);
         rightX += (int)(DANCE_ARC_X_PX * s);
         eyeTop -= (int)(DANCE_ARC_Y_PX * (1.0f - s * s));
+    } else if (state.expression == Expression::HAPPY) {
+        eyeTop += (int)(HAPPY_BOUNCE_Y_PX * sin((float)state.nowMs / HAPPY_BOUNCE_PERIOD_MS));
     } else if (state.expression == Expression::READING) {
         float s = readingSweep(state.nowMs);
         leftX += (int)(READING_SWEEP_X_PX * s);
@@ -2509,7 +2945,10 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     } else if (state.expression == Expression::FAILED) {
         drawEyeX(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
         drawEyeX(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
-    } else if (state.expression == Expression::FINISHED) {
+    } else if (state.expression == Expression::FINISHED || state.expression == Expression::HAPPY) {
+        // Same shape for both: a smile and a job well done look alike. What
+        // separates them is that HAPPY bounces (see above) and FINISHED holds
+        // still.
         drawEyeCaret(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
         drawEyeCaret(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
     } else if (state.expression == Expression::THINKING && !isMi84) {
@@ -2571,6 +3010,14 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         } else if (state.expression == Expression::COFFEE) {
             drawCoffeeCup(display, state.nowMs, iconR, iconG, iconB);
         }
+    }
+
+    // The hand, in whatever colour the active theme gives the eyes — teal in
+    // CLASSIC, green in MATRIX, navy in MI2MO2, amber in MI84. Drawn after
+    // the eyes so a wave that swings wide passes in front of them rather
+    // than being clipped by them.
+    if (state.expression == Expression::BYE) {
+        drawByeHand(display, state.nowMs, eyeR, eyeG, eyeB);
     }
 
     if (showStatsBox) {
@@ -2659,7 +3106,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // drawing on top of (or getting drawn over by) the cup; it comes back
     // on its own the instant COFFEE clears, no extra state needed, exactly
     // like THINKING's rain.
-    if (isMatrix && state.expression != Expression::COFFEE) {
+    if (isMatrix && state.expression != Expression::COFFEE && state.expression != Expression::BYE) {
         int logBottomY = display.height() - MATRIX_EYE_SIZE - MATRIX_EYE_BOTTOM_MARGIN - MATRIX_LOG_BOTTOM_GAP;
         // SLEEPING gets the same rain as THINKING — already dimmed for free
         // by the DimmingDisplay decorator wrapping `display` above, so it
@@ -2683,8 +3130,10 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     }
 
     // MI84's terminal chrome and its tab content, drawn last (on top) for
-    // the same reason MATRIX's log is. COFFEE is the one expression that
-    // skips the content area: its own eyes+cup layout (see isCoffee above)
+    // the same reason MATRIX's log is. COFFEE and BYE both skip the content
+    // area — BYE's raised hands occupy y=58..90, which runs straight through
+    // it, and since this block draws last the log would otherwise print over
+    // the hands. Same reasoning, same fix: its own eyes+cup layout (see isCoffee above)
     // takes precedence over the bottom-pinned eyes regardless of theme and
     // sits right across that region, so - exactly as MATRIX does with its
     // log - the content is left out for as long as the cup is up and comes
@@ -2692,7 +3141,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // The header/status/tab rows sit above the cup and stay on throughout.
     if (isMi84) {
         drawMi84Chrome(display, state);
-        if (state.expression != Expression::COFFEE) {
+        if (state.expression != Expression::COFFEE && state.expression != Expression::BYE) {
             drawMi84Content(display, state);
         }
     }

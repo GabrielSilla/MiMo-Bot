@@ -160,6 +160,7 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "SLEEPY") == 0) return Expression::SLEEPY;
     if (strcmp(name, "COFFEE") == 0) return Expression::COFFEE;
     if (strcmp(name, "WEATHER") == 0) return Expression::WEATHER;
+    if (strcmp(name, "BYE") == 0) return Expression::BYE;
     return Expression::NEUTRAL;
 }
 
@@ -598,7 +599,8 @@ void Personality::update(unsigned long now) {
         updateBootAnimation(bootElapsed);
     } else if (_renderExpression == Expression::SLEEPING || _renderExpression == Expression::MUSIC
         || _renderExpression == Expression::FAILED || _renderExpression == Expression::READING
-        || _renderExpression == Expression::THINKING || _renderExpression == Expression::COFFEE) {
+        || _renderExpression == Expression::THINKING || _renderExpression == Expression::COFFEE
+        || _renderExpression == Expression::BYE) {
         // Asleep, lost in the music, dead (FAILED), absorbed in reading, lost
         // in thought, or on a coffee break: hold still on the idle
         // blink/look-around timers. MUSIC, READING, THINKING, and COFFEE

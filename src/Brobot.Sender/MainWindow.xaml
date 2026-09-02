@@ -629,7 +629,7 @@
 
                         <TextBlock Style="{StaticResource CardDescriptionStyle}" Margin="0,6,0,0"
                                    TextWrapping="Wrap"
-                                   Text="Enter envia; seta para cima/baixo percorre o histórico. Comando desconhecido é ignorado pelo MiMo sem aviso. Hora, Clima e Jogos sobrescrevem o que você mandar na mão."/>
+                                   Text="Enter envia; seta para cima/baixo percorre o histórico. Separe vários comandos com | (ex.: WEATHER 18 RAIN | NOTIFY WEATHER Leva guarda-chuva) — por isso o | não pode aparecer dentro de uma mensagem. Comando desconhecido é ignorado pelo MiMo sem aviso. Hora, Clima e Jogos sobrescrevem o que você mandar na mão."/>
                     </StackPanel>
                 </Grid>
             </Border>
