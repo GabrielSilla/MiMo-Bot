@@ -30,12 +30,42 @@ public static class ClaudeCodeHookInstaller
     // include even where it isn't strictly required, so only PreToolUse and
     // Notification (which need to match "any tool"/"any notification") get
     // a real regex.
+    // Tool-scoped events (PreToolUse and the permission/failure ones) match
+    // "any tool"; everything else needs no matcher. Adding an event here is
+    // half of wiring one up — the other half is an arm in
+    // hooks/mimo-claude-hook.ps1 (to extract its text) and one in
+    // MainWindow.OnAiThoughtReceived (to decide what MiMo does about it).
+    //
+    // What's deliberately absent is as considered as what's here.
+    // PostToolUse (success) is left out because PreToolUse already announced
+    // that same call and Core's own FACE_OVERRIDE_DURATION_MS already returns
+    // the face on its own afterwards — installing it would double the
+    // PowerShell processes spawned per tool call to say nothing new. So are
+    // MessageDisplay, FileChanged, InstructionsLoaded, ConfigChange,
+    // DirectoryAdded and TeammateIdle, which fire often enough that MiMo
+    // would strobe rather than report. Only PostToolUseFailure is taken from
+    // that family, because a tool *failing* is genuinely new information and
+    // is the only thing in the whole bridge that can legitimately show ERROR.
     private static readonly (string EventName, string Matcher)[] Events =
     {
+        ("SessionStart", ""),
         ("UserPromptSubmit", ""),
         ("PreToolUse", ".*"),
+        ("PostToolUseFailure", ".*"),
+        ("PermissionRequest", ".*"),
+        ("PermissionDenied", ".*"),
         ("Notification", ".*"),
+        ("SubagentStart", ""),
+        ("SubagentStop", ""),
+        ("PreCompact", ""),
+        ("PostCompact", ""),
         ("Stop", ""),
+        ("StopFailure", ""),
+        ("PreModelSwitch", ""),
+        ("PostModelSwitch", ""),
+        ("TaskCreated", ""),
+        ("TaskCompleted", ""),
+        ("CwdChanged", ""),
         ("SessionEnd", ""),
     };
 

@@ -44,6 +44,15 @@ public sealed class SenderSettings
     public string TcpHost { get; set; } = "";
     public int TcpPort { get; set; } = 5555;
 
+    // The Claude Code account that was signed in the last time a session
+    // started (see ClaudeCodeAccount). Like TcpHost above, and unlike every
+    // other field here, this isn't a preference anyone chose — it's a fact
+    // about the world, recorded so the *next* launch can tell whether the
+    // account changed while MiMo wasn't looking. Written immediately rather
+    // than waiting for "Salvar configurações", same reasoning as
+    // PersistDiscoveredAddress.
+    public string LastClaudeAccountUuid { get; set; } = "";
+
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Brobot", "mimo-sender-settings.json");

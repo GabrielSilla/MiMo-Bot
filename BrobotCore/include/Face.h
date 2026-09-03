@@ -161,6 +161,20 @@ struct FaceState {
     int statsGpuTempC = -1;
     int statsRamLoad = -1;
 
+    // Claude Code session telemetry, set via AISTATS by whichever PC app is
+    // connected — same persistent, expression-independent shape as hasStats
+    // above, and the same -1 convention for "no source could supply this",
+    // drawn as "--" rather than a zero nobody should believe. Only drawn in
+    // the themes that have a console log to put it in (MATRIX, MI84), where
+    // it sits under the AI tab exactly as the machine stats sit under the
+    // MONITOR tab's game name.
+    bool hasAiStats = false;
+    int aiContextPercent = -1;  // share of the context window currently loaded
+    int aiCostCents = -1;       // session cost in USD cents; cents because the wire is integers only
+    int aiRateFiveHour = -1;    // 5-hour rate limit consumed, 0..100
+    int aiRateSevenDay = -1;    // 7-day rate limit consumed, 0..100
+    const char* aiModelName = nullptr; // non-owning, same convention as message/timeText
+
     Theme theme = Theme::CLASSIC;
     // Only meaningful (and only drawn) while theme == MATRIX or MI84 —
     // the two log-based themes; see Theme above. Oldest entry

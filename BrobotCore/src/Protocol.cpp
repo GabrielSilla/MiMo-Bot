@@ -62,6 +62,8 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         _personality.onNotifyCommand(args, now);
     } else if (commandLength == 5 && strncmp(line, "STATS", 5) == 0) {
         _personality.onStatsCommand(args, now);
+    } else if (commandLength == 7 && strncmp(line, "AISTATS", 7) == 0) {
+        _personality.onAiStatsCommand(args, now);
     } else if (commandLength == 4 && strncmp(line, "PING", 4) == 0) {
         // The only command Core answers. Exists so a PC app sweeping the
         // local network for MiMo's (DHCP-assigned, therefore moving) IP can

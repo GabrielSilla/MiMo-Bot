@@ -499,6 +499,52 @@ void Personality::onStatsCommand(const char* args, unsigned long now) {
     _hasStats = true;
 }
 
+// AISTATS: the same shape as STATS above — four integers, -1 for anything the
+// PC app couldn't supply — plus one trailing free-text field, the model's
+// display name, which is why this can't just call the same parser. The name
+// is *copied* rather than pointed at: `args` is Protocol's own line buffer,
+// which the very next command overwrites.
+void Personality::onAiStatsCommand(const char* args, unsigned long now) {
+    (void)now;
+
+    if (args[0] == '\0') {
+        _hasAiStats = false;
+        return;
+    }
+
+    int values[4] = {-1, -1, -1, -1};
+    const char* cursor = args;
+    for (int i = 0; i < 4 && cursor != nullptr && *cursor != '\0'; i++) {
+        char* end = nullptr;
+        long parsed = strtol(cursor, &end, 10);
+        if (end == cursor) {
+            break; // not a number where one was expected — keep the rest at -1
+        }
+        values[i] = (int)parsed;
+        cursor = end;
+        while (*cursor == ' ') {
+            cursor++;
+        }
+    }
+
+    _aiContextPercent = values[0];
+    _aiCostCents = values[1];
+    _aiRateFiveHour = values[2];
+    _aiRateSevenDay = values[3];
+
+    // Whatever is left after the four numbers is the model name, which may be
+    // absent entirely (the status line sends nothing there when the payload
+    // carried no model) — an empty name simply drops that column.
+    if (cursor != nullptr && *cursor != '\0') {
+        strncpy(_aiModelName, cursor, AI_MODEL_NAME_CAPACITY - 1);
+        _aiModelName[AI_MODEL_NAME_CAPACITY - 1] = '\0';
+    } else {
+        _aiModelName[0] = '\0';
+    }
+
+    _hasAiStats = true;
+}
+
 // Appends to MATRIX's console log, dropping the oldest line once full — a
 // plain shift-and-append rather than a wraparound ring buffer, since
 // MATRIX_LOG_LINES is tiny (6) and this keeps currentState() able to just
@@ -659,6 +705,13 @@ FaceState Personality::currentState() const {
     state.statsGpuLoad = _statsGpuLoad;
     state.statsGpuTempC = _statsGpuTempC;
     state.statsRamLoad = _statsRamLoad;
+
+    state.hasAiStats = _hasAiStats;
+    state.aiContextPercent = _aiContextPercent;
+    state.aiCostCents = _aiCostCents;
+    state.aiRateFiveHour = _aiRateFiveHour;
+    state.aiRateSevenDay = _aiRateSevenDay;
+    state.aiModelName = (_aiModelName[0] != '\0') ? _aiModelName : nullptr;
 
     state.theme = _theme;
     state.themeStartedMs = _themeChangedAt;

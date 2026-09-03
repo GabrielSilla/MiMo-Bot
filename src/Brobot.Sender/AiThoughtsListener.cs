@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -26,9 +27,18 @@ public sealed record AiThoughtEvent(string Name, string? Text);
 /// </summary>
 public sealed class AiThoughtsListener : IDisposable
 {
+    // A hook that connects but never writes must not wedge the queue behind
+    // it, now that everything is read on one thread instead of many.
+    private const int ReadTimeoutMs = 1000;
+
     private TcpListener? _listener;
     private Thread? _acceptThread;
+    private Thread? _workerThread;
+    private BlockingCollection<TcpClient>? _pendingClients;
     private volatile bool _running;
+
+    private BlockingCollection<TcpClient> _pending =>
+        _pendingClients ?? throw new InvalidOperationException("listener not started");
 
     public event Action<AiThoughtEvent>? ThoughtReceived;
 
@@ -40,6 +50,9 @@ public sealed class AiThoughtsListener : IDisposable
         _listener.Start();
 
         _running = true;
+        _pendingClients = new BlockingCollection<TcpClient>();
+        _workerThread = new Thread(WorkerLoop) { IsBackground = true, Name = "AiThoughtsListener-Worker" };
+        _workerThread.Start();
         _acceptThread = new Thread(AcceptLoop) { IsBackground = true, Name = "AiThoughtsListener-Accept" };
         _acceptThread.Start();
     }
@@ -50,7 +63,43 @@ public sealed class AiThoughtsListener : IDisposable
         _listener?.Stop(); // unblocks a pending AcceptTcpClient in the accept thread
         _acceptThread?.Join(1000);
         _acceptThread = null;
+
+        // CompleteAdding is what ends the worker's GetConsumingEnumerable —
+        // done after the accept thread is gone, so nothing can still be
+        // adding to a completed collection.
+        _pendingClients?.CompleteAdding();
+        _workerThread?.Join(1000);
+        _workerThread = null;
+        _pendingClients?.Dispose();
+        _pendingClients = null;
+
         _listener = null;
+    }
+
+    /// <summary>
+    /// Reads and raises accepted connections strictly in the order they were
+    /// accepted — see the hand-off comment in <see cref="AcceptLoop"/> for why
+    /// that ordering is load-bearing rather than incidental.
+    /// </summary>
+    private void WorkerLoop()
+    {
+        BlockingCollection<TcpClient>? pending = _pendingClients;
+        if (pending == null)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (TcpClient client in pending.GetConsumingEnumerable())
+            {
+                HandleClient(client);
+            }
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+        {
+            // Stop() disposed the collection out from under us — nothing left to drain.
+        }
     }
 
     public void Dispose() => Stop();
@@ -69,20 +118,38 @@ public sealed class AiThoughtsListener : IDisposable
                 return; // Stop() called (or the listener never started) — nothing more to accept
             }
 
-            // A hook invocation is a short-lived process: connect, write one
-            // line, exit. Handling it on a pool thread (rather than a thread
-            // per connection, or handling it inline and blocking the accept
-            // loop) keeps the accept loop free to take the next hook's
-            // connection immediately, even if several fire in a burst.
-            ThreadPool.QueueUserWorkItem(_ => HandleClient(client));
+            // Accepted here, read on the single worker below — never on a
+            // pool thread. Order matters in this stream: a burst of hooks is
+            // a burst of *separate processes*, and dispatching each to the
+            // pool let two of them be read and raised concurrently, so the
+            // order MainWindow saw them in had nothing to do with the order
+            // they arrived in. A session start is exactly such a burst
+            // (SessionStart, the status line, and often the previous
+            // session's SessionEnd, all within a few hundred ms), and
+            // "SessionEnd applied after SessionStart" wipes the greeting
+            // that just went up. This was a real bug, fixed once.
+            //
+            // The accept loop still doesn't block on reading — that's the
+            // whole point of handing off — it just hands off to one consumer
+            // instead of many.
+            try
+            {
+                _pending.Add(client);
+            }
+            catch (InvalidOperationException)
+            {
+                client.Dispose(); // CompleteAdding raced with us; Stop() is winding down
+                return;
+            }
         }
     }
 
     private void HandleClient(TcpClient client)
     {
         using (client)
-        using (var reader = new StreamReader(client.GetStream()))
         {
+            client.ReceiveTimeout = ReadTimeoutMs;
+            using var reader = new StreamReader(client.GetStream());
             string? line;
             try
             {

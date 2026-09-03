@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -31,6 +32,20 @@ public partial class MainWindow : Window
     // there's only one consumer (a Claude Code hook command) and nothing else
     // on the machine should be competing for it.
     private const int AiThoughtsPort = 5591;
+
+    // Core reveals a message one character at a time at this rate
+    // (TYPING_CHAR_INTERVAL_MS in BrobotCore/include/Face.h). Mirrored by hand
+    // here, the same way IDisplay and Font5x7.CharAdvance already are, so this
+    // app can work out how long a message of its own needs before it's been
+    // fully said — see HoldAiMessagesWhileTyping. Nothing enforces the match;
+    // if Core's rate changes, change it here too.
+    private const int CoreTypingCharIntervalMs = 40;
+    private const int AiMessageHoldMarginMs = 400; // typing finished vs. read comfortably are not the same instant
+
+    private static readonly string AiEventLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "Brobot", "ai-events.log");
+    private const long AiEventLogMaxBytes = 256 * 1024;
 
     private readonly BrobotConnection _connection;
     private Forms.NotifyIcon? _trayIcon;
@@ -90,6 +105,8 @@ public partial class MainWindow : Window
 
     private AiThoughtsListener? _aiThoughtsListener;
     private bool _aiThoughtFaceActive;
+    private bool _aiStatsActive; // AISTATS is persistent on Core — see ClearAiStatsIfActive
+    private DateTime _aiMessageHoldUntil = DateTime.MinValue; // see HoldAiMessagesWhileTyping
 
     private readonly DispatcherTimer _connectionStatusTimer;
 
@@ -889,6 +906,7 @@ public partial class MainWindow : Window
                 _aiThoughtsListener?.Dispose();
                 _aiThoughtsListener = null;
                 ClearAiThoughtFaceIfActive();
+                ClearAiStatsIfActive();
             }
             else
             {
@@ -1017,38 +1035,287 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Appends one line to %AppData%\Broboti-events.log.
+    ///
+    /// The AI bridge is a race between short-lived processes that MiMo shows
+    /// the *result* of, one message at a time, so "the greeting vanished"
+    /// looks identical from the outside whatever caused it — a clear, a
+    /// message applied out of order, or a second event nobody expected. This
+    /// log is the only place the actual sequence and timing is visible.
+    /// Capped and self-truncating rather than rotated: it exists to be read
+    /// right after reproducing something, not to be kept.
+    /// Never allowed to throw — a failure to write a diagnostic must not take
+    /// down the event that was being diagnosed.
+    /// </summary>
+    private static void LogAiEvent(string line)
+    {
+        try
+        {
+            string? dir = Path.GetDirectoryName(AiEventLogPath);
+            if (dir != null)
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            var info = new FileInfo(AiEventLogPath);
+            if (info.Exists && info.Length > AiEventLogMaxBytes)
+            {
+                File.Delete(AiEventLogPath);
+            }
+
+            File.AppendAllText(
+                AiEventLogPath,
+                $"{DateTime.Now:HH:mm:ss.fff}  {line}{Environment.NewLine}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Sends one MSG, falling back to <paramref name="fallback"/> when the hook
+    /// had nothing to say. A hook's text is optional by design — the payload
+    /// may not carry the field, or may carry it empty — and "MSG" with no
+    /// argument means *clear the message* on Core (see PROTOCOL.md), so
+    /// forwarding a null through would silently wipe the screen instead of
+    /// saying something. A null fallback therefore means "say nothing at all"
+    /// rather than "clear what's there".
+    ///
+    /// Every AI message goes through here rather than calling SendCommand
+    /// directly, so <see cref="_aiMessageHoldUntil"/> only has to be honoured
+    /// in one place.
+    /// </summary>
+    private void SendAiMessage(string? text, string? fallback = null, bool force = false)
+    {
+        string? message = string.IsNullOrWhiteSpace(text) ? fallback : text.Trim();
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        if (!force && DateTime.UtcNow < _aiMessageHoldUntil)
+        {
+            // The session greeting is still typing itself in — see HoldAiMessagesWhileTyping.
+            LogAiEvent($"   (segurado, saudacao ainda digitando) MSG {message}");
+            return;
+        }
+
+        _connection.SendCommand($"MSG {message}");
+    }
+
+    /// <summary>
+    /// Keeps the next second or so of AI messages from overwriting one that
+    /// still has characters left to type.
+    ///
+    /// This exists for exactly one event. A session starting is the single
+    /// moment when three things fire within a few hundred milliseconds of each
+    /// other — SessionStart's greeting, UserPromptSubmit's "Pensando...", and
+    /// the status line, which Claude Code runs once on session start whether or
+    /// not a prompt was submitted — so the greeting was reliably being replaced
+    /// mid-word, a second or so before it had finished saying which project it
+    /// had opened. Everywhere else, a message replacing an older one promptly
+    /// is the wanted behaviour, not a bug: a tool description that lagged
+    /// behind the tool actually running would be worse than one that cut the
+    /// previous description short.
+    ///
+    /// The window is measured from the message's own length rather than fixed
+    /// at a second, because a second isn't enough: at Core's typing rate the
+    /// usual greeting takes about 1.2s, and a long folder name pushes that
+    /// further.
+    /// </summary>
+    private void HoldAiMessagesWhileTyping(string message)
+    {
+        _aiMessageHoldUntil = DateTime.UtcNow.AddMilliseconds(
+            message.Length * CoreTypingCharIntervalMs + AiMessageHoldMarginMs);
+    }
+
     private void OnAiThoughtReceived(AiThoughtEvent thought)
     {
-        // AiThoughtsListener raises this from a thread-pool thread, not the UI thread.
+        // AiThoughtsListener raises this from its own worker thread, not the
+        // UI thread — and strictly in arrival order, which is what makes the
+        // log below a faithful record of the sequence rather than of whichever
+        // thread happened to win.
         Dispatcher.Invoke(() =>
         {
+            LogAiEvent($"<- {thought.Name} {thought.Text}".TrimEnd());
+
             switch (thought.Name)
             {
+                case "SessionStart":
+                    // HAPPY, not NEUTRAL: this is the one AI event that's
+                    // unambiguously good news. It isn't sticky (it times out
+                    // via FACE_OVERRIDE_DURATION_MS like every other
+                    // foreground expression bar THINKING), so there's nothing
+                    // to track for a later clear.
+                    _connection.SendCommand("FACE HAPPY");
+
+                    // Claude Code has no hook event for switching accounts —
+                    // measured against the real desktop app, an account switch
+                    // fires no Notification at all, only the usual SessionEnd/
+                    // SessionStart burst any session restart produces. So this
+                    // reads the actual signed-in account out of
+                    // ~/.claude.json (see ClaudeCodeAccount) and compares it
+                    // against the one recorded from the previous SessionStart,
+                    // rather than trying to detect the switch from anything
+                    // the hook delivers.
+                    ClaudeAccount? account = ClaudeCodeAccount.TryRead();
+                    SenderSettings sessionStartSettings = SenderSettings.Load(); // one read, used for both the compare and the update below
+                    string greeting;
+
+                    bool switched = account != null
+                        && sessionStartSettings.LastClaudeAccountUuid is { Length: > 0 } previousUuid
+                        && previousUuid != account.Uuid;
+
+                    // Logged unconditionally (not just when something looks
+                    // wrong) because the previous version of this feature
+                    // silently never fired and there was no way to tell why
+                    // from the log alone — only the hook's raw text was
+                    // recorded, never this decision.
+                    LogAiEvent(account == null
+                        ? "   (conta: ~/.claude.json sem oauthAccount legivel)"
+                        : $"   (conta: {account.Uuid} \"{account.DisplayName}\", salva: " +
+                          $"\"{(string.IsNullOrEmpty(sessionStartSettings.LastClaudeAccountUuid) ? "(nenhuma)" : sessionStartSettings.LastClaudeAccountUuid)}\", trocou: {switched})");
+
+                    if (switched)
+                    {
+                        // The account-switch greeting wins outright over the
+                        // generic one below — knowing *who* just signed in is
+                        // more specific than "bora trabalhar em <pasta>", and
+                        // switching accounts lands you in the home directory
+                        // anyway, where there's no project name to offer instead.
+                        greeting = $"Conta do Claude trocada para {account!.DisplayName}!";
+                    }
+                    else
+                    {
+                        greeting = string.IsNullOrWhiteSpace(thought.Text)
+                            ? "Bora trabalhar!"
+                            : thought.Text.Trim();
+                    }
+
+                    if (account != null && sessionStartSettings.LastClaudeAccountUuid != account.Uuid)
+                    {
+                        // Recorded immediately, like a discovered network
+                        // address — this is a fact about which account is
+                        // signed in, not a preference to wait on "Salvar
+                        // configurações" for.
+                        sessionStartSettings.LastClaudeAccountUuid = account.Uuid;
+                        sessionStartSettings.Save();
+                    }
+
+                    LogAiEvent($"   -> MSG {greeting}");
+                    SendAiMessage(greeting);
+                    HoldAiMessagesWhileTyping(greeting);
+                    _aiThoughtFaceActive = false;
+                    break;
+
                 case "UserPromptSubmit":
                     // THINKING is sticky on Core (holds until PreToolUse/Stop/etc.
                     // picks something else), so it needs the same explicit-clear
                     // handling as MUSIC/WATCHING below.
                     _connection.SendCommand("FACE THINKING");
-                    _connection.SendCommand("MSG Pensando...");
+                    SendAiMessage(null, "Pensando...");
                     _aiThoughtFaceActive = true;
                     break;
 
                 case "PreToolUse":
                     _connection.SendCommand("FACE READING");
-                    if (!string.IsNullOrWhiteSpace(thought.Text))
-                    {
-                        _connection.SendCommand($"MSG {thought.Text}");
-                    }
+                    SendAiMessage(thought.Text);
                     _aiThoughtFaceActive = false; // READING isn't sticky — it auto-reverts on its own
+                    break;
+
+                case "PostToolUseFailure":
+                    // The only event in the whole bridge that legitimately
+                    // means ERROR. Core's Expression::FAILED (spelled ERROR on
+                    // the wire) and Buzzer's three-trill "uh-oh" cue both
+                    // existed with nothing ever triggering them from the AI
+                    // side until this event was installed.
+                    _connection.SendCommand("FACE ERROR");
+                    SendAiMessage(thought.Text, "Deu erro na ferramenta.");
+                    _aiThoughtFaceActive = false;
+                    break;
+
+                case "PermissionRequest":
+                    // The one AI event that is genuinely an interruption:
+                    // Claude has stopped and cannot continue until you look at
+                    // the terminal. That's what the notification tier is for —
+                    // whole screen, 10s, expires on its own (see PROTOCOL.md's
+                    // NOTIFY), rather than a MSG that would queue politely
+                    // behind whatever is already up. READING carries it because
+                    // its "olha aqui" chirp is already the sound for exactly
+                    // this, and asking permission isn't an error.
+                    _connection.SendCommand($"NOTIFY READING {(string.IsNullOrWhiteSpace(thought.Text) ? "Preciso da sua permissao!" : thought.Text.Trim())}");
+                    break;
+
+                case "PermissionDenied":
+                    _connection.SendCommand("FACE ERROR");
+                    SendAiMessage(thought.Text, "Bloqueado.");
+                    _aiThoughtFaceActive = false;
+                    break;
+
+                case "SubagentStart":
+                    // A subagent working is still the AI thinking, so this
+                    // shares THINKING (and its sticky handling) with
+                    // UserPromptSubmit rather than inventing an expression:
+                    // what changed is the message, not the state.
+                    _connection.SendCommand("FACE THINKING");
+                    SendAiMessage(thought.Text, "Chamei um subagente...");
+                    _aiThoughtFaceActive = true;
+                    break;
+
+                case "SubagentStop":
+                    // No FACE: the main agent is still working, and saying
+                    // FINISHED here would announce an ending that hasn't
+                    // happened. Same no-FACE reasoning as Notification below.
+                    SendAiMessage(thought.Text);
+                    break;
+
+                case "PreCompact":
+                    _connection.SendCommand("FACE THINKING");
+                    SendAiMessage(null, "Organizando a memoria...");
+                    _aiThoughtFaceActive = true;
+                    break;
+
+                case "PostCompact":
+                    _connection.SendCommand("FACE FINISHED");
+                    SendAiMessage(null, "Memoria organizada!");
+                    _aiThoughtFaceActive = false;
+                    break;
+
+                case "StopFailure":
+                    // The turn ended on an API error rather than on an answer,
+                    // so it gets ERROR where Stop gets FINISHED.
+                    _connection.SendCommand("FACE ERROR");
+                    SendAiMessage(null, "Deu ruim na API...");
+                    _aiThoughtFaceActive = false;
+                    break;
+
+                case "PreModelSwitch":
+                case "PostModelSwitch":
+                case "TaskCreated":
+                case "TaskCompleted":
+                case "CwdChanged":
+                    // Housekeeping events: worth saying, not worth a face.
+                    // TaskCreated/TaskCompleted carry no text of their own, so
+                    // the phrase lives here rather than in the hook script,
+                    // which has nothing to read for them.
+                    // A null fallback means "say nothing at all": the model
+                    // switches and CwdChanged carry no text of their own worth
+                    // announcing when the hook couldn't name what changed
+                    // (CwdChanged into the home directory, say), and a bare
+                    // "..." on screen is worse than silence.
+                    SendAiMessage(thought.Text, thought.Name switch
+                    {
+                        "TaskCreated" => "Anotei uma tarefa nova.",
+                        "TaskCompleted" => "Tarefa concluida!",
+                        _ => null,
+                    });
                     break;
 
                 case "Notification":
                     // No FACE change: a notification (e.g. "waiting for permission")
                     // isn't itself an expression, just something worth saying.
-                    if (!string.IsNullOrWhiteSpace(thought.Text))
-                    {
-                        _connection.SendCommand($"MSG {thought.Text}");
-                    }
+                    SendAiMessage(thought.Text);
                     break;
 
                 case "ContextUsage":
@@ -1056,21 +1323,53 @@ public partial class MainWindow : Window
                     // command, not a hook — see ClaudeCodeHookInstaller) on every
                     // new assistant message. No FACE change, same reasoning as
                     // Notification — this is a stat, not an expression.
-                    if (!string.IsNullOrWhiteSpace(thought.Text))
-                    {
-                        _connection.SendCommand($"MSG {thought.Text}");
-                    }
+                    // Claude Code runs the status line once on session start,
+                    // so this is one of the two things that used to land on top
+                    // of the greeting before it had finished typing.
+                    SendAiMessage(thought.Text);
+                    break;
+
+                case "AiStats":
+                    // Straight passthrough: the status line script already
+                    // formatted the fields exactly as PROTOCOL.md's AISTATS
+                    // wants them, and nothing here has an opinion about how
+                    // Core draws them — that's Core's call, same as every
+                    // other command this app sends.
+                    _connection.SendCommand($"AISTATS {thought.Text}");
+                    _aiStatsActive = true;
                     break;
 
                 case "Stop":
+                    // thought.Text is the first sentence of what Claude
+                    // actually just said (Stop's last_assistant_message, see
+                    // the hook script) — MiMo reports the work instead of a
+                    // fixed "Terminei!", which stays as the fallback for a
+                    // turn that ended with no text.
                     _connection.SendCommand("FACE FINISHED");
-                    _connection.SendCommand("MSG Terminei!");
+                    SendAiMessage(thought.Text, "Terminei!");
                     _aiThoughtFaceActive = false;
                     break;
 
                 case "SessionEnd":
+                    // A SessionEnd landing inside the greeting's window is,
+                    // by construction, the *previous* session's — starting a
+                    // new conversation (or /clear) ends the old session and
+                    // begins a new one, and those are two separate hook
+                    // processes with no ordering between them. Honouring it
+                    // would wipe a greeting that went up a moment ago and is
+                    // still typing itself in, which is exactly the "manda e
+                    // depois manda um comando pra limpar" symptom. A session
+                    // that genuinely ends a second after starting loses only
+                    // a tidy-up it will get again on the next SessionEnd.
+                    if (DateTime.UtcNow < _aiMessageHoldUntil)
+                    {
+                        LogAiEvent("   (SessionEnd ignorado: e da sessao anterior)");
+                        break;
+                    }
+
                     _connection.SendCommand("FACE NEUTRAL");
                     _connection.SendCommand("MSG");
+                    ClearAiStatsIfActive();
                     _aiThoughtFaceActive = false;
                     break;
             }
@@ -1094,6 +1393,24 @@ public partial class MainWindow : Window
         _connection.SendCommand("FACE NEUTRAL");
         _connection.SendCommand("MSG");
         _aiThoughtFaceActive = false;
+    }
+
+    /// <summary>
+    /// AISTATS is persistent on Core — nothing times it out, exactly like
+    /// WEATHER/TIME/STATS (see PROTOCOL.md) — so a session that ends, or a
+    /// bridge that gets uninstalled, has to say so explicitly or the last
+    /// reading sits frozen in the AI tab forever, claiming a session is
+    /// running that isn't.
+    /// </summary>
+    private void ClearAiStatsIfActive()
+    {
+        if (!_aiStatsActive)
+        {
+            return;
+        }
+
+        _connection.SendCommand("AISTATS");
+        _aiStatsActive = false;
     }
 
     // Checkboxes take effect immediately (the monitors above start/stop the

@@ -23,6 +23,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `SOUND <ON\|OFF>` | Liga/desliga os sons do buzzer (bipes R2D2 por expressão, ver Buzzer.cpp). Persistente — fica valendo até o próximo `SOUND` chegar. Padrão do Core: `ON`. Texto não reconhecido é ignorado (mantém o valor atual). |
 | `SCANLINES <ON\|OFF>` | Liga/desliga o filtro CRT completo da tela física (scanline rolante + chromatic fringing + tint quente + vinheta — ver ST7735PhysicalDisplay.cpp). Sem efeito no Brobot Virtual Display/build nativo, que nunca aplicam esse pós-processamento. Persistente — fica valendo até o próximo `SCANLINES` chegar. Padrão do Core: `ON`. |
 | `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o MiMo nunca mais dormiria. |
+| `AISTATS <contexto%> <custoCents> <limite5h%> <limite7d%> <modelo>` | Telemetria da sessão de IA (ver abaixo). Os quatro primeiros são inteiros com a mesma convenção do `STATS`: **-1** = "o app do PC não tinha esse dado", desenhado como `--`. O custo vai em **centavos de dólar** porque o protocolo só carrega inteiros; o Core imprime de volta como `$1.24`. `<modelo>` é texto livre até o fim da linha (pode ter espaço, pode ser vazio). `AISTATS` sem argumentos limpa. Persistente e sem contar como interação, exatamente como `STATS`. |
 | `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 10s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
 | `PING` | **O único comando que o Core responde** — devolve a linha `MIMO <revisão>` (hoje `MIMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o MiMo na rede (ver abaixo). |
 
@@ -67,6 +68,38 @@ O que aparece depende do tema:
 Os stats só são desenhados enquanto `PLAYING` é a expressão em cena. Um
 `STATS` recebido fora disso é guardado e simplesmente não aparece, do mesmo
 jeito que um `WEATHER` chega antes de haver espaço pra ele.
+
+### Telemetria da sessão de IA (`AISTATS`)
+
+`AISTATS` é para uma sessão de IA o que o `STATS` é para um jogo: os números
+que ficam **embaixo** da aba correspondente do log. Quem envia é o
+`mimo-claude-statusline.ps1` — a *statusLine* do Claude Code, não um hook —,
+que recebe um payload muito mais rico que qualquer hook (modelo, custo,
+janela de contexto, limites de uso) e reenvia a cada nova resposta do
+assistente.
+
+Aparece só nos dois temas que têm log — `MATRIX` e `MI84` — e só na aba
+`IA`, em duas linhas ancoradas na base da região, com o log rolando acima:
+
+```
+Opus CTX 42%
+$1.24 5H 31% 7D 12%
+```
+
+Duas linhas, e não cinco, porque a aba IA não tem folga: cada linha gasta
+aqui é uma linha a menos de log. Ficam ancoradas embaixo pelo mesmo motivo
+que os medidores do Game Mode ficam ancorados na base da caixa — são um
+mostrador atualizado o tempo todo, e um número que dança conforme o texto
+acima dele quebra não dá pra ler.
+
+Nos temas sem log (`DEFAULT` e `MI2MO2`) o `AISTATS` é guardado e não
+desenhado; lá a mesma informação continua chegando como uma `MSG` comum,
+que é o que esses temas têm para mostrá-la.
+
+Como é persistente, quem manda também precisa limpar: o Brobot.Sender manda
+`AISTATS` sem argumentos quando a sessão do Claude Code termina
+(`SessionEnd`) ou quando a ponte é desinstalada — senão a última leitura fica
+congelada na tela para sempre, anunciando uma sessão que não existe mais.
 
 ### `PING` e a descoberta do MiMo na rede
 

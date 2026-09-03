@@ -1,5 +1,6 @@
 #include "ST7735PhysicalDisplay.h"
 #include "AurebeshGFXFont.h"
+#include "LatinAccentGFXFont.h"
 #include <SPI.h>
 
 // A cheap, integer-only take on the "Nostalgia CRT" style shader used on the
@@ -78,6 +79,69 @@ bool isAurebeshCovered(char c) {
     char upper = (char)toupper((unsigned char)c);
     return (upper >= '0' && upper <= '9') || (upper >= 'A' && upper <= 'Z');
 }
+
+// Every accented Latin-1 letter this app ever sends — from a Claude Code
+// hook's real prose, not just this codebase's own (deliberately
+// accent-free, for exactly this reason) hardcoded PT-BR strings — arrives
+// on the wire as UTF-8: two bytes, lead byte 0xC3 followed by a
+// continuation byte 0x80-0xBF. The classic built-in Adafruit font has no
+// idea about any of that; drawing each byte separately drew two wrong
+// glyphs instead of one accented letter, which is the whole bug this
+// decoder exists to fix. `0xC0 + (continuation & 0x3F)` recovers the exact
+// Latin-1 codepoint for the *entire* C0-FF block this way — uppercase and
+// lowercase alike — since UTF-8's 2-byte form for U+0080-U+07FF always
+// encodes a Latin-1 Supplement codepoint (U+00C0-U+00FF) with this same
+// lead byte. Returns the decoded codepoint and advances `p` past however
+// many bytes it consumed (2 for a recognized sequence, 1 otherwise) — a
+// lone/dangling 0xC3 with no valid continuation byte (e.g. a message cut
+// off by the typewriter effect mid-character) falls through to "just this
+// one raw byte", which duplicates the exact one-byte-at-a-time behavior
+// this function is replacing for anything it doesn't specifically handle.
+uint8_t decodeNextCodepoint(const char*& p) {
+    uint8_t lead = (uint8_t)*p;
+    if (lead == 0xC3) {
+        uint8_t cont = (uint8_t)p[1];
+        if (cont >= 0x80 && cont <= 0xBF) {
+            p += 2;
+            return (uint8_t)(0xC0 + (cont & 0x3F));
+        }
+    }
+    p += 1;
+    return lead;
+}
+
+// LatinAccentGFXFont's own populated codepoints (see its header) — the rest
+// of its 0xE0-0xFA range is blank placeholder glyphs, present only so the
+// range stays contiguous.
+bool isLatinAccentCovered(uint8_t codepoint) {
+    switch (codepoint) {
+        case 0xE0: case 0xE1: case 0xE2: case 0xE3: case 0xE7: case 0xE9:
+        case 0xEA: case 0xED: case 0xF3: case 0xF4: case 0xF5: case 0xFA:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// An UPPERCASE accented letter (sentence-initial "Não", say) has no glyph
+// of its own — same reasoning Font5x7.cs's own StripDiacritic already
+// settled on: a lowercase letter has rows 0-1 free above it for the mark,
+// but an uppercase one already fills the whole 7-row cell, leaving nowhere
+// to put one. Falls back to the plain base letter (still readable, unlike
+// a dropped glyph) via the classic built-in font; returns '\0' for
+// anything this table doesn't cover (ñ, ü, ...), which the caller takes as
+// "draw nothing" rather than risk two more wrong classic-font glyphs.
+char stripLatinAccent(uint8_t codepoint) {
+    switch (codepoint) {
+        case 0xC1: case 0xC0: case 0xC2: case 0xC3: return 'A'; // Á À Â Ã
+        case 0xC9: case 0xCA: return 'E';                       // É Ê
+        case 0xCD: return 'I';                                  // Í
+        case 0xD3: case 0xD4: case 0xD5: return 'O';            // Ó Ô Õ
+        case 0xDA: return 'U';                                  // Ú
+        case 0xC7: return 'C';                                  // Ç
+        default: return '\0';
+    }
+}
 }  // namespace
 
 void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, TextFont font) {
@@ -85,16 +149,38 @@ void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, 
     _canvas.setTextWrap(false);
 
     // Drawn one character at a time (rather than one _canvas.print(text)
-    // call) so a run can freely mix AUREBESH-covered and uncovered
-    // characters, switching Adafruit_GFX's active font per glyph. Advances
-    // by a flat 6px either way — AurebeshGFXGlyph::xAdvance is 6 and the
-    // built-in font already advances 6px/char at textSize 1 (5px glyph + 1px
-    // gap), matching CHAR_ADVANCE_PX (see Face.cpp) so MI2MO2's per-character
-    // word-wrap math stays correct on this display too.
+    // call) so a run can freely mix AUREBESH-covered, accented-Latin, and
+    // plain characters, switching Adafruit_GFX's active font per glyph.
+    // Advances by a flat 6px regardless of which font drew it or how many
+    // *wire bytes* a character consumed — AurebeshGFXGlyph/LatinAccentGFXGlyph
+    // both set xAdvance 6, and the built-in font already advances 6px/char
+    // at textSize 1 (5px glyph + 1px gap), matching CHAR_ADVANCE_PX (see
+    // Face.cpp) so MI2MO2's per-character word-wrap math stays correct on
+    // this display too — an accented letter is still exactly one column
+    // wide on screen even though it took two bytes on the wire.
     int penX = x;
-    for (const char* p = text; *p != '\0'; p++) {
-        char c = *p;
-        if (font == TextFont::AUREBESH && isAurebeshCovered(c)) {
+    for (const char* p = text; *p != '\0'; ) {
+        const char* charStart = p;
+        uint8_t codepoint = decodeNextCodepoint(p);
+        bool consumedTwoBytes = (p - charStart) == 2;
+
+        if (consumedTwoBytes) {
+            if (isLatinAccentCovered(codepoint)) {
+                // Same baseline-vs-top-left cursor adjustment Aurebesh
+                // already needs (see below) — LatinAccentGFXFont uses the
+                // identical yOffset=-7 convention.
+                _canvas.setFont(&LatinAccentGFXFont);
+                _canvas.setCursor(penX, y + 7);
+                _canvas.write(codepoint);
+            } else if (char base = stripLatinAccent(codepoint)) {
+                _canvas.setFont(nullptr);
+                _canvas.setCursor(penX, y);
+                _canvas.write((uint8_t)base);
+            }
+            // Anything else (ñ, ü, ...): silently draw nothing rather than
+            // the two wrong classic-font glyphs this whole function exists
+            // to stop drawing.
+        } else if (font == TextFont::AUREBESH && isAurebeshCovered((char)codepoint)) {
             // A custom GFXfont draws relative to the text *baseline*, unlike
             // the built-in font's top-left cursor (which every other
             // drawText call in this codebase assumes) — shift the cursor
@@ -104,11 +190,11 @@ void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, 
             // drawn right before/after it in the same message.
             _canvas.setFont(&AurebeshGFXFont);
             _canvas.setCursor(penX, y + 7);
-            _canvas.write((uint8_t)toupper((unsigned char)c));
+            _canvas.write((uint8_t)toupper(codepoint));
         } else {
             _canvas.setFont(nullptr);
             _canvas.setCursor(penX, y);
-            _canvas.write((uint8_t)c);
+            _canvas.write(codepoint);
         }
         penX += 6;
     }

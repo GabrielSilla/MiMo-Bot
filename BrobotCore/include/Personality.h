@@ -17,6 +17,7 @@ public:
     void onThemeCommand(const char* name, unsigned long now);
     void onNotifyCommand(const char* args, unsigned long now);
     void onStatsCommand(const char* args, unsigned long now);
+    void onAiStatsCommand(const char* args, unsigned long now);
 
     void update(unsigned long now);
     FaceState currentState() const;
@@ -127,6 +128,10 @@ private:
     WeatherCondition _weatherCondition = WeatherCondition::CLEAR;
     static constexpr size_t TIME_TEXT_CAPACITY = 6; // "HH:MM\0"
     char _timeText[TIME_TEXT_CAPACITY] = {0};
+    // Long enough for "Claude Opus 5" and anything of that shape; a longer
+    // display name is truncated rather than rejected, since the AI stat row
+    // only has room for a short label either way.
+    static constexpr size_t AI_MODEL_NAME_CAPACITY = 14; // "Claude Opus 5\0" — the longest that still fits its stat row
 
     // MATRIX theme's own state — see Face.h's Theme/MATRIX_LOG_* comments.
     // The theme itself never times out or gets pre-empted, same "just holds
@@ -169,6 +174,20 @@ private:
     int _statsGpuLoad = -1;
     int _statsGpuTempC = -1;
     int _statsRamLoad = -1;
+
+    // Claude Code session telemetry pushed in by AISTATS, held exactly like
+    // _hasStats above: persistent, never expiring, replaced only by the next
+    // AISTATS and cleared by an argument-less one. -1 means "the PC app had
+    // no value for this", same convention and same "--" rendering.
+    // _aiModelName is a copy, not a borrowed pointer, for the same reason
+    // _timeText is: the args buffer it arrives in is Protocol's line buffer,
+    // reused by the very next command.
+    bool _hasAiStats = false;
+    int _aiContextPercent = -1;
+    int _aiCostCents = -1;
+    int _aiRateFiveHour = -1;
+    int _aiRateSevenDay = -1;
+    char _aiModelName[AI_MODEL_NAME_CAPACITY] = {0};
 
     void updateBlink(unsigned long now);
     void updateLook(unsigned long now);

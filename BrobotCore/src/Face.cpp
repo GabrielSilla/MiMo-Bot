@@ -1616,6 +1616,71 @@ void drawMatrixMonitor(IDisplay& display, const FaceState& state, int maxBottomY
     }
 }
 
+// The AI tab's own readout — what the MONITOR tab's stat rows are to a game,
+// these are to a Claude Code session (see FaceState::hasAiStats). Two rows,
+// because that's what the AI tab can spare without starving the log it sits
+// under, so the five figures are packed rather than given a row each:
+//
+//     Opus CTX 42%
+//     $1.24 5H 31% 7D 12%
+//
+// Worst case widths at CHAR_ADVANCE_PX (6): row one is a 13-char model name
+// plus " CTX 100%" = 22 chars = 132px, row two is "$99.99 5H 100% 7D 100%" =
+// 22 chars — both inside the 160px frame from either theme's left margin.
+// AI_MODEL_NAME_CAPACITY is what holds the first of those to 13.
+//
+// -1 prints as "--", same convention and same reasoning as the machine stats
+// above: a session that has made no API call yet genuinely has no percentage,
+// and rate limits are absent altogether on some plans. Shared by MATRIX and
+// MI84 rather than written twice, which is why it takes its position and
+// color as parameters — the same treatment drawMatrixLog already got.
+constexpr int AI_STATS_ROWS = 2;
+constexpr int AI_STATS_LINE_CAPACITY = 32;
+
+void formatAiPercent(char* out, size_t size, int percent) {
+    if (percent < 0) {
+        snprintf(out, size, "--");
+    } else {
+        snprintf(out, size, "%d%%", percent);
+    }
+}
+
+// Cents travel on the wire (the protocol is integers only) and are printed
+// back as dollars here, since "$1.24" is what anyone reads a session cost as.
+void formatAiCost(char* out, size_t size, int cents) {
+    if (cents < 0) {
+        snprintf(out, size, "$--");
+    } else {
+        snprintf(out, size, "$%d.%02d", cents / 100, cents % 100);
+    }
+}
+
+void drawAiStatsRows(IDisplay& display, const FaceState& state, int x, int y,
+                     uint8_t r, uint8_t g, uint8_t b) {
+    char line[AI_STATS_LINE_CAPACITY];
+    char context[8];
+    formatAiPercent(context, sizeof(context), state.aiContextPercent);
+
+    // No model name (the status line had none to send) simply drops that
+    // column rather than printing a placeholder for it: unlike a missing
+    // percentage, a missing name isn't a reading anyone is waiting on.
+    if (state.aiModelName != nullptr && state.aiModelName[0] != '\0') {
+        snprintf(line, sizeof(line), "%s CTX %s", state.aiModelName, context);
+    } else {
+        snprintf(line, sizeof(line), "CTX %s", context);
+    }
+    display.drawText(line, x, y, r, g, b);
+
+    char cost[10];
+    char fiveHour[8];
+    char sevenDay[8];
+    formatAiCost(cost, sizeof(cost), state.aiCostCents);
+    formatAiPercent(fiveHour, sizeof(fiveHour), state.aiRateFiveHour);
+    formatAiPercent(sevenDay, sizeof(sevenDay), state.aiRateSevenDay);
+    snprintf(line, sizeof(line), "%s 5H %s 7D %s", cost, fiveHour, sevenDay);
+    display.drawText(line, x, y + MESSAGE_LINE_HEIGHT, r, g, b);
+}
+
 // ===========================================================================
 // MI84 — a 1984 amber-CRT terminal.
 //
@@ -1946,9 +2011,19 @@ void drawMi84Content(IDisplay& display, const FaceState& state) {
     bool sleeping = state.expression == Expression::SLEEPING;
     bool hasPrompt = thinking || sleeping;
     int promptY = MI84_CONTENT_BOTTOM_Y - MESSAGE_LINE_HEIGHT;
+    // The session readout claims the two rows directly above whatever the
+    // bottom of the content area currently is — under the prompt row when
+    // one is up, at the very bottom otherwise — leaving the log the rest.
+    // Same bottom-anchoring, and the same shared renderer, as MATRIX.
+    int contentBottom = hasPrompt ? promptY : MI84_CONTENT_BOTTOM_Y;
+    int statsY = contentBottom - AI_STATS_ROWS * MESSAGE_LINE_HEIGHT;
     drawMatrixLog(display, state, MI84_CONTENT_TOP_Y,
-                  hasPrompt ? promptY : MI84_CONTENT_BOTTOM_Y, MI84_X,
+                  state.hasAiStats ? statsY : contentBottom, MI84_X,
                   MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    if (state.hasAiStats) {
+        drawAiStatsRows(display, state, MI84_X, statsY,
+                        MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    }
     if (thinking) {
         drawMi84ThinkingPrompt(display, state.nowMs, promptY);
     } else if (sleeping) {
@@ -3123,8 +3198,21 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
             if (state.logTab == LogTab::MONITOR && state.hasStats) {
                 drawMatrixMonitor(display, state, logBottomY);
             } else {
-                drawMatrixLog(display, state, MATRIX_LOG_FIRST_LINE_Y, logBottomY,
+                // The AI tab's session readout takes the bottom two rows of
+                // the region, so the log gets what's left above it — exactly
+                // the arrangement MONITOR already has, just anchored the
+                // other way round: the game's stats follow its name down the
+                // screen, while these are pinned to the bottom so the figures
+                // hold still while the log scrolls behind them.
+                bool aiStats = (state.logTab == LogTab::AI) && state.hasAiStats;
+                int logBottom = aiStats
+                    ? (logBottomY - AI_STATS_ROWS * MESSAGE_LINE_HEIGHT)
+                    : logBottomY;
+                drawMatrixLog(display, state, MATRIX_LOG_FIRST_LINE_Y, logBottom,
                               MATRIX_LOG_X, MSG_R, MSG_G, MSG_B);
+                if (aiStats) {
+                    drawAiStatsRows(display, state, MATRIX_LOG_X, logBottom, MSG_R, MSG_G, MSG_B);
+                }
             }
         }
     }
