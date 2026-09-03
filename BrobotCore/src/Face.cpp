@@ -1703,6 +1703,28 @@ void drawAiStatsRows(IDisplay& display, const FaceState& state, int x, int y,
 constexpr uint8_t MI84_INK_R = 255, MI84_INK_G = 176, MI84_INK_B = 0;
 constexpr uint8_t MI84_DIM_R = 132, MI84_DIM_G = 90, MI84_DIM_B = 0;
 
+// CLASSIC's own selectable primary color (see ClassicColor in Face.h and
+// CLASSICCOLOR in PROTOCOL.md). RED/PINK/WHITE are new — no other theme has
+// a red, pink, or white ink to borrow — but GREEN and AMBER deliberately
+// reuse MATRIX_R/G/B and MI84_INK_R/G/B rather than getting their own
+// values, so picking "green" here reads as the same green MiMo already
+// shows elsewhere rather than a third shade of it.
+constexpr uint8_t CLASSIC_RED_R = 220, CLASSIC_RED_G = 45, CLASSIC_RED_B = 45;
+constexpr uint8_t CLASSIC_PINK_R = 255, CLASSIC_PINK_G = 105, CLASSIC_PINK_B = 180;
+constexpr uint8_t CLASSIC_WHITE_R = 255, CLASSIC_WHITE_G = 255, CLASSIC_WHITE_B = 255;
+
+void classicColorRGB(ClassicColor color, uint8_t& r, uint8_t& g, uint8_t& b) {
+    switch (color) {
+        case ClassicColor::GREEN: r = MATRIX_R; g = MATRIX_G; b = MATRIX_B; return;
+        case ClassicColor::AMBER: r = MI84_INK_R; g = MI84_INK_G; b = MI84_INK_B; return;
+        case ClassicColor::RED:   r = CLASSIC_RED_R; g = CLASSIC_RED_G; b = CLASSIC_RED_B; return;
+        case ClassicColor::PINK:  r = CLASSIC_PINK_R; g = CLASSIC_PINK_G; b = CLASSIC_PINK_B; return;
+        case ClassicColor::WHITE: r = CLASSIC_WHITE_R; g = CLASSIC_WHITE_G; b = CLASSIC_WHITE_B; return;
+        case ClassicColor::BLUE:
+        default: r = EYE_R; g = EYE_G; b = EYE_B; return;
+    }
+}
+
 // Vertical budget, in a 128px frame at MESSAGE_LINE_HEIGHT (9px) per row.
 // The eyes reuse MATRIX_EYE_SIZE/GAP/BOTTOM_MARGIN, so they occupy y=93..120
 // and the chrome plus content has to live above that. There's deliberately
@@ -2142,8 +2164,8 @@ struct NotificationPalette {
     uint8_t textR, textG, textB; // the message
 };
 
-NotificationPalette notificationPalette(Theme theme) {
-    switch (theme) {
+NotificationPalette notificationPalette(const FaceState& state) {
+    switch (state.theme) {
         case Theme::MATRIX:
             return {BG_R, BG_G, BG_B, MATRIX_R, MATRIX_G, MATRIX_B, MATRIX_R, MATRIX_G, MATRIX_B};
         case Theme::MI84:
@@ -2158,8 +2180,15 @@ NotificationPalette notificationPalette(Theme theme) {
                     MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B,
                     MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B};
         case Theme::CLASSIC:
-        default:
-            return {BG_R, BG_G, BG_B, EYE_R, EYE_G, EYE_B, MSG_R, MSG_G, MSG_B};
+        default: {
+            // The ink follows the user's chosen CLASSICCOLOR (see Face.h);
+            // the message text stays plain white regardless — same "message
+            // box/text never change with the theme" rule the ordinary
+            // (non-notification) message box already follows.
+            uint8_t r, g, b;
+            classicColorRGB(state.classicColor, r, g, b);
+            return {BG_R, BG_G, BG_B, r, g, b, MSG_R, MSG_G, MSG_B};
+        }
     }
 }
 
@@ -2771,7 +2800,7 @@ void drawWeatherNotification(IDisplay& display, const FaceState& state,
 }
 
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
-    NotificationPalette p = notificationPalette(state.theme);
+    NotificationPalette p = notificationPalette(state);
 
     // A storm's flash inverts the whole palette for a few frames: the ground
     // becomes the theme's own colour and everything drawn on it becomes the
@@ -2855,13 +2884,21 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     DimmingDisplay dimmed(themed, SLEEP_DIM_FACTOR);
     IDisplay& display = (state.expression == Expression::SLEEPING && !isMi2Mo2) ? static_cast<IDisplay&>(dimmed) : themed;
 
+    // CLASSIC's own primary color (see ClassicColor in Face.h) — resolved
+    // once here and threaded into the same places EYE_R/G/B used to be
+    // hardcoded, exactly like MI2MO2/MI84's own inks just below. Harmless
+    // to resolve even outside CLASSIC: isMi2Mo2/isMi84 always win the
+    // ternaries there, so this is simply unused on every other theme.
+    uint8_t classicR, classicG, classicB;
+    classicColorRGB(state.classicColor, classicR, classicG, classicB);
+
     // MI2MO2 doesn't get a global RecoloringDisplay like MATRIX — only the
     // eyes and the message text change color, everything else (badges,
     // corner icons, message box) stays exactly CLASSIC — so the eye color
     // is just a plain variable threaded into the eye-drawing calls below.
-    uint8_t eyeR = isMi2Mo2 ? MI2MO2_BADGE_R : (isMi84 ? MI84_INK_R : EYE_R);
-    uint8_t eyeG = isMi2Mo2 ? MI2MO2_BADGE_G : (isMi84 ? MI84_INK_G : EYE_G);
-    uint8_t eyeB = isMi2Mo2 ? MI2MO2_BADGE_B : (isMi84 ? MI84_INK_B : EYE_B);
+    uint8_t eyeR = isMi2Mo2 ? MI2MO2_BADGE_R : (isMi84 ? MI84_INK_R : classicR);
+    uint8_t eyeG = isMi2Mo2 ? MI2MO2_BADGE_G : (isMi84 ? MI84_INK_G : classicG);
+    uint8_t eyeB = isMi2Mo2 ? MI2MO2_BADGE_B : (isMi84 ? MI84_INK_B : classicB);
 
     // MI84 keeps MATRIX's eye geometry and shapes but carries two things in
     // *brightness* that the other themes express some other way: the lamp
@@ -2893,9 +2930,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // it has to be the theme's amber all the same: left on CLASSIC's teal,
     // the one icon this theme does draw came out as the single non-amber
     // thing on an otherwise monochrome terminal.
-    uint8_t iconR = isMi2Mo2 ? MI2MO2_LOGIC_R : (isMi84 ? MI84_INK_R : EYE_R);
-    uint8_t iconG = isMi2Mo2 ? MI2MO2_LOGIC_G : (isMi84 ? MI84_INK_G : EYE_G);
-    uint8_t iconB = isMi2Mo2 ? MI2MO2_LOGIC_B : (isMi84 ? MI84_INK_B : EYE_B);
+    uint8_t iconR = isMi2Mo2 ? MI2MO2_LOGIC_R : (isMi84 ? MI84_INK_R : classicR);
+    uint8_t iconG = isMi2Mo2 ? MI2MO2_LOGIC_G : (isMi84 ? MI84_INK_G : classicG);
+    uint8_t iconB = isMi2Mo2 ? MI2MO2_LOGIC_B : (isMi84 ? MI84_INK_B : classicB);
 
     bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix && !isMi84;
 

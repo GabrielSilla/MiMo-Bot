@@ -41,6 +41,30 @@ public static class ThemeManager
         new ThemeInfo("MiMo84", "MiMo-84", "Themes/MiMoClassic.xaml", "MI84"),
     ];
 
+    /// <summary>
+    /// CoreColor is the value sent as `CLASSICCOLOR &lt;CoreColor&gt;` (see
+    /// PROTOCOL.md) — only meaningful while MiMo Classic itself is selected
+    /// (Core ignores it entirely on every other theme, see Face.cpp's
+    /// classicColorRGB), which is why MainWindow only shows this picker for
+    /// that one entry above.
+    /// </summary>
+    public sealed record ClassicColorInfo(string Key, string DisplayName, string CoreColor);
+
+    public const string DefaultClassicColor = "Blue";
+
+    public static readonly IReadOnlyList<ClassicColorInfo> AvailableClassicColors =
+    [
+        new ClassicColorInfo("Blue", "Azul (original)", "BLUE"),
+        // Green/Amber deliberately reuse the exact wire values MiMo Matrix/
+        // MiMo-84 already send via THEME, not new ones of their own — see
+        // Face.cpp's classicColorRGB for why.
+        new ClassicColorInfo("Green", "Verde (Matrix)", "GREEN"),
+        new ClassicColorInfo("Amber", "Âmbar (MiMo-84)", "AMBER"),
+        new ClassicColorInfo("Red", "Vermelho", "RED"),
+        new ClassicColorInfo("Pink", "Rosa", "PINK"),
+        new ClassicColorInfo("White", "Branco", "WHITE"),
+    ];
+
     private static ResourceDictionary? _activeThemeDictionary;
 
     public static void Apply(string? themeKey)

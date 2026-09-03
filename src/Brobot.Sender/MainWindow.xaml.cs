@@ -281,6 +281,15 @@ public partial class MainWindow : Window
             && currentTheme.CoreTheme != "DEFAULT") {
             _connection.SendCommand($"THEME {currentTheme.CoreTheme}");
         }
+        // CLASSICCOLOR is another persistent flag Core forgets on its own
+        // reboot — same resend-if-non-default reasoning as THEME just
+        // above. Resent regardless of which theme is currently selected:
+        // Core just holds the value until CLASSIC actually reads it, same
+        // as Personality::_classicColor does on its side.
+        if (connected && !_wasConnected && ClassicColorComboBox.SelectedItem is ThemeManager.ClassicColorInfo currentColor
+            && currentColor.Key != ThemeManager.DefaultClassicColor) {
+            _connection.SendCommand($"CLASSICCOLOR {currentColor.CoreColor}");
+        }
         // SOUND/SCANLINES are persistent flags too, and both default to ON
         // on Core (same as THEME's DEFAULT) — only the OFF case needs
         // resending after a reconnect, since ON is already what a freshly
@@ -941,9 +950,42 @@ public partial class MainWindow : Window
 
         ThemeManager.Apply(theme.Key);
         _connection.SendCommand($"THEME {theme.CoreTheme}");
+        RefreshClassicColorVisibility(theme);
 
         SenderSettings settings = SenderSettings.Load();
         settings.Theme = theme.Key;
+        settings.Save();
+    }
+
+    /// <summary>
+    /// The color picker only ever does anything on MiMo Classic — Core
+    /// ignores CLASSICCOLOR on every other theme (see PROTOCOL.md/Face.cpp)
+    /// — so it's hidden rather than left enabled-but-inert for the rest.
+    /// </summary>
+    private void RefreshClassicColorVisibility(ThemeManager.ThemeInfo theme)
+    {
+        ClassicColorComboBox.Visibility = theme.Key == ThemeManager.DefaultTheme
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// CLASSICCOLOR is a persistent device flag exactly like THEME/SOUND/
+    /// SCANLINES (see PROTOCOL.md) — Core just remembers whatever was last
+    /// sent. This picker is only visible while MiMo Classic is selected
+    /// (see RefreshClassicColorVisibility), so this only ever fires then.
+    /// </summary>
+    private void ClassicColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsInitialized || ClassicColorComboBox.SelectedItem is not ThemeManager.ClassicColorInfo color)
+        {
+            return;
+        }
+
+        _connection.SendCommand($"CLASSICCOLOR {color.CoreColor}");
+
+        SenderSettings settings = SenderSettings.Load();
+        settings.ClassicColor = color.Key;
         settings.Save();
     }
 
@@ -968,6 +1010,12 @@ public partial class MainWindow : Window
     {
         TemaComboBox.SelectedItem = ThemeManager.Available.FirstOrDefault(t => t.Key == settings.Theme)
             ?? ThemeManager.Available.First(t => t.Key == ThemeManager.DefaultTheme);
+    }
+
+    private void SyncClassicColorComboBoxSelection(SenderSettings settings)
+    {
+        ClassicColorComboBox.SelectedItem = ThemeManager.AvailableClassicColors.FirstOrDefault(c => c.Key == settings.ClassicColor)
+            ?? ThemeManager.AvailableClassicColors.First(c => c.Key == ThemeManager.DefaultClassicColor);
     }
 
     private void PensamentosIaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1704,6 +1752,9 @@ public partial class MainWindow : Window
         {
             ShowTestMode();
         }
+
+        ClassicColorComboBox.ItemsSource = ThemeManager.AvailableClassicColors;
+        SyncClassicColorComboBoxSelection(settings);
 
         TemaComboBox.ItemsSource = ThemeManager.Available;
         SyncTemaComboBoxSelection(settings);

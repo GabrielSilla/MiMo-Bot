@@ -15,6 +15,7 @@ public:
     void onWeatherCommand(const char* args, unsigned long now);
     void onTimeCommand(const char* args, unsigned long now);
     void onThemeCommand(const char* name, unsigned long now);
+    void onClassicColorCommand(const char* name);
     void onNotifyCommand(const char* args, unsigned long now);
     void onStatsCommand(const char* args, unsigned long now);
     void onAiStatsCommand(const char* args, unsigned long now);
@@ -141,6 +142,10 @@ private:
     // FaceState::themeStartedMs, which see for why a stateless renderer
     // needs it. Only MI84 reads it (its boot sequence).
     unsigned long _themeChangedAt = 0;
+    // CLASSIC's own primary color (see Face.h's ClassicColor) — held
+    // exactly like _theme above regardless of which theme is currently
+    // active, and read by Face::render only while CLASSIC actually is.
+    ClassicColor _classicColor = ClassicColor::BLUE;
     // MATRIX's console log is split in two, one per tier, rather than one
     // shared list: AI activity and media/game "now playing" lines were
     // interleaving into a single stream where neither was readable. They

@@ -55,6 +55,18 @@ enum class WeatherCondition : uint8_t { CLEAR, CLOUDY, RAIN, STORM, SNOW, FOG };
 // each time the theme is selected (see FaceState::themeStartedMs).
 enum class Theme : uint8_t { CLASSIC, MATRIX, MI2MO2, MI84 };
 
+// CLASSIC's own primary color, set via CLASSICCOLOR (see PROTOCOL.md) —
+// every other theme has a fixed palette of its own and ignores this
+// entirely (Personality still tracks and forwards it regardless of which
+// theme is active, same "just holds whatever was last sent" treatment as
+// Theme itself, so switching back to CLASSIC doesn't lose the choice).
+// GREEN and AMBER deliberately resolve to MATRIX's and MI84's own ink
+// colors rather than picking new values (see Face.cpp's classicColorRGB) —
+// "MiMo Classic in green" reads as the same green MiMo already has
+// elsewhere, not a third, slightly-different green. BLUE is the original
+// default eye color from before this setting existed.
+enum class ClassicColor : uint8_t { BLUE, GREEN, AMBER, RED, PINK, WHITE };
+
 // Typewriter reveal speed — shared between Personality (which paces
 // TypedMessage::updateTyping off it) and Face (which needs the same value
 // to work out, purely from nowMs and a message's typingStartedAt, how long
@@ -176,6 +188,11 @@ struct FaceState {
     const char* aiModelName = nullptr; // non-owning, same convention as message/timeText
 
     Theme theme = Theme::CLASSIC;
+    // Only meaningful (and only drawn) while theme == CLASSIC — see
+    // ClassicColor above. Carried here regardless of the active theme so a
+    // color chosen while on CLASSIC is still remembered after switching
+    // away and back.
+    ClassicColor classicColor = ClassicColor::BLUE;
     // Only meaningful (and only drawn) while theme == MATRIX or MI84 —
     // the two log-based themes; see Theme above. Oldest entry
     // at index 0, newest at logLineCount-1. Pointers into Personality's own

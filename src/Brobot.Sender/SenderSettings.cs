@@ -22,6 +22,11 @@ public sealed class SenderSettings
     public bool MidiaEnabled { get; set; }
     public bool JogosEnabled { get; set; }
     public string Theme { get; set; } = ThemeManager.DefaultTheme;
+    // Only meaningful while Theme is MiMo Classic (see ThemeManager's
+    // ClassicColorInfo) — kept regardless of which theme is currently
+    // selected, same reasoning as Core's own Personality::_classicColor,
+    // so switching away and back to Classic doesn't lose the choice.
+    public string ClassicColor { get; set; } = ThemeManager.DefaultClassicColor;
 
     // Unlike the checkboxes above (opt-in monitors, off by default), Sons
     // and Scanlines toggle features MiMo already has on by default (see

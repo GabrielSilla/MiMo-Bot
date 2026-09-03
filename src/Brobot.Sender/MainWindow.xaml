@@ -486,6 +486,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
                         <iconPacks:PackIconMaterial Kind="Palette" Width="24" Height="24"
@@ -495,6 +496,21 @@
                         <TextBlock Text="Tema" Style="{StaticResource CardTitleStyle}"/>
                         <TextBlock Text="Escolhe a aparência do MiMo" Style="{StaticResource CardDescriptionStyle}"/>
                     </StackPanel>
+                    <!-- Only MiMo Classic honors CLASSICCOLOR (see PROTOCOL.md/Face.cpp) — every
+                         other theme has its own fixed palette, so this picker would otherwise imply
+                         a choice that does nothing. Hidden rather than disabled for exactly that
+                         reason; visibility toggled alongside TemaComboBox's own selection (see
+                         TemaComboBox_SelectionChanged/RefreshClassicColorVisibility). -->
+                    <ComboBox x:Name="ClassicColorComboBox" Grid.Column="2" Width="120" Margin="0,0,10,0" VerticalAlignment="Center"
+                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              Visibility="Collapsed"
+                              SelectionChanged="ClassicColorComboBox_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <!-- ItemTemplate rather than DisplayMemberPath: MimoComboBoxStyle's closed-box
                          ContentPresenter only picks up ComboBox.ItemTemplate (forwarded as
                          SelectionBoxItemTemplate) — DisplayMemberPath alone only formats the
@@ -504,7 +520,7 @@
                          "Tela do MiMo" card — selecting it also sends Core's own THEME MATRIX
                          (TemaComboBox_SelectionChanged), alongside whatever WPF skin the entry
                          points at. -->
-                    <ComboBox x:Name="TemaComboBox" Grid.Column="2" Width="140" VerticalAlignment="Center"
+                    <ComboBox x:Name="TemaComboBox" Grid.Column="3" Width="140" VerticalAlignment="Center"
                               Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
                               SelectionChanged="TemaComboBox_SelectionChanged">
                         <ComboBox.ItemTemplate>

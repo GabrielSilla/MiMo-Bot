@@ -136,6 +136,12 @@ WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears th
 TIME <HH:MM>                  (empty clears the clock)
 NOTIFY <FACE> <text>          (top-priority full-screen interruption, auto-clears after 10s)
 THEME <DEFAULT|MATRIX|MI2MO2|MI84> (persistent, like WEATHER/TIME — see Face.cpp's theme notes)
+CLASSICCOLOR <BLUE|GREEN|AMBER|RED|PINK|WHITE> (DEFAULT theme's own primary
+                               color — eyes, corner icons, weather/clock
+                               badge. No effect on any other theme, which
+                               has its own fixed palette. Persistent like
+                               THEME, and kept even while a different theme
+                               is selected, see Face.cpp's ClassicColor)
 SOUND <ON|OFF>                (persistent; buzzer cues, see Buzzer.cpp)
 SCANLINES <ON|OFF>            (persistent; physical display's CRT post-FX only)
 STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>   (-1 = no source; empty clears)
@@ -384,7 +390,16 @@ builds never see it.
 
 ## Firmware internals (BrobotCore)
 
-- **`Face.cpp`**: eyes are two filled rounded-squares (42px, teal), corners faked
+- **`Face.cpp`**: eyes are two filled rounded-squares (42px, teal by default —
+  the wire's `CLASSICCOLOR` command, see PROTOCOL.md, picks a different one of
+  six for `THEME DEFAULT` only; every other theme keeps its own fixed palette
+  and ignores it. `classicColorRGB` resolves `FaceState::classicColor` to
+  RGB once per frame and feeds the same variable into the eyes, the corner
+  icons, the weather/clock badge, and a `DEFAULT` notification's ink — the
+  places `EYE_R/G/B` used to be hardcoded directly. GREEN/AMBER deliberately
+  resolve to `MATRIX_R/G/B`/`MI84_INK_R/G/B` rather than getting new values
+  of their own, so picking "green" here reads as the same green MiMo already
+  shows elsewhere), corners faked
   with a 2-row "staircase" background cut (not a true circle — keeps serial
   bandwidth down). Eye size/position stay constant whether or not a message is
   showing. Most expressions (HAPPY/SAD/ANGRY/SLEEPING/SLEEPY) just tweak eye height/gap/offset,
@@ -1303,6 +1318,22 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   Mi2-Mo2 was added, which would have silently dropped the new theme on
   every reconnect. `DEFAULT` still needs no resend, since that's already
   Core's own boot default.
+  A second `ComboBox` (`ClassicColorComboBox`,
+  `ThemeManager.AvailableClassicColors`) sits beside it, sending Core's own
+  `CLASSICCOLOR <CoreColor>` (see PROTOCOL.md) — MiMo Classic's selectable
+  primary color (eyes, corner icons, weather/clock badge): Azul (original),
+  Verde (reuses MiMo Matrix's own green), Âmbar (reuses MiMo-84's own
+  amber), Vermelho, Rosa, Branco. Hidden (`Visibility.Collapsed`, not
+  disabled) whenever anything but "MiMo Classic" is selected
+  (`RefreshClassicColorVisibility`, called from `TemaComboBox_SelectionChanged`)
+  since Core ignores `CLASSICCOLOR` entirely on every other theme — a picker
+  left visible-but-inert there would imply a choice that does nothing.
+  Same persistent-flag treatment as `THEME` in every other respect:
+  `SenderSettings.ClassicColor` is saved immediately on change (not gated
+  behind "Salvar configurações"), and `UpdateConnectionStatus` resends it on
+  reconnect for any non-`Blue` value — regardless of which theme happens to
+  be selected at that moment, since Core holds the color independently of
+  the active theme and only reads it while rendering `DEFAULT`.
 - **"Atividade da IA"** (a provider `ComboBox`: Claude/Codex/Gemini/Cursor/
   Outro, plus an **Instalar**/**Desinstalar** button — no checkbox) is the
   per-tool-hooks → local endpoint → `FACE`/`MSG` bridge. Unlike every other

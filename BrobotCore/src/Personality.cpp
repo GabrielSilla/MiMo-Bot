@@ -421,6 +421,25 @@ void Personality::onThemeCommand(const char* name, unsigned long now) {
     _themeChangedAt = now;
 }
 
+// Same "passive telemetry" reasoning as onThemeCommand just above: never
+// touches _lastInteractionAt, holds whatever was last sent regardless of
+// which theme is active, and only CLASSIC's own rendering ever reads it.
+void Personality::onClassicColorCommand(const char* name) {
+    if (strcmp(name, "GREEN") == 0) {
+        _classicColor = ClassicColor::GREEN;
+    } else if (strcmp(name, "AMBER") == 0) {
+        _classicColor = ClassicColor::AMBER;
+    } else if (strcmp(name, "RED") == 0) {
+        _classicColor = ClassicColor::RED;
+    } else if (strcmp(name, "PINK") == 0) {
+        _classicColor = ClassicColor::PINK;
+    } else if (strcmp(name, "WHITE") == 0) {
+        _classicColor = ClassicColor::WHITE;
+    } else {
+        _classicColor = ClassicColor::BLUE;
+    }
+}
+
 // "NOTIFY <EXPRESSION> <text>" — one atomic line rather than the usual
 // FACE-then-MSG pair, and deliberately so: this is the highest-priority
 // thing the display can show, and a two-command form could be caught
@@ -715,6 +734,7 @@ FaceState Personality::currentState() const {
 
     state.theme = _theme;
     state.themeStartedMs = _themeChangedAt;
+    state.classicColor = _classicColor;
     // Which of MATRIX's log tabs is on screen follows exactly what the face
     // itself is doing: a game rendering shows the monitor tab, other
     // background (media) expressions show the media log, and otherwise — AI
