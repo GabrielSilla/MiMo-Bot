@@ -106,7 +106,10 @@ internal static class Font5x7
         new byte[] {0x38, 0x44, 0x46, 0x45, 0x3A}, // 'ô' (o + circumflex)
         new byte[] {0x38, 0x45, 0x46, 0x45, 0x3A}, // 'õ' (o + tilde)
         new byte[] {0x3C, 0x40, 0x42, 0x21, 0x7C}, // 'ú' (u + acute)
-        new byte[] {0x38, 0x44, 0x44, 0x44, 0x00}, // 'ç' — same as 'c': no spare row below for a cedilla hook without repeating 'g's original "looks cut off" mistake
+        new byte[] {0x18, 0x24, 0x64, 0x64, 0x00}, // 'ç' — 'c's loop shrunk to rows 2-5 (like 'g's bowl) to free row 6 for a
+                                                    // 2px cedilla hook at cols 2-3, reusing 'g's own hook columns; a plain
+                                                    // 'c' bitmap (rows 2-6, no spare row) previously stood in for it and
+                                                    // was indistinguishable from a real 'c' — a real bug, fixed once.
 
         // Terminal punctuation, added for the MI84 theme (see Face.cpp) but
         // shared by everything: MATRIX's own tab header and log prefix
