@@ -251,9 +251,17 @@
         </Style>
     </Window.Resources>
 
+    <!-- Two "pages" sharing one window, no tab control: the checklist
+         (default) and the game picker (see GamePickerGrid below) that
+         AntiStressButton_Click swaps in. Both are plain siblings in the same
+         cell rather than a TabControl, since there's no selector to expose —
+         navigation only ever happens by clicking ANTI STRESS BUTTON to go in
+         and Voltar/a game ending to come back out. -->
+    <Grid>
     <ScrollViewer x:Name="RootScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
         <Grid Margin="32,28,24,28">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -284,10 +292,38 @@
             <TextBlock Grid.Row="1" Text="Escolha as informações que o MiMo pode receber"
                        HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,0,0,24"/>
 
+            <!-- Anti-Stress: an umbrella for MiMo's short joguinhos (currently
+                 Pong and Batalha RPG), not a game itself — clicking the
+                 button navigates to GamePickerGrid to choose one, rather
+                 than starting anything directly (see AntiStressButton_Click).
+                 First card of the list, de propósito — é o botão que se
+                 aperta sem pensar, não algo que se configura. -->
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="ControllerClassic" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Anti-Stress" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Escolha um joguinho rápido pra descontrair — o MiMo mostra na tela dele"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="AntiStressStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <Button x:Name="AntiStressButton" Grid.Column="2" Content="ANTI STRESS BUTTON" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="AntiStressButton_Click"/>
+                </Grid>
+            </Border>
+
             <!-- Conexão: MiMo's IP address on the local network (WiFi — see
                  CLAUDE.md's connection-freeze note on why this replaced the
                  Serial/USB path entirely for this app) -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -318,7 +354,7 @@
             </Border>
 
             <!-- Hora -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -339,7 +375,7 @@
             </Border>
 
             <!-- Clima -->
-            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -361,7 +397,7 @@
             </Border>
 
             <!-- Pausa -->
-            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -393,7 +429,7 @@
             </Border>
 
             <!-- Pensamentos da IA -->
-            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -425,7 +461,7 @@
             </Border>
 
             <!-- Mídia -->
-            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -447,7 +483,7 @@
             </Border>
 
             <!-- Jogos -->
-            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -480,7 +516,7 @@
             </Border>
 
             <!-- Tema -->
-            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -533,7 +569,7 @@
             </Border>
 
             <!-- Sons -->
-            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="11" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -554,7 +590,7 @@
             </Border>
 
             <!-- Scanlines -->
-            <Border Grid.Row="11" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="12" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -575,7 +611,7 @@
             </Border>
 
             <!-- Info -->
-            <Border Grid.Row="12" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
+            <Border Grid.Row="13" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="36" Height="36" CornerRadius="11" Background="{DynamicResource BadgeBrush}">
                         <iconPacks:PackIconMaterial Kind="InformationOutline" Width="18" Height="18"
@@ -595,7 +631,7 @@
                  possible from inside this app: the ESP32 accepts one TCP
                  client at a time, so an external script can't reach MiMo
                  without closing Brobot.Sender first. -->
-            <Border Grid.Row="13" x:Name="TesteCard" Style="{StaticResource CardStyle}"
+            <Border Grid.Row="14" x:Name="TesteCard" Style="{StaticResource CardStyle}"
                     Visibility="Collapsed" Margin="0,4,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -650,8 +686,80 @@
                 </Grid>
             </Border>
 
-            <Button Grid.Row="14" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+            <Button Grid.Row="15" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
                     Click="SaveButton_Click"/>
         </Grid>
     </ScrollViewer>
+
+    <!-- The game picker "page" — see the comment on the outer Grid above.
+         Shown instead of RootScrollViewer while choosing or playing a
+         minigame; ShowMainChecklist() swaps back to the checklist the moment
+         a game ends (naturally, via Escape, or via Voltar). -->
+    <Grid x:Name="GamePickerGrid" Visibility="Collapsed" Margin="32,28,24,28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Escolha um joguinho" HorizontalAlignment="Center"
+                   Foreground="{DynamicResource InkBrush}" FontSize="20" FontWeight="SemiBold" Margin="0,8,0,4"/>
+        <TextBlock Grid.Row="1" Text="O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado"
+                   HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,0,0,24"/>
+
+        <StackPanel Grid.Row="2">
+            <!-- Pong -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="TableTennis" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Pong" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Um Pong solo na tela do MiMo — esquerda/direita movem a raquete, ESC sai na hora"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="PongPickerStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <Button x:Name="PlayPongButton" Grid.Column="2" Content="JOGAR" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="PlayPongButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Batalha RPG -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="SwordCross" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Batalha RPG" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="MiMo enfrenta inimigos de tecnologia na tela dele — Atacar, Magias ou Fugir pelas setinhas e Enter, ESC sai na hora"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="RpgPickerStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <Button x:Name="PlayRpgButton" Grid.Column="2" Content="BATALHAR" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="PlayRpgButton_Click"/>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- Always available — cancels a pending/active game and leaves the
+             picker with no need to reach for ESC on the keyboard. -->
+        <Button Grid.Row="3" x:Name="BackFromGamesButton" Content="VOLTAR" HorizontalAlignment="Center"
+                Style="{StaticResource InstallButtonStyle}" Margin="0,10,0,0" Click="BackFromGamesButton_Click"/>
+    </Grid>
+    </Grid>
 </Window>

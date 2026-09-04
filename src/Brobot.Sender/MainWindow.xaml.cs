@@ -103,6 +103,18 @@ public partial class MainWindow : Window
     };
     private static readonly Random PausaRng = new();
 
+    // Anti-Stress Pong: the timer covers the 5s gap between the "Vamos jogar
+    // um pouco?" greeting and the actual PONG START, and is null once that's
+    // fired. The hook is non-null exactly while a round can be in progress —
+    // installed the moment PONG START is sent, disposed on Escape, on the
+    // PONG OVER Core sends back when the round ends on its own, or on app exit.
+    private DispatcherTimer? _pongStartTimer;
+    private GlobalKeyboardHook? _pongHook;
+
+    // Batalha RPG: same shape as the Pong fields above.
+    private DispatcherTimer? _rpgStartTimer;
+    private GlobalKeyboardHook? _rpgHook;
+
     private AiThoughtsListener? _aiThoughtsListener;
     private bool _aiThoughtFaceActive;
     private bool _aiStatsActive; // AISTATS is persistent on Core — see ClearAiStatsIfActive
@@ -172,6 +184,12 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _connection = new BrobotConnection(Dispatcher);
+        // BrobotConnection batches every incoming line into per-frame
+        // draw-command batches for whoever wants them (Brobot Virtual
+        // Display); this app has no use for those except the one
+        // spontaneous "PONG OVER <score>" line Core writes when an
+        // Anti-Stress round ends on its own (see OnFrameReceived).
+        _connection.FrameReceived += OnFrameReceived;
 
         SetupTrayIcon();
         Closing += MainWindow_Closing;
@@ -897,6 +915,251 @@ public partial class MainWindow : Window
                 $"STATS {Field(reading.CpuLoadPercent)} {Field(reading.CpuTempC)} " +
                 $"{Field(reading.GpuLoadPercent)} {Field(reading.GpuTempC)} {Field(reading.RamLoadPercent)}");
         });
+    }
+
+    /// <summary>
+    /// The "ANTI STRESS BUTTON": just navigates to the game picker (see
+    /// ShowGamePicker) — it's an umbrella for MiMo's short joguinhos, not a
+    /// game itself, so it no longer starts Pong directly. Which game
+    /// actually starts is up to PlayPongButton_Click/PlayRpgButton_Click.
+    /// </summary>
+    private void AntiStressButton_Click(object sender, RoutedEventArgs e)
+    {
+        ShowGamePicker();
+    }
+
+    /// <summary>
+    /// Swaps the checklist for the game picker "page" — see the XAML
+    /// comment on GamePickerGrid for why this is plain Visibility toggling
+    /// rather than a TabControl. Clears both picker status lines so a stale
+    /// "Jogando!"/score from a previous visit doesn't flash before the user
+    /// picks anything this time.
+    /// </summary>
+    private void ShowGamePicker()
+    {
+        PongPickerStatusText.Text = string.Empty;
+        RpgPickerStatusText.Text = string.Empty;
+        RootScrollViewer.Visibility = Visibility.Collapsed;
+        GamePickerGrid.Visibility = Visibility.Visible;
+    }
+
+    private void ShowMainChecklist()
+    {
+        GamePickerGrid.Visibility = Visibility.Collapsed;
+        RootScrollViewer.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>
+    /// "JOGAR" (Pong): greets, waits 5s (see PongStartTimer_Tick), then hands
+    /// the round over to Core. Both play buttons are disabled for the whole
+    /// cycle — greeting, wait, and round — so a second click can't stack a
+    /// duplicate PONG START, and Batalha RPG can't be started underneath it
+    /// (Core only ever runs one exclusive mode at a time, see
+    /// Protocol::dispatch); StopAntiStressGame re-enables both once the round
+    /// is over, however that happens.
+    /// </summary>
+    private void PlayPongButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayPongButton.IsEnabled = false;
+        PlayRpgButton.IsEnabled = false;
+        PongPickerStatusText.Text = "Chamando você pra jogar...";
+
+        // FACE HAPPY first, same as every other "genuinely good news" moment
+        // in this app (see SessionStart's greeting) — a bare MSG with no
+        // preceding FACE would route by Core's _lastCommandTier instead of
+        // landing predictably in the foreground.
+        _connection.SendCommand("FACE HAPPY");
+        _connection.SendCommand("MSG Vamos jogar um pouco?");
+
+        _pongStartTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _pongStartTimer.Tick += PongStartTimer_Tick;
+        _pongStartTimer.Start();
+    }
+
+    private void PongStartTimer_Tick(object? sender, EventArgs e)
+    {
+        _pongStartTimer!.Stop();
+        _pongStartTimer = null;
+
+        _connection.SendCommand("PONG START");
+
+        // Installed only now, not on the button click — the 5s greeting
+        // window has no game running yet, so there's nothing for the arrows
+        // to control and no round for Escape to stop.
+        _pongHook = new GlobalKeyboardHook();
+        _pongHook.LeftArrowChanged += down => _connection.SendCommand($"PONG KEY LEFT {(down ? "DOWN" : "UP")}");
+        _pongHook.RightArrowChanged += down => _connection.SendCommand($"PONG KEY RIGHT {(down ? "DOWN" : "UP")}");
+        _pongHook.EscapePressed += OnPongEscapePressed;
+        _pongHook.Install();
+
+        PongPickerStatusText.Text = "Jogando! Use as setinhas para mover a raquete, ESC para sair.";
+    }
+
+    /// <summary>
+    /// The only path that has to tell Core to stop — every other way a round
+    /// ends (missing the ball) Core already knows on its own and reports
+    /// back via PONG OVER (see OnFrameReceived).
+    /// </summary>
+    private void OnPongEscapePressed()
+    {
+        _connection.SendCommand("PONG STOP");
+        StopAntiStressGame("Você saiu do jogo.");
+    }
+
+    /// <summary>
+    /// Idempotent cleanup, same shape as ClearGameFaceIfActive/
+    /// ClearMediaFaceIfActive — safe to call from Escape, from a PONG OVER
+    /// Core sent back on its own, from Voltar, or from app shutdown,
+    /// whichever gets here first. Deliberately does not itself send
+    /// PONG STOP: the caller decides whether Core still needs telling.
+    /// <paramref name="statusText"/> lands on the *checklist's* Anti-Stress
+    /// card (not the picker, which is about to disappear) so the result is
+    /// still visible after navigating back.
+    /// </summary>
+    private void StopAntiStressGame(string statusText)
+    {
+        _pongStartTimer?.Stop();
+        _pongStartTimer = null;
+
+        _pongHook?.Dispose();
+        _pongHook = null;
+
+        PlayPongButton.IsEnabled = true;
+        PlayRpgButton.IsEnabled = true;
+        AntiStressStatusText.Text = statusText;
+        ShowMainChecklist();
+    }
+
+    /// <summary>
+    /// "BATALHAR": structurally identical to PlayPongButton_Click — greets,
+    /// waits 5s, hands the battle over to Core. See that method's comment for
+    /// why both play buttons are disabled here too; a third minigame would
+    /// be the point to pull this and Pong's copy into one shared helper, but
+    /// with only two, copying the shape is simpler than generalizing it
+    /// (same call CLAUDE.md already makes for ClearGameFaceIfActive/
+    /// ClearMediaFaceIfActive).
+    /// </summary>
+    private void PlayRpgButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayPongButton.IsEnabled = false;
+        PlayRpgButton.IsEnabled = false;
+        RpgPickerStatusText.Text = "Preparando os inimigos...";
+
+        _connection.SendCommand("FACE HAPPY");
+        _connection.SendCommand("MSG Hora de batalhar!");
+
+        _rpgStartTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _rpgStartTimer.Tick += RpgStartTimer_Tick;
+        _rpgStartTimer.Start();
+    }
+
+    private void RpgStartTimer_Tick(object? sender, EventArgs e)
+    {
+        _rpgStartTimer!.Stop();
+        _rpgStartTimer = null;
+
+        _connection.SendCommand("RPG START");
+
+        // Only LEFT/RIGHT fire on the down-edge here (see GlobalKeyboardHook)
+        // — RPG's menu cursor moves one step per press, not "hold to glide"
+        // like the Pong paddle, so the release edge is simply ignored.
+        _rpgHook = new GlobalKeyboardHook();
+        _rpgHook.LeftArrowChanged += down => { if (down) _connection.SendCommand("RPG LEFT"); };
+        _rpgHook.RightArrowChanged += down => { if (down) _connection.SendCommand("RPG RIGHT"); };
+        _rpgHook.EnterPressed += () => _connection.SendCommand("RPG CONFIRM");
+        _rpgHook.EscapePressed += OnRpgEscapePressed;
+        _rpgHook.Install();
+
+        RpgPickerStatusText.Text = "Batalhando! Setinhas + Enter escolhem, ESC sai.";
+    }
+
+    /// <summary>Mirrors OnPongEscapePressed — see that method's comment.</summary>
+    private void OnRpgEscapePressed()
+    {
+        _connection.SendCommand("RPG STOP");
+        StopRpgBattle("Você saiu da batalha.");
+    }
+
+    /// <summary>Mirrors StopAntiStressGame — see that method's comment.</summary>
+    private void StopRpgBattle(string statusText)
+    {
+        _rpgStartTimer?.Stop();
+        _rpgStartTimer = null;
+
+        _rpgHook?.Dispose();
+        _rpgHook = null;
+
+        PlayPongButton.IsEnabled = true;
+        PlayRpgButton.IsEnabled = true;
+        AntiStressStatusText.Text = statusText;
+        ShowMainChecklist();
+    }
+
+    /// <summary>
+    /// "VOLTAR": always visible on the picker, for whenever the user gives
+    /// up — whether they haven't picked a game yet, are still waiting out a
+    /// greeting's 5s countdown, or a round/battle is already in progress.
+    /// Only the last case has anything to actually tell Core; the other two
+    /// never got as far as a PONG/RPG START, so there's nothing for Core to
+    /// stop.
+    /// </summary>
+    private void BackFromGamesButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pongHook != null)
+        {
+            _connection.SendCommand("PONG STOP");
+            StopAntiStressGame("Você saiu do jogo.");
+            return;
+        }
+
+        if (_rpgHook != null)
+        {
+            _connection.SendCommand("RPG STOP");
+            StopRpgBattle("Você saiu da batalha.");
+            return;
+        }
+
+        _pongStartTimer?.Stop();
+        _pongStartTimer = null;
+        _rpgStartTimer?.Stop();
+        _rpgStartTimer = null;
+        PlayPongButton.IsEnabled = true;
+        PlayRpgButton.IsEnabled = true;
+        ShowMainChecklist();
+    }
+
+    /// <summary>
+    /// The only things this app ever reads out of BrobotConnection's
+    /// incoming frames — everything else in them is draw commands meant for
+    /// Brobot Virtual Display, not this app. Already on the UI thread:
+    /// FrameReceived is raised via a synchronous Dispatcher.Invoke inside
+    /// BrobotConnection itself, so no marshaling is needed here.
+    /// </summary>
+    private void OnFrameReceived(IReadOnlyList<string> lines)
+    {
+        foreach (string line in lines)
+        {
+            if (line.StartsWith("PONG OVER ", StringComparison.Ordinal))
+            {
+                string score = line["PONG OVER ".Length..].Trim();
+                StopAntiStressGame($"Última pontuação: {score}");
+                return;
+            }
+
+            if (line.StartsWith("RPG OVER ", StringComparison.Ordinal))
+            {
+                string result = line["RPG OVER ".Length..].Trim();
+                string message = result switch
+                {
+                    "VICTORY" => "Vitória!",
+                    "DEFEAT" => "Você perdeu...",
+                    "FLED" => "Fugiu da batalha.",
+                    _ => result,
+                };
+                StopRpgBattle(message);
+                return;
+            }
+        }
     }
 
     /// <summary>
@@ -1812,6 +2075,13 @@ public partial class MainWindow : Window
         _statsMonitor?.Dispose();
         _weatherMonitor?.Dispose();
         _aiThoughtsListener?.Dispose();
+        // A system-wide keyboard hook must not outlive the process that
+        // installed it — dispose it before _connection so any commands it
+        // fires mid-teardown still go out rather than throwing.
+        _pongHook?.Dispose();
+        _pongStartTimer?.Stop();
+        _rpgHook?.Dispose();
+        _rpgStartTimer?.Stop();
         _clockTimer?.Stop();
         _breakTimer?.Stop();
         _connectionStatusTimer.Stop();
