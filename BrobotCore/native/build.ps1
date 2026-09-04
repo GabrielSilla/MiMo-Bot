@@ -64,6 +64,8 @@ $sources = @(
     (Join-Path $coreDir "src\Face.cpp"),
     (Join-Path $coreDir "src\Personality.cpp"),
     (Join-Path $coreDir "src\Protocol.cpp"),
+    (Join-Path $coreDir "src\PongGame.cpp"),
+    (Join-Path $coreDir "src\RpgBattle.cpp"),
     (Join-Path $nativeDir "src\TcpBroadcastStream.cpp"),
     (Join-Path $nativeDir "src\main_native.cpp")
 )

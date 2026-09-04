@@ -26,7 +26,9 @@
 #include "DeviceSettings.h"
 #include "Face.h"
 #include "Personality.h"
+#include "PongGame.h"
 #include "Protocol.h"
+#include "RpgBattle.h"
 #include "SerialVirtualDisplay.h"
 #include "TcpBroadcastStream.h"
 
@@ -72,7 +74,9 @@ int main(int argc, char** argv) {
     SerialVirtualDisplay display(serial);
     Personality personality;
     DeviceSettings deviceSettings;
-    Protocol protocol(personality, deviceSettings);
+    PongGame pongGame;
+    RpgBattle rpgBattle;
+    Protocol protocol(personality, deviceSettings, pongGame, rpgBattle);
 
     personality.begin(nativeMillis());
 
@@ -83,12 +87,45 @@ int main(int argc, char** argv) {
         unsigned long now = nativeMillis();
 
         protocol.poll(serial, now);
-        personality.update(now);
+
+        // Mirrors main.cpp's loop(): Pong and RPG Battle are both exclusive,
+        // replacing Personality's own update entirely while active rather
+        // than adding another priority tier. Protocol::dispatch keeps the
+        // two from both being active at once.
+        if (pongGame.isActive()) {
+            pongGame.update(now);
+        } else if (rpgBattle.isActive()) {
+            rpgBattle.update(now);
+        } else {
+            personality.update(now);
+        }
+
+        // See main.cpp's own copy of this for why — fired once per
+        // round/battle, the instant it ends by the Core's own decision (see
+        // PROTOCOL.md's PONG OVER / RPG OVER).
+        if (pongGame.justEnded()) {
+            char overLine[24];
+            std::snprintf(overLine, sizeof(overLine), "PONG OVER %d", pongGame.lastScore());
+            serial.println(overLine);
+            serial.println("PRESENT");
+        }
+        if (rpgBattle.justEnded()) {
+            char overLine[24];
+            std::snprintf(overLine, sizeof(overLine), "RPG OVER %s", rpgBattle.lastResultToken());
+            serial.println(overLine);
+            serial.println("PRESENT");
+        }
 
         if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
             lastFrameAt = now;
             display.clear(0, 0, 0);
-            Face::render(display, personality.currentState());
+            if (pongGame.isActive()) {
+                pongGame.render(display);
+            } else if (rpgBattle.isActive()) {
+                rpgBattle.render(display, now);
+            } else {
+                Face::render(display, personality.currentState());
+            }
             display.present();
         }
 

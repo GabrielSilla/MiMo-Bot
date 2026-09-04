@@ -26,6 +26,13 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o MiMo nunca mais dormiria. |
 | `AISTATS <contexto%> <custoCents> <limite5h%> <limite7d%> <modelo>` | Telemetria da sessão de IA (ver abaixo). Os quatro primeiros são inteiros com a mesma convenção do `STATS`: **-1** = "o app do PC não tinha esse dado", desenhado como `--`. O custo vai em **centavos de dólar** porque o protocolo só carrega inteiros; o Core imprime de volta como `$1.24`. `<modelo>` é texto livre até o fim da linha (pode ter espaço, pode ser vazio). `AISTATS` sem argumentos limpa. Persistente e sem contar como interação, exatamente como `STATS`. |
 | `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 10s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
+| `PONG START` | Liga o minijogo Pong (ver abaixo), o "ANTI STRESS BUTTON" do Brobot.Sender — exclusivo, acima até de `NOTIFY`. |
+| `PONG KEY <LEFT\|RIGHT> <DOWN\|UP>` | Estado bruto de uma tecla de seta (pressionada/solta) — quem decide velocidade/física da raquete é o Core, o app do PC só reporta a transição. |
+| `PONG STOP` | Encerra o Pong na hora, jogo em andamento ou já na tela de fim de jogo, e volta ao normal. |
+| `RPG START` | Liga a Batalha RPG (ver abaixo), sorteando 2 inimigos — exclusiva, igual ao Pong. |
+| `RPG LEFT` / `RPG RIGHT` | Um passo do cursor no menu atual (ação, magia ou alvo) — evento discreto por tecla pressionada, não "segurar para mover" como o `PONG KEY`. |
+| `RPG CONFIRM` | Confirma a opção selecionada. |
+| `RPG STOP` | Encerra a batalha na hora e volta ao normal. |
 | `PING` | **O único comando que o Core responde** — devolve a linha `MIMO <revisão>` (hoje `MIMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o MiMo na rede (ver abaixo). |
 
 `WEATHER`, `TIME`, `THEME`, `CLASSICCOLOR`, `SOUND` e `SCANLINES` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.
@@ -69,6 +76,75 @@ O que aparece depende do tema:
 Os stats só são desenhados enquanto `PLAYING` é a expressão em cena. Um
 `STATS` recebido fora disso é guardado e simplesmente não aparece, do mesmo
 jeito que um `WEATHER` chega antes de haver espaço pra ele.
+
+### Pong
+
+O "ANTI STRESS BUTTON" do Brobot.Sender: um Pong solo, raquete embaixo,
+controlada pelas setinhas esquerda/direita do PC. Quem manda é o app do PC,
+mas quem decide tudo — posição da bola, colisão, pontuação, quando acabou —
+é o Core, igual ao resto do protocolo. O app do PC só relata qual tecla
+mudou de estado.
+
+`PONG START` liga um modo **exclusivo**: enquanto está ativo, o Core para de
+atualizar/desenhar `Personality`/`Face` por completo (nem pisca, nem olha ao
+redor, nem dorme) e passa a atualizar/desenhar só o jogo — não é mais um tier
+de prioridade, é um desvio total, acima até de `NOTIFY`. `PONG STOP` encerra
+na hora, jogo em andamento ou já na tela de fim de jogo, e devolve a tela
+para `Personality` no quadro seguinte.
+
+Perder (a bola passa da raquete) mostra "GAME OVER" + a pontuação por alguns
+segundos e volta ao normal sozinho — sem precisar de `PONG STOP`. Nesse
+instante o Core manda uma linha de volta, a única deste protocolo que não é
+resposta a um comando de desenho nem ao `PING`:
+
+```
+PONG OVER <pontuação>
+```
+
+Escrita direto no mesmo `Stream`, do mesmo jeito que a resposta do `PING`
+(ver `Protocol.cpp`), seguida de um `PRESENT` — o que a deixa passar pelo
+mesmo agrupamento em quadro que `BrobotConnection` já usa do lado do PC, sem
+precisar de mecanismo novo. O Brobot.Sender usa essa linha só para saber a
+hora certa de parar de escutar o teclado; ela não é redesenhada em lugar
+nenhum.
+
+### Batalha RPG
+
+O segundo minigame exclusivo do Brobot.Sender, no mesmo espírito do Pong
+acima: uma batalha por turno estilo Final Fantasy 1 contra 2 inimigos
+temáticos de tecnologia (Bug, Vírus, Drone, Firewall, Roteador, IA Rebelde —
+sorteados entre os seis, podendo repetir), com menu de Atacar/Magias/Fugir
+embaixo e as magias limitadas a Bola de Fogo e Cura. Quem decide tudo — vida,
+dano sorteado, ordem de turno e as animações — é o Core; o app do PC só
+relata qual tecla mudou de estado, igual ao Pong. Atacar e Bola de Fogo
+sorteiam entre 5 e 20 de dano; Cura e o ataque de cada inimigo sorteiam
+entre 1 e 10 — os dois primeiros são mais fortes de propósito, senão uma
+batalha contra 2 inimigos de 50 de vida cada, revidando 1-10 por rodada,
+se arrastava bem mais do que uma pausa rápida devia.
+
+`RPG START` sorteia o número de inimigos, a vida de cada um (sempre 50) e a
+do MiMo (sempre 100), e liga o mesmo tipo de desvio exclusivo do Pong:
+enquanto ativo, `Personality`/`Face` param de ser atualizados/desenhados por
+completo. `Protocol::dispatch` é quem garante que o Pong e a Batalha RPG
+nunca ficam ativos ao mesmo tempo — um `PONG START` chegando com a batalha
+em andamento (ou vice-versa) é simplesmente ignorado.
+
+Como o Pong, perder termina a batalha (`DERROTA...`) e volta ao normal
+sozinho depois de alguns segundos — só que aqui só existe **uma vida**: ao
+contrário de "perder a bola e jogar de novo", a Batalha RPG acaba de vez ao
+zerar a vida do MiMo, com vitória (todos os inimigos derrotados) ou fuga
+(`Fugir`, sempre bem-sucedida, sem chance de falha) como os outros dois
+finais possíveis. Ao terminar por qualquer um desses três — nunca por um
+`RPG STOP` vindo do app do PC, que já sabe o motivo — o Core manda uma linha
+de volta, no mesmo formato do `PONG OVER`:
+
+```
+RPG OVER <VICTORY|DEFEAT|FLED>
+```
+
+Escrita direto no `Stream` seguida de um `PRESENT`, exatamente como o
+`PONG OVER` — o Brobot.Sender usa essa linha só para saber a hora certa de
+parar de escutar o teclado.
 
 ### Telemetria da sessão de IA (`AISTATS`)
 

@@ -1,11 +1,14 @@
 #include <Arduino.h>
+#include <stdio.h>
 
 #include "Buzzer.h"
 #include "Config.h"
 #include "DeviceSettings.h"
 #include "Face.h"
 #include "Personality.h"
+#include "PongGame.h"
 #include "Protocol.h"
+#include "RpgBattle.h"
 
 #if VSCREEN
 #include "SerialVirtualDisplay.h"
@@ -36,7 +39,9 @@ String pcWaitingMessage;
 
 Personality personality;
 DeviceSettings deviceSettings;
-Protocol protocol(personality, deviceSettings);
+PongGame pongGame;
+RpgBattle rpgBattle;
+Protocol protocol(personality, deviceSettings, pongGame, rpgBattle);
 Buzzer buzzer;
 
 unsigned long lastFrameAt = 0;
@@ -137,8 +142,55 @@ void loop() {
     protocol.poll(Serial, now);
 #endif
 
-    personality.update(now);
+    // Pong and RPG Battle are both exclusive: while either is active it
+    // replaces Personality's own update entirely rather than adding another
+    // priority tier, so nothing (not even the idle blink/look-around/sleep
+    // timers, let alone a NOTIFY) advances or interrupts it — see
+    // PongGame.h/RpgBattle.h. Protocol::dispatch is what keeps the two from
+    // both being active at once, so this is a plain either/or, never both.
+    if (pongGame.isActive()) {
+        pongGame.update(now);
+    } else if (rpgBattle.isActive()) {
+        rpgBattle.update(now);
+    } else {
+        personality.update(now);
+    }
     buzzer.update(now);
+
+    // Fired exactly once, the instant a round/battle ends by the Core's own
+    // decision — tells whichever PC app is connected to stop listening to
+    // the keyboard (see PROTOCOL.md's PONG OVER / RPG OVER). Written
+    // straight to the active stream, the same "reply directly, don't route
+    // through Personality" idiom Protocol::dispatch already uses for the
+    // PING reply. A PONG/RPG STOP never reaches here — both classes'
+    // stop() deliberately never set justEnded(), since main.cpp already
+    // knows why in that case (it just sent the STOP itself).
+    if (pongGame.justEnded()) {
+        char overLine[24];
+        snprintf(overLine, sizeof(overLine), "PONG OVER %d", pongGame.lastScore());
+#if defined(ESP32)
+        if (pcConnected) {
+            protocolClient.println(overLine);
+            protocolClient.println("PRESENT");
+        }
+#else
+        Serial.println(overLine);
+        Serial.println("PRESENT");
+#endif
+    }
+    if (rpgBattle.justEnded()) {
+        char overLine[24];
+        snprintf(overLine, sizeof(overLine), "RPG OVER %s", rpgBattle.lastResultToken());
+#if defined(ESP32)
+        if (pcConnected) {
+            protocolClient.println(overLine);
+            protocolClient.println("PRESENT");
+        }
+#else
+        Serial.println(overLine);
+        Serial.println("PRESENT");
+#endif
+    }
 
 #if !VSCREEN
     // Cheap bool set — fine to do every loop() iteration rather than only
@@ -151,26 +203,35 @@ void loop() {
     if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
         lastFrameAt = now;
         display.clear(0, 0, 0);
-#if defined(ESP32)
-        if (!pcConnected) {
-            // No PC app connected right now (still waiting after boot, or
-            // Brobot.Sender dropped) — show the persistent IP message
-            // instead of Personality's own idle face, bypassing Personality
-            // entirely (same trick the config-portal screen in setup()
-            // uses): this has to stay up indefinitely, and with no PC
-            // connected there's no FACE/MSG command that could arrive to
-            // drive Personality's own message system anyway.
-            FaceState waitingState;
-            waitingState.expression = Expression::FINISHED;
-            waitingState.message = pcWaitingMessage.c_str();
-            waitingState.nowMs = now;
-            Face::render(display, waitingState);
+        if (pongGame.isActive()) {
+            // Exclusive, same bypass shape as the two branches below: a
+            // round in progress owns the whole frame, Personality/Face never
+            // get a look-in until it ends.
+            pongGame.render(display);
+        } else if (rpgBattle.isActive()) {
+            rpgBattle.render(display, now);
         } else {
-            renderPersonalityFrame(now);
-        }
+#if defined(ESP32)
+            if (!pcConnected) {
+                // No PC app connected right now (still waiting after boot, or
+                // Brobot.Sender dropped) — show the persistent IP message
+                // instead of Personality's own idle face, bypassing Personality
+                // entirely (same trick the config-portal screen in setup()
+                // uses): this has to stay up indefinitely, and with no PC
+                // connected there's no FACE/MSG command that could arrive to
+                // drive Personality's own message system anyway.
+                FaceState waitingState;
+                waitingState.expression = Expression::FINISHED;
+                waitingState.message = pcWaitingMessage.c_str();
+                waitingState.nowMs = now;
+                Face::render(display, waitingState);
+            } else {
+                renderPersonalityFrame(now);
+            }
 #else
-        renderPersonalityFrame(now);
+            renderPersonalityFrame(now);
 #endif
+        }
         display.present();
     }
 }

@@ -3,20 +3,29 @@
 #include <Arduino.h>
 #include "DeviceSettings.h"
 #include "Personality.h"
+#include "PongGame.h"
+#include "RpgBattle.h"
 
 // Reads control commands (FACE / MSG, see PROTOCOL.md) off a Stream one
-// byte at a time and dispatches complete lines to a Personality, or to a
+// byte at a time and dispatches complete lines to a Personality, to a
 // DeviceSettings for the handful of commands (SOUND/SCANLINES) that aren't
-// about Brobot's expression/behavior state. Never blocks — safe to call
-// every loop() iteration.
+// about Brobot's expression/behavior state, or to a PongGame/RpgBattle for
+// the two exclusive minigame command families (see PROTOCOL.md's Pong and
+// RPG Battle sections). Never blocks — safe to call every loop() iteration.
 //
 // PING is the one command answered here rather than forwarded anywhere:
 // it's about the link itself, not about Brobot, so there's no Personality
 // or DeviceSettings state for it to touch.
+//
+// Also the one place that arbitrates between the two minigames — PongGame
+// and RpgBattle stay unaware of each other (same separation Personality and
+// PongGame already have), so a PONG/RPG START is simply ignored while the
+// other minigame is already active, rather than letting one clobber the
+// other's exclusive screen.
 class Protocol {
 public:
-    Protocol(Personality& personality, DeviceSettings& deviceSettings)
-        : _personality(personality), _deviceSettings(deviceSettings) {}
+    Protocol(Personality& personality, DeviceSettings& deviceSettings, PongGame& pongGame, RpgBattle& rpgBattle)
+        : _personality(personality), _deviceSettings(deviceSettings), _pongGame(pongGame), _rpgBattle(rpgBattle) {}
 
     void poll(Stream& serial, unsigned long now);
 
@@ -34,6 +43,8 @@ private:
     unsigned long _lastByteAt = 0;
     Personality& _personality;
     DeviceSettings& _deviceSettings;
+    PongGame& _pongGame;
+    RpgBattle& _rpgBattle;
 
     // Takes the Stream (rather than only poll() holding it) purely so PING
     // can write its reply back to whoever asked — every other command is
