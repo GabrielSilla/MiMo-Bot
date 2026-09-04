@@ -48,18 +48,24 @@ src/
                                      Simulator and Sender to reach Core — plus MimoDiscovery, which
                                      finds MiMo's DHCP-assigned IP on the network (see Architecture below)
   Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
-                                     Brobot: MainWindow is a card-based checklist (Conexão, Hora, Clima,
-                                     Pausa, Atividade da IA, Mídia, Jogos, Tema, Sons, Scanlines — mostly
-                                     checkboxes, except Conexão (a status readout plus one button), Tema
-                                     (a ComboBox) and Atividade da IA (an Instalar/Desinstalar button), see below).
+                                     Brobot: MainWindow is a card-based checklist (Anti-Stress, Conexão,
+                                     Hora, Clima, Pausa, Atividade da IA, Mídia, Jogos, Tema, Sons,
+                                     Scanlines — mostly checkboxes, except Conexão (a status readout plus
+                                     one button), Tema (a ComboBox) and Atividade da IA (an Instalar/
+                                     Desinstalar button), see below). Anti-Stress's own button doesn't
+                                     toggle anything — it navigates to a second, tab-less page
+                                     (GamePickerGrid) to launch one of MiMo's minigames (Pong, Batalha
+                                     RPG — see BrobotCore below and Brobot.Sender internals below).
                                      The Conexão card is a readout, not a setup form — MiMo's address is
                                      discovered, never typed (WiFi/TCP only — no SettingsWindow, no
                                      Serial/USB, see below). WeatherMonitor + WindowsMediaMonitor + GameMonitor +
                                      AiThoughtsListener are the live data sources so far, ClaudeCodeHookInstaller edits
                                      Claude Code's own settings.json, ClaudeCodeAccount reads (never writes)
                                      ~/.claude.json to detect an account switch, SenderSettings persists
-                                     checkbox/provider/connection state to %AppData%. Icons via the
-                                     MahApps.Metro.IconPacks.Material NuGet package.
+                                     checkbox/provider/connection state to %AppData%, GlobalKeyboardHook is a
+                                     system-wide low-level keyboard hook (this app's only P/Invoke) the two
+                                     minigames use to read arrow/Enter/Escape regardless of window focus.
+                                     Icons via the MahApps.Metro.IconPacks.Material NuGet package.
 hooks/                               mimo-claude-hook.ps1 (the Claude Code hook command) and
                                      mimo-claude-statusline.ps1 (its statusLine command — a different
                                      contract, see below); both wired up by ClaudeCodeHookInstaller and
@@ -73,7 +79,10 @@ BrobotCore/                         PlatformIO project (Arduino/C++)
                                      (the SOUND/SCANLINES toggles, header-only),
                                      AurebeshGFXFont.h (THEME MI2MO2's alien script as an Adafruit
                                      GFXfont — the firmware-side twin of AurebeshFont.cs),
-                                     Face, Personality, Protocol, main.cpp
+                                     Face, Personality, Protocol, main.cpp, PongGame, RpgBattle
+                                     (MiMo's two exclusive minigames, launched from Brobot.Sender's
+                                     Anti-Stress card — see PROTOCOL.md's Pong/Batalha RPG sections
+                                     and this file's own Firmware internals below)
   platformio.ini                    envs: uno, uno_physical, esp32dev, esp32dev_physical
                                      (esp32* envs use board=esp32-c3-devkitm-1 — the actual
                                      hardware in hand is an ESP32-C3 SuperMini clone board)
@@ -146,6 +155,8 @@ SOUND <ON|OFF>                (persistent; buzzer cues, see Buzzer.cpp)
 SCANLINES <ON|OFF>            (persistent; physical display's CRT post-FX only)
 STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>   (-1 = no source; empty clears)
 AISTATS <ctx%> <costCents> <rate5h%> <rate7d%> <model>  (-1 = no source; empty clears)
+PONG START|STOP|<KEY LEFT|RIGHT DOWN|UP>   (see Firmware internals' PongGame.cpp entry)
+RPG START|STOP|LEFT|RIGHT|CONFIRM          (see Firmware internals' RpgBattle.cpp entry)
 PING                          (Core replies "MIMO 1" — the only command it answers)
 
 CLR r g b
@@ -160,6 +171,20 @@ PRESENT
 touches neither `Personality` nor `DeviceSettings` — it's about the link, not
 about Brobot. It exists so a PC app can find MiMo on the network after DHCP
 moves it; see `MimoDiscovery` under Brobot.Connection internals below.
+`PONG OVER <score>` and `RPG OVER <VICTORY|DEFEAT|FLED>` are the only other
+Core→PC lines, and only ever follow a `PONG`/`RPG` command — written
+straight to the `Stream` the same way `PING`'s reply is, right before a
+`PRESENT` so they flush through the PC side's existing frame-batching (see
+PROTOCOL.md's Pong/Batalha RPG sections for the full mechanism).
+
+`PONG`/`RPG` are a different kind of command from everything else above:
+each puts Core into an **exclusive** mode (`PongGame`/`RpgBattle`, see
+Firmware internals below) that bypasses `Personality`/`Face` entirely for
+as long as it's active, rather than adding a fifth priority tier — the same
+bypass trick `main.cpp` already used for the WiFi setup portal screen.
+`Protocol::dispatch` refuses to start either while the other is already
+active, so exactly one of Personality/PongGame/RpgBattle ever owns the
+frame at a time.
 
 `FACE`/`MSG` are arbitrated by **four** independent priority tiers on Core,
 not by whichever PC app last happened to send one — see Personality.cpp
@@ -992,7 +1017,55 @@ builds never see it.
   Brobot.Connection internals). The reply's trailing number is a protocol
   revision, there so a future PC app can tell an old board from a new one
   without a second round trip; bump it only for changes a client would
-  actually have to branch on.
+  actually have to branch on. `dispatch` is also the one place that
+  arbitrates between the two exclusive minigames: the `PONG`/`RPG` branches
+  each check the *other* one's `isActive()` before forwarding a command, so
+  `PongGame`/`RpgBattle` stay as unaware of each other as `Personality` and
+  either of them already are — a `PONG START` arriving mid-battle (or vice
+  versa) is simply dropped rather than one minigame clobbering the other's
+  exclusive screen.
+- **`PongGame.cpp`/`RpgBattle.cpp`** (MiMo's two minigames, launched from
+  Brobot.Sender's Anti-Stress card): both follow the same shape —
+  `onCommand`/`update`/`render`/`isActive`/`justEnded` — and the same
+  bypass `main.cpp` already used for the WiFi setup portal: while
+  `isActive()`, `loop()` calls their `update`/`render` *instead of*
+  `personality.update()`/`renderPersonalityFrame()`, not as a new
+  `Personality::Tier` — so a round/battle in progress is immune to
+  everything, `NOTIFY` included, until it ends. `justEnded()` is
+  edge-triggered (true exactly once, cleared on read) and is what tells
+  `main.cpp` to write one `PONG OVER <score>`/`RPG OVER <result>` line
+  straight to the active `Stream` — the same "reply directly, don't route
+  through Personality" idiom the `PING` reply above already uses — followed
+  by a `PRESENT` so it flushes through `BrobotConnection`'s existing
+  frame-batching on the PC side with no protocol-level plumbing added.
+  Neither class calls `justEnded()`-triggering logic from its own `stop()`:
+  a `PONG`/`RPG STOP` (Escape, from Brobot.Sender) means the PC side already
+  knows the round/battle is over because it just sent that command, so no
+  notification line is needed there — only a Core-decided ending (missed
+  the ball; victory/defeat/Fugir) fires one. Both draw with plain `fillRect`/
+  `drawRect`/`drawText` only — `IDisplay::drawRoundedRect` turned out to be
+  an *outline*, not a fill, on both real implementations (Adafruit_GFX's
+  `drawRoundRect` on the physical build, an outer-minus-inner ring on the
+  Simulator), so neither minigame's sprites attempt a filled disc the way an
+  early draft assumed Face.cpp's own icons did.
+  `PongGame` is a small continuous-physics sim (paddle/ball as floats,
+  updated every `update(now)` call via a stored `dt`, same as any other
+  per-frame integration) with a `PLAYING`/`GAME_OVER` sub-state.
+  `RpgBattle` is a state machine instead (`PLAYER_MENU` → `SPELL_MENU`/
+  `TARGET_SELECT` → `PLAYER_ACTION` → `ENEMY_ACTION` → back to
+  `PLAYER_MENU`, or `VICTORY`/`DEFEAT`/`FLED`), closer in spirit to
+  `Face.cpp`'s anchored-timestamp animations than to `PongGame`'s
+  physics — `render(display, now)` takes `now` and recomputes each
+  animation's `elapsed` from a stored start timestamp, rather than
+  `PongGame`'s style of precomputing everything in `update()`. Damage/heal
+  is rolled and applied at the animation's *impact keyframe* (roughly its
+  halfway point), not the instant a menu choice is confirmed, so an HP bar
+  only moves when the hit visibly lands. Player damage (Atacar/Bola de
+  Fogo, `RPG_PLAYER_ATTACK_DAMAGE_MIN/MAX` in `Config.h`) rolls higher than
+  enemy damage and Cura's heal (`RPG_DAMAGE_MIN/MAX`) — a real balance
+  fix: with 2 enemies at 50 HP each hitting back for the same 1-10 every
+  round, a symmetric roll made a "quick anti-stress" battle drag on far
+  longer than intended.
 - **`native/src/TcpBroadcastStream.cpp`**: the native build's `Stream` — listens on
   a TCP port and accepts multiple simultaneous clients (non-blocking `accept()`,
   polled once per main-loop iteration), broadcasting every draw command to all of
@@ -1144,9 +1217,9 @@ turns on a background watcher that decides *when* to send something; it
 never decides *how it should look* — that's still 100% Core's call per the
 one rule at the top of this file.
 
-The main-window layout (MiMo wordmark, six feature cards — Conexão, Hora,
-Clima, Atividade da IA, Mídia, Jogos — a Tema card, an info card, a "Salvar
-configurações" button, warm cream/tan palette) follows a supplied design
+The main-window layout (MiMo wordmark, an Anti-Stress card first, six feature
+cards — Conexão, Hora, Clima, Atividade da IA, Mídia, Jogos — a Tema card, an
+info card, a "Salvar configurações" button, warm cream/tan palette) follows a supplied design
 reference closely — see `MainWindow.xaml`'s `Window.Resources` for the
 color brushes and the custom `CheckBox`/`ComboBox`/`Button`/`TextBox`
 control templates (WPF's stock chrome doesn't look anything like flat
@@ -1158,6 +1231,44 @@ draws that geometry anchored to its layout slot's top-left corner, not
 centered in it, so without those two setters the check sits visibly
 off-center in the 28x28 box — this was a real bug, fixed once.
 
+- **Anti-Stress card**: an umbrella entry point, not a game itself — its
+  button (`AntiStressButton`) navigates to a second, tab-less "page"
+  (`GamePickerGrid` in `MainWindow.xaml`) instead of starting anything
+  directly, one card per minigame (Pong, Batalha RPG) each with its own
+  JOGAR/BATALHAR button. Two sibling elements in the same `Grid` cell
+  (`RootScrollViewer`'s checklist and `GamePickerGrid`), swapped by plain
+  `Visibility` toggling (`ShowGamePicker`/`ShowMainChecklist`) rather than a
+  `TabControl` — there's nothing to expose a selector for, navigation only
+  ever happens by clicking into or out of it. `PlayPongButton_Click`/
+  `PlayRpgButton_Click` are what actually send `FACE HAPPY` + a greeting
+  `MSG`, wait 5s, then `PONG`/`RPG START` and install a `GlobalKeyboardHook`
+  — structurally identical copies of each other rather than a shared
+  helper, the same "only two of these, copying the shape is simpler than
+  generalizing it" call this file already makes for
+  `ClearGameFaceIfActive`/`ClearMediaFaceIfActive`; worth pulling into one
+  method if a third minigame shows up. `VOLTAR` (`BackFromGamesButton`) is
+  always visible on the picker and handles all three ways of giving up —
+  nothing picked yet, still waiting out the 5s greeting, or a round/battle
+  already running (the only case that actually sends a `PONG`/`RPG STOP`) —
+  by checking which hook field is non-null. A game ending any other way
+  (naturally, or via Escape) calls `StopAntiStressGame`/`StopRpgBattle`,
+  which navigates back to the checklist automatically and leaves the result
+  ("Última pontuação: 7", "Vitória!", ...) on the *checklist's* own
+  `AntiStressStatusText`, since the picker's per-game status lines are
+  about to disappear along with the page.
+  `GlobalKeyboardHook.cs` (this app's only P/Invoke) is a system-wide
+  `WH_KEYBOARD_LL` hook: the player is watching MiMo's own screen while
+  playing, not this window, so arrow/Enter/Escape have to reach Core
+  regardless of what has focus on the PC. Installed from the UI thread, its
+  callback then runs synchronously on that same thread's message pump — the
+  one background-originated callback in this app that does *not* need
+  `Dispatcher.Invoke` to touch UI/`_connection`, unlike every monitor
+  below. It never suppresses a key (always calls `CallNextHookEx`), a
+  deliberate simple default. Left/Right/Enter only fire on the actual
+  press→release transition (Windows repeats `WM_KEYDOWN` while a key is
+  held); Escape does not bother with that dedupe, since
+  `StopAntiStressGame`/`StopRpgBattle` are idempotent and firing twice from
+  a held Escape is harmless.
 - **Conexão card**: a single `TextBox` (`ConnectionAddressTextBox`, "IP:porta"
   in one field, e.g. `192.168.1.50:5555` — parsed by splitting on the *last*
   `:` so a literal IPv6 address wouldn't break it) plus a Conectar/Desconectar
