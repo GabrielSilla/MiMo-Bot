@@ -183,8 +183,22 @@ float smoothstep(float t) {
 } // namespace
 
 void Personality::TypedMessage::set(const char* text, unsigned long now) {
-    strncpy(full, text, MESSAGE_CAPACITY - 1);
-    full[MESSAGE_CAPACITY - 1] = '\0';
+    size_t textLength = strlen(text);
+    if (textLength < MESSAGE_CAPACITY) {
+        strncpy(full, text, MESSAGE_CAPACITY - 1);
+        full[MESSAGE_CAPACITY - 1] = '\0';
+    } else {
+        // Too long to fit at all — trim it and mark the cut with "..." rather
+        // than silently dropping the tail: an AI message (the usual source of
+        // anything this long, e.g. Stop's last_assistant_message) ending
+        // mid-word with no signal it was cut reads as MiMo saying something
+        // nonsensical, not merely brief.
+        constexpr size_t ELLIPSIS_LEN = 3; // "..."
+        size_t keep = MESSAGE_CAPACITY - 1 - ELLIPSIS_LEN;
+        memcpy(full, text, keep);
+        memcpy(full + keep, "...", ELLIPSIS_LEN);
+        full[MESSAGE_CAPACITY - 1] = '\0';
+    }
 
     // A new message always replaces whatever was showing (or being typed)
     // and restarts the typewriter reveal from scratch. The expiry countdown

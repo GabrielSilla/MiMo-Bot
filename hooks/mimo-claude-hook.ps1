@@ -153,7 +153,13 @@ function Get-FolderName([string]$path) {
 function Limit-Length([string]$s, [int]$max = 100) {
     if ([string]::IsNullOrEmpty($s)) { return $s }
     if ($s.Length -le $max) { return $s }
-    return $s.Substring(0, $max - 1) + "…"
+    # Three literal periods, not a single "…" character: Core reads the wire
+    # byte-at-a-time and Font5x7/the physical display's own font both work in
+    # single-byte Latin glyphs, so a multi-byte UTF-8 ellipsis arrived as
+    # three separate bytes, none of which map to a glyph — it drew as
+    # invisible gaps instead of a visible "this was cut" cue. A real bug,
+    # fixed once.
+    return $s.Substring(0, $max - 3) + "..."
 }
 
 # Claude Code already generates a short present-tense description for some

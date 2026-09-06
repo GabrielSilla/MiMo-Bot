@@ -886,7 +886,12 @@ builds never see it.
   rendered — a background message keeps typing in while hidden behind an
   active foreground one, so it's already sitting there fully revealed the
   instant it becomes visible again, no retyping. `MESSAGE_CAPACITY` is 255
-  chars, per tier.
+  chars, per tier. `TypedMessage::set` trims anything longer to fit and
+  appends `"..."` inside that same capacity rather than just dropping the
+  tail — a message that's cut mid-word/mid-sentence with no signal it was
+  cut reads as MiMo saying something nonsensical, which is exactly what a
+  verbose `last_assistant_message` from Stop used to produce. This was a
+  real bug, fixed once.
   `onThemeCommand` stamps `_themeChangedAt` on **every** `THEME` command, not
   only on an actual change of value, and that's what MI84's boot sequence
   hangs off (`FaceState::themeStartedMs`). Core has no "a PC app just
@@ -1553,7 +1558,18 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   two garbage lines on the listener's side. `Get-FirstSentence` then takes
   the first *sentence* rather than the first 100 characters, because a hard
   cut lands mid-word and reads as truncation while one whole sentence reads
-  as MiMo actually saying something.
+  as MiMo actually saying something. `Limit-Length` is still the backstop
+  right before sending (a long sentence is still possible) — it caps at 100
+  chars and appends **three literal periods**, not a single `"…"` character:
+  Core reads the wire byte-at-a-time and both fonts (`Font5x7`/the physical
+  display's own) work in single-byte Latin glyphs, so a multi-byte UTF-8
+  ellipsis arrived as three bytes with no glyph mapping and drew as
+  invisible gaps instead of a visible "this was cut" cue — a real bug,
+  fixed once. `Personality::TypedMessage::set` (`Personality.cpp` above)
+  does the same three-periods truncation independently, as a backstop for
+  any message reaching Core's own 255-char-per-tier capacity from a source
+  other than this script (weather alerts, media titles, a raw `MSG` sent by
+  hand).
 - **`hooks/mimo-claude-statusline.ps1`** (same repo root / copy-to-output /
   path-resolution setup as the hook script above): registered as Claude
   Code's `statusLine` command, not a `hooks` entry — a genuinely different
