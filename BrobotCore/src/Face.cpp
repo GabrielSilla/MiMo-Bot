@@ -589,6 +589,30 @@ void drawMessageBox(IDisplay& display, uint8_t r, uint8_t g, uint8_t b, int line
     fillRoundedRect(display, boxX, boxY, boxW, boxHeight, r, g, b);
 }
 
+// Every greedy word-wrap loop below (drawWrappedMessage and its MI2MO2
+// twin, drawMatrixLog, drawStatsMessage's own inline wrap, and
+// drawNotificationText) computes its per-line budget in *columns* but
+// cuts/copies the underlying C string by *byte* count. PT-BR accents
+// (á é í ó ú ã õ â ê ç) are 2-byte UTF-8 sequences — a 0xC3 lead byte plus
+// one continuation byte — that still occupy exactly one column on screen
+// (see ST7735PhysicalDisplay.cpp's decodeNextCodepoint/drawText), so a
+// forced line break landing precisely between the two leaves both
+// fragments undecodable: neither half's byte maps to a glyph, and the
+// whole character silently draws as nothing rather than a letter with (or
+// even without) its accent. Nudging the cut back one byte whenever it
+// would land right after a lone lead byte is enough to dodge that split —
+// real continuation-byte scanning isn't needed since this codebase's only
+// multi-byte sequences are these 2-byte accents. Backing up to a rescuing
+// space (see each loop's own "don't cut a word in half" step) is already
+// safe on its own and never needs this: a space can only ever follow a
+// complete character in valid UTF-8, never a lone lead byte.
+int utf8SafeTake(const char* text, int pos, int take, int remaining) {
+    if (take < remaining && take > 0 && (unsigned char)text[pos + take - 1] == 0xC3) {
+        take--;
+    }
+    return take;
+}
+
 // Greedy word-wrap into a fixed-height 3-line window, bottom-anchored inside
 // the message box: the last line always sits just above the box's bottom
 // padding, the block grows upward one line at a time as text is typed, and
@@ -629,6 +653,7 @@ void drawWrappedMessage(IDisplay& display, const char* message, uint8_t r, uint8
             if (breakAt > 0) {
                 take = breakAt;
             }
+            take = utf8SafeTake(message, pos, take, remaining);
         }
 
         lineStart[lineCount] = pos;
@@ -705,6 +730,7 @@ void drawWrappedMessageMi2Mo2(IDisplay& display, const char* message,
             if (breakAt > 0) {
                 take = breakAt;
             }
+            take = utf8SafeTake(message, pos, take, remaining);
         }
 
         lineStart[lineCount] = pos;
@@ -1512,6 +1538,7 @@ void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines, b
                 if (breakAt > 0) {
                     take = breakAt;
                 }
+                take = utf8SafeTake(state.message, pos, take, remaining);
             }
 
             memcpy(buffer, state.message + pos, take);
@@ -1611,6 +1638,7 @@ int drawMatrixLog(IDisplay& display, const FaceState& state, int firstLineY, int
                 if (breakAt > 0) {
                     take = breakAt;
                 }
+                take = utf8SafeTake(entry, pos, take, remaining);
             }
 
             wrapEntry[wrapCount] = entry;
@@ -2329,6 +2357,7 @@ void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_
             if (breakAt > 0) {
                 take = breakAt;
             }
+            take = utf8SafeTake(text, pos, take, remaining);
         }
 
         lineStart[lineCount] = pos;

@@ -211,6 +211,14 @@ void Personality::TypedMessage::set(const char* text, unsigned long now) {
         // nonsensical, not merely brief.
         constexpr size_t ELLIPSIS_LEN = 3; // "..."
         size_t keep = MESSAGE_CAPACITY - 1 - ELLIPSIS_LEN;
+        // Don't cut a PT-BR accent's 2-byte UTF-8 sequence in half (a 0xC3
+        // lead byte with its continuation trimmed away) — the lead byte left
+        // dangling at the very end wouldn't decode as anything on the
+        // physical display (see Face.cpp's utf8SafeTake for the same
+        // one-byte-back nudge applied to every word-wrap loop there).
+        if (keep > 0 && (unsigned char)text[keep - 1] == 0xC3) {
+            keep--;
+        }
         memcpy(full, text, keep);
         memcpy(full + keep, "...", ELLIPSIS_LEN);
         full[MESSAGE_CAPACITY - 1] = '\0';
@@ -665,8 +673,21 @@ void Personality::pushLogLine(const char* text, LogTab tab) {
         (*count)--;
     }
 
-    strncpy(log[*count], text, MATRIX_LOG_LINE_CAPACITY - 1);
-    log[*count][MATRIX_LOG_LINE_CAPACITY - 1] = '\0';
+    // Same one-byte-back nudge as TypedMessage::set above (and Face.cpp's
+    // utf8SafeTake, which every word-wrap loop there uses): a plain
+    // strncpy cutoff can land right after a PT-BR accent's 0xC3 lead byte,
+    // leaving a dangling byte with no glyph mapping on the physical
+    // display instead of the accented letter it was part of.
+    size_t textLen = strlen(text);
+    size_t keep = MATRIX_LOG_LINE_CAPACITY - 1;
+    if (textLen < keep) {
+        keep = textLen;
+    }
+    if (keep > 0 && keep < textLen && (unsigned char)text[keep - 1] == 0xC3) {
+        keep--;
+    }
+    memcpy(log[*count], text, keep);
+    log[*count][keep] = '\0';
     (*count)++;
 }
 
