@@ -173,6 +173,22 @@ WeatherCondition parseWeatherCondition(const char* name) {
     return WeatherCondition::CLEAR;
 }
 
+// An unrecognized token falls back to FIRST_CONTACT rather than garbage —
+// harmless, since it only ever picks which accent drawAchievementNotification
+// adds to the shared trophy, never anything that changes priority/duration.
+AchievementIcon parseAchievementIcon(const char* name) {
+    if (strcmp(name, "EARLY_BIRD") == 0) return AchievementIcon::EARLY_BIRD;
+    if (strcmp(name, "NIGHT_OWL") == 0) return AchievementIcon::NIGHT_OWL;
+    if (strcmp(name, "COFFEE_MACHINE") == 0) return AchievementIcon::COFFEE_MACHINE;
+    if (strcmp(name, "ONE_MORE_GAME") == 0) return AchievementIcon::ONE_MORE_GAME;
+    if (strcmp(name, "VICTORY_ROYALE") == 0) return AchievementIcon::VICTORY_ROYALE;
+    if (strcmp(name, "AI_OVERLOAD") == 0) return AchievementIcon::AI_OVERLOAD;
+    if (strcmp(name, "AUDIOPHILE") == 0) return AchievementIcon::AUDIOPHILE;
+    if (strcmp(name, "BREAK_TAKER") == 0) return AchievementIcon::BREAK_TAKER;
+    if (strcmp(name, "IDENTITY_CRISIS") == 0) return AchievementIcon::IDENTITY_CRISIS;
+    return AchievementIcon::FIRST_CONTACT;
+}
+
 // Eases the 0..1 travel fraction so motion accelerates in and decelerates
 // out, instead of moving at a constant speed — reads as noticeably smoother
 // with the same number of frames.
@@ -491,10 +507,45 @@ void Personality::onNotifyCommand(const char* args, unsigned long now) {
     raiseNotification(parseExpression(nameBuf), text, now);
 }
 
+// "ACHIEVEMENT <ID> <text>" — same one-atomic-line shape and priority as
+// NOTIFY above (in fact it *is* a notification, just one whose artwork
+// choice needs a second dimension beyond Expression — see AchievementIcon
+// in Face.h). <ID> is one of the 10 tokens AchievementMonitor already uses
+// as its own internal ids (see Brobot.Sender's AchievementCatalog.cs), so
+// Core and the PC app never need a separate lookup table kept in sync by
+// hand — an unrecognized id just falls back to FIRST_CONTACT's plain accent
+// rather than failing the notification outright.
+void Personality::onAchievementCommand(const char* args, unsigned long now) {
+    if (args[0] == '\0') {
+        return;
+    }
+
+    const char* space = strchr(args, ' ');
+    char nameBuf[20]; // longest token today is "IDENTITY_CRISIS" (15 chars)
+    const char* text = "";
+    if (space == nullptr) {
+        strncpy(nameBuf, args, sizeof(nameBuf) - 1);
+        nameBuf[sizeof(nameBuf) - 1] = '\0';
+    } else {
+        size_t nameLen = (size_t)(space - args);
+        if (nameLen >= sizeof(nameBuf)) {
+            nameLen = sizeof(nameBuf) - 1;
+        }
+        memcpy(nameBuf, args, nameLen);
+        nameBuf[nameLen] = '\0';
+        text = space + 1;
+    }
+
+    _notificationAchievementIcon = parseAchievementIcon(nameBuf);
+    raiseNotification(Expression::ACHIEVEMENT, text, now);
+}
+
 // Machine load for Game Mode: "STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC>
-// <ram%>", every field an integer, -1 where the PC app had no source for it
-// (see FaceState's own note on why -1 rather than 0). "STATS" with nothing
-// after it clears them, the same convention empty MSG/WEATHER/TIME use.
+// <ram%> <fps>", every field an integer, -1 where the PC app had no source for
+// it (see FaceState's own note on why -1 rather than 0). "STATS" with nothing
+// after it clears them, the same convention empty MSG/WEATHER/TIME use. `fps`
+// is the one field that isn't a load/temperature reading (MSI Afterburner's
+// own Framerate sensor), which is why Face.cpp draws it with no suffix.
 //
 // Like onWeatherCommand/onTimeCommand — and unlike every FACE/MSG path — this
 // deliberately never touches _lastInteractionAt. It's passive telemetry
@@ -509,9 +560,9 @@ void Personality::onStatsCommand(const char* args, unsigned long now) {
         return;
     }
 
-    int values[5] = {-1, -1, -1, -1, -1};
+    int values[6] = {-1, -1, -1, -1, -1, -1};
     const char* cursor = args;
-    for (int i = 0; i < 5 && cursor != nullptr && *cursor != '\0'; i++) {
+    for (int i = 0; i < 6 && cursor != nullptr && *cursor != '\0'; i++) {
         char* end = nullptr;
         long parsed = strtol(cursor, &end, 10);
         if (end == cursor) {
@@ -529,6 +580,7 @@ void Personality::onStatsCommand(const char* args, unsigned long now) {
     _statsGpuLoad = values[2];
     _statsGpuTempC = values[3];
     _statsRamLoad = values[4];
+    _statsFps = values[5];
     _hasStats = true;
 }
 
@@ -713,6 +765,7 @@ FaceState Personality::currentState() const {
     if (notificationActive(_currentNow)) {
         state.isNotification = true;
         state.notificationStartedMs = _notificationStartedAt;
+        state.achievementIcon = _notificationAchievementIcon;
         state.message = _notificationMessage.visible;
         state.messageTypingStartedMs = _notificationMessage.typingStartedAt;
     } else if (isGameExpression(_renderExpression)) {
@@ -738,6 +791,7 @@ FaceState Personality::currentState() const {
     state.statsGpuLoad = _statsGpuLoad;
     state.statsGpuTempC = _statsGpuTempC;
     state.statsRamLoad = _statsRamLoad;
+    state.statsFps = _statsFps;
 
     state.hasAiStats = _hasAiStats;
     state.aiContextPercent = _aiContextPercent;

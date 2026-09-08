@@ -8,7 +8,8 @@ public sealed record SystemStatsReading(
     int? CpuTempC,
     int? GpuLoadPercent,
     int? GpuTempC,
-    int? RamLoadPercent);
+    int? RamLoadPercent,
+    int? Fps);
 
 /// <summary>
 /// Samples CPU/GPU/RAM load and temperature for MiMo's Game Mode, from two
@@ -22,12 +23,16 @@ public sealed record SystemStatsReading(
 ///   temperature, which nothing else here can: it lives in an MSR, readable
 ///   only from kernel mode, and LibreHardwareMonitor's own driver for that is
 ///   blocked by Windows' vulnerable-driver blocklist on this machine (measured:
-///   every CPU temperature sensor reads empty even when elevated).
+///   every CPU temperature sensor reads empty even when elevated). It's also
+///   the only source for <b>FPS</b> — nothing else here samples that at all —
+///   which is why that reading is fetched unconditionally rather than only
+///   when something else is missing.
 ///
 /// The split is deliberate rather than incidental — it keeps the feature whole
-/// for someone who has never heard of Afterburner, and costs them exactly one
-/// field. Never let a missing source become an exception: a monitor that
-/// throws is worse than a monitor that reports null.
+/// for someone who has never heard of Afterburner, and costs them exactly the
+/// fields only it can supply (CPU temperature, FPS). Never let a missing
+/// source become an exception: a monitor that throws is worse than a monitor
+/// that reports null.
 /// </summary>
 public sealed class SystemStatsMonitor : IDisposable
 {
@@ -104,7 +109,7 @@ public sealed class SystemStatsMonitor : IDisposable
         {
             if (_disposed)
             {
-                return new SystemStatsReading(null, null, null, null, null);
+                return new SystemStatsReading(null, null, null, null, null, null);
             }
 
             _computer ??= OpenComputer();
@@ -138,12 +143,17 @@ public sealed class SystemStatsMonitor : IDisposable
             }
         }
 
-        // Only consulted for what's still missing — normally just CPU
-        // temperature, but it stands in for any of them if a sensor drops out.
-        if (cpuTemp == null || cpuLoad == null || gpuTemp == null || gpuLoad == null)
+        // FPS has no source but Afterburner, so it's read every tick
+        // regardless of whether LibreHardwareMonitor already found everything
+        // else; the other four are only backfilled from here when something's
+        // still missing, same as before.
+        int? fps = null;
+        IReadOnlyDictionary<string, float>? afterburner = AfterburnerSensors.TryReadAll();
+        if (afterburner != null)
         {
-            IReadOnlyDictionary<string, float>? afterburner = AfterburnerSensors.TryReadAll();
-            if (afterburner != null)
+            fps = Round(afterburner, AfterburnerSensors.Framerate);
+
+            if (cpuTemp == null || cpuLoad == null || gpuTemp == null || gpuLoad == null)
             {
                 cpuTemp ??= Round(afterburner, AfterburnerSensors.CpuTemperature);
                 cpuLoad ??= Round(afterburner, AfterburnerSensors.CpuUsage);
@@ -152,7 +162,7 @@ public sealed class SystemStatsMonitor : IDisposable
             }
         }
 
-        return new SystemStatsReading(cpuLoad, cpuTemp, gpuLoad, gpuTemp, ramLoad);
+        return new SystemStatsReading(cpuLoad, cpuTemp, gpuLoad, gpuTemp, ramLoad, fps);
     }
 
     private static Computer OpenComputer()

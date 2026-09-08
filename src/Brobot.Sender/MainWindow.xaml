@@ -249,21 +249,106 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Flat pill-tab header, same "no stock WPF chrome" treatment every
+             other retemplated control here gets. TabItem's Header is plain
+             text, so the selected/unselected foreground swap has to reach
+             through ContentPresenter's own auto-generated TextBlock — done
+             via the TextElement.Foreground attached property on the named
+             ContentPresenter rather than a direct Setter on Foreground,
+             since Foreground on the Border wouldn't inherit into a
+             ContentPresenter the way it does into a normal panel. -->
+        <Style x:Key="MimoTabItemStyle" TargetType="TabItem">
+            <Setter Property="FontSize" Value="13.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="HeaderBorder" CornerRadius="12" Padding="18,10" Margin="0,0,8,0"
+                                Background="Transparent">
+                            <ContentPresenter x:Name="HeaderPresenter" ContentSource="Header"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{DynamicResource InkBrush}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource InkBrush}"/>
+                                <Setter TargetName="HeaderPresenter" Property="TextElement.Foreground" Value="{DynamicResource ButtonTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource HighlightBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Retemplated down to a header row (TabPanel) over whichever tab's
+             content — the stock template draws a bordered content box that
+             doesn't match this window's flat-card look at all. The header
+             row's own margin lines its pill tabs up with the cards below,
+             which each carry their own left/right margin via the content
+             Grid instead. -->
+        <Style x:Key="MimoTabControlStyle" TargetType="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <DockPanel>
+                            <TabPanel x:Name="HeaderPanel" DockPanel.Dock="Top" IsItemsHost="True"
+                                      Background="Transparent" HorizontalAlignment="Center" Margin="0,20,0,4"/>
+                            <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                        </DockPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
-    <!-- Two "pages" sharing one window, no tab control: the checklist
-         (default) and the game picker (see GamePickerGrid below) that
-         AntiStressButton_Click swaps in. Both are plain siblings in the same
-         cell rather than a TabControl, since there's no selector to expose —
-         navigation only ever happens by clicking ANTI STRESS BUTTON to go in
-         and Voltar/a game ending to come back out. -->
+    <!-- The MiMo wordmark sits above the tabs, shared by all three, rather
+         than living inside Configurações Gerais's own content — it's the
+         app's own identity, not something specific to one tab, and the tab
+         headers read as navigation *within* the app, not above it. Wrapped
+         in a transparent Border, not handled on the Image itself: Image has
+         no Background property, and the Border is what makes the whole logo
+         area hit-testable rather than only where the bitmap happens to be
+         opaque. -->
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="Transparent" HorizontalAlignment="Center"
+                Margin="0,20,0,0" MouseLeftButtonUp="LogoImage_MouseLeftButtonUp">
+            <Image x:Name="LogoImage"
+                   Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
+                   Height="48" VerticalAlignment="Top"/>
+        </Border>
+
+        <!-- One shared subtitle above the tabs instead of each tab carrying
+             its own — TabSubtitleText's text swaps per selected tab
+             (MainTabControl_SelectionChanged) rather than living inside each
+             TabItem's own content. -->
+        <TextBlock Grid.Row="1" x:Name="TabSubtitleText" Text="Escolha as informações que o MiMo pode receber"
+                   HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,6,0,0"/>
+
+        <!-- Configurações Gerais / Mini Games / Conquistas — a real TabControl now
+             (see MimoTabControlStyle/MimoTabItemStyle above) rather than the
+             plain-Visibility page swap this app used to do for its old
+             Anti-Stress button/game-picker pair: with a third, permanent
+             destination (Conquistas) alongside the checklist, a selector is
+             exactly what's needed, not something to avoid. -->
+        <TabControl Grid.Row="2" x:Name="MainTabControl" Style="{StaticResource MimoTabControlStyle}"
+                    SelectionChanged="MainTabControl_SelectionChanged">
+    <TabItem Header="Configurações Gerais" Style="{StaticResource MimoTabItemStyle}">
     <ScrollViewer x:Name="RootScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
-        <Grid Margin="32,28,24,28">
+        <Grid Margin="32,20,24,28">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -279,51 +364,10 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Wrapped in a transparent Border, not handled on the Image
-                 itself: Image has no Background property, and the Border is
-                 what makes the whole logo area hit-testable rather than only
-                 where the bitmap happens to be opaque. -->
-            <Border Grid.Row="0" Background="Transparent" HorizontalAlignment="Center"
-                    Margin="0,0,0,14" MouseLeftButtonUp="LogoImage_MouseLeftButtonUp">
-                <Image x:Name="LogoImage"
-                       Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
-                       Height="48" VerticalAlignment="Top"/>
-            </Border>
-            <TextBlock Grid.Row="1" Text="Escolha as informações que o MiMo pode receber"
-                       HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,0,0,24"/>
-
-            <!-- Anti-Stress: an umbrella for MiMo's short joguinhos (currently
-                 Pong and Batalha RPG), not a game itself — clicking the
-                 button navigates to GamePickerGrid to choose one, rather
-                 than starting anything directly (see AntiStressButton_Click).
-                 First card of the list, de propósito — é o botão que se
-                 aperta sem pensar, não algo que se configura. -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
-                        <iconPacks:PackIconMaterial Kind="ControllerClassic" Width="24" Height="24"
-                                                     Foreground="{DynamicResource InkBrush}"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="Anti-Stress" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Escolha um joguinho rápido pra descontrair — o MiMo mostra na tela dele"
-                                   Style="{StaticResource CardDescriptionStyle}"/>
-                        <TextBlock x:Name="AntiStressStatusText" Style="{StaticResource CardStatusStyle}"/>
-                    </StackPanel>
-                    <Button x:Name="AntiStressButton" Grid.Column="2" Content="ANTI STRESS BUTTON" VerticalAlignment="Center"
-                            Style="{StaticResource InstallButtonStyle}" Click="AntiStressButton_Click"/>
-                </Grid>
-            </Border>
-
             <!-- Conexão: MiMo's IP address on the local network (WiFi — see
                  CLAUDE.md's connection-freeze note on why this replaced the
                  Serial/USB path entirely for this app) -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="0" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -354,7 +398,7 @@
             </Border>
 
             <!-- Hora -->
-            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="1" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -375,7 +419,7 @@
             </Border>
 
             <!-- Clima -->
-            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -397,7 +441,7 @@
             </Border>
 
             <!-- Pausa -->
-            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -429,7 +473,7 @@
             </Border>
 
             <!-- Pensamentos da IA -->
-            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -461,7 +505,7 @@
             </Border>
 
             <!-- Mídia -->
-            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -483,7 +527,7 @@
             </Border>
 
             <!-- Jogos -->
-            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -516,7 +560,7 @@
             </Border>
 
             <!-- Tema -->
-            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -569,7 +613,7 @@
             </Border>
 
             <!-- Sons -->
-            <Border Grid.Row="11" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -590,7 +634,7 @@
             </Border>
 
             <!-- Scanlines -->
-            <Border Grid.Row="12" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -611,7 +655,7 @@
             </Border>
 
             <!-- Info -->
-            <Border Grid.Row="13" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
+            <Border Grid.Row="10" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="36" Height="36" CornerRadius="11" Background="{DynamicResource BadgeBrush}">
                         <iconPacks:PackIconMaterial Kind="InformationOutline" Width="18" Height="18"
@@ -631,7 +675,7 @@
                  possible from inside this app: the ESP32 accepts one TCP
                  client at a time, so an external script can't reach MiMo
                  without closing Brobot.Sender first. -->
-            <Border Grid.Row="14" x:Name="TesteCard" Style="{StaticResource CardStyle}"
+            <Border Grid.Row="11" x:Name="TesteCard" Style="{StaticResource CardStyle}"
                     Visibility="Collapsed" Margin="0,4,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -686,29 +730,26 @@
                 </Grid>
             </Border>
 
-            <Button Grid.Row="15" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+            <Button Grid.Row="12" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
                     Click="SaveButton_Click"/>
         </Grid>
     </ScrollViewer>
+    </TabItem>
 
-    <!-- The game picker "page" — see the comment on the outer Grid above.
-         Shown instead of RootScrollViewer while choosing or playing a
-         minigame; ShowMainChecklist() swaps back to the checklist the moment
-         a game ends (naturally, via Escape, or via Voltar). -->
-    <Grid x:Name="GamePickerGrid" Visibility="Collapsed" Margin="32,28,24,28">
+    <!-- Mini Games — one card per minigame (Pong, Batalha RPG), each with its
+         own JOGAR/BATALHAR button. This used to be a second tab-less "page"
+         (GamePickerGrid) an Anti-Stress button swapped in via plain
+         Visibility toggling; now it's a permanent tab, so there's no
+         entering/leaving to track — StopGameButton only ever needs to cancel
+         a pending/active round, never navigate anywhere. -->
+    <TabItem Header="Mini Games" Style="{StaticResource MimoTabItemStyle}">
+    <Grid Margin="32,20,24,28">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Escolha um joguinho" HorizontalAlignment="Center"
-                   Foreground="{DynamicResource InkBrush}" FontSize="20" FontWeight="SemiBold" Margin="0,8,0,4"/>
-        <TextBlock Grid.Row="1" Text="O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado"
-                   HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,0,0,24"/>
-
-        <StackPanel Grid.Row="2">
+        <StackPanel Grid.Row="0">
             <!-- Pong -->
             <Border Style="{StaticResource CardStyle}">
                 <Grid>
@@ -756,10 +797,25 @@
             </Border>
         </StackPanel>
 
-        <!-- Always available — cancels a pending/active game and leaves the
-             picker with no need to reach for ESC on the keyboard. -->
-        <Button Grid.Row="3" x:Name="BackFromGamesButton" Content="VOLTAR" HorizontalAlignment="Center"
-                Style="{StaticResource InstallButtonStyle}" Margin="0,10,0,0" Click="BackFromGamesButton_Click"/>
+        <!-- Always available — cancels a pending/active game with no need to
+             reach for ESC on the keyboard (the global hook that listens for
+             ESC isn't even installed yet during the 5s greeting window). -->
+        <Button Grid.Row="1" x:Name="StopGameButton" Content="PARAR" HorizontalAlignment="Center"
+                Style="{StaticResource InstallButtonStyle}" Margin="0,10,0,0" Click="StopGameButton_Click"/>
     </Grid>
+    </TabItem>
+
+    <!-- Conquistas — the 10 cards are built in code (MainWindow.BuildAchievementCards),
+         not hand-authored here like every other card in this app: they're all
+         the same shape (icon/name/description-or-quote/status), and ten
+         near-identical XAML blocks plus 40 named elements would be pure
+         repetition with nothing to actually customize per card. ConquistasPanel
+         is the only thing this tab needs to name. -->
+    <TabItem Header="Conquistas" Style="{StaticResource MimoTabItemStyle}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+        <StackPanel x:Name="ConquistasPanel" Margin="32,20,24,28"/>
+    </ScrollViewer>
+    </TabItem>
+    </TabControl>
     </Grid>
 </Window>

@@ -23,9 +23,10 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `CLASSICCOLOR <cor>` | Cor primária do tema `DEFAULT` (olhos, ícones de canto e o selo de clima/hora) — **sem efeito nos outros temas**, que têm paleta própria e ignoram este comando por completo. Valores: `BLUE` (o teal original, padrão do Core), `GREEN` (o mesmo verde do `MATRIX`), `AMBER` (o mesmo âmbar do `MI84`), `RED`, `PINK` ou `WHITE`. Persistente como `THEME` — fica guardado até o próximo `CLASSICCOLOR` chegar, mesmo trocando de tema e voltando para `DEFAULT`. |
 | `SOUND <ON\|OFF>` | Liga/desliga os sons do buzzer (bipes R2D2 por expressão, ver Buzzer.cpp). Persistente — fica valendo até o próximo `SOUND` chegar. Padrão do Core: `ON`. Texto não reconhecido é ignorado (mantém o valor atual). |
 | `SCANLINES <ON\|OFF>` | Liga/desliga o filtro CRT completo da tela física (scanline rolante + chromatic fringing + tint quente + vinheta — ver ST7735PhysicalDisplay.cpp). Sem efeito no Brobot Virtual Display/build nativo, que nunca aplicam esse pós-processamento. Persistente — fica valendo até o próximo `SCANLINES` chegar. Padrão do Core: `ON`. |
-| `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o MiMo nunca mais dormiria. |
+| `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%> <fps>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `fps` é o único campo que não é carga/temperatura (vem do sensor "Framerate" do MSI Afterburner) — por isso é desenhado sem sufixo `%`/`C`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o MiMo nunca mais dormiria. |
 | `AISTATS <contexto%> <custoCents> <limite5h%> <limite7d%> <modelo>` | Telemetria da sessão de IA (ver abaixo). Os quatro primeiros são inteiros com a mesma convenção do `STATS`: **-1** = "o app do PC não tinha esse dado", desenhado como `--`. O custo vai em **centavos de dólar** porque o protocolo só carrega inteiros; o Core imprime de volta como `$1.24`. `<modelo>` é texto livre até o fim da linha (pode ter espaço, pode ser vazio). `AISTATS` sem argumentos limpa. Persistente e sem contar como interação, exatamente como `STATS`. |
 | `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 10s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
+| `ACHIEVEMENT <ID> <texto>` | Uma notificação especial pra uma das 10 conquistas do MiMo (ver abaixo) — mesma prioridade/duração/formato atômico do `NOTIFY`, só que `<ID>` escolhe qual acabamento único some ao troféu em vez de uma expressão comum. `<ID>`: `FIRST_CONTACT`, `EARLY_BIRD`, `NIGHT_OWL`, `COFFEE_MACHINE`, `ONE_MORE_GAME`, `VICTORY_ROYALE`, `AI_OVERLOAD`, `AUDIOPHILE`, `BREAK_TAKER`, `IDENTITY_CRISIS`. Um `<ID>` não reconhecido cai no acabamento de `FIRST_CONTACT` em vez de falhar a notificação inteira. |
 | `PONG START` | Liga o minijogo Pong (ver abaixo), o "ANTI STRESS BUTTON" do Brobot.Sender — exclusivo, acima até de `NOTIFY`. |
 | `PONG KEY <LEFT\|RIGHT> <DOWN\|UP>` | Estado bruto de uma tecla de seta (pressionada/solta) — quem decide velocidade/física da raquete é o Core, o app do PC só reporta a transição. |
 | `PONG STOP` | Encerra o Pong na hora, jogo em andamento ou já na tela de fim de jogo, e volta ao normal. |
@@ -48,30 +49,47 @@ O que aparece depende do tema:
 
 - **`MATRIX`**: uma terceira aba no log, `IA MIDIA [MONITOR]`. Ela mostra o
   nome do jogo (com o mesmo prefixo `> ` e a mesma quebra de linha de
-  qualquer entrada do log) e, embaixo, três linhas: `CPU 25% 53C`,
-  `GPU 12% 38C`, `RAM 66%`. O nome do jogo saiu da aba MIDIA e passou a
-  viver aqui — música e vídeo continuam na MIDIA, que não tem stats.
+  qualquer entrada do log) e, embaixo, quatro linhas: `CPU 25% 53C`,
+  `GPU 12% 38C`, `RAM 66%`, `FPS 60`. O nome do jogo saiu da aba MIDIA e
+  passou a viver aqui — música e vídeo continuam na MIDIA, que não tem
+  stats. `FPS` vem do sensor "Framerate" do MSI Afterburner (ver
+  `AfterburnerSensors.cs`) e só aparece com o Afterburner aberto; sem ele o
+  campo chega como `--`, do mesmo jeito que qualquer outra leitura sem
+  fonte.
 - **`MI84`**: mesma terceira aba `IA MIDIA [MONITOR]` do `MATRIX` (é o
   mesmo `LogTab`, não uma cópia), mas os números viram medidores de barra:
   uma linha por leitura, com rótulo, dez células, o percentual e a
   temperatura — `CPU [######····] 43% 61C`. As células são retângulos
   desenhados, não caracteres de bloco: a Font5x7 não tem glifo de bloco, e
-  nesse tamanho um retângulo sai mais nítido. As três linhas ficam em `y`
-  fixo, então o nome do jogo quebrando em mais ou menos linhas não empurra
-  os números — mesma razão pela qual `DEFAULT`/`MI2MO2` ancoram os deles na
-  base da caixa.
-- **`DEFAULT` e `MI2MO2`**: a caixa de mensagem cresce e vira um painel fixo,
-  com um medidor por linha (`CPU`, `GPU`, `RAM`) e o nome do jogo acima
-  deles. Ela **não digita e não expira** — é um mostrador atualizado a cada
-  2s, e redigitar a cada atualização deixaria os números ilegíveis.
-  No `DEFAULT` a caixa tem 5 linhas: os olhos encolhem e sobem para o topo
-  da tela enquanto o jogo roda, liberando espaço, e o nome do jogo pode
-  ocupar duas linhas. No `MI2MO2` são 4 linhas e a chapa do R2 fica
-  intocada — a lente termina em y=77 e uma caixa de 5 linhas começaria em
-  y=71, cobrindo o olho dele; com 4 linhas ela começa em 80 e passa raspando.
-  Em ambos, os três medidores ficam ancorados na base da caixa, então os
-  números não se mexem conforme o nome do jogo quebra em mais ou menos
-  linhas.
+  nesse tamanho um retângulo sai mais nítido. `FPS` é a exceção: sem barra
+  (não é uma leitura de 0-100% — um monitor de alta taxa passa disso
+  tranquilamente) e sem sufixo, só o rótulo e o número. As quatro linhas
+  ficam em `y` fixo, então o nome do jogo quebrando em mais ou menos linhas
+  não empurra os números — mesma razão pela qual `DEFAULT`/`MI2MO2` ancoram
+  os deles na base da caixa.
+- **`DEFAULT`**: a caixa de mensagem cresce e vira um painel fixo com o nome
+  do jogo acima e, embaixo, uma grade 2x2 — `FPS`/`RAM` numa linha, `CPU`/
+  `GPU` na de baixo:
+  ```
+  Jogando <nome>
+
+  FPS 60                RAM 66%
+  CPU 25% 53C   GPU 12% 38C
+  ```
+  A caixa tem 5 linhas: os olhos encolhem e sobem para o topo da tela
+  enquanto o jogo roda, liberando espaço, e a grade usa só 2 dessas 5 —
+  sobrando 3 para o nome do jogo (antes eram 3 medidores empilhados, um por
+  linha, sobrando 2). Ela **não digita e não expira** — é um mostrador
+  atualizado a cada 2s, e redigitar a cada atualização deixaria os números
+  ilegíveis. `FPS`/`RAM` dividem uma linha por nenhum dos dois ter
+  temperatura para mostrar, mesma razão de `CPU`/`GPU` dividirem a outra.
+- **`MI2MO2`**: mesmo painel de `DEFAULT`, mas sem `FPS` e sem a grade — um
+  medidor por linha (`CPU`, `GPU`, `RAM`), como antes. A caixa tem 4 linhas
+  e a chapa do R2 fica intocada — a lente termina em y=77 e uma caixa de 5
+  linhas começaria em y=71, cobrindo o olho dele; com 4 linhas ela começa em
+  80 e passa raspando, sem sobra pra uma quarta leitura. Os três medidores
+  ficam ancorados na base da caixa, então os números não se mexem conforme
+  o nome do jogo quebra em mais ou menos linhas.
 
 Os stats só são desenhados enquanto `PLAYING` é a expressão em cena. Um
 `STATS` recebido fora disso é guardado e simplesmente não aparece, do mesmo
@@ -446,6 +464,43 @@ a necessidade de placeholder.
   o que lê como falha e não como sono.
 - **Qualquer outra**: o rosto centralizado, piscando no ritmo normal do
   `Personality`, com a mensagem embaixo.
+- **`ACHIEVEMENT`** (uma das 10 conquistas do MiMo, ver `AchievementMonitor`
+  no Brobot.Sender): olhos pequenos à esquerda (a mesma posição/tamanho do
+  `COFFEE`) e um **troféu** saltando para dentro do quadro à direita — a
+  mesma silhueta em todas as 10, pra ficar claro de cara que é uma conquista,
+  igual a um jogo de verdade sempre mostra *um* troféu não importa qual foi
+  ganho. O salto é uma tabela de pontos fixos (mesma ideia do estrondo da
+  lâmpada do boot do `MI84`): sobe rápido, passa um pouco do lugar, volta um
+  pouco de menos, e assenta — depois disso balança de leve pelo resto dos
+  10s, pra não ficar parado o tempo todo. `<ID>` escolhe o **acabamento**
+  que faz cada conquista parecer única:
+  - **`FIRST_CONTACT`**: uma mãozinha acenando, balançando de um lado pro
+    outro.
+  - **`EARLY_BIRD`**: um solzinho nascendo sobre uma linha de horizonte —
+    parado, porque o próprio salto do troféu já é o momento de movimento
+    desse ícone.
+  - **`NIGHT_OWL`**: uma lua crescente (o mesmo truque de "recortar com a
+    cor de fundo" usado em todo o projeto) e umas estrelinhas que piscam de
+    forma aleatória.
+  - **`COFFEE_MACHINE`**: a mesma xícara fumegante do `COFFEE`, só que em
+    miniatura.
+  - **`ONE_MORE_GAME`**: o mesmo controle de vídeo game do ícone de canto do
+    `PLAYING`.
+  - **`VICTORY_ROYALE`**: duas espadas cruzadas.
+  - **`AI_OVERLOAD`**: o troféu inteiro **gagueja** como os olhos do
+    `THINKING` — não ganha um ícone à parte, o próprio troféu tremendo já é
+    o acabamento.
+  - **`AUDIOPHILE`**: três notas musicais (a mesma nota do ícone de canto do
+    `MUSIC`) quicando fora de fase, tipo um equalizador.
+  - **`BREAK_TAKER`**: um bonequinho se espreguiçando, com os braços
+    erguidos, balançando bem devagar.
+  - **`IDENTITY_CRISIS`**: a cor do troféu **fica trocando** entre as cores
+    de cada tema (o teal do Classic, o verde do Matrix, o âmbar do MI84, um
+    vermelho no lugar do MI2MO2) — não ganha ícone à parte, é a própria cor
+    do troféu que carrega o efeito, e não tem relação com o tema realmente
+    ativo no momento.
+  Um `<ID>` que o Core não reconhece cai no acabamento do `FIRST_CONTACT`
+  em vez de falhar a notificação inteira.
 
 Toda arte de notificação recebe a **cor de fundo por parâmetro** em vez de
 assumir preto. Isso não é estilo: o truque de "recortar um buraco" usado no

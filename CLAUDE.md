@@ -48,14 +48,18 @@ src/
                                      Simulator and Sender to reach Core — plus MimoDiscovery, which
                                      finds MiMo's DHCP-assigned IP on the network (see Architecture below)
   Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
-                                     Brobot: MainWindow is a card-based checklist (Anti-Stress, Conexão,
-                                     Hora, Clima, Pausa, Atividade da IA, Mídia, Jogos, Tema, Sons,
-                                     Scanlines — mostly checkboxes, except Conexão (a status readout plus
-                                     one button), Tema (a ComboBox) and Atividade da IA (an Instalar/
-                                     Desinstalar button), see below). Anti-Stress's own button doesn't
-                                     toggle anything — it navigates to a second, tab-less page
-                                     (GamePickerGrid) to launch one of MiMo's minigames (Pong, Batalha
-                                     RPG — see BrobotCore below and Brobot.Sender internals below).
+                                     Brobot: MainWindow is three tabs (Configurações Gerais/Mini Games/
+                                     Conquistas — see below). Configurações Gerais is the original
+                                     card-based checklist (Conexão, Hora, Clima, Pausa, Atividade da IA,
+                                     Mídia, Jogos, Tema, Sons, Scanlines — mostly checkboxes, except
+                                     Conexão (a status readout plus one button), Tema (a ComboBox) and
+                                     Atividade da IA (an Instalar/Desinstalar button), see below). Mini
+                                     Games holds one card per minigame (Pong, Batalha RPG — see BrobotCore
+                                     below and Brobot.Sender internals below), each with its own
+                                     JOGAR/BATALHAR button. Conquistas holds 10 fixed achievements
+                                     (AchievementCatalog), tracked by AchievementMonitor against signals
+                                     the other monitors below already raise — unlocking one also flashes
+                                     a NOTIFY on MiMo's own screen (see Brobot.Sender internals below).
                                      The Conexão card is a readout, not a setup form — MiMo's address is
                                      discovered, never typed (WiFi/TCP only — no SettingsWindow, no
                                      Serial/USB, see below). WeatherMonitor + WindowsMediaMonitor + GameMonitor +
@@ -81,7 +85,7 @@ BrobotCore/                         PlatformIO project (Arduino/C++)
                                      GFXfont — the firmware-side twin of AurebeshFont.cs),
                                      Face, Personality, Protocol, main.cpp, PongGame, RpgBattle
                                      (MiMo's two exclusive minigames, launched from Brobot.Sender's
-                                     Anti-Stress card — see PROTOCOL.md's Pong/Batalha RPG sections
+                                     Mini Games tab — see PROTOCOL.md's Pong/Batalha RPG sections
                                      and this file's own Firmware internals below)
   platformio.ini                    envs: uno, uno_physical, esp32dev, esp32dev_physical
                                      (esp32* envs use board=esp32-c3-devkitm-1 — the actual
@@ -1212,19 +1216,52 @@ This is the app for whoever actually assembled a Brobot — not a dev tool, and
 user-facing branded **"MiMo"** throughout (window titles, tray tooltip, every
 string an end user sees) even though the code/project/namespace keep the
 Brobot name everywhere. It runs in the system tray and, when opened, shows
-a checklist of what to send MiMo — **no separate settings window**: there
-used to be one (`SettingsWindow`, COM-port picker + TCP host/port +
-theme combo), deleted entirely once Serial was dropped from this app (see
-Brobot.Connection internals above) — the Conexão card (IP:port field +
-Conectar/Desconectar) is now just another card in the main view, and the
-theme combo already had its own duplicate card there too. Checking a box
-turns on a background watcher that decides *when* to send something; it
-never decides *how it should look* — that's still 100% Core's call per the
-one rule at the top of this file.
+three tabs — **no separate settings window**: there used to be one
+(`SettingsWindow`, COM-port picker + TCP host/port + theme combo), deleted
+entirely once Serial was dropped from this app (see Brobot.Connection
+internals above) — the Conexão card (IP:port field + Conectar/Desconectar)
+is now just another card in the checklist tab, and the theme combo already
+had its own duplicate card there too. Checking a box turns on a background
+watcher that decides *when* to send something; it never decides *how it
+should look* — that's still 100% Core's call per the one rule at the top of
+this file.
 
-The main-window layout (MiMo wordmark, an Anti-Stress card first, six feature
-cards — Conexão, Hora, Clima, Atividade da IA, Mídia, Jogos — a Tema card, an
-info card, a "Salvar configurações" button, warm cream/tan palette) follows a supplied design
+**MiMo wordmark, then a shared subtitle, then three tabs — Configurações
+Gerais, Mini Games, Conquistas** (`MimoTabControlStyle`/`MimoTabItemStyle` in
+`MainWindow.xaml`'s `Window.Resources`) — replaced what used to be a plain-
+`Visibility` page swap between the checklist and an Anti-Stress button's game
+picker: with a third, permanent destination (Conquistas, deliberately empty
+for now — nothing here yet) alongside the checklist, a real selector was the
+right shape rather than something to keep avoiding. The wordmark and the
+subtitle both sit in the outer `Grid` *above* the `TabControl`, not inside any
+one `TabItem`'s own content — the logo is the app's own identity, shared by
+all three tabs, and a single `TabSubtitleText` swaps its own text to match
+whichever tab is selected rather than each tab carrying a duplicate copy.
+`MimoTabControlStyle` retemplates `TabControl` down to a `TabPanel` header row
+(`HorizontalAlignment="Center"`, so the three pills sit centered under the
+subtitle rather than pinned to the left) over a plain `ContentPresenter` — the
+stock template draws a bordered content box that doesn't match this window's
+flat-card look at all, same reasoning every other retemplated control here
+already has. `MimoTabItemStyle` is a flat pill header (`InkBrush` fill when
+selected, `HighlightBrush` otherwise) — its selected/unselected foreground
+swap has to reach through `ContentPresenter`'s own auto-generated `TextBlock`
+via the `TextElement.Foreground` attached property on a named
+`ContentPresenter` rather than a direct `Setter` on `TabItem.Foreground`,
+since a plain string `Header` doesn't inherit that the way a normal panel's
+children would.
+`MainTabControl_SelectionChanged` is what keeps `TabSubtitleText` in sync,
+and it has to guard against a real gotcha: `SelectionChanged` is a bubbling
+routed event that `TabControl` inherits from the same `Selector` base
+`ComboBox` does, so a selection change on any `ComboBox` nested inside a
+tab's own content (`TemaComboBox`, `PensamentosIaComboBox`, ...) bubbles all
+the way up and would fire this handler too — guarded by comparing
+`e.OriginalSource` against `MainTabControl` itself, not just checking
+`sender` (which is always `MainTabControl`, the object the handler is
+attached to, regardless of which nested control actually raised the event).
+
+The **Configurações Gerais** tab (six feature cards — Conexão, Hora, Clima,
+Atividade da IA, Mídia, Jogos — a Tema card, an info card, a "Salvar
+configurações" button, warm cream/tan palette) follows a supplied design
 reference closely — see `MainWindow.xaml`'s `Window.Resources` for the
 color brushes and the custom `CheckBox`/`ComboBox`/`Button`/`TextBox`
 control templates (WPF's stock chrome doesn't look anything like flat
@@ -1236,31 +1273,33 @@ draws that geometry anchored to its layout slot's top-left corner, not
 centered in it, so without those two setters the check sits visibly
 off-center in the 28x28 box — this was a real bug, fixed once.
 
-- **Anti-Stress card**: an umbrella entry point, not a game itself — its
-  button (`AntiStressButton`) navigates to a second, tab-less "page"
-  (`GamePickerGrid` in `MainWindow.xaml`) instead of starting anything
-  directly, one card per minigame (Pong, Batalha RPG) each with its own
-  JOGAR/BATALHAR button. Two sibling elements in the same `Grid` cell
-  (`RootScrollViewer`'s checklist and `GamePickerGrid`), swapped by plain
-  `Visibility` toggling (`ShowGamePicker`/`ShowMainChecklist`) rather than a
-  `TabControl` — there's nothing to expose a selector for, navigation only
-  ever happens by clicking into or out of it. `PlayPongButton_Click`/
-  `PlayRpgButton_Click` are what actually send `FACE HAPPY` + a greeting
-  `MSG`, wait 5s, then `PONG`/`RPG START` and install a `GlobalKeyboardHook`
-  — structurally identical copies of each other rather than a shared
-  helper, the same "only two of these, copying the shape is simpler than
-  generalizing it" call this file already makes for
-  `ClearGameFaceIfActive`/`ClearMediaFaceIfActive`; worth pulling into one
-  method if a third minigame shows up. `VOLTAR` (`BackFromGamesButton`) is
-  always visible on the picker and handles all three ways of giving up —
-  nothing picked yet, still waiting out the 5s greeting, or a round/battle
-  already running (the only case that actually sends a `PONG`/`RPG STOP`) —
-  by checking which hook field is non-null. A game ending any other way
-  (naturally, or via Escape) calls `StopAntiStressGame`/`StopRpgBattle`,
-  which navigates back to the checklist automatically and leaves the result
-  ("Última pontuação: 7", "Vitória!", ...) on the *checklist's* own
-  `AntiStressStatusText`, since the picker's per-game status lines are
-  about to disappear along with the page.
+- **Mini Games tab**: one card per minigame (Pong, Batalha RPG), each with
+  its own JOGAR/BATALHAR button — no umbrella entry point in front of them
+  any more. This used to be a second, tab-less "page" (`GamePickerGrid`) an
+  Anti-Stress card's own button swapped in via plain `Visibility` toggling
+  (`ShowGamePicker`/`ShowMainChecklist`); now it's just this permanent tab,
+  so there's no entering/leaving to track and those two methods are gone
+  entirely. `PlayPongButton_Click`/`PlayRpgButton_Click` are what actually
+  send `FACE HAPPY` + a greeting `MSG`, wait 5s, then `PONG`/`RPG START` and
+  install a `GlobalKeyboardHook` — structurally identical copies of each
+  other rather than a shared helper, the same "only two of these, copying
+  the shape is simpler than generalizing it" call this file already makes
+  for `ClearGameFaceIfActive`/`ClearMediaFaceIfActive`; worth pulling into
+  one method if a third minigame shows up. `PARAR` (`StopGameButton`, née
+  `BackFromGamesButton`/`VOLTAR` — renamed once it stopped navigating
+  anywhere) is always visible on the tab and handles all three ways of
+  giving up — nothing picked yet (a no-op, both hooks/timers already null),
+  still waiting out the 5s greeting, or a round/battle already running (the
+  only case that actually sends a `PONG`/`RPG STOP`) — by checking which
+  hook field is non-null. A game ending any other way (naturally, or via
+  Escape) calls `StopPongGame`/`StopRpgBattle` (renamed from
+  `StopAntiStressGame`), which write the result ("Última pontuação: 7",
+  "Vitória!", ...) straight onto that game's own `PongPickerStatusText`/
+  `RpgPickerStatusText` — there's no separate checklist-side status label to
+  hand it off to any more (the old `AntiStressStatusText` existed
+  specifically because the picker's per-game lines were about to disappear
+  along with the page; that's no longer true, so the simpler direct write
+  replaced it).
   `GlobalKeyboardHook.cs` (this app's only P/Invoke) is a system-wide
   `WH_KEYBOARD_LL` hook: the player is watching MiMo's own screen while
   playing, not this window, so arrow/Enter/Escape have to reach Core
@@ -1272,8 +1311,80 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   deliberate simple default. Left/Right/Enter only fire on the actual
   press→release transition (Windows repeats `WM_KEYDOWN` while a key is
   held); Escape does not bother with that dedupe, since
-  `StopAntiStressGame`/`StopRpgBattle` are idempotent and firing twice from
+  `StopPongGame`/`StopRpgBattle` are idempotent and firing twice from
   a held Escape is harmless.
+- **Conquistas tab**: 10 fixed achievements (`AchievementCatalog.All`), each
+  tracked against a signal this app already observes elsewhere for its own
+  reasons — no new OS-level sensor needed for any of them. Two ideas from the
+  original brainstorm (a "deep focus"-style window-switch timer, a PC-uptime
+  "marathon") were dropped for exactly that reason: nothing here watches
+  which window has focus, and while the OS's own boot time is cheap to read
+  once (`Environment.TickCount64`, used for Early Bird below), a *running*
+  uptime accumulator would need an always-on timer this app has no other
+  reason to keep.
+  `AchievementMonitor` (persisted via `AchievementStore` to
+  `%AppData%\Brobot\achievements.json`, same neighborhood/best-effort error
+  handling as `SenderSettings`/`GameMonitor`'s own cache) is a plain class
+  with one method per signal, called from the exact spot in `MainWindow` that
+  already reacts to that signal for its own reason — it adds bookkeeping
+  alongside that call, it doesn't own or replace it:
+  `OnConnected` (from `UpdateConnectionStatus`'s `connected && !_wasConnected`
+  branch) for **First Contact** and **Early Bird**; `SetGameActive`/
+  `SetMusicActive` (from `OnGameChanged`/`OnNowPlayingChanged`, and the
+  Jogos/Mídia checkboxes' own unchecked branches, so toggling a monitor off
+  mid-session can't leave a stale "active" flag stuck true) accumulate toward
+  **One More Game**/**Audiophile**; `OnAiActivity` (one call at the top of
+  `OnAiThoughtReceived`, regardless of which hook event it is — a heartbeat,
+  not per-event logic) toward **AI Overload**; `OnRpgVictory` (from
+  `OnFrameReceived`'s `RPG OVER VICTORY` case) counts toward **Victory
+  Royale**; `OnBreakReminderSent` (from `SendBreakReminder`) toward **Break
+  Taker**; `OnThemeSelected` (from `TemaComboBox_SelectionChanged`, keyed on
+  `CoreTheme` — `DEFAULT`/`MATRIX`/`MI2MO2`/`MI84`) tracks **Identity
+  Crisis**'s "used every theme" set.
+  `Tick(connected)` is what drives every duration-based accumulator —
+  **Coffee Machine** (4h connected in a day), **One More Game** (3h with a
+  game active), **Audiophile** (24h lifetime with music active), plus
+  re-checking **Night Owl** (wall clock before 05:00, connected) and **Early
+  Bird** (OS boot time before 07:00) on every call. It's called from
+  `UpdateConnectionStatus`'s existing 200ms poll rather than a timer of its
+  own, since that poll already knows `connected` at every tick. None of the
+  duration criteria are a real activity/idle detector — nothing here watches
+  mouse/keyboard input, so "Coffee Machine" really measures "MiMo was
+  connected", not "you were at the keyboard"; honest enough for a
+  Tamagotchi-style nudge, not a timesheet. Daily accumulators
+  (`TodayConnectedSeconds`/`TodayGameSeconds`/`TodayAiActiveSeconds`) reset
+  the moment `AchievementProgress.Date` no longer matches today rather than
+  prorating a session that spans midnight; `Tick`/`OnAiActivity` also guard
+  against a gap over 5 minutes (system sleep, a clock change) crediting that
+  whole gap to whatever was active before it.
+  `TryUnlock` saves immediately the instant something actually unlocks (an
+  unlock is a fact worth persisting right away, same reasoning
+  `MimoDiscovery`'s `PersistDiscoveredAddress` already follows) but the
+  accumulators themselves are only flushed to disk once a minute
+  (`MaybeSave`) — `Tick` fires every 200ms and `OnAiActivity` on every AI hook
+  event, and writing the file on every one of those would be pure waste.
+  The tab's 10 cards are built in code (`MainWindow.BuildAchievementCards`),
+  not hand-authored XAML like every other card in this app: they're all the
+  same shape (icon badge, name, description-or-quote, status), so a loop over
+  `AchievementCatalog.All` plus a small dictionary of the four elements each
+  card needs to update later (`RefreshAchievementCard`) replaces what would
+  otherwise be ten near-identical XAML blocks and forty named fields — the
+  one departure from this app's usual all-XAML convention, and worth it only
+  because there's nothing to customize per card. A locked card shows a 🔒 in
+  place of its real emoji and its criterion text (what to still aim for), at
+  reduced opacity; the moment `AchievementMonitor.Unlocked` fires
+  (`OnAchievementUnlocked`), the card swaps in the real emoji, the flavor
+  quote, the unlock date, and full opacity.
+  **Unlocking also reaches MiMo's own screen**, reusing Core's existing
+  top-priority `NOTIFY` tier rather than adding any new protocol command or
+  firmware feature — `NOTIFY HAPPY Conquista desbloqueada: <NOME> - <frase>`
+  gets every behavior every other notification already has for free
+  (full-screen, outranks even AI activity, auto-clears after 10s; see
+  PROTOCOL.md). `HAPPY` for the same reason `SessionStart`'s greeting uses
+  it: this is unambiguously good news. `Achievement.Emoji` is WPF-only —
+  Core's bitmap `Font5x7` has no glyph for any of these, so the text sent
+  over `NOTIFY` never includes it, only the plain-text name and quote (both
+  written with real Portuguese diacritics, which Core's font *does* support).
 - **Conexão card**: a single `TextBox` (`ConnectionAddressTextBox`, "IP:porta"
   in one field, e.g. `192.168.1.50:5555` — parsed by splitting on the *last*
   `:` so a literal IPv6 address wouldn't break it) plus a Conectar/Desconectar
@@ -1828,7 +1939,34 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   screen as a 39-digit number. The header's own `dwHeaderSize`/`dwEntrySize`
   are used to walk the block rather than a compiled-in struct size, so a
   future layout change degrades instead of returning garbage. Afterburner also
-  publishes **FPS**, which this doesn't use yet and which costs nothing to add.
+  publishes **FPS** (`AfterburnerSensors.Framerate`), which `SystemStatsMonitor.Read()`
+  now reads unconditionally rather than only when CPU/GPU load or temperature
+  is still missing — it's the one field with no other source at all, so
+  there's no "something else already found it" case to gate on the way the
+  other four are. It rides the same `STATS` line as everything else (a new
+  6th field, `PROTOCOL.md`), and on Core it's drawn with no `%`/`C` suffix
+  (`formatStatValue`'s suffix `'\0'` case) since it's a plain count, not a
+  load percentage or a temperature — and with no bar in MI84's MONITOR tab,
+  since a load/temperature bar assumes a 0-100 range and a high-refresh
+  monitor routinely clears 100 FPS. `CLASSIC`'s own Game Mode panel
+  (`drawStatsMessage`) does show it, but not as a fourth stacked row — its
+  box height is the same fixed constant as before (`STATS_BOX_LINES_CLASSIC`),
+  so a fourth row would eat into the game name's own space instead. Passing
+  `gridLayout = true` packs all four readings into a 2x2 grid instead
+  (`STATS_GRID_ROWS` = 2, `STATS_GRID_COL2_X` splitting the box's usable
+  width into two columns): `FPS`/`RAM` share the top row, `CPU`/`GPU` the
+  bottom — the same pairing logic as before (neither FPS nor RAM has a
+  temperature to show, same as neither of CPU/GPU's own column-mates would
+  need one), which is what makes two readings fit on one row at all. This
+  actually frees a row versus the old one-per-row layout (2 rows instead of
+  3), so the game name gains a line rather than losing one. `MI2MO2` calls
+  the same function with `gridLayout = false` and is completely unchanged —
+  still the original one-per-row CPU/GPU/RAM list, still no FPS — because
+  its box height (`STATS_BOX_LINES_MI2MO2`) is already at the most it can
+  grow without covering the bottom of R2's lens, so there's no slack to
+  spend on a fourth reading regardless of layout. `MATRIX`/`MI84`'s MONITOR
+  tabs (log-based, not box-based) show FPS as their own fourth row, per
+  above.
 - **`GameMonitor.cs`**: polls `Process.GetProcesses()` every 5s against Discord's
   public "detectable applications" catalog (`GET
   https://discord.com/api/v10/applications/detectable`, the same executable-name
@@ -1841,9 +1979,17 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   executable paths — so riding Discord's community-fed catalog, the same
   technique Discord itself uses, is the closest thing to a generic answer. The
   ~10k-entry win32 executable map is filtered and cached to
-  `%AppData%\Brobot\detectable-games-cache.json` (a week-long TTL) so the app
-  works offline after the first fetch and doesn't redownload ~12MB every
-  launch. Filtering excludes `is_launcher: true` entries (e.g.
+  `%AppData%\Brobot\detectable-games-cache.json`, but the cache is no longer
+  trusted by age — `GameMonitor.Start()` re-fetches and re-filters it every
+  time (i.e. every Sender launch with Jogos checked, since `RestoreSettings`
+  replays the checkbox the same way a manual click would), not just once a
+  fixed TTL had elapsed. A week-long TTL used to gate this, and meant a game
+  Discord added to the catalog could sit unrecognized for up to a week — the
+  literal "jogo novo não aparece" complaint this refetch-on-start replaced it
+  to fix. The on-disk cache still matters: `LoadCache()` seeds `Poll()` with
+  something to match against immediately (rather than waiting on the
+  network), and is what a failed/offline refresh falls back to. Filtering
+  excludes `is_launcher: true` entries (e.g.
   `LeagueClientUx.exe` — the menu/launcher process, not an actual match/session)
   and, more importantly, **generic runtime-host executables** the catalog
   sometimes lists as if they were a specific game's own binary — a real
@@ -1857,7 +2003,8 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   ambiguous regardless of whether it's on the hardcoded list). `CacheSchemaVersion`
   exists specifically so a cache file written before this filtering existed —
   otherwise indistinguishable from a fresh one, and easily surviving a full PC
-  reboot since it's on disk — doesn't keep being trusted for its full 7-day TTL
+  reboot since it's on disk — doesn't keep being trusted for the brief window
+  before the next refresh lands, or as the fallback if that refresh fails,
   after the bug that produced it was fixed; bump it whenever the filtering
   logic changes. `Poll()` wraps each process's name lookup in its own
   try/catch — a handful of protected/system processes throw

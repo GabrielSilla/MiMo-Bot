@@ -20,7 +20,27 @@
 // a new enumerator each. Everywhere else it falls through to NEUTRAL's
 // shape and no cue, which is exactly right for something that never
 // renders as a face.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE };
+// ACHIEVEMENT is WEATHER's own trick, reused: it names no mood either, and
+// only ever reaches the notification tier (see ACHIEVEMENT in PROTOCOL.md).
+// Which of the 10 achievements is being celebrated comes from
+// FaceState::achievementIcon (below), the same way weatherCondition carries
+// WEATHER's own artwork choice — so a new achievement costs one enumerator
+// in AchievementIcon and one `case` in drawAchievementNotification, not a
+// new command or a new Expression each time.
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT };
+
+// Which of MiMo's 10 achievements a notification is celebrating (see
+// ACHIEVEMENT in PROTOCOL.md) — every one shows the same trophy
+// (drawAchievementNotification's shared drawTrophy), and this is what picks
+// the small accent — or, for AI_OVERLOAD/IDENTITY_CRISIS, the treatment
+// applied to the trophy itself — that makes each feel distinct. Names match
+// the wire tokens Brobot.Sender's AchievementMonitor already uses as its own
+// internal ids (see AchievementCatalog.cs), so the two never have to be
+// cross-referenced by hand.
+enum class AchievementIcon : uint8_t {
+    FIRST_CONTACT, EARLY_BIRD, NIGHT_OWL, COFFEE_MACHINE, ONE_MORE_GAME,
+    VICTORY_ROYALE, AI_OVERLOAD, AUDIOPHILE, BREAK_TAKER, IDENTITY_CRISIS,
+};
 
 // Weather pictograms shown in the persistent top-left badge (see WEATHER in
 // PROTOCOL.md). Deliberately small — just enough categories to read clearly
@@ -146,6 +166,11 @@ struct FaceState {
     // stateless Face::render needs the anchor, same as themeStartedMs and
     // expressionStartedMs above.
     unsigned long notificationStartedMs = 0;
+    // Only meaningful while expression == ACHIEVEMENT — which of the 10
+    // achievements picks the trophy's accent (see AchievementIcon above).
+    // Copied every frame regardless, same harmless-when-unused convention
+    // weatherCondition already follows.
+    AchievementIcon achievementIcon = AchievementIcon::FIRST_CONTACT;
 
     unsigned long nowMs = 0;       // clock time, used to animate the sleeping "Z Z Z"
 
@@ -172,6 +197,11 @@ struct FaceState {
     int statsGpuLoad = -1;
     int statsGpuTempC = -1;
     int statsRamLoad = -1;
+    // MSI Afterburner's own "Framerate" sensor — the one field here that
+    // isn't a load/temperature percentage, hence no suffix when drawn (see
+    // formatStatValue in Face.cpp). Same -1-means-no-source convention;
+    // Afterburner not running is the common reason, not a real 0 FPS.
+    int statsFps = -1;
 
     // Claude Code session telemetry, set via AISTATS by whichever PC app is
     // connected — same persistent, expression-independent shape as hasStats

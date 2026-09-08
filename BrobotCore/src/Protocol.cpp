@@ -62,6 +62,8 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         _deviceSettings.onScanlinesCommand(args);
     } else if (commandLength == 6 && strncmp(line, "NOTIFY", 6) == 0) {
         _personality.onNotifyCommand(args, now);
+    } else if (commandLength == 11 && strncmp(line, "ACHIEVEMENT", 11) == 0) {
+        _personality.onAchievementCommand(args, now);
     } else if (commandLength == 5 && strncmp(line, "STATS", 5) == 0) {
         _personality.onStatsCommand(args, now);
     } else if (commandLength == 7 && strncmp(line, "AISTATS", 7) == 0) {

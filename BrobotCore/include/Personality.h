@@ -17,6 +17,7 @@ public:
     void onThemeCommand(const char* name, unsigned long now);
     void onClassicColorCommand(const char* name);
     void onNotifyCommand(const char* args, unsigned long now);
+    void onAchievementCommand(const char* args, unsigned long now);
     void onStatsCommand(const char* args, unsigned long now);
     void onAiStatsCommand(const char* args, unsigned long now);
 
@@ -112,6 +113,11 @@ private:
     TypedMessage _notificationMessage;
     unsigned long _notificationUntil = 0;   // 0 / past = no notification showing
     unsigned long _notificationStartedAt = 0;
+    // Only meaningful while _notificationExpression == ACHIEVEMENT — set by
+    // onAchievementCommand alongside raiseNotification, the same way WEATHER
+    // notifications lean on _weatherCondition below rather than a field of
+    // their own.
+    AchievementIcon _notificationAchievementIcon = AchievementIcon::FIRST_CONTACT;
 
     // SLEEPY's own periodic "go to bed" nudge. It used to have a
     // TypedMessage of its own, shown only while _renderExpression ==
@@ -179,6 +185,7 @@ private:
     int _statsGpuLoad = -1;
     int _statsGpuTempC = -1;
     int _statsRamLoad = -1;
+    int _statsFps = -1;
 
     // Claude Code session telemetry pushed in by AISTATS, held exactly like
     // _hasStats above: persistent, never expiring, replaced only by the next

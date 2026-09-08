@@ -346,9 +346,21 @@ constexpr int MESSAGE_MARGIN_X = MESSAGE_BOX_MARGIN_X + 4; // text inset from th
 // it — that's the most this theme can grow without redrawing the plate.
 constexpr int STATS_BOX_LINES_CLASSIC = 5;
 constexpr int STATS_BOX_LINES_MI2MO2 = 4;
-// The three stat rows always sit at the bottom of whichever box, so the
-// numbers stay at fixed positions and the name gets whatever is left above.
+// The stat rows always sit at the bottom of whichever box, so the numbers
+// stay at fixed positions and the name gets whatever is left above.
+// MI2MO2 lists CPU/GPU/RAM one per row (STATS_ROWS) exactly as before — no
+// room to add FPS there without redrawing the plate (see above). CLASSIC
+// instead packs all four readings into a 2x2 grid (STATS_GRID_ROWS), which
+// both fits FPS and frees a row for the name versus one-per-row would; see
+// drawStatsMessage's own note on why only CLASSIC gets this.
 constexpr int STATS_ROWS = 3;
+constexpr int STATS_GRID_ROWS = 2;
+// Splits the box's usable text width (MESSAGE_MARGIN_X..width-MESSAGE_MARGIN_X,
+// 144px) into two ~72px columns. Comfortable for every realistic reading
+// ("CPU 45% 62C" is 66px); only a simultaneous 100%-and-100C+ pair on the
+// left column runs a few px into the right one — an edge case rare enough
+// not to cost either column real room.
+constexpr int STATS_GRID_COL2_X = MESSAGE_MARGIN_X + 72;
 
 // CLASSIC's Game Mode eyes: smaller, and pinned near the top instead of the
 // usual EYE_Y, which is what frees the lower two thirds of the frame for the
@@ -496,7 +508,15 @@ float byeBlinkAmount(unsigned long sinceStartMs) {
 constexpr int BYE_HAND_PIVOT_X = 34;
 constexpr int BYE_HAND_PIVOT_Y = 78; // the wrist; the hand stands above it
 
-void drawByeHand(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+// pivotX/flipX default to BYE's own values, so the plain BYE call site below
+// is untouched — FIRST_CONTACT's achievement notification (see
+// drawAchievementNotification) is the one caller that overrides both, to
+// mirror the same hand onto the right side of the screen instead of
+// relocating its own eyes to BYE's own left-hand/right-eyes arrangement,
+// which would have meant moving the trophy badge and every other
+// achievement's shared eye position to match.
+void drawByeHand(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b,
+                 int pivotX = BYE_HAND_PIVOT_X, float flipX = BYE_HAND_FLIP_X) {
     float angle = BYE_WAVE_MAX_ANGLE * sin((float)nowMs / BYE_WAVE_PERIOD_MS);
     float sinA = sin(angle);
     float cosA = sin(angle + BYE_HALF_PI); // cos is not wired up in the native shim
@@ -505,11 +525,11 @@ void drawByeHand(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, u
         const HandQuad& quad = BYE_HAND[q];
         float sx[4], sy[4];
         for (int i = 0; i < 4; i++) {
-            float lx = quad.x[i] * BYE_HAND_SCALE * BYE_HAND_FLIP_X;
+            float lx = quad.x[i] * BYE_HAND_SCALE * flipX;
             float ly = quad.y[i] * BYE_HAND_SCALE;
             // Rotate about the wrist, then place on screen. The y negation is
             // what turns hand-local "up" into the display's downward axis.
-            sx[i] = (float)BYE_HAND_PIVOT_X + (lx * cosA - ly * sinA);
+            sx[i] = (float)pivotX + (lx * cosA - ly * sinA);
             sy[i] = (float)BYE_HAND_PIVOT_Y - (lx * sinA + ly * cosA);
         }
         fillQuad(display, sx, sy, r, g, b);
@@ -1288,7 +1308,14 @@ unsigned long matrixRainHash(unsigned long a, unsigned long b) {
 // topY/bottomY bound the same region drawMatrixLog would otherwise draw
 // into (see Face::render's call site) — the rain replaces the log there,
 // it doesn't add a new region of its own.
-void drawMatrixRain(IDisplay& display, unsigned long nowMs, int topY, int bottomY) {
+// r/g/b default to MSG_R/G/B (this call's original behavior, relying on
+// MATRIX's own RecoloringDisplay to flatten it to green) — AI_OVERLOAD's
+// achievement notification (see drawAchievementNotification) is the one
+// caller that passes its own ink color explicitly, since that notification
+// draws straight onto the raw display with no recoloring decorator to lean
+// on.
+void drawMatrixRain(IDisplay& display, unsigned long nowMs, int topY, int bottomY,
+                    uint8_t r = MSG_R, uint8_t g = MSG_G, uint8_t b = MSG_B) {
     int rowCount = (bottomY - topY) / MESSAGE_LINE_HEIGHT;
     if (rowCount < 1) {
         return;
@@ -1324,7 +1351,7 @@ void drawMatrixRain(IDisplay& display, unsigned long nowMs, int topY, int bottom
             glyph[0] = MATRIX_RAIN_CHARS[charHash % MATRIX_RAIN_CHAR_COUNT];
             int x = col * MATRIX_RAIN_COLUMN_SPACING_PX;
             int y = topY + row * MESSAGE_LINE_HEIGHT;
-            display.drawText(glyph, x, y, MSG_R, MSG_G, MSG_B);
+            display.drawText(glyph, x, y, r, g, b);
         }
     }
 }
@@ -1393,9 +1420,13 @@ void drawMatrixTabHeader(IDisplay& display, LogTab tab) {
 // side for why that one is uniquely hard to get).
 constexpr int STATS_LINE_CAPACITY = 24;
 
+// suffix = '\0' means "just the number, no unit" — FPS is a plain count, not
+// a load percentage or a temperature, so it gets neither '%' nor 'C'.
 void formatStatValue(char* out, size_t size, int value, char suffix) {
     if (value < 0) {
         snprintf(out, size, "--");
+    } else if (suffix == '\0') {
+        snprintf(out, size, "%d", value);
     } else {
         snprintf(out, size, "%d%c", value, suffix);
     }
@@ -1405,10 +1436,13 @@ void formatStatValue(char* out, size_t size, int value, char suffix) {
 // temperature column entirely, which is how RAM — which has no temperature to
 // show at all, as opposed to one that couldn't be read — shares this
 // formatter with CPU and GPU. That's a different thing from a -1 temperature,
-// which does print, as "--".
-void formatStatsLine(char* line, size_t size, const char* label, int loadPercent, int tempC, bool withTemp) {
+// which does print, as "--". loadSuffix defaults to '%' for CPU/GPU/RAM's own
+// load percentage; FPS reuses this same formatter with loadSuffix = '\0' and
+// withTemp = false, since it's neither a percentage nor paired with a
+// temperature.
+void formatStatsLine(char* line, size_t size, const char* label, int loadValue, int tempC, bool withTemp, char loadSuffix = '%') {
     char loadText[8];
-    formatStatValue(loadText, sizeof(loadText), loadPercent, '%');
+    formatStatValue(loadText, sizeof(loadText), loadValue, loadSuffix);
 
     if (!withTemp) {
         snprintf(line, size, "%s %s", label, loadText);
@@ -1430,14 +1464,20 @@ void formatStatsLine(char* line, size_t size, const char* label, int loadPercent
 // every couple of seconds — it would retype the whole thing on every STATS,
 // and the numbers would never sit still long enough to read. Bypassing that
 // is also what keeps it permanently open with no expiry to fight.
-void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines) {
+//
+// gridLayout picks which of the two stat layouts below this call draws —
+// true for CLASSIC's 2x2 FPS/RAM-over-CPU/GPU grid, false for MI2MO2's
+// original one-per-row CPU/GPU/RAM list (see the STATS_GRID_ROWS comment
+// above for why only CLASSIC gets the grid).
+void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines, bool gridLayout) {
     drawMessageBox(display, MSG_BOX_R, MSG_BOX_G, MSG_BOX_B, boxLines);
 
+    int statsRows = gridLayout ? STATS_GRID_ROWS : STATS_ROWS;
     int boxBottom = display.height() - MESSAGE_BOX_MARGIN_BOTTOM - MESSAGE_BOX_PADDING_Y;
     // The readings are bottom-anchored so they never move as the game's name
     // wraps to a different height; the name fills whatever is left above them.
-    int statsTop = boxBottom - STATS_ROWS * MESSAGE_LINE_HEIGHT;
-    int nameLines = boxLines - STATS_ROWS;
+    int statsTop = boxBottom - statsRows * MESSAGE_LINE_HEIGHT;
+    int nameLines = boxLines - statsRows;
 
     int maxChars = (display.width() - 2 * MESSAGE_MARGIN_X) / CHAR_ADVANCE_PX;
     if (maxChars > MESSAGE_MAX_LINE_CHARS) {
@@ -1486,17 +1526,40 @@ void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines) {
         }
     }
 
-    // One reading per row, matching how MATRIX's monitor tab lists them.
-    char line[STATS_LINE_CAPACITY];
+    char left[STATS_LINE_CAPACITY];
+    if (gridLayout) {
+        // CLASSIC's 2x2 grid — FPS/RAM over CPU/GPU. FPS and RAM share a row
+        // (neither has a temperature to show), same as CPU and GPU do on the
+        // row below. MI2MO2 never reaches this branch, so its own lack of
+        // room for FPS is untouched.
+        char right[STATS_LINE_CAPACITY];
+
+        formatStatsLine(left, sizeof(left), "FPS", state.statsFps, 0, false, '\0');
+        formatStatsLine(right, sizeof(right), "RAM", state.statsRamLoad, 0, false);
+        display.drawText(left, MESSAGE_MARGIN_X, statsTop, MSG_R, MSG_G, MSG_B);
+        display.drawText(right, STATS_GRID_COL2_X, statsTop, MSG_R, MSG_G, MSG_B);
+
+        formatStatsLine(left, sizeof(left), "CPU", state.statsCpuLoad, state.statsCpuTempC, true);
+        formatStatsLine(right, sizeof(right), "GPU", state.statsGpuLoad, state.statsGpuTempC, true);
+        display.drawText(left, MESSAGE_MARGIN_X, statsTop + MESSAGE_LINE_HEIGHT, MSG_R, MSG_G, MSG_B);
+        display.drawText(right, STATS_GRID_COL2_X, statsTop + MESSAGE_LINE_HEIGHT, MSG_R, MSG_G, MSG_B);
+        return;
+    }
+
+    // MI2MO2: one reading per row, matching how MATRIX's monitor tab lists
+    // them. No FPS row here — MI2MO2's box height can't grow without
+    // covering the bottom of R2's lens (see STATS_BOX_LINES_MI2MO2 above),
+    // so it keeps the original three-row CPU/GPU/RAM list instead of the
+    // grid CLASSIC uses.
     for (int i = 0; i < STATS_ROWS; i++) {
         if (i == 0) {
-            formatStatsLine(line, sizeof(line), "CPU", state.statsCpuLoad, state.statsCpuTempC, true);
+            formatStatsLine(left, sizeof(left), "CPU", state.statsCpuLoad, state.statsCpuTempC, true);
         } else if (i == 1) {
-            formatStatsLine(line, sizeof(line), "GPU", state.statsGpuLoad, state.statsGpuTempC, true);
+            formatStatsLine(left, sizeof(left), "GPU", state.statsGpuLoad, state.statsGpuTempC, true);
         } else {
-            formatStatsLine(line, sizeof(line), "RAM", state.statsRamLoad, 0, false);
+            formatStatsLine(left, sizeof(left), "RAM", state.statsRamLoad, 0, false);
         }
-        display.drawText(line, MESSAGE_MARGIN_X, statsTop + i * MESSAGE_LINE_HEIGHT, MSG_R, MSG_G, MSG_B);
+        display.drawText(left, MESSAGE_MARGIN_X, statsTop + i * MESSAGE_LINE_HEIGHT, MSG_R, MSG_G, MSG_B);
     }
 }
 
@@ -1588,17 +1651,22 @@ int drawMatrixLog(IDisplay& display, const FaceState& state, int firstLineY, int
     return y;
 }
 
+// CPU, GPU, RAM, FPS.
+constexpr int MATRIX_MONITOR_ROWS = 4;
+
 // The MONITOR tab: the game's name (drawn by the log above, so it keeps the
 // same "> " prompt and wrapping every other entry gets) with the machine's
 // load listed underneath it. Stats are drawn only as far as the room left
 // above the eyes allows, so a long game name costs stat lines rather than
-// overlapping them.
+// overlapping them — which is also why a missing FPS row (no Afterburner
+// running) costs nothing extra: formatStatsLine still prints "FPS --", same
+// as any other unavailable reading.
 void drawMatrixMonitor(IDisplay& display, const FaceState& state, int maxBottomY) {
     int y = drawMatrixLog(display, state, MATRIX_LOG_FIRST_LINE_Y, maxBottomY,
                           MATRIX_LOG_X, MSG_R, MSG_G, MSG_B);
 
     char line[STATS_LINE_CAPACITY];
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < MATRIX_MONITOR_ROWS; i++) {
         if (y + MESSAGE_LINE_HEIGHT > maxBottomY) {
             return;
         }
@@ -1607,8 +1675,10 @@ void drawMatrixMonitor(IDisplay& display, const FaceState& state, int maxBottomY
             formatStatsLine(line, sizeof(line), "CPU", state.statsCpuLoad, state.statsCpuTempC, true);
         } else if (i == 1) {
             formatStatsLine(line, sizeof(line), "GPU", state.statsGpuLoad, state.statsGpuTempC, true);
-        } else {
+        } else if (i == 2) {
             formatStatsLine(line, sizeof(line), "RAM", state.statsRamLoad, 0, false);
+        } else {
+            formatStatsLine(line, sizeof(line), "FPS", state.statsFps, 0, false, '\0');
         }
 
         display.drawText(line, MATRIX_LOG_X, y, MSG_R, MSG_G, MSG_B);
@@ -1908,7 +1978,8 @@ constexpr int MI84_BAR_CELLS = 10;
 constexpr int MI84_BAR_CELL_W = 5;
 constexpr int MI84_VALUE_X = 94;
 constexpr int MI84_TEMP_X = 124;
-constexpr int MI84_MONITOR_ROWS = 3;
+// CPU, GPU, RAM, FPS.
+constexpr int MI84_MONITOR_ROWS = 4;
 
 void drawMi84Bar(IDisplay& display, int y, int percent) {
     // A field with no source arrives as -1 (see FaceState::hasStats) and
@@ -1937,8 +2008,17 @@ void drawMi84Bar(IDisplay& display, int y, int percent) {
 // its own numbers: a readout replaced every couple of seconds has to hold
 // still to be readable, so a name that wraps to two lines must not shift
 // the figures down.
+//
+// The name gets one row here (not two, as it used to) to free the row FPS
+// now occupies below RAM — CONTENT_TOP_Y..CONTENT_BOTTOM_Y is exactly 5
+// content rows, and 1 for the name plus 4 stat rows fills them precisely,
+// same as the previous 2-plus-3 split did. FPS has no bar: unlike a
+// load/temperature reading it isn't bounded to 0-100 (a 144Hz+ monitor
+// routinely clears that), so a filled-bar gauge would misrepresent it —
+// it gets the value column only, with formatStatValue's suffix-less form
+// (see Face.cpp's own note there) instead of the usual '%'.
 void drawMi84Monitor(IDisplay& display, const FaceState& state) {
-    int rowY = MI84_CONTENT_TOP_Y + MESSAGE_LINE_HEIGHT * 2;
+    int rowY = MI84_CONTENT_TOP_Y + MESSAGE_LINE_HEIGHT;
     drawMatrixLog(display, state, MI84_CONTENT_TOP_Y, rowY, MI84_X,
                   MI84_INK_R, MI84_INK_G, MI84_INK_B);
 
@@ -1947,18 +2027,24 @@ void drawMi84Monitor(IDisplay& display, const FaceState& state) {
         int load = state.statsRamLoad;
         int tempC = -1;
         bool withTemp = false;
+        bool withBar = true;
+        char loadSuffix = '%';
 
         if (i == 0) {
             label = "CPU"; load = state.statsCpuLoad; tempC = state.statsCpuTempC; withTemp = true;
         } else if (i == 1) {
             label = "GPU"; load = state.statsGpuLoad; tempC = state.statsGpuTempC; withTemp = true;
+        } else if (i == 3) {
+            label = "FPS"; load = state.statsFps; withBar = false; loadSuffix = '\0';
         }
 
         display.drawText(label, MI84_X, rowY, MI84_INK_R, MI84_INK_G, MI84_INK_B);
-        drawMi84Bar(display, rowY + 1, load);
+        if (withBar) {
+            drawMi84Bar(display, rowY + 1, load);
+        }
 
         char value[8];
-        formatStatValue(value, sizeof(value), load, '%');
+        formatStatValue(value, sizeof(value), load, loadSuffix);
         display.drawText(value, MI84_VALUE_X, rowY, MI84_INK_R, MI84_INK_G, MI84_INK_B);
 
         if (withTemp) {
@@ -2196,21 +2282,36 @@ constexpr int NOTIFICATION_TEXT_LINES = 3;
 constexpr int NOTIFICATION_TEXT_TOP_Y = 95; // bottom third; the face owns everything above
 constexpr int NOTIFICATION_TEXT_MAX_CHARS = 26; // 160px / CHAR_ADVANCE_PX
 
-// Greedy word-wrap, centered per line. Centering is what makes this its own
-// function rather than a call to drawWrappedMessage: that one is left-
-// aligned and bottom-anchored inside the message box, which is right for a
-// speech bubble and wrong for a full-screen announcement.
+// Greedy word-wrap, centered per line — centering, and a fixed top-anchored
+// Y, are what make this its own function rather than a call to
+// drawWrappedMessage: that one is left-aligned and bottom-anchored inside a
+// box that grows upward, which is right for a speech bubble and wrong for a
+// full-screen announcement with no box of its own.
+//
+// Two passes, same shape as drawWrappedMessage: first wrap the *whole*
+// string (up to MESSAGE_COMPUTE_LINES, the same generous cap that function
+// uses) into lines, then draw only the last NOTIFICATION_TEXT_LINES of
+// them. A single pass that stopped after the first 3 lines used to mean a
+// message that wrapped to 4+ lines silently lost everything past line 3 —
+// never shown, not even once — instead of scrolling. Since `text` here is
+// TypedMessage's own *typed-so-far* substring, recomputing "the last 3
+// lines" fresh every frame is what makes the oldest line disappear as the
+// typewriter keeps revealing more text, the same "oldest visible line
+// scrolls off, like a terminal" behavior the message box already has — no
+// separate scroll-position state to track here either.
 void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_t g, uint8_t b) {
     if (text == nullptr || text[0] == '\0') {
         return;
     }
 
     int len = (int)strlen(text);
-    int pos = 0;
-    int y = NOTIFICATION_TEXT_TOP_Y;
-    char buffer[NOTIFICATION_TEXT_MAX_CHARS + 1];
 
-    for (int line = 0; line < NOTIFICATION_TEXT_LINES && pos < len; line++) {
+    int lineStart[MESSAGE_COMPUTE_LINES];
+    int lineLength[MESSAGE_COMPUTE_LINES];
+    int lineCount = 0;
+
+    int pos = 0;
+    while (pos < len && lineCount < MESSAGE_COMPUTE_LINES) {
         int remaining = len - pos;
         int take = (remaining <= NOTIFICATION_TEXT_MAX_CHARS) ? remaining : NOTIFICATION_TEXT_MAX_CHARS;
 
@@ -2230,7 +2331,25 @@ void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_
             }
         }
 
-        memcpy(buffer, text + pos, (size_t)take);
+        lineStart[lineCount] = pos;
+        lineLength[lineCount] = take;
+        lineCount++;
+
+        pos += take;
+        while (pos < len && text[pos] == ' ') {
+            pos++;
+        }
+    }
+
+    int visibleStart = (lineCount > NOTIFICATION_TEXT_LINES) ? (lineCount - NOTIFICATION_TEXT_LINES) : 0;
+    int visibleCount = lineCount - visibleStart;
+
+    char buffer[NOTIFICATION_TEXT_MAX_CHARS + 1];
+    int y = NOTIFICATION_TEXT_TOP_Y;
+    for (int i = 0; i < visibleCount; i++) {
+        int lineIndex = visibleStart + i;
+        int take = lineLength[lineIndex];
+        memcpy(buffer, text + lineStart[lineIndex], (size_t)take);
         buffer[take] = '\0';
         int x = (display.width() - take * CHAR_ADVANCE_PX) / 2;
         if (x < 0) {
@@ -2238,11 +2357,6 @@ void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_
         }
         display.drawText(buffer, x, y, r, g, b);
         y += MESSAGE_LINE_HEIGHT;
-
-        pos += take;
-        while (pos < len && text[pos] == ' ') {
-            pos++;
-        }
     }
 }
 
@@ -2504,10 +2618,16 @@ constexpr unsigned long SUN_SPIN_PERIOD_MS = 6000; // one full turn
 constexpr float SUN_TWO_PI = 6.2832f;
 constexpr float SUN_HALF_PI = 1.5708f;
 
-void drawSun(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+// cx/cy default to CLEAR's own fixed corner spot, so that call site (and
+// every other existing one) is untouched; EARLY_BIRD's achievement
+// notification (see drawAchievementNotification) is the one caller that
+// overrides both, to animate the same sun rising up the frame instead of
+// sitting still in the corner.
+void drawSun(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b,
+            int cx = SUN_CX, int cy = SUN_CY) {
     for (int dy = -SUN_DISC_R; dy <= SUN_DISC_R; dy++) {
         int halfW = SUN_DISC_HALF_W[dy < 0 ? -dy : dy];
-        display.fillRect(SUN_CX - halfW, SUN_CY + dy, halfW * 2, 1, r, g, b);
+        display.fillRect(cx - halfW, cy + dy, halfW * 2, 1, r, g, b);
     }
 
     // Rays are blocks stepping outward along each angle rather than drawn
@@ -2522,8 +2642,8 @@ void drawSun(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8
 
         for (int k = 0; k < SUN_RAY_BLOCKS; k++) {
             float radius = (float)(SUN_RAY_INNER_R + k * SUN_RAY_STEP_PX);
-            int x = SUN_CX + (int)(radius * cosT) - SUN_RAY_BLOCK_PX / 2;
-            int y = SUN_CY + (int)(radius * sinT) - SUN_RAY_BLOCK_PX / 2;
+            int x = cx + (int)(radius * cosT) - SUN_RAY_BLOCK_PX / 2;
+            int y = cy + (int)(radius * sinT) - SUN_RAY_BLOCK_PX / 2;
             display.fillRect(x, y, SUN_RAY_BLOCK_PX, SUN_RAY_BLOCK_PX, r, g, b);
         }
     }
@@ -2799,6 +2919,418 @@ void drawWeatherNotification(IDisplay& display, const FaceState& state,
     }
 }
 
+// Achievements (see ACHIEVEMENT in PROTOCOL.md): each of the 10 gets its own
+// full-size main artwork — a moon, a sunrise, a gamepad, and so on — with a
+// small trophy badge tucked in the top-right corner as the one constant that
+// says "this is an achievement" across all 10, the way a game's toast always
+// carries *a* trophy icon alongside whatever you actually earned. The
+// trophy is deliberately the small, secondary element here, not the star of
+// the show — a first pass had this backwards (one big bouncing trophy with a
+// tiny accent on it), which buried the very thing meant to make each
+// achievement feel distinct. Eyes stay small and to the left, same "eyes are
+// the constant, artwork is the extra" layout COFFEE's own notification
+// already uses — reusing its exact eye geometry rather than retuning a
+// second set of constants for what would look identical on screen.
+constexpr int NOTIF_ACHV_EYES_CENTER_X = NOTIF_COFFEE_EYES_CENTER_X;
+constexpr int NOTIF_ACHV_EYE_Y = NOTIF_COFFEE_EYE_Y;
+constexpr int NOTIF_ACHV_EYE_SIZE = NOTIF_COFFEE_EYE_SIZE;
+constexpr int NOTIF_ACHV_EYE_GAP = NOTIF_COFFEE_EYE_GAP;
+
+// Where the main artwork sits — same general area COFFEE's cup and WEATHER's
+// umbrella occupy, bottom-anchored so every icon's "ground" lines up
+// regardless of how tall it is.
+constexpr int ACHV_ART_CX = 114;
+constexpr int ACHV_ART_BASE_Y = 82;
+
+// A small triangle-wave sway/bob, reused by several of the icons below — the
+// same "no persistent state, driven purely off nowMs" approach every other
+// looping animation in this file already uses, just parameterized by
+// period/amplitude instead of hardcoded per caller.
+int achvSwayPx(unsigned long nowMs, unsigned long periodMs, int amplitude) {
+    unsigned long t = nowMs % periodMs;
+    unsigned long half = periodMs / 2;
+    if (t < half) {
+        return -amplitude + (int)((unsigned long)(2 * amplitude) * t / half);
+    }
+    return amplitude - (int)((unsigned long)(2 * amplitude) * (t - half) / half);
+}
+
+// The trophy badge's entrance: a breakpoint table rather than a curve (same
+// idiom mi84LampLevel already uses for its own lamp-strike animation) — a
+// sharp rise, an overshoot past the resting spot, a small undershoot
+// settling back, then still. Bounded (see FaceState::notificationStartedMs),
+// unlike the idle bob below which loops for as long as the notification
+// stays up. Written for the *badge's* small scale directly — a first pass
+// reused a big trophy's own keyframes scaled down, which was more indirect
+// than just picking small numbers to begin with.
+struct TrophyKeyframe { unsigned long t; int y; };
+constexpr TrophyKeyframe TROPHY_BADGE_KEYFRAMES[] = {
+    {0, 14}, {250, -2}, {400, 1}, {550, 0},
+};
+constexpr int TROPHY_BADGE_KEYFRAME_COUNT = 4;
+
+int trophyBadgeBounceOffset(unsigned long sinceStart) {
+    if (sinceStart >= TROPHY_BADGE_KEYFRAMES[TROPHY_BADGE_KEYFRAME_COUNT - 1].t) {
+        return 0;
+    }
+    for (int i = 0; i < TROPHY_BADGE_KEYFRAME_COUNT - 1; i++) {
+        if (sinceStart >= TROPHY_BADGE_KEYFRAMES[i].t && sinceStart < TROPHY_BADGE_KEYFRAMES[i + 1].t) {
+            unsigned long span = TROPHY_BADGE_KEYFRAMES[i + 1].t - TROPHY_BADGE_KEYFRAMES[i].t;
+            unsigned long into = sinceStart - TROPHY_BADGE_KEYFRAMES[i].t;
+            int delta = TROPHY_BADGE_KEYFRAMES[i + 1].y - TROPHY_BADGE_KEYFRAMES[i].y;
+            return TROPHY_BADGE_KEYFRAMES[i].y + (int)((long)delta * (long)into / (long)span);
+        }
+    }
+    return 0;
+}
+
+// A tiny continuous bob once the entrance settles, so the badge doesn't just
+// sit dead still for the rest of the notification's 10s — same reasoning
+// COFFEE's steam keeps looping instead of playing once.
+int trophyBadgeIdleBobPx(unsigned long nowMs) {
+    return achvSwayPx(nowMs, 1400, 1);
+}
+
+// Tucked in the top-right corner — every notification screen leaves that
+// strip empty (the persistent WEATHER/TIME badges that normally live there
+// don't draw while a notification owns the frame), and it stays clear of
+// every achievement's own main artwork below, which all sit lower and more
+// central.
+constexpr int TROPHY_BADGE_CX = 146;
+constexpr int TROPHY_BADGE_TOP_Y = 8;
+// EARLY_BIRD's own spot for the badge (see drawAchievementNotification) —
+// its sun rises into the usual top-right corner, so the badge sits just
+// above the message text instead (badge height is ~14px; the 22px margin
+// leaves some breathing room above NOTIFICATION_TEXT_TOP_Y).
+constexpr int TROPHY_BADGE_BOTTOM_Y = NOTIFICATION_TEXT_TOP_Y - 22;
+constexpr int TROPHY_BADGE_ROW_H = 2;
+constexpr int TROPHY_BADGE_BOWL_ROWS = 4;
+constexpr int TROPHY_BADGE_BOWL_HALF_W[TROPHY_BADGE_BOWL_ROWS] = {6, 5, 4, 3};
+constexpr int TROPHY_BADGE_HANDLE_ROW = 1;
+constexpr int TROPHY_BADGE_HANDLE_W = 2;
+constexpr int TROPHY_BADGE_HANDLE_H = 3;
+constexpr int TROPHY_BADGE_HANDLE_GAP = 2;
+constexpr int TROPHY_BADGE_STEM_W = 2;
+constexpr int TROPHY_BADGE_STEM_H = 4;
+constexpr int TROPHY_BADGE_FOOT_W = 8;
+constexpr int TROPHY_BADGE_FOOT_H = 2;
+
+void drawTrophyBadge(IDisplay& display, int cx, int topY, uint8_t r, uint8_t g, uint8_t b) {
+    int y = topY;
+    for (int row = 0; row < TROPHY_BADGE_BOWL_ROWS; row++) {
+        int halfW = TROPHY_BADGE_BOWL_HALF_W[row];
+        display.fillRect(cx - halfW, y, halfW * 2, TROPHY_BADGE_ROW_H, r, g, b);
+
+        if (row == TROPHY_BADGE_HANDLE_ROW) {
+            int handleY = y - 1;
+            display.fillRect(cx - halfW - TROPHY_BADGE_HANDLE_GAP - TROPHY_BADGE_HANDLE_W, handleY,
+                             TROPHY_BADGE_HANDLE_W, TROPHY_BADGE_HANDLE_H, r, g, b);
+            display.fillRect(cx + halfW + TROPHY_BADGE_HANDLE_GAP, handleY,
+                             TROPHY_BADGE_HANDLE_W, TROPHY_BADGE_HANDLE_H, r, g, b);
+        }
+
+        y += TROPHY_BADGE_ROW_H;
+    }
+
+    display.fillRect(cx - TROPHY_BADGE_STEM_W / 2, y, TROPHY_BADGE_STEM_W, TROPHY_BADGE_STEM_H, r, g, b);
+    y += TROPHY_BADGE_STEM_H;
+
+    display.fillRect(cx - TROPHY_BADGE_FOOT_W / 2, y, TROPHY_BADGE_FOOT_W, TROPHY_BADGE_FOOT_H, r, g, b);
+}
+
+// NIGHT_OWL: a real stepped circle — same technique CLEAR's own sun uses
+// (SUN_DISC_HALF_W above), not drawWeatherMoon's rounded-square cut, which
+// only reads as round at that badge's tiny 8px size; scaled up to this
+// notification's size it came out looking like a square with clipped
+// corners. Two discs of the same radius, one in ink and one offset up-right
+// in background colour to bite a crescent out of it — with two actual
+// circles (rather than two rounded squares) the bite comes out smoothly
+// curved on its own, no separate notch-fill needed the way
+// drawWeatherMoon's square-based cut requires. Stars twinkle in and out via
+// glitchHash across the *whole* frame, not just around the moon — a
+// dedicated eyeIndex (50) so their flicker never correlates with the eyes'
+// own glitch elsewhere in this file. Landing on the eyes or the trophy badge
+// is harmless (same ink colour as the eyes, and the badge is small enough
+// that an occasional star behind it goes unnoticed); staying above the text
+// zone (y >= NOTIFICATION_TEXT_TOP_Y) is the one boundary that matters, so a
+// star never reads as stray noise behind the message.
+constexpr int NIGHT_OWL_MOON_R = 20;
+// Half-width per |dy| from the centre, 0..NIGHT_OWL_MOON_R — a real
+// sqrt(r^2 - dy^2) circle, not hand-tuned like SUN_DISC_HALF_W's is.
+constexpr int NIGHT_OWL_MOON_HALF_W[NIGHT_OWL_MOON_R + 1] = {
+    20, 20, 20, 20, 20, 19, 19, 19, 18, 18, 17, 17, 16, 15, 14, 13, 12, 11, 9, 6, 0,
+};
+constexpr int NIGHT_OWL_MOON_CUT_OFFSET = 10;
+constexpr int NIGHT_OWL_STAR_COUNT = 14;
+
+void drawAchvMoonDisc(IDisplay& display, int cx, int cy, uint8_t r, uint8_t g, uint8_t b) {
+    for (int dy = -NIGHT_OWL_MOON_R; dy <= NIGHT_OWL_MOON_R; dy++) {
+        int halfW = NIGHT_OWL_MOON_HALF_W[dy < 0 ? -dy : dy];
+        if (halfW <= 0) {
+            continue;
+        }
+        display.fillRect(cx - halfW, cy + dy, halfW * 2, 1, r, g, b);
+    }
+}
+
+void drawAchvNightOwl(IDisplay& display, unsigned long nowMs, int cx,
+                      uint8_t r, uint8_t g, uint8_t b, uint8_t bgR, uint8_t bgG, uint8_t bgB) {
+    int moonCy = 18 + NIGHT_OWL_MOON_R;
+    drawAchvMoonDisc(display, cx, moonCy, r, g, b);
+    drawAchvMoonDisc(display, cx + NIGHT_OWL_MOON_CUT_OFFSET, moonCy - NIGHT_OWL_MOON_CUT_OFFSET, bgR, bgG, bgB);
+
+    for (int i = 0; i < NIGHT_OWL_STAR_COUNT; i++) {
+        unsigned long h = glitchHash(nowMs / 400, i, 50);
+        if (h % 3 != 0) {
+            continue;
+        }
+        int sx = (int)(h % (unsigned long)display.width());
+        int sy = 4 + (int)((h >> 5) % (unsigned long)(NOTIFICATION_TEXT_TOP_Y - 8));
+        display.fillRect(sx, sy, 1, 1, r, g, b);
+    }
+}
+
+// ONE_MORE_GAME: the same body/grip/d-pad/button composition PLAYING's own
+// corner gamepad uses, just twice the scale for this notification's own art
+// area — bgR/G/B is a parameter (unlike the corner icon's own hardcoded
+// black cuts) since MI2MO2's notification ground is navy on a light plate,
+// not black.
+void drawAchvGamepad(IDisplay& display, int cx, int cy, uint8_t r, uint8_t g, uint8_t b,
+                     uint8_t bgR, uint8_t bgG, uint8_t bgB) {
+    int baseX = cx - 14, baseY = cy - 8;
+    display.fillRect(baseX, baseY, 28, 16, r, g, b);
+    display.fillRect(baseX - 4, baseY + 8, 6, 6, r, g, b);
+    display.fillRect(baseX + 26, baseY + 8, 6, 6, r, g, b);
+
+    display.fillRect(baseX + 6, baseY + 4, 2, 8, bgR, bgG, bgB);
+    display.fillRect(baseX + 2, baseY + 8, 10, 2, bgR, bgG, bgB);
+    display.fillRect(baseX + 18, baseY + 4, 4, 4, bgR, bgG, bgB);
+    display.fillRect(baseX + 22, baseY + 8, 4, 4, bgR, bgG, bgB);
+}
+
+// VICTORY_ROYALE: one plain upright sword — two rotated crossed swords built
+// from fillQuad kept coming out illegible at this resolution no matter how
+// the blade/guard were reshaped, so this drops rotation entirely and goes
+// back to the same "stack plain fillRects, top to bottom" composition every
+// other icon here already uses (the trophy badge, the gamepad, the coffee
+// cup): a tapering tip, a straight blade, a wide guard bar, a grip, a
+// pommel, all axis-aligned. Plainer than the two-sword idea, but actually
+// reads as a sword instead of an ambiguous blob.
+constexpr int ACHV_SWORD_BLADE_HALF_W = 3;
+constexpr int ACHV_SWORD_BLADE_H = 26;
+constexpr int ACHV_SWORD_TIP_ROWS = 4;
+constexpr int ACHV_SWORD_TIP_ROW_H = 2;
+constexpr int ACHV_SWORD_TIP_HALF_W[ACHV_SWORD_TIP_ROWS] = {3, 2, 1, 0};
+constexpr int ACHV_SWORD_GUARD_HALF_W = 10;
+constexpr int ACHV_SWORD_GUARD_H = 3;
+constexpr int ACHV_SWORD_GRIP_HALF_W = 2;
+constexpr int ACHV_SWORD_GRIP_H = 8;
+constexpr int ACHV_SWORD_POMMEL_HALF_W = 4;
+constexpr int ACHV_SWORD_POMMEL_H = 4;
+
+// baseY is the pommel's own bottom edge — everything else stacks upward
+// from there, same bottom-anchored convention the other achievement icons
+// use against ACHV_ART_BASE_Y.
+void drawAchvSword(IDisplay& display, int cx, int baseY, uint8_t r, uint8_t g, uint8_t b) {
+    int y = baseY;
+
+    y -= ACHV_SWORD_POMMEL_H;
+    display.fillRect(cx - ACHV_SWORD_POMMEL_HALF_W, y, ACHV_SWORD_POMMEL_HALF_W * 2, ACHV_SWORD_POMMEL_H, r, g, b);
+
+    y -= ACHV_SWORD_GRIP_H;
+    display.fillRect(cx - ACHV_SWORD_GRIP_HALF_W, y, ACHV_SWORD_GRIP_HALF_W * 2, ACHV_SWORD_GRIP_H, r, g, b);
+
+    y -= ACHV_SWORD_GUARD_H;
+    display.fillRect(cx - ACHV_SWORD_GUARD_HALF_W, y, ACHV_SWORD_GUARD_HALF_W * 2, ACHV_SWORD_GUARD_H, r, g, b);
+
+    y -= ACHV_SWORD_BLADE_H;
+    display.fillRect(cx - ACHV_SWORD_BLADE_HALF_W, y, ACHV_SWORD_BLADE_HALF_W * 2, ACHV_SWORD_BLADE_H, r, g, b);
+
+    for (int i = 0; i < ACHV_SWORD_TIP_ROWS; i++) {
+        y -= ACHV_SWORD_TIP_ROW_H;
+        int halfW = ACHV_SWORD_TIP_HALF_W[i];
+        if (halfW > 0) {
+            display.fillRect(cx - halfW, y, halfW * 2, ACHV_SWORD_TIP_ROW_H, r, g, b);
+        }
+    }
+}
+
+// AUDIOPHILE: four of MUSIC's own corner notes, staggered in x and bobbing
+// out of phase (different periods, and a nowMs offset per note) so they read
+// as an equalizer rather than four copies moving in lockstep.
+void drawAchvNotes(IDisplay& display, unsigned long nowMs, int cx, int baseY, uint8_t r, uint8_t g, uint8_t b) {
+    constexpr int count = 4;
+    constexpr int xOffsets[count] = {-18, -6, 6, 18};
+    constexpr unsigned long periods[count] = {700, 850, 620, 780};
+    constexpr unsigned long phaseOffsets[count] = {0, 137, 274, 411};
+    for (int i = 0; i < count; i++) {
+        int bob = achvSwayPx(nowMs + phaseOffsets[i], periods[i], 8);
+        drawMusicNote(display, cx + xOffsets[i] - 2, baseY - 4 + bob, r, g, b);
+    }
+}
+
+// BREAK_TAKER: a stick figure with arms raised in a stretch, bobbing gently
+// — the one main visual that's a little person rather than an object,
+// matching what this achievement is actually about.
+void drawAchvStretch(IDisplay& display, unsigned long nowMs, int cx, int baseY, uint8_t r, uint8_t g, uint8_t b) {
+    int bob = achvSwayPx(nowMs, 1600, 4);
+    int headY = baseY - 34 + bob;
+    display.fillRect(cx - 4, headY, 8, 8, r, g, b);
+    display.fillRect(cx - 2, headY + 8, 4, 16, r, g, b);
+    for (int i = 0; i < 12; i++) {
+        display.fillRect(cx - 2 - i, headY + 8 - i, 2, 2, r, g, b);
+        display.fillRect(cx + 2 + i, headY + 8 - i, 2, 2, r, g, b);
+    }
+    display.fillRect(cx - 6, headY + 24, 3, 10, r, g, b);
+    display.fillRect(cx + 3, headY + 24, 3, 10, r, g, b);
+}
+
+// AI_OVERLOAD's main visual is the notification's own eyes, sliced into the
+// same jittering horizontal bands THINKING already uses — reproducing
+// drawNotificationEyes' geometry by hand (rather than adding a "glitch"
+// flag to that shared function) so every other notification's eyes stay
+// exactly as simple as they already are.
+void drawAchvEyesGlitch(IDisplay& display, int centerX, int topY, int size, int gap,
+                        float openFactor, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    int h = (int)(size * openFactor);
+    if (h < MIN_EYE_HEIGHT) {
+        h = MIN_EYE_HEIGHT;
+    }
+    int totalWidth = size * 2 + gap;
+    int leftX = centerX - totalWidth / 2;
+    int top = topY + (size - h) / 2;
+    drawEyeGlitch(display, leftX, top, size, h, nowMs, 0, r, g, b);
+    drawEyeGlitch(display, leftX + size + gap, top, size, h, nowMs, 1, r, g, b);
+}
+
+// IDENTITY_CRISIS's main visual is the notification's own eye color cycling
+// through a stand-in for each theme's own palette — "which MiMo are we
+// today" applied to the one thing that's supposed to look the same every
+// time. Deliberately independent of the *actual* active theme (state.theme):
+// this is celebrating having tried all of them, not showing whichever one
+// happens to be current.
+void achvIdentityCrisisColor(unsigned long nowMs, uint8_t& r, uint8_t& g, uint8_t& b) {
+    constexpr unsigned long cycleMs = 450;
+    int index = (int)((nowMs / cycleMs) % 4);
+    switch (index) {
+        case 0: r = 0;   g = 200; b = 190; break; // MiMo Classic's teal
+        case 1: r = MATRIX_R; g = MATRIX_G; b = MATRIX_B; break;
+        case 2: r = MI84_INK_R; g = MI84_INK_G; b = MI84_INK_B; break;
+        default: r = 220; g = 40; b = 60; break;  // stands in for MI2MO2's red lamp
+    }
+}
+
+// Shared by COFFEE_MACHINE (see that case's own comment) — the exact same
+// mug drawCoffeeNotification draws for a plain COFFEE notification, at that
+// same position, since this notification's eye layout is identical to
+// COFFEE's own and the cup fits without retuning a single constant.
+void drawAchvCoffeeCup(IDisplay& display, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b,
+                       uint8_t bgR, uint8_t bgG, uint8_t bgB) {
+    int sipDx = 0, sipDy = 0;
+    coffeeSipOffset(nowMs, &sipDx, &sipDy);
+    drawCoffeeCupAt(display, nowMs, NOTIF_COFFEE_CUP_X + sipDx, NOTIF_COFFEE_CUP_Y + sipDy,
+                    NOTIF_COFFEE_CUP_W, NOTIF_COFFEE_CUP_H, NOTIF_COFFEE_STEAM_RISE_PX,
+                    r, g, b, bgR, bgG, bgB);
+}
+
+// EARLY_BIRD: CLEAR's own turning sun (see drawSun above), risen up from
+// below the frame into the top of the screen instead of sitting fixed in
+// the corner — the sunrise itself is the animation, so the trophy badge
+// moves down to the bottom for this one achievement (see
+// drawAchievementNotification) rather than sharing the top with it.
+// Smoothstep-eased (same t*t*(3-2t) curve used elsewhere in this file) over
+// a bounded window anchored on notificationStartedMs, then holds at rest —
+// CLEAR's own spin keeps running throughout regardless of position, since
+// that part of drawSun is driven by nowMs alone.
+constexpr unsigned long ACHV_SUNRISE_DURATION_MS = 1400;
+constexpr int ACHV_SUNRISE_REST_Y = 34;
+
+int achvSunriseY(unsigned long sinceStart, int startY, int restY) {
+    if (sinceStart >= ACHV_SUNRISE_DURATION_MS) {
+        return restY;
+    }
+    float k = (float)sinceStart / (float)ACHV_SUNRISE_DURATION_MS;
+    float eased = k * k * (3.0f - 2.0f * k);
+    return startY - (int)((float)(startY - restY) * eased);
+}
+
+void drawAchievementNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p, float eyeOpenFactor) {
+    unsigned long sinceStart = state.nowMs - state.notificationStartedMs;
+
+    uint8_t r = p.inkR, g = p.inkG, b = p.inkB;
+    if (state.achievementIcon == AchievementIcon::IDENTITY_CRISIS) {
+        achvIdentityCrisisColor(state.nowMs, r, g, b);
+    }
+
+    if (state.achievementIcon == AchievementIcon::AI_OVERLOAD) {
+        // MATRIX's own digital-rain effect (see drawMatrixRain above),
+        // filling the whole frame behind everything else rather than the
+        // bounded log region it normally replaces — drawn first so the
+        // glitching eyes and the trophy badge both land on top of it,
+        // instead of rain characters cutting through either.
+        drawMatrixRain(display, state.nowMs, 0, NOTIFICATION_TEXT_TOP_Y, r, g, b);
+        drawAchvEyesGlitch(display, NOTIF_ACHV_EYES_CENTER_X, NOTIF_ACHV_EYE_Y,
+                          NOTIF_ACHV_EYE_SIZE, NOTIF_ACHV_EYE_GAP, eyeOpenFactor,
+                          state.nowMs, r, g, b);
+    } else {
+        drawNotificationEyes(display, NOTIF_ACHV_EYES_CENTER_X, NOTIF_ACHV_EYE_Y,
+                             NOTIF_ACHV_EYE_SIZE, NOTIF_ACHV_EYE_GAP, eyeOpenFactor,
+                             r, g, b, p.bgR, p.bgG, p.bgB);
+    }
+
+    switch (state.achievementIcon) {
+        case AchievementIcon::FIRST_CONTACT:
+            // The exact same waving hand BYE uses, mirrored onto the right
+            // side of the screen (see drawByeHand's own comment) rather than
+            // a hand drawn from scratch.
+            drawByeHand(display, state.nowMs, r, g, b, display.width() - BYE_HAND_PIVOT_X, -BYE_HAND_FLIP_X);
+            break;
+        case AchievementIcon::EARLY_BIRD: {
+            int startY = display.height() + SUN_DISC_R + SUN_RAY_INNER_R + SUN_RAY_STEP_PX;
+            int sunY = achvSunriseY(sinceStart, startY, ACHV_SUNRISE_REST_Y);
+            drawSun(display, state.nowMs, r, g, b, ACHV_ART_CX, sunY);
+            break;
+        }
+        case AchievementIcon::NIGHT_OWL:
+            drawAchvNightOwl(display, state.nowMs, ACHV_ART_CX, r, g, b, p.bgR, p.bgG, p.bgB);
+            break;
+        case AchievementIcon::COFFEE_MACHINE:
+            drawAchvCoffeeCup(display, state.nowMs, r, g, b, p.bgR, p.bgG, p.bgB);
+            break;
+        case AchievementIcon::ONE_MORE_GAME:
+            drawAchvGamepad(display, ACHV_ART_CX, ACHV_ART_BASE_Y - 8, r, g, b, p.bgR, p.bgG, p.bgB);
+            break;
+        case AchievementIcon::VICTORY_ROYALE:
+            drawAchvSword(display, ACHV_ART_CX, ACHV_ART_BASE_Y, r, g, b);
+            break;
+        case AchievementIcon::AI_OVERLOAD:
+            // The glitching eyes above are this one's whole main visual.
+            break;
+        case AchievementIcon::AUDIOPHILE:
+            drawAchvNotes(display, state.nowMs, ACHV_ART_CX, ACHV_ART_BASE_Y, r, g, b);
+            break;
+        case AchievementIcon::BREAK_TAKER:
+            drawAchvStretch(display, state.nowMs, ACHV_ART_CX, ACHV_ART_BASE_Y, r, g, b);
+            break;
+        case AchievementIcon::IDENTITY_CRISIS:
+            // The cycling eye color above is this one's whole main visual.
+            break;
+    }
+
+    // The trophy badge is always the notification's own ink color, never
+    // IDENTITY_CRISIS's cycling one above — it staying put in one steady
+    // color is what makes it read as a fixed "achievement" emblem rather
+    // than one more moving part of that particular achievement's effect.
+    // EARLY_BIRD is the one exception to the badge's usual top-right spot:
+    // its sun rises up into that exact corner, so the badge moves down to
+    // sit just above the message text instead of colliding with it.
+    int badgeTopY = (state.achievementIcon == AchievementIcon::EARLY_BIRD)
+        ? TROPHY_BADGE_BOTTOM_Y
+        : TROPHY_BADGE_TOP_Y;
+    int badgeOffset = trophyBadgeBounceOffset(sinceStart) + trophyBadgeIdleBobPx(state.nowMs);
+    drawTrophyBadge(display, TROPHY_BADGE_CX, badgeTopY + badgeOffset, p.inkR, p.inkG, p.inkB);
+}
+
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     NotificationPalette p = notificationPalette(state);
 
@@ -2831,6 +3363,8 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
                              NOTIF_EYE_SIZE, NOTIF_EYE_GAP,
                              sleepyNotificationOpen(sinceStart),
                              p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+    } else if (state.expression == Expression::ACHIEVEMENT) {
+        drawAchievementNotification(display, state, p, 1.0f - state.blinkAmount);
     } else {
         // Any notification without artwork of its own: just MiMo, blinking,
         // with the message below. There is deliberately no placeholder
@@ -3133,7 +3667,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     }
 
     if (showStatsBox) {
-        drawStatsMessage(display, state, isMi2Mo2 ? STATS_BOX_LINES_MI2MO2 : STATS_BOX_LINES_CLASSIC);
+        drawStatsMessage(display, state, isMi2Mo2 ? STATS_BOX_LINES_MI2MO2 : STATS_BOX_LINES_CLASSIC, !isMi2Mo2);
     } else if (hasMessage) {
         if (isMi2Mo2) {
             // Same dark box / light text as CLASSIC: MI2MO2's plate is

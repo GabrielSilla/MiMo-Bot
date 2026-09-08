@@ -18,23 +18,30 @@ namespace Brobot.Sender;
 /// to query directly (see CLAUDE.md/conversation history), so riding
 /// Discord's community-fed catalog is the closest thing to a generic answer.
 /// The filtered (win32, non-launcher) executable map is cached to disk so
-/// the app works offline after the first successful fetch and doesn't
-/// redownload the ~12MB payload on every launch.
+/// the app still has a catalog to match against if a refresh fails or the
+/// machine is offline — but every `Start()` (i.e. every Sender launch with
+/// Jogos checked, since `RestoreSettings` replays the checkbox) re-fetches
+/// and re-filters it regardless of how fresh the cache already is. A cache
+/// aged by a fixed TTL was found to sit on a stale catalog for up to a week
+/// after Discord added a new game, which is exactly the "jogo novo não
+/// aparece" complaint this is fixing — nothing here is expensive enough to
+/// justify waiting instead of just checking on every start.
 /// </summary>
 public sealed class GameMonitor : IDisposable
 {
     private const string DetectableGamesUrl = "https://discord.com/api/v10/applications/detectable";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan CacheMaxAge = TimeSpan.FromDays(7);
     private static readonly HttpClient HttpClient = new();
 
     // Bump whenever the filtering logic in RefreshFromNetworkAsync changes —
     // a cache file written by an older version (e.g. one that didn't exclude
     // generic runtime hosts like "dotnet.exe") is otherwise indistinguishable
-    // from a fresh one and would keep being trusted for its full 7-day TTL
-    // even after the bug that produced it was fixed. A missing/old Version
-    // (older files simply don't have this field, so it deserializes as 0)
-    // forces an immediate re-fetch regardless of age.
+    // from a fresh one, and matters even now that every start refreshes
+    // anyway: it's still what Poll() matches against for the brief window
+    // before that refresh lands, and what a failed refresh falls back to. A
+    // missing/old Version (older files simply don't have this field, so it
+    // deserializes as 0) makes LoadCache discard it instead of trusting
+    // stale filtering.
     private const int CacheSchemaVersion = 2;
 
     private static string CacheFilePath => Path.Combine(
@@ -58,7 +65,6 @@ public sealed class GameMonitor : IDisposable
     private CancellationTokenSource? _cts;
     private string? _lastRaised;
     private Dictionary<string, string> _knownGames = new(StringComparer.OrdinalIgnoreCase);
-    private DateTime? _cacheFetchedAt;
 
     /// <summary>Raised (off the UI thread) with the game's display name, or null when no known game is running.</summary>
     public event Action<string?>? GameChanged;
@@ -87,36 +93,32 @@ public sealed class GameMonitor : IDisposable
     {
         _knownGames = LoadCache() ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        bool needsRefresh = _knownGames.Count == 0
-            || !_cacheFetchedAt.HasValue
-            || DateTime.UtcNow - _cacheFetchedAt.Value > CacheMaxAge;
-
-        if (needsRefresh)
+        // Always refresh on start, regardless of how fresh the on-disk cache
+        // already is — a new game added to Discord's catalog since the last
+        // refresh would otherwise sit unrecognized until whichever fixed TTL
+        // used to gate this expired. LoadCache above still gives Poll()
+        // something to match against immediately, and remains what's used if
+        // this fails.
+        //
+        // Belt and braces around the refresh: polling has to start even if
+        // updating the catalog goes wrong in a way RefreshFromNetworkAsync
+        // didn't anticipate. This method is fire-and-forget
+        // (`_ = RunAsync(...)` in Start), so anything escaping here is an
+        // unobserved exception that silently ends the loop — GameChanged
+        // then never fires again for the life of the app, with no error
+        // surfaced anywhere. That exact failure has now happened twice in
+        // different spots; the cached catalog is a perfectly good
+        // fallback, so nothing about a failed refresh is worth stopping
+        // for.
+        try
         {
-            // Belt and braces around the refresh: polling has to start even if
-            // updating the catalog goes wrong in a way RefreshFromNetworkAsync
-            // didn't anticipate. This method is fire-and-forget
-            // (`_ = RunAsync(...)` in Start), so anything escaping here is an
-            // unobserved exception that silently ends the loop — GameChanged
-            // then never fires again for the life of the app, with no error
-            // surfaced anywhere. That exact failure has now happened twice in
-            // different spots; the cached catalog is a perfectly good
-            // fallback, so nothing about a failed refresh is worth stopping
-            // for.
-            try
-            {
-                await RefreshFromNetworkAsync(token);
-            }
-            catch (Exception) when (!token.IsCancellationRequested)
-            {
-                StatusChanged?.Invoke(_knownGames.Count > 0
-                    ? $"Falha ao atualizar catálogo ({_knownGames.Count} jogos salvos localmente)"
-                    : "Falha ao baixar catálogo de jogos");
-            }
+            await RefreshFromNetworkAsync(token);
         }
-        else
+        catch (Exception) when (!token.IsCancellationRequested)
         {
-            StatusChanged?.Invoke($"{_knownGames.Count} jogos catalogados (cache)");
+            StatusChanged?.Invoke(_knownGames.Count > 0
+                ? $"Falha ao atualizar catálogo ({_knownGames.Count} jogos salvos localmente)"
+                : "Falha ao baixar catálogo de jogos");
         }
 
         while (!token.IsCancellationRequested)
@@ -200,7 +202,6 @@ public sealed class GameMonitor : IDisposable
             }
 
             _knownGames = games;
-            _cacheFetchedAt = DateTime.UtcNow;
             SaveCache(games);
             StatusChanged?.Invoke($"{games.Count} jogos catalogados");
         }
@@ -244,7 +245,6 @@ public sealed class GameMonitor : IDisposable
                 return null; // missing/outdated schema — force a fresh fetch instead of trusting stale filtering
             }
 
-            _cacheFetchedAt = cache.FetchedAt;
             return new Dictionary<string, string>(cache.Games, StringComparer.OrdinalIgnoreCase);
         }
         catch (Exception)

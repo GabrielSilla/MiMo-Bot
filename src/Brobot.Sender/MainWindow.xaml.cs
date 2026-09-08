@@ -50,6 +50,9 @@ public partial class MainWindow : Window
     private readonly BrobotConnection _connection;
     private Forms.NotifyIcon? _trayIcon;
 
+    private readonly AchievementMonitor _achievements;
+    private readonly Dictionary<string, (Border Card, TextBlock Icon, TextBlock Description, TextBlock Status)> _achievementCards = new();
+
     private WindowsMediaMonitor? _mediaMonitor;
     private bool _mediaFaceActive;
 
@@ -183,6 +186,10 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        _achievements = new AchievementMonitor();
+        _achievements.Unlocked += OnAchievementUnlocked;
+        BuildAchievementCards();
+
         _connection = new BrobotConnection(Dispatcher);
         // BrobotConnection batches every incoming line into per-frame
         // draw-command batches for whoever wants them (Brobot Virtual
@@ -199,6 +206,107 @@ public partial class MainWindow : Window
         _connectionStatusTimer.Start();
 
         RestoreSettings();
+    }
+
+    /// <summary>
+    /// Builds the Conquistas tab's 10 cards in code rather than hand-authored
+    /// XAML like every other card in this app (see the comment on
+    /// ConquistasPanel) — all ten are the same shape, so a loop over
+    /// AchievementCatalog.All plus a dictionary of the four elements each
+    /// card needs to update later (RefreshAchievementCard) replaces what
+    /// would otherwise be ten near-identical blocks and forty named fields.
+    /// Called once, from the constructor, after InitializeComponent (so
+    /// ConquistasPanel and the shared styles below already exist).
+    /// </summary>
+    private void BuildAchievementCards()
+    {
+        foreach (Achievement achievement in AchievementCatalog.All)
+        {
+            var icon = new TextBlock
+            {
+                Text = "🔒",
+                FontSize = 22,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+            };
+            var iconBadge = new Border
+            {
+                Style = (Style)FindResource("IconBadgeStyle"),
+                Child = icon,
+            };
+
+            var title = new TextBlock { Text = achievement.Name, Style = (Style)FindResource("CardTitleStyle") };
+            var description = new TextBlock { Style = (Style)FindResource("CardDescriptionStyle") };
+            var status = new TextBlock { Style = (Style)FindResource("CardStatusStyle") };
+
+            var textStack = new StackPanel { VerticalAlignment = System.Windows.VerticalAlignment.Center, Margin = new Thickness(16, 0, 0, 0) };
+            textStack.Children.Add(title);
+            textStack.Children.Add(description);
+            textStack.Children.Add(status);
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            Grid.SetColumn(iconBadge, 0);
+            Grid.SetColumn(textStack, 1);
+            grid.Children.Add(iconBadge);
+            grid.Children.Add(textStack);
+
+            var card = new Border { Style = (Style)FindResource("CardStyle"), Child = grid };
+
+            ConquistasPanel.Children.Add(card);
+            _achievementCards[achievement.Id] = (card, icon, description, status);
+
+            RefreshAchievementCard(achievement);
+        }
+    }
+
+    /// <summary>
+    /// Repaints one achievement card from AchievementMonitor's own idea of
+    /// whether it's unlocked — called once per card at startup (see
+    /// BuildAchievementCards) and again from OnAchievementUnlocked the
+    /// instant it actually unlocks. Locked cards show a lock icon and the
+    /// criterion text (what to aim for); unlocked ones swap in the real
+    /// emoji, the flavor quote, and the unlock date, at full opacity.
+    /// </summary>
+    private void RefreshAchievementCard(Achievement achievement)
+    {
+        if (!_achievementCards.TryGetValue(achievement.Id, out var views))
+        {
+            return;
+        }
+
+        DateTime? unlockedAt = _achievements.GetUnlockedAt(achievement.Id);
+        bool unlocked = unlockedAt.HasValue;
+
+        views.Card.Opacity = unlocked ? 1.0 : 0.4;
+        views.Icon.Text = unlocked ? achievement.Emoji : "🔒";
+        views.Description.Text = unlocked ? achievement.Quote : achievement.Description;
+        views.Status.Text = unlocked ? $"Desbloqueada em {unlockedAt:dd/MM/yyyy}" : "Bloqueada";
+    }
+
+    /// <summary>
+    /// AchievementMonitor can raise Unlocked from whatever thread called the
+    /// triggering OnX/Tick — most already run on the UI thread via their own
+    /// Dispatcher.Invoke further up the call chain, but this is kept
+    /// explicit rather than relying on that.
+    /// </summary>
+    private void OnAchievementUnlocked(Achievement achievement)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            RefreshAchievementCard(achievement);
+
+            // ACHIEVEMENT rides the same top-priority notification tier
+            // NOTIFY does (full-screen, 10s auto-clear — see PROTOCOL.md),
+            // but with a second field: achievement.Id doubles as the wire
+            // token Core's AchievementIcon parses, which is what picks the
+            // unique accent on the shared trophy for this achievement.
+            // Achievement.Emoji is WPF-only — Core's bitmap font has no
+            // glyph for it, so it's left out of the text sent here.
+            _connection.SendCommand(
+                $"ACHIEVEMENT {achievement.Id} Conquista desbloqueada: {achievement.Name} - {achievement.Quote}");
+        });
     }
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -318,6 +426,10 @@ public partial class MainWindow : Window
         if (connected && !_wasConnected && ScanlinesCheckBox.IsChecked == false) {
             _connection.SendCommand("SCANLINES OFF");
         }
+        if (connected && !_wasConnected) {
+            _achievements.OnConnected();
+        }
+        _achievements.Tick(connected);
         _wasConnected = connected;
     }
 
@@ -718,6 +830,7 @@ public partial class MainWindow : Window
         string message = PausaMessages[PausaRng.Next(PausaMessages.Length)];
         _connection.SendCommand($"NOTIFY COFFEE {message}");
         PausaStatusText.Text = $"Último lembrete: {message}";
+        _achievements.OnBreakReminderSent();
     }
 
     private static bool TryParseTime(string text, out TimeOnly time) =>
@@ -746,6 +859,7 @@ public partial class MainWindow : Window
             _mediaMonitor = null;
             MediaStatusText.Text = string.Empty;
             ClearMediaFaceIfActive();
+            _achievements.SetMusicActive(false);
         }
     }
 
@@ -758,6 +872,7 @@ public partial class MainWindow : Window
             {
                 MediaStatusText.Text = "Nada tocando";
                 ClearMediaFaceIfActive();
+                _achievements.SetMusicActive(false);
                 return;
             }
 
@@ -766,6 +881,9 @@ public partial class MainWindow : Window
             _connection.SendCommand($"FACE {face}");
             _connection.SendCommand($"MSG {nowPlaying.Artist} - {nowPlaying.Title}");
             _mediaFaceActive = true;
+            // Audiophile is specifically about music, not video — WATCHING
+            // (a browser tab, VLC, ...) doesn't count.
+            _achievements.SetMusicActive(nowPlaying.IsLikelyAudioOnly);
         });
     }
 
@@ -824,6 +942,7 @@ public partial class MainWindow : Window
             _gameMonitor = null;
             GameStatusText.Text = string.Empty;
             ClearGameFaceIfActive();
+            _achievements.SetGameActive(false);
         }
     }
 
@@ -832,6 +951,8 @@ public partial class MainWindow : Window
         // GameMonitor raises this off its own polling loop, not the UI thread.
         Dispatcher.Invoke(() =>
         {
+            _achievements.SetGameActive(game != null);
+
             if (game == null)
             {
                 GameStatusText.Text = "Nenhum jogo detectado";
@@ -913,40 +1034,9 @@ public partial class MainWindow : Window
 
             _connection.SendCommand(
                 $"STATS {Field(reading.CpuLoadPercent)} {Field(reading.CpuTempC)} " +
-                $"{Field(reading.GpuLoadPercent)} {Field(reading.GpuTempC)} {Field(reading.RamLoadPercent)}");
+                $"{Field(reading.GpuLoadPercent)} {Field(reading.GpuTempC)} {Field(reading.RamLoadPercent)} " +
+                $"{Field(reading.Fps)}");
         });
-    }
-
-    /// <summary>
-    /// The "ANTI STRESS BUTTON": just navigates to the game picker (see
-    /// ShowGamePicker) — it's an umbrella for MiMo's short joguinhos, not a
-    /// game itself, so it no longer starts Pong directly. Which game
-    /// actually starts is up to PlayPongButton_Click/PlayRpgButton_Click.
-    /// </summary>
-    private void AntiStressButton_Click(object sender, RoutedEventArgs e)
-    {
-        ShowGamePicker();
-    }
-
-    /// <summary>
-    /// Swaps the checklist for the game picker "page" — see the XAML
-    /// comment on GamePickerGrid for why this is plain Visibility toggling
-    /// rather than a TabControl. Clears both picker status lines so a stale
-    /// "Jogando!"/score from a previous visit doesn't flash before the user
-    /// picks anything this time.
-    /// </summary>
-    private void ShowGamePicker()
-    {
-        PongPickerStatusText.Text = string.Empty;
-        RpgPickerStatusText.Text = string.Empty;
-        RootScrollViewer.Visibility = Visibility.Collapsed;
-        GamePickerGrid.Visibility = Visibility.Visible;
-    }
-
-    private void ShowMainChecklist()
-    {
-        GamePickerGrid.Visibility = Visibility.Collapsed;
-        RootScrollViewer.Visibility = Visibility.Visible;
     }
 
     /// <summary>
@@ -955,7 +1045,7 @@ public partial class MainWindow : Window
     /// cycle — greeting, wait, and round — so a second click can't stack a
     /// duplicate PONG START, and Batalha RPG can't be started underneath it
     /// (Core only ever runs one exclusive mode at a time, see
-    /// Protocol::dispatch); StopAntiStressGame re-enables both once the round
+    /// Protocol::dispatch); StopPongGame re-enables both once the round
     /// is over, however that happens.
     /// </summary>
     private void PlayPongButton_Click(object sender, RoutedEventArgs e)
@@ -1003,20 +1093,20 @@ public partial class MainWindow : Window
     private void OnPongEscapePressed()
     {
         _connection.SendCommand("PONG STOP");
-        StopAntiStressGame("Você saiu do jogo.");
+        StopPongGame("Você saiu do jogo.");
     }
 
     /// <summary>
     /// Idempotent cleanup, same shape as ClearGameFaceIfActive/
     /// ClearMediaFaceIfActive — safe to call from Escape, from a PONG OVER
-    /// Core sent back on its own, from Voltar, or from app shutdown,
+    /// Core sent back on its own, from PARAR, or from app shutdown,
     /// whichever gets here first. Deliberately does not itself send
     /// PONG STOP: the caller decides whether Core still needs telling.
-    /// <paramref name="statusText"/> lands on the *checklist's* Anti-Stress
-    /// card (not the picker, which is about to disappear) so the result is
-    /// still visible after navigating back.
+    /// <paramref name="statusText"/> lands directly on Pong's own status line
+    /// (Mini Games is a permanent tab now, not a page that's about to
+    /// disappear, so there's nowhere else for it to need to survive to).
     /// </summary>
-    private void StopAntiStressGame(string statusText)
+    private void StopPongGame(string statusText)
     {
         _pongStartTimer?.Stop();
         _pongStartTimer = null;
@@ -1026,8 +1116,7 @@ public partial class MainWindow : Window
 
         PlayPongButton.IsEnabled = true;
         PlayRpgButton.IsEnabled = true;
-        AntiStressStatusText.Text = statusText;
-        ShowMainChecklist();
+        PongPickerStatusText.Text = statusText;
     }
 
     /// <summary>
@@ -1080,7 +1169,7 @@ public partial class MainWindow : Window
         StopRpgBattle("Você saiu da batalha.");
     }
 
-    /// <summary>Mirrors StopAntiStressGame — see that method's comment.</summary>
+    /// <summary>Mirrors StopPongGame — see that method's comment.</summary>
     private void StopRpgBattle(string statusText)
     {
         _rpgStartTimer?.Stop();
@@ -1091,24 +1180,24 @@ public partial class MainWindow : Window
 
         PlayPongButton.IsEnabled = true;
         PlayRpgButton.IsEnabled = true;
-        AntiStressStatusText.Text = statusText;
-        ShowMainChecklist();
+        RpgPickerStatusText.Text = statusText;
     }
 
     /// <summary>
-    /// "VOLTAR": always visible on the picker, for whenever the user gives
-    /// up — whether they haven't picked a game yet, are still waiting out a
-    /// greeting's 5s countdown, or a round/battle is already in progress.
-    /// Only the last case has anything to actually tell Core; the other two
-    /// never got as far as a PONG/RPG START, so there's nothing for Core to
-    /// stop.
+    /// "PARAR": always visible on the Mini Games tab, for whenever the user
+    /// gives up — whether they're still waiting out a greeting's 5s
+    /// countdown or a round/battle is already in progress (nothing picked
+    /// yet is simply a no-op, both hooks/timers already null). Only an
+    /// active round/battle has anything to actually tell Core; the countdown
+    /// case never got as far as a PONG/RPG START, so there's nothing for
+    /// Core to stop.
     /// </summary>
-    private void BackFromGamesButton_Click(object sender, RoutedEventArgs e)
+    private void StopGameButton_Click(object sender, RoutedEventArgs e)
     {
         if (_pongHook != null)
         {
             _connection.SendCommand("PONG STOP");
-            StopAntiStressGame("Você saiu do jogo.");
+            StopPongGame("Você saiu do jogo.");
             return;
         }
 
@@ -1125,7 +1214,6 @@ public partial class MainWindow : Window
         _rpgStartTimer = null;
         PlayPongButton.IsEnabled = true;
         PlayRpgButton.IsEnabled = true;
-        ShowMainChecklist();
     }
 
     /// <summary>
@@ -1142,7 +1230,7 @@ public partial class MainWindow : Window
             if (line.StartsWith("PONG OVER ", StringComparison.Ordinal))
             {
                 string score = line["PONG OVER ".Length..].Trim();
-                StopAntiStressGame($"Última pontuação: {score}");
+                StopPongGame($"Última pontuação: {score}");
                 return;
             }
 
@@ -1156,6 +1244,10 @@ public partial class MainWindow : Window
                     "FLED" => "Fugiu da batalha.",
                     _ => result,
                 };
+                if (result == "VICTORY")
+                {
+                    _achievements.OnRpgVictory();
+                }
                 StopRpgBattle(message);
                 return;
             }
@@ -1214,6 +1306,7 @@ public partial class MainWindow : Window
         ThemeManager.Apply(theme.Key);
         _connection.SendCommand($"THEME {theme.CoreTheme}");
         RefreshClassicColorVisibility(theme);
+        _achievements.OnThemeSelected(theme.CoreTheme);
 
         SenderSettings settings = SenderSettings.Load();
         settings.Theme = theme.Key;
@@ -1450,6 +1543,7 @@ public partial class MainWindow : Window
         Dispatcher.Invoke(() =>
         {
             LogAiEvent($"<- {thought.Name} {thought.Text}".TrimEnd());
+            _achievements.OnAiActivity();
 
             switch (thought.Name)
             {
@@ -1732,6 +1826,33 @@ public partial class MainWindow : Window
     /// clicks on the wordmark. Deliberately silent until it fires: a
     /// progress hint would turn a hidden gesture into a visible one.
     /// </summary>
+    /// <summary>
+    /// TabSubtitleText sits above the tab headers now, shared by all three
+    /// tabs, rather than each TabItem carrying its own copy of this text —
+    /// so switching tabs is what has to keep it in sync, instead of it just
+    /// being part of whichever tab's content is showing.
+    /// SelectionChanged is a bubbling routed event, and TabControl inherits
+    /// it from the same Selector base ComboBox does — a selection change on
+    /// any ComboBox nested inside a tab's own content (TemaComboBox,
+    /// PensamentosIaComboBox, ...) bubbles all the way up and would fire this
+    /// handler too, so it's guarded to only act when the TabControl itself
+    /// is what actually changed selection.
+    /// </summary>
+    private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, MainTabControl))
+        {
+            return;
+        }
+
+        TabSubtitleText.Text = MainTabControl.SelectedIndex switch
+        {
+            0 => "Escolha as informações que o MiMo pode receber",
+            1 => "O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado",
+            _ => string.Empty,
+        };
+    }
+
     private void LogoImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         if (TesteCard.Visibility == Visibility.Visible)
