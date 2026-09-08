@@ -1798,7 +1798,7 @@ void drawAiStatsRows(IDisplay& display, const FaceState& state, int x, int y,
 // the rest; its warm phosphor tint happens to push amber exactly the right
 // way, and its scanline dimming is deliberately light, which matters more
 // here than anywhere else since this theme is almost entirely 7px text.
-constexpr uint8_t MI84_INK_R = 255, MI84_INK_G = 176, MI84_INK_B = 0;
+constexpr uint8_t MI84_INK_R = 255, MI84_INK_G = 191, MI84_INK_B = 0;
 constexpr uint8_t MI84_DIM_R = 132, MI84_DIM_G = 90, MI84_DIM_B = 0;
 
 // CLASSIC's own selectable primary color (see ClassicColor in Face.h and

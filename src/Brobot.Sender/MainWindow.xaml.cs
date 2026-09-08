@@ -1745,13 +1745,15 @@ public partial class MainWindow : Window
                     break;
 
                 case "Stop":
-                    // thought.Text is the first sentence of what Claude
-                    // actually just said (Stop's last_assistant_message, see
-                    // the hook script) — MiMo reports the work instead of a
-                    // fixed "Terminei!", which stays as the fallback for a
-                    // turn that ended with no text.
+                    // Deliberately always the fixed phrase, not
+                    // thought.Text (the first sentence of last_assistant_message,
+                    // still sent by the hook script): the actual answer text
+                    // ended up on MiMo's screen unfiltered, which reads fine
+                    // for a short reply but odd/exposing for a longer or more
+                    // technical one — a plain "done" beat surfacing Claude's
+                    // own words verbatim.
                     _connection.SendCommand("FACE FINISHED");
-                    SendAiMessage(thought.Text, "Terminei!");
+                    SendAiMessage("Terminei!");
                     _aiThoughtFaceActive = false;
                     break;
 
