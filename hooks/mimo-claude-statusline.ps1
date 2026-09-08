@@ -49,6 +49,12 @@ param(
 
 $ErrorActionPreference = "SilentlyContinue"
 
+# Same fix as mimo-claude-hook.ps1's own note: Windows PowerShell's default
+# console input encoding isn't UTF-8, so a multi-byte character anywhere in
+# this payload (a model display name, say) would otherwise get silently
+# mis-decoded before ConvertFrom-Json ever sees it.
+[Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+
 $raw = [Console]::In.ReadToEnd()
 $payload = $null
 if (-not [string]::IsNullOrWhiteSpace($raw)) {
@@ -129,7 +135,10 @@ function Send-Line([string]$line) {
         # hold up Claude Code's status line refresh.
         $connectTask = $client.ConnectAsync("127.0.0.1", $Port)
         if ($connectTask.Wait(300) -and $client.Connected) {
-            $writer = New-Object System.IO.StreamWriter($client.GetStream())
+            # BOM-less UTF-8 — same reasoning as mimo-claude-hook.ps1's own
+            # writer (see CLAUDE.md's note on BrobotConnection.cs's original
+            # version of this same bug).
+            $writer = New-Object System.IO.StreamWriter($client.GetStream(), (New-Object System.Text.UTF8Encoding($false)))
             $writer.WriteLine($line)
             $writer.Flush()
         }

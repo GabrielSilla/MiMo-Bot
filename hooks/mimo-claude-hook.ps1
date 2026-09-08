@@ -46,6 +46,19 @@ param(
 
 $ErrorActionPreference = "SilentlyContinue"
 
+# Claude Code pipes this hook's JSON payload in as UTF-8, but Windows
+# PowerShell's own default console input encoding (whatever the system's OEM
+# codepage is, not UTF-8) silently mis-decodes any multi-byte character in it
+# before this script ever sees the string — a PT-BR accent inside
+# last_assistant_message (e.g. "repositório") came out the other side as
+# mojibake, which then got faithfully re-encoded as UTF-8 *of the wrong
+# characters* on the way to AiThoughtsListener. This is a different bug from
+# the file-encoding one documented above (that one was about *this .ps1
+# file's own* literal strings; this one is about the *payload read from
+# stdin*), and forcing UTF-8 input decoding here is what fixes it at the
+# source rather than in every string-processing function downstream.
+[Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+
 # Friendly Portuguese label per Claude Code tool name, for PreToolUse — kept
 # here (not in Brobot.Sender) since it's Claude-Code-specific; a Codex/Gemini
 # hook script would need its own mapping for its own tool names.
@@ -319,7 +332,12 @@ try {
     # connection (nothing listening) returns almost instantly either way.
     $connectTask = $client.ConnectAsync("127.0.0.1", $Port)
     if ($connectTask.Wait(300) -and $client.Connected) {
-        $writer = New-Object System.IO.StreamWriter($client.GetStream())
+        # BOM-less UTF-8, same reasoning BrobotConnection.cs's own TCP writer
+        # already follows (see CLAUDE.md) — Windows PowerShell's .NET
+        # Framework runtime defaults StreamWriter to UTF-8 *with* a 3-byte
+        # BOM preamble on the first write, and there's no reason to depend on
+        # AiThoughtsListener's reader silently stripping it back off.
+        $writer = New-Object System.IO.StreamWriter($client.GetStream(), (New-Object System.Text.UTF8Encoding($false)))
         $writer.WriteLine($line)
         $writer.Flush()
     }
