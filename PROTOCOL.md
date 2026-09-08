@@ -34,6 +34,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `RPG LEFT` / `RPG RIGHT` | Um passo do cursor no menu atual (ação, magia ou alvo) — evento discreto por tecla pressionada, não "segurar para mover" como o `PONG KEY`. |
 | `RPG CONFIRM` | Confirma a opção selecionada. |
 | `RPG STOP` | Encerra a batalha na hora e volta ao normal. |
+| `BUZZ <cue>` | **Só para teste manual** — toca uma vinheta do buzzer direto, sem precisar chegar no evento real que a dispara. `<cue>`: `VICTORY` (a fanfarra de vitória de Final Fantasy do fim da Batalha RPG, ver `Buzzer::playRpgVictory`). Respeita `SOUND OFF`. Nome não reconhecido é ignorado. |
 | `PING` | **O único comando que o Core responde** — devolve a linha `MIMO <revisão>` (hoje `MIMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o MiMo na rede (ver abaixo). |
 
 `WEATHER`, `TIME`, `THEME`, `CLASSICCOLOR`, `SOUND` e `SCANLINES` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.

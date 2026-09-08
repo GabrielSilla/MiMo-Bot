@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "Buzzer.h"
 #include "Config.h"
@@ -41,8 +42,8 @@ Personality personality;
 DeviceSettings deviceSettings;
 PongGame pongGame;
 RpgBattle rpgBattle;
-Protocol protocol(personality, deviceSettings, pongGame, rpgBattle);
 Buzzer buzzer;
+Protocol protocol(personality, deviceSettings, pongGame, rpgBattle, buzzer);
 
 unsigned long lastFrameAt = 0;
 
@@ -179,6 +180,14 @@ void loop() {
 #endif
     }
     if (rpgBattle.justEnded()) {
+        // RPG battles bypass Personality/Expression entirely (see
+        // RpgBattle.h), so this is the one place that can know "the battle
+        // was just won" — playForExpression's switch never sees it. Gated
+        // on soundEnabled() the same way renderPersonalityFrame gates every
+        // other cue.
+        if (deviceSettings.soundEnabled() && strcmp(rpgBattle.lastResultToken(), "VICTORY") == 0) {
+            buzzer.playRpgVictory(now);
+        }
         char overLine[24];
         snprintf(overLine, sizeof(overLine), "RPG OVER %s", rpgBattle.lastResultToken());
 #if defined(ESP32)

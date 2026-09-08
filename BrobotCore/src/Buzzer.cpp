@@ -48,6 +48,43 @@ constexpr SoundSegment CUE_READING[] = {
     {SoundSegmentKind::SWEEP, 3800, 2000, 170, 19},
 };
 
+// Nobuo Uematsu's Final Fantasy "victory fanfare" — just its opening
+// trumpet sting (three staccato hits, a rising triad, a trill, then the
+// held final note), not the full ~19s piece: that short call is what
+// everyone actually means by "the FF victory sound," and at ~3.3s it fits
+// inside RpgBattle's own end-screen hold (RPG_END_HOLD_MS, 4s) without
+// needing to be cut off. Timing (note lengths and the silence between them)
+// is taken directly from a beep(1) script written to reproduce this exact
+// fanfare on a hardware buzzer — the same problem this file is solving, just
+// on different hardware. Frequencies are that source's own notes (554-987Hz)
+// uniformly scaled x3.7 — any constant multiplier preserves the tune's
+// intervals, unlike an octave-doubling (x4) this started as, which pushed
+// the loudest/most-repeated note (the 987Hz one, four times in this excerpt)
+// up to 3948Hz — measurably quieter on this board than every other cue's
+// notes, none of which go above 3800Hz (see the file-level comment above
+// CUE_FINISHED, and nextChatterSegment's own 1800-3400Hz TONE range below).
+// x3.7 keeps the whole melody inside that already-proven-loud 2050-3652Hz
+// window instead.
+constexpr SoundSegment CUE_RPG_VICTORY[] = {
+    {SoundSegmentKind::TONE, 3652, 0, 53, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 53, 0},
+    {SoundSegmentKind::TONE, 3652, 0, 53, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 53, 0},
+    {SoundSegmentKind::TONE, 3652, 0, 53, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 53, 0},
+    {SoundSegmentKind::TONE, 3652, 0, 428, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 53, 0},
+    {SoundSegmentKind::TONE, 2901, 0, 428, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 53, 0},
+    {SoundSegmentKind::TONE, 3256, 0, 428, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 53, 0},
+    {SoundSegmentKind::TONE, 3652, 0, 107, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 214, 0},
+    {SoundSegmentKind::TONE, 3256, 0, 107, 0},
+    {SoundSegmentKind::SILENCE, 0, 0, 214, 0},
+    {SoundSegmentKind::TONE, 3652, 0, 857, 0},
+};
+
 template <size_t N>
 constexpr uint8_t count(const SoundSegment (&)[N]) {
     return static_cast<uint8_t>(N);
@@ -94,6 +131,13 @@ void Buzzer::playForExpression(Expression expression, unsigned long nowMs) {
             stop();
             break;
     }
+}
+
+void Buzzer::playRpgVictory(unsigned long nowMs) {
+    _fixedSegments = CUE_RPG_VICTORY;
+    _fixedSegmentCount = count(CUE_RPG_VICTORY);
+    _fixedSegmentIndex = 0;
+    play(&Buzzer::nextFixedSegment, nowMs);
 }
 
 bool Buzzer::nextFixedSegment(Buzzer& self, SoundSegment& out) {

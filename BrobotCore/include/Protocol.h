@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "Buzzer.h"
 #include "DeviceSettings.h"
 #include "Personality.h"
 #include "PongGame.h"
@@ -22,10 +23,17 @@
 // PongGame already have), so a PONG/RPG START is simply ignored while the
 // other minigame is already active, rather than letting one clobber the
 // other's exclusive screen.
+//
+// BUZZ <cue> triggers a Buzzer cue directly, bypassing Personality/
+// Expression entirely — a manual hook for testing a cue (e.g. the RPG
+// victory fanfare) without having to actually win a battle first. See
+// Protocol.cpp's dispatch for the recognized cue names.
 class Protocol {
 public:
-    Protocol(Personality& personality, DeviceSettings& deviceSettings, PongGame& pongGame, RpgBattle& rpgBattle)
-        : _personality(personality), _deviceSettings(deviceSettings), _pongGame(pongGame), _rpgBattle(rpgBattle) {}
+    Protocol(Personality& personality, DeviceSettings& deviceSettings, PongGame& pongGame, RpgBattle& rpgBattle,
+             Buzzer& buzzer)
+        : _personality(personality), _deviceSettings(deviceSettings), _pongGame(pongGame), _rpgBattle(rpgBattle),
+          _buzzer(buzzer) {}
 
     void poll(Stream& serial, unsigned long now);
 
@@ -45,6 +53,7 @@ private:
     DeviceSettings& _deviceSettings;
     PongGame& _pongGame;
     RpgBattle& _rpgBattle;
+    Buzzer& _buzzer;
 
     // Takes the Stream (rather than only poll() holding it) purely so PING
     // can write its reply back to whoever asked — every other command is

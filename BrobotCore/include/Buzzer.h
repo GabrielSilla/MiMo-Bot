@@ -51,6 +51,14 @@ public:
     // THINKING's endless chatter would never be allowed to actually vary.
     void playForExpression(Expression expression, unsigned long nowMs);
 
+    // One-shot Final Fantasy victory-fanfare sting for RpgBattle's own
+    // VICTORY ending — RPG battles bypass Personality/Expression entirely
+    // (see RpgBattle.h), so this can't be reached through
+    // playForExpression's switch the way FINISHED/FAILED/READING are; call
+    // it directly from main.cpp instead, once, when RpgBattle::justEnded()
+    // reports a VICTORY.
+    void playRpgVictory(unsigned long nowMs);
+
     // Immediately silences the buzzer, regardless of what's currently
     // playing — used when the SOUND device setting is off (see
     // DeviceSettings/main.cpp), safe to call every frame.

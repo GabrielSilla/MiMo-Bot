@@ -76,6 +76,15 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         if (!_pongGame.isActive()) {
             _rpgBattle.onCommand(args, now);
         }
+    } else if (commandLength == 4 && strncmp(line, "BUZZ", 4) == 0) {
+        // Test-only hook: fires a Buzzer cue straight from the wire, same
+        // "reply/react directly, don't route through Personality" shape as
+        // PING below — there's no Expression or minigame state to update,
+        // just a sound. VICTORY is the only cue wired up so far (see
+        // Buzzer::playRpgVictory); an unrecognized name is ignored.
+        if (_deviceSettings.soundEnabled() && strcmp(args, "VICTORY") == 0) {
+            _buzzer.playRpgVictory(now);
+        }
     } else if (commandLength == 4 && strncmp(line, "PING", 4) == 0) {
         // The only command Core answers. Exists so a PC app sweeping the
         // local network for MiMo's (DHCP-assigned, therefore moving) IP can
