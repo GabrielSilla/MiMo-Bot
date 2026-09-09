@@ -56,6 +56,8 @@ public partial class MainWindow : Window
     private WindowsMediaMonitor? _mediaMonitor;
     private bool _mediaFaceActive;
 
+    private NotificationMonitor? _notificationMonitor;
+
     private GameMonitor? _gameMonitor;
     private bool _gameFaceActive;
 
@@ -909,6 +911,87 @@ public partial class MainWindow : Window
         _connection.SendCommand("FACE IDLE_MEDIA");
         _connection.SendCommand("MSG");
         _mediaFaceActive = false;
+    }
+
+    private async void NotificationsCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        if (NotificationsCheckBox.IsChecked == true)
+        {
+            _notificationMonitor = new NotificationMonitor();
+            _notificationMonitor.NotificationReceived += OnPcNotificationReceived;
+            try
+            {
+                bool granted = await _notificationMonitor.StartAsync();
+                if (granted)
+                {
+                    NotificationsStatusText.Text = "Observando notificações...";
+                }
+                else
+                {
+                    _notificationMonitor.Dispose();
+                    _notificationMonitor = null;
+                    UncheckNotificationsWithoutClearingStatus("Permissão negada -- veja Configurações do Windows > Privacidade > Notificações");
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationMonitor?.Dispose();
+                _notificationMonitor = null;
+                LogAiEvent($"NotificationsCheckBox_CheckedChanged threw: {ex}");
+                UncheckNotificationsWithoutClearingStatus($"Falha ao observar notificações: {ex.Message}");
+            }
+        }
+        else
+        {
+            _notificationMonitor?.Dispose();
+            _notificationMonitor = null;
+            NotificationsStatusText.Text = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Sets NotificationsCheckBox back to unchecked after a failed Start,
+    /// while keeping <paramref name="statusMessage"/> on screen. A plain
+    /// `NotificationsCheckBox.IsChecked = false` would re-enter this same
+    /// handler via its own Unchecked wiring (same Checked/Unchecked pair
+    /// pointed at one method, same as MediaCheckBox/GameCheckBox) — that
+    /// re-entrant call would take the `else` branch above and immediately
+    /// overwrite the failure message with an empty string, which is exactly
+    /// why it was showing as "nothing, or gone too fast to read" instead of
+    /// the actual reason. Detaching the handler for the one synchronous
+    /// assignment sidesteps that without touching the shared Checked/Unchecked
+    /// wiring every other checkbox in this app still relies on.
+    /// </summary>
+    private void UncheckNotificationsWithoutClearingStatus(string statusMessage)
+    {
+        NotificationsCheckBox.Checked -= NotificationsCheckBox_CheckedChanged;
+        NotificationsCheckBox.Unchecked -= NotificationsCheckBox_CheckedChanged;
+        NotificationsCheckBox.IsChecked = false;
+        NotificationsCheckBox.Checked += NotificationsCheckBox_CheckedChanged;
+        NotificationsCheckBox.Unchecked += NotificationsCheckBox_CheckedChanged;
+        NotificationsStatusText.Text = statusMessage;
+    }
+
+    /// <summary>
+    /// NotificationMonitor raises this off a background thread, not the UI
+    /// thread. Sent as NOTIFY, Core's top-priority tier (full screen, 10s,
+    /// outranks even AI activity — see PROTOCOL.md), not a plain FACE/MSG:
+    /// a Windows notification is itself an interruption on the PC, so
+    /// showing it as anything less on MiMo would undersell what it is.
+    /// READING is the expression — same "look over here" cue
+    /// PermissionRequest's own NOTIFY already uses, and asking for
+    /// attention isn't a failure, so not ERROR. One atomic NOTIFY line
+    /// rather than a FACE+MSG pair for the same reason every other
+    /// notification source in this app sends one: a two-command form could
+    /// be caught half-applied by Core.
+    /// </summary>
+    private void OnPcNotificationReceived(PcNotification notification)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            NotificationsStatusText.Text = $"{notification.AppName}: {notification.Text}";
+            _connection.SendCommand($"NOTIFY READING {notification.AppName}: {notification.Text}");
+        });
     }
 
     private void GameCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
@@ -2066,6 +2149,7 @@ public partial class MainWindow : Window
         settings.PensamentosIaProvider = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? "Claude";
         settings.MidiaEnabled = MediaCheckBox.IsChecked == true;
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
+        settings.NotificationsEnabled = NotificationsCheckBox.IsChecked == true;
         settings.SonsEnabled = SonsCheckBox.IsChecked == true;
         settings.ScanlinesEnabled = ScanlinesCheckBox.IsChecked == true;
         // Carried through rather than read off the UI: the address isn't
@@ -2131,6 +2215,7 @@ public partial class MainWindow : Window
         PausaCheckBox.IsChecked = settings.PausaEnabled;
         MediaCheckBox.IsChecked = settings.MidiaEnabled;
         GameCheckBox.IsChecked = settings.JogosEnabled;
+        NotificationsCheckBox.IsChecked = settings.NotificationsEnabled;
         SonsCheckBox.IsChecked = settings.SonsEnabled;
         ScanlinesCheckBox.IsChecked = settings.ScanlinesEnabled;
 
@@ -2194,6 +2279,7 @@ public partial class MainWindow : Window
         _trayIcon!.Visible = false;
         _trayIcon.Dispose();
         _mediaMonitor?.Dispose();
+        _notificationMonitor?.Dispose();
         _gameMonitor?.Dispose();
         _statsMonitor?.Dispose();
         _weatherMonitor?.Dispose();

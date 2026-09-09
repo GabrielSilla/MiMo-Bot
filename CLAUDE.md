@@ -50,19 +50,20 @@ src/
   Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
                                      Brobot: MainWindow is three tabs (Configurações Gerais/Mini Games/
                                      Conquistas — see below). Configurações Gerais is the original
-                                     card-based checklist (Conexão, Hora, Clima, Pausa, Atividade da IA,
-                                     Mídia, Jogos, Tema, Sons, Scanlines — mostly checkboxes, except
-                                     Conexão (a status readout plus one button), Tema (a ComboBox) and
-                                     Atividade da IA (an Instalar/Desinstalar button), see below). Mini
-                                     Games holds one card per minigame (Pong, Batalha RPG — see BrobotCore
-                                     below and Brobot.Sender internals below), each with its own
-                                     JOGAR/BATALHAR button. Conquistas holds 10 fixed achievements
-                                     (AchievementCatalog), tracked by AchievementMonitor against signals
-                                     the other monitors below already raise — unlocking one also flashes
-                                     a NOTIFY on MiMo's own screen (see Brobot.Sender internals below).
-                                     The Conexão card is a readout, not a setup form — MiMo's address is
-                                     discovered, never typed (WiFi/TCP only — no SettingsWindow, no
-                                     Serial/USB, see below). WeatherMonitor + WindowsMediaMonitor + GameMonitor +
+                                     card-based checklist (Conexão, Hora, Clima, Pausa, Notificações,
+                                     Atividade da IA, Mídia, Jogos, Tema, Sons, Scanlines — mostly
+                                     checkboxes, except Conexão (a status readout plus one button), Tema
+                                     (a ComboBox) and Atividade da IA (an Instalar/Desinstalar button),
+                                     see below). Mini Games holds one card per minigame (Pong, Batalha
+                                     RPG — see BrobotCore below and Brobot.Sender internals below), each
+                                     with its own JOGAR/BATALHAR button. Conquistas holds 10 fixed
+                                     achievements (AchievementCatalog), tracked by AchievementMonitor
+                                     against signals the other monitors below already raise — unlocking
+                                     one also flashes a NOTIFY on MiMo's own screen (see Brobot.Sender
+                                     internals below). The Conexão card is a readout, not a setup form —
+                                     MiMo's address is discovered, never typed (WiFi/TCP only — no
+                                     SettingsWindow, no Serial/USB, see below). WeatherMonitor +
+                                     WindowsMediaMonitor + GameMonitor + NotificationMonitor +
                                      AiThoughtsListener are the live data sources so far, ClaudeCodeHookInstaller edits
                                      Claude Code's own settings.json, ClaudeCodeAccount reads (never writes)
                                      ~/.claude.json to detect an account switch, SenderSettings persists
@@ -1522,6 +1523,10 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   highest-priority thing the display shows). A notification expires on its
   own, so there's nothing to explicitly clear on uncheck, unlike
   MUSIC/WATCHING/PLAYING/THINKING elsewhere in this file.
+- **Notificações** is a plain checkbox card, same shape as Mídia/Jogos —
+  see `NotificationMonitor.cs` below for the actual mechanism (polling
+  Windows' own notification platform) and why it's a poll rather than the
+  push event its own WinRT API offers.
 - **Tema** is a `ComboBox` (`TemaComboBox`, `ThemeManager.Available`) picking
   between "MiMo Classic", "MiMo Matrix", "MiMo Mi2-Mo2" and "MiMo-84" — one control driving two
   unrelated systems: `ThemeManager.Apply` swaps this app's own WPF skin
@@ -1871,6 +1876,47 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   wrongly interrupting whatever the AI happened to be showing at that moment.
   And `IDLE_MEDIA` rather than bare `IDLE`, which clears the game tier too —
   stopping the music must not wipe a game that's still open.
+- **`NotificationMonitor.cs`**: shows Windows' own toast notifications (any
+  app, not just this one) on MiMo, via `Windows.UI.Notifications.Management.
+  UserNotificationListener` — the same WinRT surface Action Center itself is
+  built on. That API's own docs (and this project's own first assumption)
+  gate it behind package identity (MSIX/UWP) — a real sparse-package
+  proof-of-concept (self-signed cert, signed `.msix`, `PackageManager.
+  AddPackageByUriAsync` with an `ExternalLocationUri`) was built and then
+  thrown away once testing showed it wasn't needed: `RequestAccessAsync`
+  and `GetNotificationsAsync` both work fine from this app's plain Win32
+  process with zero extra packaging, the same as `WindowsMediaMonitor`/
+  `WeatherMonitor`'s WinRT calls already do. The one member that *does*
+  still need identity is the live push event, `NotificationChanged` —
+  subscribing to it throws `COMException 0x80070490` ("element not found")
+  even right after `RequestAccessAsync` returns `Allowed` — confirmed by
+  hitting it for real, not assumed. So this polls `GetNotificationsAsync`
+  on a timer (`PollInterval`, 3s) instead, the same "no changed event
+  available, so ask on a schedule" shape `WeatherMonitor`'s clock and
+  `GameMonitor`'s process list already use, deduping against a `HashSet<uint>`
+  of notification ids rebuilt from the current listing each poll (so a
+  dismissed id doesn't stay "seen" forever). `StartAsync` seeds that set from
+  whatever's already sitting in Action Center *before* starting the poll
+  loop, specifically so checking the box doesn't dump a burst of stale
+  notifications onto the screen. Each new one sends one atomic
+  `NOTIFY READING <app>: <text>` — Core's top-priority tier, not a plain
+  `FACE`/`MSG` pair: a Windows notification is already an interruption on
+  the PC side, so anything less on MiMo would undersell it. `READING` for
+  the same "look over here" reasoning `Atividade da IA`'s own
+  `PermissionRequest` → `NOTIFY` already uses.
+  `MainWindow.NotificationsCheckBox_CheckedChanged` has one thing worth
+  calling out: setting `NotificationsCheckBox.IsChecked = false` from
+  inside the failure branches would normally re-enter the very same handler
+  through its own `Unchecked` wiring (same Checked/Unchecked-to-one-method
+  pattern every checkbox card here uses) — and that re-entrant call takes
+  the plain `else` branch, which unconditionally clears the status text,
+  wiping out the failure message that was just set a moment earlier before
+  anyone could read it. `UncheckNotificationsWithoutClearingStatus`
+  detaches the handler for that one assignment and reattaches right after,
+  which is what actually surfaced the `COMException` above instead of a
+  status line that "flashed and vanished" — this exact class of bug likely
+  also affects `MediaCheckBox`'s identical catch-block pattern, not fixed
+  here since it wasn't the thing asked for.
 - **`WeatherMonitor.cs`**: `Windows.Devices.Geolocation.Geolocator` for a one-time
   (per session) auto-located lat/long — weather doesn't need continuous GPS-grade
   tracking — then polls Open-Meteo (free, no API key/signup) every 30 minutes.
