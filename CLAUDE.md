@@ -64,12 +64,16 @@ src/
                                      MiMo's address is discovered, never typed (WiFi/TCP only — no
                                      SettingsWindow, no Serial/USB, see below). WeatherMonitor +
                                      WindowsMediaMonitor + GameMonitor + NotificationMonitor +
-                                     AiThoughtsListener are the live data sources so far, ClaudeCodeHookInstaller edits
+                                     AiThoughtsListener are the live data sources so far (Notificações also
+                                     runs TeamsNotificationWatcher alongside NotificationMonitor — see
+                                     Brobot.Sender internals below for why Teams needs its own, much more
+                                     fragile capture path), ClaudeCodeHookInstaller edits
                                      Claude Code's own settings.json, ClaudeCodeAccount reads (never writes)
                                      ~/.claude.json to detect an account switch, SenderSettings persists
-                                     checkbox/provider/connection state to %AppData%, GlobalKeyboardHook is a
-                                     system-wide low-level keyboard hook (this app's only P/Invoke) the two
-                                     minigames use to read arrow/Enter/Escape regardless of window focus.
+                                     checkbox/provider/connection state to %AppData%, GlobalKeyboardHook and
+                                     TeamsNotificationWatcher are this app's only P/Invoke — the former a
+                                     system-wide low-level keyboard hook the two minigames use to read
+                                     arrow/Enter/Escape regardless of window focus.
                                      Icons via the MahApps.Metro.IconPacks.Material NuGet package.
 hooks/                               mimo-claude-hook.ps1 (the Claude Code hook command) and
                                      mimo-claude-statusline.ps1 (its statusLine command — a different
@@ -1301,7 +1305,8 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   specifically because the picker's per-game lines were about to disappear
   along with the page; that's no longer true, so the simpler direct write
   replaced it).
-  `GlobalKeyboardHook.cs` (this app's only P/Invoke) is a system-wide
+  `GlobalKeyboardHook.cs` (one of this app's two P/Invoke consumers — see
+  `TeamsNotificationWatcher.cs` below for the other) is a system-wide
   `WH_KEYBOARD_LL` hook: the player is watching MiMo's own screen while
   playing, not this window, so arrow/Enter/Escape have to reach Core
   regardless of what has focus on the PC. Installed from the UI thread, its
@@ -1523,10 +1528,11 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   highest-priority thing the display shows). A notification expires on its
   own, so there's nothing to explicitly clear on uncheck, unlike
   MUSIC/WATCHING/PLAYING/THINKING elsewhere in this file.
-- **Notificações** is a plain checkbox card, same shape as Mídia/Jogos —
-  see `NotificationMonitor.cs` below for the actual mechanism (polling
-  Windows' own notification platform) and why it's a poll rather than the
-  push event its own WinRT API offers.
+- **Notificações** is a plain checkbox card, same shape as Mídia/Jogos, that
+  starts two independent watchers at once — see `NotificationMonitor.cs`
+  below for the main one (polling Windows' own notification platform) and
+  `TeamsNotificationWatcher.cs` for the second, Teams-only one it needed on
+  top of that, and why.
 - **Tema** is a `ComboBox` (`TemaComboBox`, `ThemeManager.Available`) picking
   between "MiMo Classic", "MiMo Matrix", "MiMo Mi2-Mo2" and "MiMo-84" — one control driving two
   unrelated systems: `ThemeManager.Apply` swaps this app's own WPF skin
@@ -1917,6 +1923,70 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   status line that "flashed and vanished" — this exact class of bug likely
   also affects `MediaCheckBox`'s identical catch-block pattern, not fixed
   here since it wasn't the thing asked for.
+- **`TeamsNotificationWatcher.cs`**: a second, independent notification
+  capture path, alongside `NotificationMonitor` above and started/stopped
+  by the same Notificações checkbox — for exactly one app, Microsoft Teams,
+  confirmed (not assumed) to need it: Teams never registers a real Windows
+  toast at all, so `UserNotificationListener` — the whole platform
+  `NotificationMonitor` watches — has zero visibility into it no matter how
+  it's used. Confirmed the hard way across several dead ends before finding
+  this one: no entry for Teams in the registry key that lists every app
+  that's ever shown a toast; `EnumWindows` polling found no new top-level
+  window when a Teams notification fired; `UIA` structure-changed events
+  never fired even once, not even for ordinary chat activity; and Teams'
+  main-window UIA tree was completely flat — a stack of nameless, childless
+  `Pane`s — even with Windows Narrator running (the strongest available
+  trigger for Chromium's full accessibility tree). What finally worked:
+  Teams' notification banner turns out to be a small *second* top-level
+  window (same process, same `TeamsWebView` window class as the huge main
+  window, but only ~370px wide), created once and Shown/Hidden in place per
+  notification rather than recreated — invisible to plain `EnumWindows`
+  polling because of exactly that reuse, but not to a proper
+  `SetWinEventHook(EVENT_OBJECT_SHOW, ...)`, the same event-driven primitive
+  every real accessibility tool is built on. *That* window's own UIA tree
+  turned out to be fully populated (unlike the main window's), several
+  levels deeper than a first attempt's depth limit suggested — the real
+  text only showed up once the walk went ~20 levels down into Teams' own
+  nested Fluent UI markup.
+  Hooks globally (`idProcess=0`, not scoped to Teams' PID at install time)
+  because Teams can restart with a new PID at any point while the checkbox
+  stays checked, so `OnWinEvent` re-checks the owning process by name
+  (`ms-teams`) on every single system-wide `EVENT_OBJECT_SHOW` instead of
+  filtering by a PID captured once — the same "don't assume, re-verify"
+  reasoning `GameMonitor` already applies per-poll for its own process list.
+  Window width alone (`MaxPopupWidthPx`, 800) is what tells the popup apart
+  from the main window, since both share process, window class, and title
+  ("Microsoft Teams") — the main window is always far wider than any
+  monitor's small corner popup, so this one crude number does the job
+  without needing anything more specific to key on.
+  `ExtractNotificationText` finds the popup's `ControlType.Document` (its
+  WebView2 content root, `RootWebArea`) and reads every `ControlType.Text`
+  descendant's accessible `Name` beneath it — filtering out the app name
+  itself and a redundant screen-reader-only composite label Teams renders
+  as a sibling of the real body text (`MessagePreviewPrefix`,
+  `"Visualização da mensagem"`) so the extracted string doesn't repeat
+  itself. That prefix is the literal PT-BR string this project's own dev
+  machine's Teams renders — a different display language changes it
+  outright, and there's no reasonable way to generalize this without real
+  evidence of what those other strings actually are, so it isn't attempted.
+  This whole class is explicitly the more fragile half of the Notificações
+  feature (see its own header comment) — a Teams update, UI redesign, or
+  display-language change can silently stop it working with no error
+  surfaced anywhere, unlike `NotificationMonitor`'s WinRT path, which is a
+  stable public API. Accepted deliberately, after confirming there was no
+  path with Teams' cooperation at all.
+  `_lastText`/`_lastRaisedAtUtc`/`DedupeWindow` (3s) exist because the same
+  banner re-fires `EVENT_OBJECT_SHOW` several times while it animates in and
+  out — without this, one real Teams notification would turn into a burst
+  of duplicate `NOTIFY`s on MiMo. The `WinEventDelegate` callback is kept as
+  an instance field, not a local — `SetWinEventHook` does not root
+  the delegate itself, so a GC'd delegate crashes the process the next time
+  Windows tries to invoke a hook nobody kept alive. Must be `Start()`-ed
+  from a thread with a live Windows message pump (`WINEVENT_OUTOFCONTEXT`
+  delivers callbacks through the calling thread's own queue) — the WPF UI
+  thread already provides one, so `MainWindow` calls `Start()` directly
+  rather than from a background `Task`, which would install the hook but
+  never actually receive a single callback.
 - **`WeatherMonitor.cs`**: `Windows.Devices.Geolocation.Geolocator` for a one-time
   (per session) auto-located lat/long — weather doesn't need continuous GPS-grade
   tracking — then polls Open-Meteo (free, no API key/signup) every 30 minutes.

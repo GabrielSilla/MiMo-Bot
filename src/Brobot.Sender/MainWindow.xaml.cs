@@ -57,6 +57,7 @@ public partial class MainWindow : Window
     private bool _mediaFaceActive;
 
     private NotificationMonitor? _notificationMonitor;
+    private TeamsNotificationWatcher? _teamsWatcher;
 
     private GameMonitor? _gameMonitor;
     private bool _gameFaceActive;
@@ -931,6 +932,7 @@ public partial class MainWindow : Window
                     _notificationMonitor.Dispose();
                     _notificationMonitor = null;
                     UncheckNotificationsWithoutClearingStatus("Permissão negada -- veja Configurações do Windows > Privacidade > Notificações");
+                    return;
                 }
             }
             catch (Exception ex)
@@ -939,12 +941,36 @@ public partial class MainWindow : Window
                 _notificationMonitor = null;
                 LogAiEvent($"NotificationsCheckBox_CheckedChanged threw: {ex}");
                 UncheckNotificationsWithoutClearingStatus($"Falha ao observar notificações: {ex.Message}");
+                return;
+            }
+
+            // Separate from NotificationMonitor above -- Teams' own banner
+            // never registers as a Windows toast, so UserNotificationListener
+            // (what NotificationMonitor watches) has no visibility into it at
+            // all; this is a second, independent capture path for that one
+            // app specifically (see TeamsNotificationWatcher's own header
+            // comment). Needs no permission of its own, so it can't fail the
+            // same way the block above can -- best-effort by construction,
+            // never blocks the checkbox from turning on.
+            try
+            {
+                _teamsWatcher = new TeamsNotificationWatcher();
+                _teamsWatcher.NotificationReceived += OnPcNotificationReceived;
+                _teamsWatcher.Start();
+            }
+            catch (Exception ex)
+            {
+                LogAiEvent($"TeamsNotificationWatcher.Start threw: {ex}");
+                _teamsWatcher?.Dispose();
+                _teamsWatcher = null;
             }
         }
         else
         {
             _notificationMonitor?.Dispose();
             _notificationMonitor = null;
+            _teamsWatcher?.Dispose();
+            _teamsWatcher = null;
             NotificationsStatusText.Text = string.Empty;
         }
     }
@@ -2280,6 +2306,7 @@ public partial class MainWindow : Window
         _trayIcon.Dispose();
         _mediaMonitor?.Dispose();
         _notificationMonitor?.Dispose();
+        _teamsWatcher?.Dispose();
         _gameMonitor?.Dispose();
         _statsMonitor?.Dispose();
         _weatherMonitor?.Dispose();
