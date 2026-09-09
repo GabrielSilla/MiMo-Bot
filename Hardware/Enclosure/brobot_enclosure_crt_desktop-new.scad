@@ -58,7 +58,7 @@ esp_usb_side = -1;        // +1 = exits top end wall, -1 = bottom
 
 usb_cut_w = 10.0;
 usb_cut_h = 5.0;
-usb_cut_z_offset = 4.5;
+usb_cut_z_offset = 5.5;
 
 // ============================================================================
 // CRT STYLING
@@ -175,10 +175,10 @@ sq_button_x_off = -12.0;
 
 // top vent slots (real top, X face) — behind the USB-C cutout so they don't intersect it
 // shrunk to fit the now much shallower body (30mm monitor depth)
-vent_count   = 5;
-vent_slot_l  = 1.2; // slot length along Z
-vent_spacing = 2.0; // pitch along Z
-vent_start_z = 7.0;
+vent_count   = 3;
+vent_slot_l  = 1.3; // slot length along Z
+vent_spacing = 5.0; // pitch along Z
+vent_start_z = 6.0;
 vent_margin_y = 10.0;
 
 // ============================================================================
