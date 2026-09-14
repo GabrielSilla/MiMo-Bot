@@ -284,6 +284,13 @@ constexpr int MATRIX_ICON_MUSIC_LEFT = 0,  MATRIX_ICON_MUSIC_W = 10;
 constexpr int MATRIX_ICON_PLAY_LEFT = 0,   MATRIX_ICON_PLAY_W = 8;
 constexpr int MATRIX_ICON_BOOK_LEFT = 0,   MATRIX_ICON_BOOK_W = 13;
 constexpr int MATRIX_ICON_GAMEPAD_LEFT = -2, MATRIX_ICON_GAMEPAD_W = 18;
+constexpr int MATRIX_ICON_MEETING_TOP = 0, MATRIX_ICON_MEETING_H = 8;
+constexpr int MATRIX_ICON_MEETING_LEFT = -1, MATRIX_ICON_MEETING_W = 15;
+// drawHammerIcon's origin is the grip, with the hammer extending upward
+// (and slightly sideways at the strike) from it, unlike every sibling icon
+// here whose box sits below/around its own origin — hence the negative TOP.
+constexpr int MATRIX_ICON_BUILDING_TOP = -12, MATRIX_ICON_BUILDING_H = 14;
+constexpr int MATRIX_ICON_BUILDING_LEFT = -6, MATRIX_ICON_BUILDING_W = 12;
 
 // origin = center - (where the box's own middle sits relative to origin)
 constexpr int matrixIconBaseY(int topOffset, int height) {
@@ -1035,10 +1042,25 @@ constexpr int HAPPY_BOUNCE_Y_PX = 4;
 constexpr int CORNER_ICON_X = 8;
 constexpr int CORNER_ICON_BOOK_X = 7;
 constexpr int CORNER_ICON_GAMEPAD_X = 7;
+constexpr int CORNER_ICON_MEETING_X = 7;
 constexpr int CORNER_ICON_MUSIC_DY = 18;
 constexpr int CORNER_ICON_PLAY_DY = 10;
 constexpr int CORNER_ICON_BOOK_DY = 13;
 constexpr int CORNER_ICON_GAMEPAD_DY = 11;
+constexpr int CORNER_ICON_MEETING_DY = 12;
+// Same drawMeetingCameraIcon the MEETING notification uses (see its own
+// definition below), just parameterized down to corner-icon scale rather
+// than a second drawing function.
+constexpr int CORNER_MEETING_CAM_BODY_W = 10;
+constexpr int CORNER_MEETING_CAM_BODY_H = 8;
+constexpr int CORNER_MEETING_CAM_LENS_W = 5;
+// drawHammerIcon's origin is the grip, with the hammer itself extending
+// *upward* from it (head held up at rest) — the opposite of BOOK/GAMEPAD/
+// MEETING, whose drawn shape sits below their own origin — so this DY sits
+// lower than theirs, leaving headroom above for the hammer without
+// colliding with the weather/clock badge strip.
+constexpr int CORNER_ICON_HAMMER_X = 10;
+constexpr int CORNER_ICON_HAMMER_DY = 20;
 
 // The gentle up-down bob CLASSIC/MI2MO2 give their corner icons. MATRIX
 // deliberately doesn't use it — there the icons are steady status lamps
@@ -1091,6 +1113,112 @@ void drawGamepadIcon(IDisplay& display, int baseX, int baseY, uint8_t r, uint8_t
 
     display.fillRect(baseX + 9, baseY + 2, 2, 2, BG_R, BG_G, BG_B); // face button
     display.fillRect(baseX + 11, baseY + 4, 2, 2, BG_R, BG_G, BG_B); // face button
+}
+
+// A hammer forging while a Gradle build runs — a real rotation about the
+// grip (the pivot), same technique BYE's waving hand already established
+// (see HandQuad/fillQuad above). Two earlier versions were tried and
+// rejected on direct feedback: a plain vertical translation (the head
+// sliding up and down onto a fixed nail) read as a piston, not a swing; a
+// 0->90-degree rotation with the head hanging *down* at rest also read as
+// pounding straight down. What was actually wanted: the head held **up** at
+// rest (like actually holding a hammer), swinging down only partway to a
+// diagonal for the strike, never past horizontal into "pointing down".
+// Local coordinates now match BYE_HAND's own convention exactly (x right, y
+// **up** from the grip), so angle 0 already holds the head straight up with
+// no extra offset needed.
+//
+// A first attempt at matching the reference split the head into two thin
+// tapered flanges (a claw and a poll) — rendered and previewed, it came out
+// as a spindly disconnected "Y", not a hammer, since two 1-2px-wide slivers
+// don't read as anything at this icon scale. Back to a single **solid**
+// head block, like the reference's own thick silhouette, just skewed
+// (wider on the poll side than the claw side) instead of a symmetric T, so
+// the asymmetry the reference has still comes through without sacrificing
+// legibility.
+constexpr int HAMMER_QUAD_COUNT = 2;
+const HandQuad HAMMER_SHAPE[HAMMER_QUAD_COUNT] = {
+    // handle, running from the grip up toward the head — thinned back down
+    // a bit from the earlier "thicker" pass, per direct feedback.
+    {{-1.5f, 1.5f, 1.5f, -1.5f}, {0.0f, 0.0f, 12.0f, 12.0f}},
+    // head — a plain axis-aligned bar, asymmetric left/right: a short claw
+    // on one side, a longer striking face on the other. The previous three
+    // passes all tried a *tapered* quad (near pair narrow, far pair wide)
+    // and each one came out reading as a single wedge pointing at whichever
+    // corner had the largest coordinates — verified by rendering the quad's
+    // four corners in isolation, each in its own color, which is what
+    // finally showed the near/far pairing was never what actually
+    // determined the silhouette: a plain rectangle has no such ambiguity,
+    // since both ends are flat regardless of which corner is which.
+    // Mirrored in x — pairs with the negated angle in drawHammerIcon below;
+    // mirroring only one of the two (tried both ways, each reported
+    // directly) either left the swing direction wrong or the shape's own
+    // asymmetry facing the wrong way relative to the swing.
+    // y reverted to its original 11..15 (height/thickness) -- only x (reach)
+    // and the overall HAMMER_SCALE below shrank from the oversized pass;
+    // the y bump that snuck in alongside that shrink was the same "touched
+    // height instead of the requested axis" mistake as before, reported
+    // directly again.
+    // x (reach) trimmed a bit further, then the claw side (the back, short
+    // reach) given a bit more of its own back -- y still untouched.
+    {{-5.0f, 7.0f, 7.0f, -5.0f}, {11.0f, 11.0f, 15.0f, 15.0f}},
+};
+// Reduced from 0.85 -- the rectangular head's reach, on top of that scale,
+// read as way too big next to the eye, reported directly.
+constexpr float HAMMER_SCALE = 0.65f;
+
+// Unlike cornerIconBob's gentle sine, a real swing spends most of its time
+// on a slow recovery back to raised and only an instant actually striking —
+// the mirror image of a sine wave, so this gets its own piecewise easing.
+// 0 = raised straight up (rest), max = tipped over to a diagonal (the
+// strike) — deliberately less than 90 degrees, so the head is always
+// somewhere between "straight up" and "sideways", never dipping toward
+// "pointing down".
+constexpr unsigned long HAMMER_STRIKE_PERIOD_MS = 900;
+constexpr float HAMMER_STRIKE_RISE_FRACTION = 0.65f; // fraction of the cycle spent recovering upward, not striking
+constexpr float HAMMER_SWING_MIN_ANGLE = 0.0f;     // straight up
+constexpr float HAMMER_SWING_MAX_ANGLE = 0.7854f;  // 45 degrees off vertical -- the strike
+
+float hammerSwingAngle(unsigned long nowMs) {
+    unsigned long t = nowMs % HAMMER_STRIKE_PERIOD_MS;
+    float phase = (float)t / (float)HAMMER_STRIKE_PERIOD_MS; // 0..1
+    if (phase < HAMMER_STRIKE_RISE_FRACTION) {
+        // Slow recovery: swing back up from the diagonal strike to raised.
+        float riseProgress = phase / HAMMER_STRIKE_RISE_FRACTION;
+        return HAMMER_SWING_MAX_ANGLE - (HAMMER_SWING_MAX_ANGLE - HAMMER_SWING_MIN_ANGLE) * riseProgress;
+    }
+    // Fast strike: swing down from raised to the diagonal.
+    float strikeProgress = (phase - HAMMER_STRIKE_RISE_FRACTION) / (1.0f - HAMMER_STRIKE_RISE_FRACTION);
+    return HAMMER_SWING_MIN_ANGLE + (HAMMER_SWING_MAX_ANGLE - HAMMER_SWING_MIN_ANGLE) * strikeProgress;
+}
+
+// pivotX/pivotY is the grip (the one fixed point — the hand holding the
+// handle). No separate anvil/nail prop here — the earlier version's fixed
+// strike target no longer matches what this motion actually depicts (a
+// hammer being raised and dropped, not a piston hitting a point), so the
+// swing itself carries the whole idea.
+void drawHammerIcon(IDisplay& display, int pivotX, int pivotY, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    // Negated together with HAMMER_SHAPE's own x-mirror above — that pairing
+    // is what actually produces a clean full mirror of the original swing
+    // (verified algebraically, not just by eye): negating only the angle
+    // flipped the swing but left the head's asymmetry facing the old way,
+    // and mirroring only the shape while leaving the angle alone produced a
+    // different, visibly wrong motion, not a mirror at all.
+    float angle = -hammerSwingAngle(nowMs);
+    float sinA = sin(angle);
+    float cosA = sin(angle + 1.5708f); // cos is not wired up in the native shim, see drawByeHand
+
+    for (int q = 0; q < HAMMER_QUAD_COUNT; q++) {
+        const HandQuad& quad = HAMMER_SHAPE[q];
+        float sx[4], sy[4];
+        for (int i = 0; i < 4; i++) {
+            float lx = quad.x[i] * HAMMER_SCALE;
+            float ly = quad.y[i] * HAMMER_SCALE;
+            sx[i] = (float)pivotX + (lx * cosA - ly * sinA);
+            sy[i] = (float)pivotY - (lx * sinA + ly * cosA);
+        }
+        fillQuad(display, sx, sy, r, g, b);
+    }
 }
 
 // COFFEE: a mug (saucer + hollowed-out body + a handle stub, same
@@ -2529,6 +2657,157 @@ void coffeeSipOffset(unsigned long nowMs, int* outDx, int* outDy) {
     *outDy = -(int)(lift * (float)COFFEE_SIP_LIFT_PX);
 }
 
+// New-email alert (Brobot.Sender's Notificações card, once
+// NotificationClassifier decides a Windows toast is an email -- see
+// PROTOCOL.md). Same left-pinned-eyes-plus-artwork layout COFFEE's own
+// notification already uses (NOTIF_COFFEE_* constants, reused directly
+// rather than retuned), an envelope standing in for COFFEE's cup.
+constexpr int NOTIF_EMAIL_EYES_CENTER_X = NOTIF_COFFEE_EYES_CENTER_X;
+constexpr int NOTIF_EMAIL_EYE_Y = NOTIF_COFFEE_EYE_Y;
+constexpr int NOTIF_EMAIL_EYE_SIZE = NOTIF_COFFEE_EYE_SIZE;
+constexpr int NOTIF_EMAIL_EYE_GAP = NOTIF_COFFEE_EYE_GAP;
+
+// Sized down from an original 46x32 -- big enough to hollow out and still
+// read as an envelope at 46x32, but noticeably too large next to COFFEE's
+// own 36x28 cup in the same spot; this keeps the same centre point rather
+// than just shrinking from the top-left corner, so the icon didn't also
+// drift toward the eyes.
+constexpr int NOTIF_EMAIL_ENVELOPE_X = 98;
+constexpr int NOTIF_EMAIL_ENVELOPE_Y = 48;
+constexpr int NOTIF_EMAIL_ENVELOPE_W = 34;
+constexpr int NOTIF_EMAIL_ENVELOPE_H = 24;
+// Unread dot in the envelope's top-right corner, in the same spot a real
+// mail icon's badge count would sit -- see emailDotOn below for why it
+// blinks rather than sitting on solid the whole 10s.
+constexpr int NOTIF_EMAIL_DOT_SIZE = 5;
+
+// Hollowed rectangle (fill, then cut the middle back out to background —
+// the same wall-thickness idiom drawCoffeeCupAt already uses to read as an
+// open mug rather than a solid block) plus a pair of diagonal flap-fold
+// lines meeting at the horizontal centre, drawn as thick stepped diagonals
+// inside the hollow body. A first version cut the flap as a background
+// triangle from the top of an otherwise-solid block instead — at row 0 that
+// cut removed the *entire* top edge (both corners' cuts met in the middle),
+// so the icon read as a rounded blob, not an envelope, until it was rebuilt
+// this way. A hollow outline plus visible fold lines is what an envelope
+// actually needs to read as one at this resolution: an icon is its lines,
+// not its silhouette alone.
+void drawEnvelopeIcon(IDisplay& display, int x, int y, int w, int h,
+                      uint8_t inkR, uint8_t inkG, uint8_t inkB,
+                      uint8_t bgR, uint8_t bgG, uint8_t bgB) {
+    int wall = 2; // 3 at the original 46x32 size left too little hollow interior once the icon shrank to 34x24
+    display.fillRect(x, y, w, h, inkR, inkG, inkB);
+    display.fillRect(x + wall, y + wall, w - 2 * wall, h - 2 * wall, bgR, bgG, bgB);
+
+    // The flap's crease lines, apex at half height -- envelope flaps in
+    // practice fold somewhere between a third and half of the envelope's
+    // own height, and half reads unambiguously at this size where a
+    // shallower fold could get lost against the border.
+    int centerX = x + w / 2;
+    int apexY = y + h / 2;
+    int rows = apexY - y;
+    for (int row = 0; row <= rows; row++) {
+        int leftX = x + (int)((long)row * (long)(centerX - x) / (long)rows);
+        int rightX = (x + w) - (int)((long)row * (long)((x + w) - centerX) / (long)rows);
+        display.fillRect(leftX, y + row, wall, 1, inkR, inkG, inkB);
+        display.fillRect(rightX - wall, y + row, wall, 1, inkR, inkG, inkB);
+    }
+}
+
+// A slow on/off blink (not a fade -- there's no alpha at this bit depth)
+// for a small attention dot, so an otherwise-static icon reads as "something
+// is live/waiting" rather than a badge that looks painted on. 1s period,
+// mostly on: deliberately closer to a heartbeat than a strobe, since this
+// sits next to MiMo's own face for the whole 10s notification. Shared by
+// EMAIL's unread dot and MEETING's own call-is-live dot below rather than
+// each keeping a copy -- same clock, same reasoning, two different spots.
+bool notifBlinkDotOn(unsigned long nowMs) {
+    return (nowMs % 1000) < 550;
+}
+
+void drawEmailNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                           float openFactor) {
+    drawNotificationEyes(display, NOTIF_EMAIL_EYES_CENTER_X, NOTIF_EMAIL_EYE_Y,
+                         NOTIF_EMAIL_EYE_SIZE, NOTIF_EMAIL_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+
+    drawEnvelopeIcon(display, NOTIF_EMAIL_ENVELOPE_X, NOTIF_EMAIL_ENVELOPE_Y,
+                     NOTIF_EMAIL_ENVELOPE_W, NOTIF_EMAIL_ENVELOPE_H,
+                     p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+
+    if (notifBlinkDotOn(state.nowMs)) {
+        int dotX = NOTIF_EMAIL_ENVELOPE_X + NOTIF_EMAIL_ENVELOPE_W - NOTIF_EMAIL_DOT_SIZE + 2;
+        int dotY = NOTIF_EMAIL_ENVELOPE_Y - NOTIF_EMAIL_DOT_SIZE + 2;
+        display.fillRect(dotX, dotY, NOTIF_EMAIL_DOT_SIZE, NOTIF_EMAIL_DOT_SIZE, p.inkR, p.inkG, p.inkB);
+    }
+}
+
+// Calendar reminder for a Teams/video meeting (Notificações, once
+// NotificationClassifier decides an Outlook toast is a meeting rather than
+// a plain email -- see PROTOCOL.md). Same left-pinned-eyes layout as
+// COFFEE/EMAIL; the icon is a video camera -- a body with a lens flap
+// jutting out its right side, apex touching the body and widening to a
+// flat edge at the outer tip -- modeled directly on the reference glyph
+// the feature was asked for with (a filled camera-body-plus-viewfinder
+// silhouette, the same shape video-call apps use for their own icon).
+constexpr int NOTIF_MEETING_EYES_CENTER_X = NOTIF_COFFEE_EYES_CENTER_X;
+constexpr int NOTIF_MEETING_EYE_Y = NOTIF_COFFEE_EYE_Y;
+constexpr int NOTIF_MEETING_EYE_SIZE = NOTIF_COFFEE_EYE_SIZE;
+constexpr int NOTIF_MEETING_EYE_GAP = NOTIF_COFFEE_EYE_GAP;
+
+constexpr int NOTIF_MEETING_CAM_X = 96;
+constexpr int NOTIF_MEETING_CAM_Y = 50;
+constexpr int NOTIF_MEETING_CAM_BODY_W = 26;
+constexpr int NOTIF_MEETING_CAM_BODY_H = 22;
+constexpr int NOTIF_MEETING_CAM_LENS_W = 12;
+constexpr int NOTIF_MEETING_DOT_SIZE = 5;
+
+// Filled body, then a lens flap grown column by column to its right: each
+// column's fill height increases from a sliver near the body (the flap's
+// apex) to the body's own height at the outer tip (the flap's flat base) --
+// the reverse of drawEnvelopeIcon's row-by-row shrink, same stepped-fill
+// idiom applied along the other axis. A pure fillRect body rather than
+// drawCoffeeCupAt's hollow-wall treatment: unlike a bare rectangle (the
+// envelope's own first, failed attempt), a box with a triangular flap
+// already has a distinctive multi-part silhouette, so it reads as "camera"
+// solid the same way the reference icon itself is a solid glyph, not an
+// outline.
+void drawMeetingCameraIcon(IDisplay& display, int x, int y, int bodyW, int bodyH, int lensW,
+                           uint8_t inkR, uint8_t inkG, uint8_t inkB) {
+    display.fillRect(x, y, bodyW, bodyH, inkR, inkG, inkB);
+
+    int centerY = y + bodyH / 2;
+    int maxHalfH = bodyH / 2 - 2; // the lens tip sits a touch shorter than the body, matching the reference proportions
+    for (int col = 0; col < lensW; col++) {
+        int halfH = 1 + (maxHalfH - 1) * col / (lensW - 1);
+        display.fillRect(x + bodyW + col, centerY - halfH, 1, 2 * halfH, inkR, inkG, inkB);
+    }
+}
+
+void drawMeetingNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                             float openFactor) {
+    drawNotificationEyes(display, NOTIF_MEETING_EYES_CENTER_X, NOTIF_MEETING_EYE_Y,
+                         NOTIF_MEETING_EYE_SIZE, NOTIF_MEETING_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+
+    drawMeetingCameraIcon(display, NOTIF_MEETING_CAM_X, NOTIF_MEETING_CAM_Y,
+                          NOTIF_MEETING_CAM_BODY_W, NOTIF_MEETING_CAM_BODY_H, NOTIF_MEETING_CAM_LENS_W,
+                          p.inkR, p.inkG, p.inkB);
+
+    // "The call is starting" dot, same clock as EMAIL's own, now sitting
+    // *on* the camera body's top-right corner rather than floating above
+    // it in the background strip -- and drawn in solid black rather than
+    // the ink colour, since ink-on-ink over the body would be invisible
+    // exactly when it's meant to be lit. Nothing is drawn for the "off"
+    // half of the cycle: the body's own ink is already there underneath,
+    // so skipping the draw is what reveals it again.
+    int dotX = NOTIF_MEETING_CAM_X + NOTIF_MEETING_CAM_BODY_W - NOTIF_MEETING_DOT_SIZE - 2;
+    int dotY = NOTIF_MEETING_CAM_Y + 3;
+    if (notifBlinkDotOn(state.nowMs)) {
+        display.fillRect(dotX, dotY, NOTIF_MEETING_DOT_SIZE, NOTIF_MEETING_DOT_SIZE, 0, 0, 0);
+    }
+}
+
 void drawCoffeeNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
                             float openFactor) {
     drawNotificationEyes(display, NOTIF_COFFEE_EYES_CENTER_X, NOTIF_COFFEE_EYE_Y,
@@ -3394,6 +3673,10 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
                              p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
     } else if (state.expression == Expression::ACHIEVEMENT) {
         drawAchievementNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::EMAIL) {
+        drawEmailNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::MEETING) {
+        drawMeetingNotification(display, state, p, 1.0f - state.blinkAmount);
     } else {
         // Any notification without artwork of its own: just MiMo, blinking,
         // with the message below. There is deliberately no placeholder
@@ -3682,8 +3965,17 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
             drawGamepadIcon(display, CORNER_ICON_GAMEPAD_X,
                             CORNER_ICON_GAMEPAD_DY + CORNER_ICON_Y_SHIFT + cornerIconBob(state.nowMs, 400.0f, 2.0f),
                             iconR, iconG, iconB);
+        } else if (state.expression == Expression::MEETING) {
+            drawMeetingCameraIcon(display, CORNER_ICON_MEETING_X,
+                                  CORNER_ICON_MEETING_DY + CORNER_ICON_Y_SHIFT + cornerIconBob(state.nowMs, 400.0f, 2.0f),
+                                  CORNER_MEETING_CAM_BODY_W, CORNER_MEETING_CAM_BODY_H, CORNER_MEETING_CAM_LENS_W,
+                                  iconR, iconG, iconB);
         } else if (state.expression == Expression::COFFEE) {
             drawCoffeeCup(display, state.nowMs, iconR, iconG, iconB);
+        } else if (state.expression == Expression::BUILDING) {
+            drawHammerIcon(display, CORNER_ICON_HAMMER_X,
+                           CORNER_ICON_HAMMER_DY + CORNER_ICON_Y_SHIFT, state.nowMs,
+                           iconR, iconG, iconB);
         }
     }
 
@@ -3753,6 +4045,21 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
                             matrixIconBaseX(MATRIX_ICON_GAMEPAD_LEFT, MATRIX_ICON_GAMEPAD_W),
                             matrixIconBaseY(MATRIX_ICON_GAMEPAD_TOP, MATRIX_ICON_GAMEPAD_H),
                             pulseR, pulseG, pulseB);
+        } else if (state.expression == Expression::MEETING) {
+            drawMeetingCameraIcon(rawDisplay,
+                                  matrixIconBaseX(MATRIX_ICON_MEETING_LEFT, MATRIX_ICON_MEETING_W),
+                                  matrixIconBaseY(MATRIX_ICON_MEETING_TOP, MATRIX_ICON_MEETING_H),
+                                  CORNER_MEETING_CAM_BODY_W, CORNER_MEETING_CAM_BODY_H, CORNER_MEETING_CAM_LENS_W,
+                                  pulseR, pulseG, pulseB);
+        } else if (state.expression == Expression::BUILDING) {
+            // The strike motion itself already reads clearly against the
+            // log's scrolling text, so this is the one icon that keeps
+            // moving (via drawHammerIcon's own nowMs) rather than holding
+            // still and only pulsing brightness like its MATRIX siblings.
+            drawHammerIcon(rawDisplay,
+                           matrixIconBaseX(MATRIX_ICON_BUILDING_LEFT, MATRIX_ICON_BUILDING_W),
+                           matrixIconBaseY(MATRIX_ICON_BUILDING_TOP, MATRIX_ICON_BUILDING_H),
+                           state.nowMs, pulseR, pulseG, pulseB);
         }
     }
 

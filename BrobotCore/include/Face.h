@@ -27,7 +27,7 @@
 // WEATHER's own artwork choice — so a new achievement costs one enumerator
 // in AchievementIcon and one `case` in drawAchievementNotification, not a
 // new command or a new Expression each time.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT };
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING };
 
 // Which of MiMo's 10 achievements a notification is celebrating (see
 // ACHIEVEMENT in PROTOCOL.md) — every one shows the same trophy

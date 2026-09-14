@@ -15,7 +15,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 
 | Comando        | Descrição                                              |
 |----------------|----------------------------------------------------------|
-| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `BYE`, `IDLE` |
+| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `MEETING`, `BUILDING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `BYE`, `IDLE` (limpa reunião+jogo+mídia de uma vez), `IDLE_MEETING`, `IDLE_GAME`, `IDLE_MEDIA` (cada um limpa só o próprio tier, ver Notificações abaixo) |
 | `MSG <texto>`  | Define o texto exibido abaixo dos olhos (resto da linha). `MSG` sem texto limpa a mensagem. |
 | `WEATHER <tempC> <condicao>` | Selo persistente de clima (canto superior esquerdo). `tempC` é inteiro (pode ser negativo). Condições: `CLEAR`, `CLOUDY`, `RAIN`, `STORM`, `SNOW`, `FOG`. `WEATHER` sem argumentos limpa o selo. |
 | `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. |
@@ -361,7 +361,7 @@ qualquer outro tema, já que este é quase todo texto de 7px.
 Notificação é o topo da escala de prioridade do display:
 
 ```
-Notificação  >  IA  >  Jogos  >  Mídia
+Notificação  >  IA  >  Reunião  >  Jogos  >  Mídia
 ```
 
 São as coisas pelas quais o MiMo **interrompe** você: os lembretes de pausa
@@ -401,6 +401,42 @@ a necessidade de placeholder.
   quebrada, não como caneca tombada, então quem carrega o gesto é o
   trajeto. A xícara é a mesma função de desenho do ícone de canto, com a
   geometria parametrizada, e não uma cópia.
+- **`EMAIL`** (Notificações, card Notificações do Brobot.Sender, quando o
+  `NotificationClassifier` reconhece a origem como Outlook/Gmail): mesmos
+  olhos pequenos à esquerda do `COFFEE`, com um **envelope** à direita no
+  lugar da xícara — retângulo **oco** (preenchido e depois esvaziado por
+  dentro, mesmo truque de parede que a xícara do `COFFEE` já usa pra ler
+  como caneca aberta em vez de bloco sólido) mais as duas linhas diagonais
+  da aba se encontrando no meio da altura. Uma primeira versão recortava a
+  aba como um triângulo de fundo por cima de um bloco sólido — na primeira
+  linha os dois cortes (um de cada canto) se encontravam exatamente no meio,
+  apagando a borda de cima inteira, e o ícone lia como uma mancha
+  arredondada, não como envelope, até ser refeito assim: contorno oco mais
+  linhas de vinco visíveis é o que faz um envelope ler como envelope nessa
+  resolução, não só a silhueta. Um pontinho pisca no canto superior direito
+  do envelope (ciclo de 1s, mais aceso que apagado) marcando "tem algo
+  esperando". Sem deslocamento nenhum — ao contrário do `COFFEE`, não há
+  gesto natural de "ler um email" que valesse a pena animar, e o pisco do
+  ponto já é suficiente para a cena não ficar parada. A mensagem embaixo é
+  só o título do email (sem repetir "você recebeu um email" — o envelope já
+  diz isso).
+- **`MEETING`** (Notificações, quando o `NotificationClassifier` reconhece
+  um lembrete de reunião do Outlook em vez de um email novo — mesmo app,
+  diferenciado pela linha de dia/hora que só o lembrete tem, ver
+  `NotificationClassifier.cs`): mesmos olhos pequenos à esquerda do
+  `COFFEE`/`EMAIL`, com uma **câmera de vídeo** à direita — corpo
+  preenchido mais uma aba de lente saindo do lado direito, ápice encostado no
+  corpo e alargando até uma base reta na ponta (desenhada coluna por coluna,
+  o mesmo truque em pontos da aba do `EMAIL`, só que ao longo do eixo
+  horizontal em vez do vertical) — a mesma silhueta corpo+visor que ícones
+  de chamada de vídeo já usam, seguindo uma referência visual pedida
+  diretamente. Ao contrário do envelope, é preenchido sólido em vez de oco:
+  um retângulo puro precisa de linhas internas pra não ler como mancha, mas
+  corpo-mais-lente já é uma silhueta com partes suficientes pra ler como
+  câmera sozinha. Mesmo pontinho piscando do `EMAIL` (ciclo de 1s), agora
+  sobre o corpo da câmera marcando "a chamada está no ar". A mensagem
+  embaixo é `Meet: <título> <hora>` (ex.: "Meet: Testes SSO Sanepar
+  10h15") — sem "às", removido a pedido depois de soar estranho na tela.
 - **`WEATHER`** (alerta de clima): o MiMo ao lado de um guarda-chuva, com
   chuva caindo atrás dos dois. A chuva é desenhada **antes** do domo e dos
   olhos, então as gotas que cairiam sobre o guarda-chuva simplesmente não
@@ -510,7 +546,7 @@ chapa clara — assumindo preto, a caneca ganhava dois buracos pretos e cada
 olho, quatro pontinhos escuros nos cantos. Foram dois bugs reais, corrigidos
 uma vez.
 
-`FACE`/`MSG` têm duas prioridades independentes, decididas pelo Core (nunca
+`FACE`/`MSG` têm quatro prioridades independentes, decididas pelo Core (nunca
 pelo app PC que envia o comando):
 
 - **Foreground (prioridade alta)** — `THINKING`, `READING`, `FINISHED`,
@@ -531,11 +567,32 @@ pelo app PC que envia o comando):
   convidando a esticar as pernas/tomar um café. Visualmente os olhos ficam
   menores e presos no canto esquerdo da tela, com uma xícara de café
   fumegante no canto direito.
-- **Background (prioridade baixa)** — `MUSIC`, `WATCHING`, `PLAYING`. É o
-  que Mídia/Jogos usam. Fica "guardado" (rosto + mensagem) enquanto o
-  foreground estiver ativo, e volta a aparecer automaticamente assim que o
-  foreground libera a tela — sem precisar reenviar `FACE`/`MSG`.
+- **`MEETING`** (prioridade média — acima de Jogos/Mídia, abaixo do
+  Foreground) — o que o `TeamsMeetingStatusMonitor` do Brobot.Sender manda
+  quando detecta uma chamada do Teams realmente ao vivo (não é o mesmo uso
+  de `NOTIFY MEETING`, que é o lembrete de calendário de tela cheia — ver
+  acima; este `FACE MEETING` é o "estou numa reunião agora", fixo na tela
+  por toda a duração da chamada). Tem tier próprio, separado de
+  Jogos/Mídia, por um motivo concreto: antes de existir esse tier, `MEETING`
+  dividia o mesmo slot de `MUSIC`/`WATCHING`, então dar play num vídeo no
+  meio de uma reunião sobrescrevia silenciosamente o aviso de reunião, e
+  pausar esse vídeo (que manda `FACE IDLE_MEDIA`) limpava a reunião também
+  — sem nada pra trazê-la de volta até a chamada acabar e uma nova começar.
+  Reportado direto, corrigido dando um slot próprio a `MEETING`, ranqueado
+  acima de Jogos/Mídia: estar numa chamada é a coisa mais central acontecendo,
+  igual ao Foreground já ser mais importante que o fundo independente da
+  ordem de chegada.
+- **Jogos (`PLAYING`)** e **Mídia (`MUSIC`/`WATCHING`)** são dois tiers
+  próprios abaixo de Reunião, ranqueados um contra o outro (Jogos vence,
+  já que tocar música no fundo de uma partida é o caso normal, e o jogo é
+  o que você está realmente fazendo) em vez de compartilhar um slot só —
+  cada um "guardado" (rosto + mensagem) enquanto um tier de prioridade
+  maior estiver ativo, voltando a aparecer sozinho assim que esse tier
+  libera a tela, sem precisar reenviar `FACE`/`MSG`.
 - `FACE NEUTRAL` limpa apenas o foreground (ex.: fim de sessão da IA).
+  `FACE IDLE` limpa Reunião+Jogos+Mídia de uma vez; `IDLE_MEETING`/
+  `IDLE_GAME`/`IDLE_MEDIA` limpam só o próprio tier — mandar o errado pro
+  que você quer encerrar deixa os outros dois presos na tela.
   `FACE IDLE` limpa apenas o background (ex.: mídia parou / jogo fechou).
   Enviar o comando errado para a intenção deixa o outro lado preso: quem
   controla mídia/jogo deve mandar `IDLE` para liberar sua própria expressão

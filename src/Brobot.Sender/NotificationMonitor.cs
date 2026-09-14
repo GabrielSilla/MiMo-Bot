@@ -3,7 +3,31 @@ using Windows.UI.Notifications.Management;
 
 namespace Brobot.Sender;
 
-public sealed record PcNotification(string AppName, string Text);
+/// <summary>
+/// AppUserModelId is carried alongside DisplayName/Text purely so
+/// NotificationClassifier has something more specific than a display name
+/// to key on later -- a browser's own per-site notifications (Gmail in a
+/// Chrome/Edge tab, say) share the browser's generic DisplayName but each
+/// get their own AppUserModelId of the shape
+/// "&lt;browser AUMID&gt;!&lt;origin URL&gt;" (confirmed against a real
+/// per-site entry, for a different site, in this machine's own toast
+/// settings registry key) -- not yet used by any classification rule
+/// (nothing here has confirmed the exact Gmail value yet), but there's no
+/// reason to throw the data away since GetNotificationsAsync already hands
+/// it over for free.
+///
+/// Title is ToastGeneric's own first text element, which is *not* always
+/// "the title" in the everyday sense -- for a new-mail toast specifically
+/// it's the sender's name, and the actual subject line is the second
+/// element, Subtitle. Confirmed the hard way: MainWindow's EMAIL text
+/// originally used Title alone and only ever showed the sender, never the
+/// subject, until this was reported directly. Meeting reminders don't
+/// carry this same split (their own Title, the event's own name, is
+/// exactly what NotificationClassifier already uses), so Subtitle exists
+/// purely for Email's benefit -- null whenever a toast has fewer than two
+/// text elements.
+/// </summary>
+public sealed record PcNotification(string AppName, string Text, string? Title = null, string? AppUserModelId = null, string? Subtitle = null);
 
 /// <summary>
 /// Watches every toast notification the Windows notification platform shows
@@ -123,10 +147,13 @@ public sealed class NotificationMonitor : IDisposable
             }
 
             string appName = n.AppInfo?.DisplayInfo?.DisplayName ?? "Notificação";
-            string text = ExtractText(n);
-            if (text.Length > 0)
+            List<string> parts = ExtractTextParts(n);
+            if (parts.Count > 0)
             {
-                NotificationReceived?.Invoke(new PcNotification(appName, text));
+                string text = string.Join(" - ", parts);
+                string title = parts[0];
+                string? subtitle = parts.Count > 1 ? parts[1] : null;
+                NotificationReceived?.Invoke(new PcNotification(appName, text, title, n.AppInfo?.AppUserModelId, subtitle));
             }
         }
 
@@ -141,16 +168,22 @@ public sealed class NotificationMonitor : IDisposable
         }
     }
 
-    /// <summary>Concatenates a toast's visible text elements (title, then body lines) into one line.</summary>
-    private static string ExtractText(UserNotification notification)
+    /// <summary>
+    /// A toast's visible text elements in template order -- the first is
+    /// the notification's title (ToastGeneric's own convention), the rest
+    /// are body lines. Kept as separate parts (not pre-joined) so the
+    /// caller can build a PcNotification with a real Title distinct from
+    /// the full concatenated Text.
+    /// </summary>
+    private static List<string> ExtractTextParts(UserNotification notification)
     {
+        var parts = new List<string>();
         NotificationBinding? binding = notification.Notification.Visual.GetBinding(KnownNotificationBindings.ToastGeneric);
         if (binding == null)
         {
-            return string.Empty;
+            return parts;
         }
 
-        var parts = new List<string>();
         foreach (AdaptiveNotificationText element in binding.GetTextElements())
         {
             if (!string.IsNullOrWhiteSpace(element.Text))
@@ -158,6 +191,6 @@ public sealed class NotificationMonitor : IDisposable
                 parts.Add(element.Text.Trim());
             }
         }
-        return string.Join(" - ", parts);
+        return parts;
     }
 }

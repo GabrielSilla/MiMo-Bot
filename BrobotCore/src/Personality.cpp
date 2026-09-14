@@ -161,6 +161,9 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "COFFEE") == 0) return Expression::COFFEE;
     if (strcmp(name, "WEATHER") == 0) return Expression::WEATHER;
     if (strcmp(name, "BYE") == 0) return Expression::BYE;
+    if (strcmp(name, "EMAIL") == 0) return Expression::EMAIL;
+    if (strcmp(name, "MEETING") == 0) return Expression::MEETING;
+    if (strcmp(name, "BUILDING") == 0) return Expression::BUILDING;
     return Expression::NEUTRAL;
 }
 
@@ -260,6 +263,21 @@ void Personality::TypedMessage::updateTyping(unsigned long now, unsigned long pe
     visible[revealed] = '\0';
 }
 
+// MEETING is also reachable via NOTIFY (a calendar reminder, full screen,
+// 10s) -- that path never touches onFaceCommand/isMeetingExpression at
+// all, so the two uses of the same Expression value don't collide. FACE
+// MEETING (Brobot.Sender's TeamsMeetingStatusMonitor, "you're in a live
+// call right now") is the sticky one this function is about, and it's a
+// tier of its own now, not folded into isMediaExpression below: sharing
+// _mediaExpression with MUSIC/WATCHING meant starting a video mid-call
+// silently replaced the meeting, and pausing that video then cleared the
+// call too, with nothing left to bring it back — reported directly, fixed
+// by giving it a separate slot ranked above both GAME and MEDIA (see
+// Personality.h's own Tier comment).
+bool Personality::isMeetingExpression(Expression e) {
+    return e == Expression::MEETING;
+}
+
 bool Personality::isGameExpression(Expression e) {
     return e == Expression::PLAYING;
 }
@@ -268,11 +286,11 @@ bool Personality::isMediaExpression(Expression e) {
     return e == Expression::MUSIC || e == Expression::WATCHING;
 }
 
-// "Belongs to one of the two lower tiers" — still one question in plenty of
-// places (which log tab, which message), even though the two now rank
+// "Belongs to one of the three lower tiers" — still one question in plenty
+// of places (which log tab, which message), even though they now rank
 // against each other rather than sharing a slot.
 bool Personality::isBackgroundExpression(Expression e) {
-    return isGameExpression(e) || isMediaExpression(e);
+    return isMeetingExpression(e) || isGameExpression(e) || isMediaExpression(e);
 }
 
 bool Personality::notificationActive(unsigned long now) const {
@@ -314,11 +332,21 @@ void Personality::begin(unsigned long now) {
 void Personality::onFaceCommand(const char* name, unsigned long now) {
     _lastInteractionAt = now;
 
-    // IDLE clears the lower tiers. Plain "IDLE" clears both, which is what
-    // it has always meant and what a client that predates the game/media
-    // split still intends by it; the two qualified forms clear exactly one,
-    // and are what Brobot.Sender sends now that Jogos outranks Mídia —
-    // otherwise stopping the music would also wipe a game that's still open.
+    // IDLE clears the lower tiers. Plain "IDLE" clears all three (meeting
+    // included), which is what it has always meant and what a client
+    // predating even the game/media split still intends by it; the
+    // qualified forms clear exactly one, and are what Brobot.Sender sends
+    // now that they rank against each other rather than sharing a slot —
+    // otherwise stopping the music would also wipe a game (or, now, a
+    // still-ongoing call) that isn't actually over.
+    if (strcmp(name, "IDLE") == 0 || strcmp(name, "IDLE_MEETING") == 0) {
+        _meetingExpression = Expression::NEUTRAL;
+        _meetingMessage.set("", now);
+        _lastCommandTier = Tier::MEETING;
+        if (strcmp(name, "IDLE_MEETING") == 0) {
+            return;
+        }
+    }
     if (strcmp(name, "IDLE") == 0 || strcmp(name, "IDLE_GAME") == 0) {
         _gameExpression = Expression::NEUTRAL;
         _gameMessage.set("", now);
@@ -339,6 +367,11 @@ void Personality::onFaceCommand(const char* name, unsigned long now) {
     // if AI activity (or a notification) is currently showing, this just
     // gets stored and takes over once the higher tier releases (see
     // resolveExpression).
+    if (isMeetingExpression(e)) {
+        _meetingExpression = e;
+        _lastCommandTier = Tier::MEETING;
+        return;
+    }
     if (isGameExpression(e)) {
         _gameExpression = e;
         _lastCommandTier = Tier::GAME;
@@ -370,7 +403,7 @@ void Personality::onMessageCommand(const char* text, unsigned long now) {
     LogTab tab = LogTab::AI;
     if (_lastCommandTier == Tier::GAME) {
         tab = LogTab::MONITOR;
-    } else if (_lastCommandTier == Tier::MEDIA) {
+    } else if (_lastCommandTier == Tier::MEDIA || _lastCommandTier == Tier::MEETING) {
         tab = LogTab::MEDIA;
     }
     pushLogLine(text, tab);
@@ -379,6 +412,10 @@ void Personality::onMessageCommand(const char* text, unsigned long now) {
     // event) routes to whichever tier the last FACE command belonged to —
     // Notifications always follow a THINKING/READING from the same AI
     // session, so this lands on the foreground message as intended.
+    if (_lastCommandTier == Tier::MEETING) {
+        _meetingMessage.set(text, now);
+        return;
+    }
     if (_lastCommandTier == Tier::GAME) {
         _gameMessage.set(text, now);
         return;
@@ -700,14 +737,15 @@ void Personality::update(unsigned long now) {
         _renderExpressionStartedAt = now;
     }
 
-    // Background messages (MUSIC/WATCHING/PLAYING "now playing" labels)
-    // never auto-expire — they hold until replaced or the background is
-    // cleared (FACE IDLE). Foreground messages expire after MESSAGE_DURATION_MS
-    // once fully typed, except while THINKING is showing, which uses its
-    // "Pensando..." text as a sticky status label the same way background
-    // does.
+    // Background messages (MEETING/MUSIC/WATCHING/PLAYING "now playing"
+    // labels) never auto-expire — they hold until replaced or the
+    // background is cleared (FACE IDLE). Foreground messages expire after
+    // MESSAGE_DURATION_MS once fully typed, except while THINKING is
+    // showing, which uses its "Pensando..." text as a sticky status label
+    // the same way background does.
     unsigned long foregroundPersistMs = (_expression == Expression::THINKING) ? 0 : MESSAGE_DURATION_MS;
     _foregroundMessage.updateTyping(now, foregroundPersistMs);
+    _meetingMessage.updateTyping(now, 0);
     _gameMessage.updateTyping(now, 0);
     _mediaMessage.updateTyping(now, 0);
     // The notification's own text never expires on the message's clock —
@@ -789,6 +827,9 @@ FaceState Personality::currentState() const {
         state.achievementIcon = _notificationAchievementIcon;
         state.message = _notificationMessage.visible;
         state.messageTypingStartedMs = _notificationMessage.typingStartedAt;
+    } else if (isMeetingExpression(_renderExpression)) {
+        state.message = _meetingMessage.visible;
+        state.messageTypingStartedMs = _meetingMessage.typingStartedAt;
     } else if (isGameExpression(_renderExpression)) {
         state.message = _gameMessage.visible;
         state.messageTypingStartedMs = _gameMessage.typingStartedAt;
@@ -835,7 +876,7 @@ FaceState Personality::currentState() const {
     LogTab tab = LogTab::AI;
     if (isGameExpression(_renderExpression)) {
         tab = LogTab::MONITOR;
-    } else if (isMediaExpression(_renderExpression)) {
+    } else if (isMediaExpression(_renderExpression) || isMeetingExpression(_renderExpression)) {
         tab = LogTab::MEDIA;
     }
 
@@ -880,11 +921,16 @@ Expression Personality::resolveExpression(unsigned long now) const {
     if (now < _expressionOverrideUntil) {
         return _expression;
     }
-    // Foreground has nothing active right now: fall back to a game first,
-    // then media, before giving up to idle/SLEEPING. A game outranks media
-    // because music playing in the background of a game session is the
-    // normal case, and the game is what you're actually doing — this is
-    // also why the two are separate tiers rather than one slot.
+    // Foreground has nothing active right now: fall back to a call first
+    // (see Personality.h's own Tier comment for why it outranks both of the
+    // ones below it — being on a call is the more central thing happening),
+    // then a game, then media, before giving up to idle/SLEEPING. A game
+    // outranks media because music playing in the background of a game
+    // session is the normal case, and the game is what you're actually
+    // doing — this is also why they're separate tiers rather than one slot.
+    if (_meetingExpression != Expression::NEUTRAL) {
+        return _meetingExpression;
+    }
     if (_gameExpression != Expression::NEUTRAL) {
         return _gameExpression;
     }

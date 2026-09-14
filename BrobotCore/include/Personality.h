@@ -27,7 +27,7 @@ public:
 private:
     static constexpr size_t MESSAGE_CAPACITY = 255;
 
-    // Four independent priority tiers, highest first, so that nothing ever
+    // Five independent priority tiers, highest first, so that nothing ever
     // permanently clobbers something lower that was already showing — each
     // keeps its own expression and its own message, and rendering simply
     // falls to the highest tier that currently has something (see
@@ -39,6 +39,8 @@ private:
     //                 expires on its own after NOTIFICATION_DURATION_MS.
     //   FOREGROUND    AI activity (THINKING/READING/FINISHED/...), driven
     //                 by Atividade da IA.
+    //   MEETING       MEETING, driven by Notificações' TeamsMeetingStatusMonitor
+    //                 (Brobot.Sender) — you're actually on a call right now.
     //   GAME          PLAYING, driven by Jogos.
     //   MEDIA         MUSIC/WATCHING, driven by Mídia.
     //
@@ -47,12 +49,20 @@ private:
     // "Jogando X" with the track and never brought it back. They're
     // separate now, which is why FACE IDLE grew the IDLE_GAME/IDLE_MEDIA
     // variants (see onFaceCommand) — a single "clear the background" no
-    // longer says which of the two it means.
+    // longer says which of the two it means. MEETING split out of the
+    // MEDIA tier for the exact same reason, reported directly: sharing
+    // _mediaExpression with MUSIC/WATCHING meant starting a video mid-call
+    // silently replaced "Em reunião: X" with the video, and pausing that
+    // video's own FACE IDLE_MEDIA then wiped the meeting too, with nothing
+    // left to bring it back until the call ended and a new one started.
+    // Ranked above GAME/MEDIA rather than merely separate from them: being
+    // on a call is the more central thing happening, the same way FOREGROUND
+    // already outranks background regardless of order of arrival.
     //
     // A lower-tier FACE command received while a higher tier is active only
     // updates that lower tier's stored state — it never interrupts what's
     // currently on screen.
-    enum class Tier { NOTIFICATION, FOREGROUND, GAME, MEDIA };
+    enum class Tier { NOTIFICATION, FOREGROUND, MEETING, GAME, MEDIA };
 
     // Holds a message's full/typed-so-far text plus its typewriter timing.
     // Foreground and background each get their own instance so an AI
@@ -72,6 +82,7 @@ private:
     };
 
     Expression _expression = Expression::NEUTRAL;       // foreground (AI)
+    Expression _meetingExpression = Expression::NEUTRAL; // NEUTRAL = no call set
     Expression _gameExpression = Expression::NEUTRAL;   // NEUTRAL = no game set
     Expression _mediaExpression = Expression::NEUTRAL;  // NEUTRAL = no media set
     Expression _renderExpression = Expression::NEUTRAL;
@@ -100,6 +111,7 @@ private:
     int _lookOffsetY = 0;
 
     TypedMessage _foregroundMessage;
+    TypedMessage _meetingMessage;
     TypedMessage _gameMessage;
     TypedMessage _mediaMessage;
 
@@ -207,6 +219,7 @@ private:
     Expression resolveExpression(unsigned long now) const;
     bool notificationActive(unsigned long now) const;
     void raiseNotification(Expression e, const char* text, unsigned long now);
+    static bool isMeetingExpression(Expression e);
     static bool isGameExpression(Expression e);
     static bool isMediaExpression(Expression e);
     static bool isBackgroundExpression(Expression e);
