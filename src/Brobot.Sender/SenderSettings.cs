@@ -22,6 +22,7 @@ public sealed class SenderSettings
     public bool MidiaEnabled { get; set; }
     public bool JogosEnabled { get; set; }
     public bool NotificationsEnabled { get; set; }
+    public bool BuildEnabled { get; set; }
     public string Theme { get; set; } = ThemeManager.DefaultTheme;
     // Only meaningful while Theme is MiMo Classic (see ThemeManager's
     // ClassicColorInfo) — kept regardless of which theme is currently

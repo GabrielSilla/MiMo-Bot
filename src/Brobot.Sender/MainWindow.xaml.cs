@@ -58,6 +58,20 @@ public partial class MainWindow : Window
 
     private NotificationMonitor? _notificationMonitor;
     private TeamsNotificationWatcher? _teamsWatcher;
+    private readonly List<LiveCallMonitor> _liveCallMonitors = new();
+    // Keyed by LiveCallAppDefinition.Name (e.g. "Teams", "Edge") -- more than
+    // one app can be mid-call at once (Teams installed AND a Meet tab open),
+    // so this is a set, not a single bool/label pair; FACE MEETING/MSG stay
+    // up as long as it's non-empty, and clear only once every entry is gone.
+    // SourceLabel is carried alongside the title since it's what MiMo's
+    // message actually says the call is happening "in" (e.g. "Teams" vs
+    // "Navegador" for either browser).
+    private readonly Dictionary<string, (string SourceLabel, string Title)> _activeCalls = new();
+    private bool _meetingFaceActive;
+    private readonly AgendaTracker _agendaTracker = new();
+
+    private GradleBuildLogMonitor? _gradleBuildMonitor;
+    private MsBuildProcessMonitor? _msBuildProcessMonitor;
 
     private GameMonitor? _gameMonitor;
     private bool _gameFaceActive;
@@ -193,6 +207,11 @@ public partial class MainWindow : Window
         _achievements.Unlocked += OnAchievementUnlocked;
         BuildAchievementCards();
 
+        _agendaTracker.Changed += OnAgendaChanged;
+        _agendaTracker.ReminderDue += OnAgendaReminderDue;
+        _agendaTracker.Start();
+        RefreshAgendaPanel();
+
         _connection = new BrobotConnection(Dispatcher);
         // BrobotConnection batches every incoming line into per-frame
         // draw-command batches for whoever wants them (Brobot Virtual
@@ -309,6 +328,94 @@ public partial class MainWindow : Window
             // glyph for it, so it's left out of the text sent here.
             _connection.SendCommand(
                 $"ACHIEVEMENT {achievement.Id} Conquista desbloqueada: {achievement.Name} - {achievement.Quote}");
+        });
+    }
+
+    /// <summary>
+    /// Full rebuild of the Agenda tab's rows from AgendaTracker.Items, same
+    /// "just redraw everything" approach RefreshAchievementCard's caller
+    /// uses at a coarser grain — the list here is at most a handful of
+    /// meetings, so there's no real cost to clearing and rebuilding rather
+    /// than diffing adds/removals by hand. Called once at startup and again
+    /// every time AgendaTracker.Changed fires (an item added, deleted, or
+    /// auto-expired after its own start time).
+    /// </summary>
+    private void RefreshAgendaPanel()
+    {
+        AgendaPanel.Children.Clear();
+
+        IReadOnlyList<AgendaItem> items = _agendaTracker.Items;
+        AgendaEmptyText.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        foreach (AgendaItem item in items)
+        {
+            var time = new TextBlock
+            {
+                Text = item.When.ToString("HH:mm"),
+                Style = (Style)FindResource("CardTitleStyle"),
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                Width = 56,
+            };
+            var title = new TextBlock
+            {
+                Text = item.Title,
+                Style = (Style)FindResource("CardDescriptionStyle"),
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(12, 0, 12, 0),
+            };
+            var deleteButton = new System.Windows.Controls.Button
+            {
+                Content = "Excluir",
+                Style = (Style)FindResource("InstallButtonStyle"),
+                Tag = item.Id,
+            };
+            deleteButton.Click += AgendaDeleteButton_Click;
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(time, 0);
+            Grid.SetColumn(title, 1);
+            Grid.SetColumn(deleteButton, 2);
+            grid.Children.Add(time);
+            grid.Children.Add(title);
+            grid.Children.Add(deleteButton);
+
+            var row = new Border { Style = (Style)FindResource("CardStyle"), Child = grid };
+            AgendaPanel.Children.Add(row);
+        }
+    }
+
+    /// <summary>AgendaTracker.Changed can fire from its own DispatcherTimer tick — already the UI thread, but kept explicit like OnAchievementUnlocked.</summary>
+    private void OnAgendaChanged()
+    {
+        Dispatcher.Invoke(RefreshAgendaPanel);
+    }
+
+    private void AgendaDeleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: string id })
+        {
+            _agendaTracker.Remove(id);
+        }
+    }
+
+    /// <summary>
+    /// AgendaTracker's own 15/10/5/"Deu a hora" countdown line, independent
+    /// of whatever NOTIFY the original meeting-detected toast already sent
+    /// (see OnPcNotificationReceived's Meeting case) — this fires later,
+    /// keyed off wall-clock time rather than the notification arriving.
+    /// Plain READING, not MEETING's own camera icon: repeating that icon
+    /// four times per meeting for what's really just a countdown ping felt
+    /// like more than was asked for; only the text was specified.
+    /// </summary>
+    private void OnAgendaReminderDue(AgendaItem item, string message)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _connection.SendCommand($"NOTIFY READING {message}");
         });
     }
 
@@ -964,6 +1071,26 @@ public partial class MainWindow : Window
                 _teamsWatcher?.Dispose();
                 _teamsWatcher = null;
             }
+
+            // A third, independent signal -- not a toast at all, but a call
+            // itself actually being live (see LiveCallMonitor's own header
+            // comment). One monitor per app it can detect this way; same
+            // best-effort treatment as the watcher above: never blocks the
+            // checkbox from turning on.
+            foreach (LiveCallAppDefinition app in new[] { LiveCallApps.Teams, LiveCallApps.Edge, LiveCallApps.Chrome })
+            {
+                try
+                {
+                    var monitor = new LiveCallMonitor(app);
+                    monitor.CallChanged += label => OnLiveCallChanged(app.Name, app.SourceLabel, label);
+                    monitor.Start();
+                    _liveCallMonitors.Add(monitor);
+                }
+                catch (Exception ex)
+                {
+                    LogAiEvent($"LiveCallMonitor.Start threw for {app.Name}: {ex}");
+                }
+            }
         }
         else
         {
@@ -971,8 +1098,80 @@ public partial class MainWindow : Window
             _notificationMonitor = null;
             _teamsWatcher?.Dispose();
             _teamsWatcher = null;
+            foreach (LiveCallMonitor monitor in _liveCallMonitors)
+            {
+                monitor.Dispose();
+            }
+            _liveCallMonitors.Clear();
+            _activeCalls.Clear();
+            ClearMeetingFaceIfActive();
             NotificationsStatusText.Text = string.Empty;
         }
+    }
+
+    /// <summary>
+    /// A LiveCallMonitor raises this off its own DispatcherTimer tick, same
+    /// thread as everything else here, but Dispatcher.Invoke is kept for the
+    /// same "explicit rather than relying on it" reasoning every other
+    /// handler in this file already follows. Sticky FACE MEETING + MSG, not
+    /// a NOTIFY — the meeting is "now playing" for as long as the call
+    /// lasts, the same treatment WindowsMediaMonitor already gives
+    /// MUSIC/WATCHING, not a 10s interruption. label == null means that one
+    /// app's call ended, mirroring OnNowPlayingChanged's own null case --
+    /// but since more than one app can be mid-call at once, MiMo's screen
+    /// only clears once _activeCalls is empty, not on the first one to end.
+    /// </summary>
+    private void OnLiveCallChanged(string appName, string sourceLabel, string? label)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (label == null)
+            {
+                _activeCalls.Remove(appName);
+            }
+            else
+            {
+                _activeCalls[appName] = (sourceLabel, label);
+            }
+
+            if (_activeCalls.Count > 0)
+            {
+                (string source, string title) = _activeCalls.Values.First();
+                _connection.SendCommand("FACE MEETING");
+                _connection.SendCommand($"MSG Em reunião no {source}: {title}");
+                _meetingFaceActive = true;
+            }
+            else
+            {
+                ClearMeetingFaceIfActive();
+            }
+        });
+    }
+
+    /// <summary>
+    /// FACE MEETING is Core's own sticky tier now (see Personality.h's Tier
+    /// comment — split out of MEDIA specifically because sharing that slot
+    /// with MUSIC/WATCHING meant a video starting mid-call silently
+    /// replaced the meeting, reported directly) — it holds until explicitly
+    /// cleared, unlike most expressions which auto-revert after a few
+    /// seconds, so the call ending (or the checkbox being unchecked
+    /// mid-call) has to explicitly send FACE IDLE_MEETING or MiMo would
+    /// stay showing a meeting that's already over. IDLE_MEETING, not
+    /// NEUTRAL or IDLE_MEDIA — NEUTRAL only clears the foreground/AI tier
+    /// (same reasoning WindowsMediaMonitor's own ClearMediaFaceIfActive
+    /// already documents), and IDLE_MEDIA now only clears MUSIC/WATCHING's
+    /// own separate slot.
+    /// </summary>
+    private void ClearMeetingFaceIfActive()
+    {
+        if (!_meetingFaceActive)
+        {
+            return;
+        }
+
+        _connection.SendCommand("FACE IDLE_MEETING");
+        _connection.SendCommand("MSG");
+        _meetingFaceActive = false;
     }
 
     /// <summary>
@@ -999,24 +1198,78 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// NotificationMonitor raises this off a background thread, not the UI
-    /// thread. Sent as NOTIFY, Core's top-priority tier (full screen, 10s,
-    /// outranks even AI activity — see PROTOCOL.md), not a plain FACE/MSG:
-    /// a Windows notification is itself an interruption on the PC, so
-    /// showing it as anything less on MiMo would undersell what it is.
-    /// READING is the expression — same "look over here" cue
-    /// PermissionRequest's own NOTIFY already uses, and asking for
-    /// attention isn't a failure, so not ERROR. One atomic NOTIFY line
-    /// rather than a FACE+MSG pair for the same reason every other
-    /// notification source in this app sends one: a two-command form could
-    /// be caught half-applied by Core.
+    /// NotificationMonitor/TeamsNotificationWatcher both raise this off a
+    /// background thread, not the UI thread. Sent as NOTIFY, Core's
+    /// top-priority tier (full screen, 10s, outranks even AI activity —
+    /// see PROTOCOL.md), not a plain FACE/MSG: a Windows notification is
+    /// itself an interruption on the PC, so showing it as anything less on
+    /// MiMo would undersell what it is. READING is the expression — same
+    /// "look over here" cue PermissionRequest's own NOTIFY already uses,
+    /// and asking for attention isn't a failure, so not ERROR. One atomic
+    /// NOTIFY line rather than a FACE+MSG pair for the same reason every
+    /// other notification source in this app sends one: a two-command form
+    /// could be caught half-applied by Core.
+    ///
+    /// NotificationClassifier picks the expression/text — email gets Core's
+    /// own dedicated EMAIL notification (an envelope, see
+    /// PROTOCOL.md/Face.cpp) rather than the generic READING every other
+    /// source still gets, so the category is visible on the icon itself
+    /// rather than something the viewer has to read out of the text. The
+    /// text drops the "Você recebeu um email:" framing that phrase would
+    /// otherwise need — once the icon already says "this is mail",
+    /// restating it in the message would be the same redundancy
+    /// COFFEE/WEATHER's own alert text already avoids (neither says "isto
+    /// é uma pausa"/"isto é clima" either).
+    ///
+    /// Meeting (an Outlook calendar reminder, not a new email — see
+    /// NotificationClassifier's own header comment for how the two are
+    /// told apart) gets its own MEETING notification too, a video-camera
+    /// icon (see PROTOCOL.md/Face.cpp) modeled on a reference glyph the
+    /// feature was asked for with. Text is "Meet: &lt;título&gt;
+    /// &lt;hora&gt;" — no "às", tried once and dropped per direct feedback.
     /// </summary>
     private void OnPcNotificationReceived(PcNotification notification)
     {
         Dispatcher.Invoke(() =>
         {
+            string expression = "READING";
+            string text = $"{notification.AppName}: {notification.Text}";
+
+            switch (NotificationClassifier.Classify(notification))
+            {
+                case NotificationCategory.Email:
+                    expression = "EMAIL";
+                    // Title is the toast's first line, which for a
+                    // new-mail notification is the *sender's name*, not
+                    // the subject -- Subtitle (the second line) is the
+                    // actual subject. Both together ("Fulano - Assunto")
+                    // reads better than either alone: sender-only (the
+                    // original version) lost the subject entirely;
+                    // subject-only loses who it's from.
+                    text = notification.Subtitle != null
+                        ? $"{notification.Title} - {notification.Subtitle}"
+                        : notification.Title ?? notification.Text;
+                    break;
+                case NotificationCategory.Meeting:
+                    expression = "MEETING";
+                    string title = notification.Title ?? notification.Text;
+                    string? time = NotificationClassifier.ExtractMeetingTime(notification);
+                    text = time != null ? $"Meet: {title} {time}" : $"Meet: {title}";
+
+                    // AgendaTracker's own countdown ladder (see its class
+                    // header) is independent of the NOTIFY sent below --
+                    // it fires later, keyed off wall-clock time, not off
+                    // this toast arriving.
+                    DateTime? when = NotificationClassifier.ExtractMeetingDateTime(notification);
+                    if (when != null)
+                    {
+                        _agendaTracker.Add(title, when.Value);
+                    }
+                    break;
+            }
+
             NotificationsStatusText.Text = $"{notification.AppName}: {notification.Text}";
-            _connection.SendCommand($"NOTIFY READING {notification.AppName}: {notification.Text}");
+            _connection.SendCommand($"NOTIFY {expression} {text}");
         });
     }
 
@@ -1471,6 +1724,119 @@ public partial class MainWindow : Window
         _connection.SendCommand(ScanlinesCheckBox.IsChecked == true ? "SCANLINES ON" : "SCANLINES OFF");
     }
 
+    /// <summary>
+    /// Starts/stops the Gradle- and MSBuild/dotnet-build-via-process-watching
+    /// monitors -- same one-checkbox-many-watchers shape Notificações
+    /// already uses for
+    /// NotificationMonitor/TeamsNotificationWatcher/LiveCallMonitor. Each is
+    /// independently best-effort: one failing to start never blocks the
+    /// others or the checkbox itself.
+    ///
+    /// Visual Studio's own build reporting comes from a completely separate
+    /// path now: Brobot.VSExtension, a real VSIX package loaded in-process by
+    /// devenv.exe, reporting over AiThoughtsListener the same way a Claude
+    /// Code hook does (see MainWindow.OnAiThoughtReceived's VsBuildStarted/
+    /// VsBuildSucceeded/VsBuildFailed cases) -- not started/stopped from here
+    /// at all, since it isn't a monitor this process owns. There is
+    /// deliberately no COM-automation (DTE) monitor for Visual Studio in
+    /// *this* process, and none should be added back here: two separate
+    /// attempts -- one with no message filter, one with a proper
+    /// IOleMessageFilter registered (the standard, documented fix for
+    /// exactly this class of problem) -- both hung Visual Studio itself the
+    /// moment a build started, reported directly both times. That's exactly
+    /// why the VSIX exists: same DTE BuildEvents, called in-process from
+    /// inside devenv.exe instead of cross-process into it.
+    ///
+    /// VisualStudioOutputMonitor (reading the Output window's own text via
+    /// UI Automation) was this app's build-detection answer before the VSIX
+    /// existed, and is no longer wired up here -- confirmed live that the
+    /// VSIX reports both Started and Succeeded/Failed reliably, with none of
+    /// the "Output tab has to actually be selected" caveat, and running both
+    /// at once was producing two separate, differently-worded notifications
+    /// for the same build. The class itself is left in place rather than
+    /// deleted, in case the VSIX ever needs a fallback.
+    /// </summary>
+    private void BuildCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        if (BuildCheckBox.IsChecked == true)
+        {
+            try
+            {
+                _gradleBuildMonitor = new GradleBuildLogMonitor();
+                _gradleBuildMonitor.BuildStateChanged += (state, project) => OnBuildStateChanged("Gradle", state, project);
+                _gradleBuildMonitor.TailError += ex => LogAiEvent($"GradleBuildLogMonitor.TailFile threw: {ex}");
+                _gradleBuildMonitor.Start();
+            }
+            catch (Exception ex)
+            {
+                LogAiEvent($"GradleBuildLogMonitor.Start threw: {ex}");
+                _gradleBuildMonitor?.Dispose();
+                _gradleBuildMonitor = null;
+            }
+
+            try
+            {
+                _msBuildProcessMonitor = new MsBuildProcessMonitor();
+                _msBuildProcessMonitor.BuildStateChanged += (state, project) => OnBuildStateChanged("MSBuild", state, project);
+                _msBuildProcessMonitor.Error += ex => LogAiEvent($"MsBuildProcessMonitor threw: {ex}");
+                _msBuildProcessMonitor.Start();
+            }
+            catch (Exception ex)
+            {
+                LogAiEvent($"MsBuildProcessMonitor.Start threw: {ex}");
+                _msBuildProcessMonitor?.Dispose();
+                _msBuildProcessMonitor = null;
+            }
+        }
+        else
+        {
+            _gradleBuildMonitor?.Dispose();
+            _gradleBuildMonitor = null;
+            _msBuildProcessMonitor?.Dispose();
+            _msBuildProcessMonitor = null;
+        }
+    }
+
+    /// <summary>
+    /// Plain FACE/MSG, not NOTIFY -- a normal foreground message like the AI
+    /// hook bridge's own PreToolUse/Stop/PostToolUseFailure already send
+    /// (see ClaudeCodeHookInstaller's own notes), not a full-screen
+    /// interruption. These are momentary, non-sticky expressions -- unlike
+    /// MEETING/MUSIC/WATCHING/PLAYING, nothing here holds the screen, so
+    /// there's no tier to fight over; Core auto-clears the message on its
+    /// own MESSAGE_DURATION_MS after it finishes typing, so nothing needs to
+    /// be explicitly cleared here afterward. projectName, when a source
+    /// could extract one (see each monitor's/the VSIX's own extraction), is
+    /// the whole subject of the message -- "Build NFePack.Service.Core
+    /// iniciado!" -- since naming the actual project is more useful than
+    /// naming which internal mechanism noticed it. sourceLabel only shows up
+    /// as a parenthesized fallback subject on the rare source/build that
+    /// couldn't tell which project it was ("Build (Gradle) iniciado!"),
+    /// since MiMo's screen would otherwise say nothing about it at all.
+    /// </summary>
+    private void OnBuildStateChanged(string sourceLabel, BuildState state, string? projectName)
+    {
+        string subject = string.IsNullOrEmpty(projectName) ? $"({sourceLabel})" : projectName;
+        Dispatcher.Invoke(() =>
+        {
+            switch (state)
+            {
+                case BuildState.Started:
+                    _connection.SendCommand("FACE BUILDING");
+                    _connection.SendCommand($"MSG Build {subject} iniciado!");
+                    break;
+                case BuildState.Successful:
+                    _connection.SendCommand("FACE FINISHED");
+                    _connection.SendCommand($"MSG Build {subject} concluído!");
+                    break;
+                case BuildState.Failed:
+                    _connection.SendCommand("FACE ERROR");
+                    _connection.SendCommand($"MSG Build {subject} falhou!");
+                    break;
+            }
+        });
+    }
+
     private void SyncTemaComboBoxSelection(SenderSettings settings)
     {
         TemaComboBox.SelectedItem = ThemeManager.Available.FirstOrDefault(t => t.Key == settings.Theme)
@@ -1888,6 +2254,29 @@ public partial class MainWindow : Window
                     ClearAiStatsIfActive();
                     _aiThoughtFaceActive = false;
                     break;
+
+                // From Brobot.VSExtension (BrobotBuildWatcherPackage), not a
+                // Claude Code hook — same AiThoughtsListener wire, since it's
+                // the exact same "one line, EVENTNAME optional text" shape.
+                // Routed through the same OnBuildStateChanged Gradle/MSBuild
+                // already use rather than duplicating its FACE/MSG logic
+                // here. thought.Text is the specific project being compiled
+                // (from EnvDTE's own OnBuildProjConfigBegin/Done, not the
+                // solution as a whole), which is why "Visual Studio" only
+                // ever shows up here as OnBuildStateChanged's fallback
+                // subject, not as a label prefixing every message the way it
+                // used to when VisualStudioOutputMonitor was still active.
+                case "VsBuildStarted":
+                    OnBuildStateChanged("Visual Studio", BuildState.Started, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
+
+                case "VsBuildSucceeded":
+                    OnBuildStateChanged("Visual Studio", BuildState.Successful, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
+
+                case "VsBuildFailed":
+                    OnBuildStateChanged("Visual Studio", BuildState.Failed, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
             }
 
             PensamentosIaStatusText.Text = $"Último evento: {thought.Name}";
@@ -1960,6 +2349,7 @@ public partial class MainWindow : Window
         {
             0 => "Escolha as informações que o MiMo pode receber",
             1 => "O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado",
+            3 => "Reuniões detectadas nas notificações do Outlook",
             _ => string.Empty,
         };
     }
@@ -2176,6 +2566,7 @@ public partial class MainWindow : Window
         settings.MidiaEnabled = MediaCheckBox.IsChecked == true;
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
         settings.NotificationsEnabled = NotificationsCheckBox.IsChecked == true;
+        settings.BuildEnabled = BuildCheckBox.IsChecked == true;
         settings.SonsEnabled = SonsCheckBox.IsChecked == true;
         settings.ScanlinesEnabled = ScanlinesCheckBox.IsChecked == true;
         // Carried through rather than read off the UI: the address isn't
@@ -2242,6 +2633,7 @@ public partial class MainWindow : Window
         MediaCheckBox.IsChecked = settings.MidiaEnabled;
         GameCheckBox.IsChecked = settings.JogosEnabled;
         NotificationsCheckBox.IsChecked = settings.NotificationsEnabled;
+        BuildCheckBox.IsChecked = settings.BuildEnabled;
         SonsCheckBox.IsChecked = settings.SonsEnabled;
         ScanlinesCheckBox.IsChecked = settings.ScanlinesEnabled;
 
@@ -2307,6 +2699,13 @@ public partial class MainWindow : Window
         _mediaMonitor?.Dispose();
         _notificationMonitor?.Dispose();
         _teamsWatcher?.Dispose();
+        foreach (LiveCallMonitor monitor in _liveCallMonitors)
+        {
+            monitor.Dispose();
+        }
+        _gradleBuildMonitor?.Dispose();
+        _msBuildProcessMonitor?.Dispose();
+        _agendaTracker.Dispose();
         _gameMonitor?.Dispose();
         _statsMonitor?.Dispose();
         _weatherMonitor?.Dispose();

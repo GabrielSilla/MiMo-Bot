@@ -51,7 +51,7 @@ src/
                                      Brobot: MainWindow is three tabs (Configurações Gerais/Mini Games/
                                      Conquistas — see below). Configurações Gerais is the original
                                      card-based checklist (Conexão, Hora, Clima, Pausa, Notificações,
-                                     Atividade da IA, Mídia, Jogos, Tema, Sons, Scanlines — mostly
+                                     Atividade da IA, Mídia, Jogos, Build, Tema, Sons, Scanlines — mostly
                                      checkboxes, except Conexão (a status readout plus one button), Tema
                                      (a ComboBox) and Atividade da IA (an Instalar/Desinstalar button),
                                      see below). Mini Games holds one card per minigame (Pong, Batalha
@@ -67,7 +67,11 @@ src/
                                      AiThoughtsListener are the live data sources so far (Notificações also
                                      runs TeamsNotificationWatcher alongside NotificationMonitor — see
                                      Brobot.Sender internals below for why Teams needs its own, much more
-                                     fragile capture path), ClaudeCodeHookInstaller edits
+                                     fragile capture path), Build runs GradleBuildLogMonitor and
+                                     MsBuildProcessMonitor (see Brobot.Sender internals below for why
+                                     Visual Studio's own builds need a completely separate mechanism —
+                                     Brobot.VSExtension, not a monitor in this process at all),
+                                     ClaudeCodeHookInstaller edits
                                      Claude Code's own settings.json, ClaudeCodeAccount reads (never writes)
                                      ~/.claude.json to detect an account switch, SenderSettings persists
                                      checkbox/provider/connection state to %AppData%, GlobalKeyboardHook and
@@ -75,6 +79,22 @@ src/
                                      system-wide low-level keyboard hook the two minigames use to read
                                      arrow/Enter/Escape regardless of window focus.
                                      Icons via the MahApps.Metro.IconPacks.Material NuGet package.
+  Brobot.VSExtension/                A real Visual Studio extension (VSIX, `net472` — devenv.exe is
+                                     still .NET Framework even in modern VS), separate from
+                                     Brobot.Sender's own process entirely: `BrobotBuildWatcherPackage`
+                                     (an `AsyncPackage`) hooks `EnvDTE.BuildEvents.OnBuildProjConfigBegin/
+                                     Done` in-process and reports over the same AiThoughtsListener TCP
+                                     wire hooks/mimo-claude-hook.ps1 uses (`VsBuildStarted`/
+                                     `VsBuildSucceeded`/`VsBuildFailed`, one line each, port 5591) — see
+                                     Brobot.Sender internals below for why this exists as a separate
+                                     project instead of a fourth monitor next to Gradle/MSBuild's. Kept
+                                     out of BrobotVirtualDisplay.slnx (separate build, same treatment as
+                                     BrobotCore/native). Bundled into the MiMo Sender installer (see
+                                     Installer below) and installed automatically when Visual Studio is
+                                     detected on the machine — there's no in-app Instalar/Desinstalar
+                                     button for it the way Atividade da IA's Claude Code hook has, since
+                                     there's no equivalent "is VS even here" question to ask from inside
+                                     the app before the installer already answered it.
 hooks/                               mimo-claude-hook.ps1 (the Claude Code hook command) and
                                      mimo-claude-statusline.ps1 (its statusLine command — a different
                                      contract, see below); both wired up by ClaudeCodeHookInstaller and
@@ -1533,6 +1553,47 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   below for the main one (polling Windows' own notification platform) and
   `TeamsNotificationWatcher.cs` for the second, Teams-only one it needed on
   top of that, and why.
+- **Build** is a plain checkbox card, same shape as Mídia/Jogos, whose
+  checked state starts/stops exactly two of this app's own build monitors —
+  `GradleBuildLogMonitor` (tails a Gradle daemon log for `BUILD SUCCESSFUL`/
+  `BUILD FAILED`) and `MsBuildProcessMonitor` (polls WMI for
+  `MSBuild.exe`/`dotnet.exe` processes, excluding any `/nodemode`-tagged
+  worker to avoid counting one real build several times over — confirmed
+  live that a plain `dotnet build` spawns several of those). Both raise a
+  `BuildStateChanged(BuildState, string? projectName)` event that
+  `MainWindow.OnBuildStateChanged` turns into `FACE BUILDING`/`FINISHED`/
+  `ERROR` plus `MSG Build <project> iniciado!/concluído!/falhou!` — the
+  project name is the whole point of the message (`(sourceLabel)` in
+  parens is only a fallback for the rare case a source couldn't extract
+  one). **Visual Studio's own builds are not covered by either of these**,
+  and deliberately don't get a third monitor in this process at all —
+  `Brobot.VSExtension` (see repository layout above), a real VSIX loaded
+  in-process by `devenv.exe`, reports `VsBuildStarted`/`VsBuildSucceeded`/
+  `VsBuildFailed` straight to `AiThoughtsListener` instead, routed through
+  the same `OnBuildStateChanged` from `OnAiThoughtReceived`'s own switch.
+  This split exists because of a hard lesson, not a preference: an
+  *external* process calling into Visual Studio's own DTE/`BuildEvents` —
+  first with no protection, then again with a correctly-implemented
+  `IOleMessageFilter`, the standard documented COM fix for exactly this
+  class of problem — hung Visual Studio itself the instant a build started,
+  confirmed live both times. A same-process VSIX has none of that risk
+  (its DTE calls are ordinary same-thread calls, the same way any of VS's
+  own internal code already talks to itself), which is the whole reason it
+  exists as a separate project rather than a fourth `Brobot.Sender`
+  monitor. An earlier UI-Automation approach (reading the Output window's
+  own rendered text) worked too and carries no such risk either, but needed
+  the Output tab to actually be the selected tab to keep working — that
+  class (`VisualStudioOutputMonitor.cs`) is kept in the repo but no longer
+  wired into this checkbox now that the VSIX is confirmed reliable; running
+  both at once was producing two separate, differently-worded messages for
+  the same build. See `Brobot.VSExtension`'s own header comment for why it
+  hooks `OnBuildProjConfigBegin`/`OnBuildProjConfigDone` specifically
+  (per-*project*, firing once per project MSBuild actually processes, each
+  with its own name and a direct success bool) rather than the
+  solution-level `OnBuildBegin`/`OnBuildDone` pair an earlier version used
+  — the solution-level pair has no project name to report at all, and
+  `SolutionBuild.LastBuildInfo`'s failed-project *count* is a strictly
+  worse signal than a same-project success bool handed to you directly.
 - **Tema** is a `ComboBox` (`TemaComboBox`, `ThemeManager.Available`) picking
   between "MiMo Classic", "MiMo Matrix", "MiMo Mi2-Mo2" and "MiMo-84" — one control driving two
   unrelated systems: `ThemeManager.Apply` swaps this app's own WPF skin
@@ -2232,8 +2293,44 @@ that could both start it (Start Menu, and an optional "start with Windows"
 shortcut in `{userstartup}`) — before the installer existed this was only
 ever launched by hand, so the collision wasn't a real scenario yet.
 
-The uninstaller deliberately leaves `%AppData%\Brobot` (settings, weather/
-game caches) and any Claude Code hook entries `ClaudeCodeHookInstaller`
+**Also silently installs `Brobot.VSExtension`'s `.vsix`** (see Repository
+layout and Brobot.Sender internals above) when Visual Studio is present on
+the machine, and only then — most people running this installer won't have
+Visual Studio at all, so this must never be a hard requirement to build or
+install MiMo Sender itself. `build-installer.ps1` builds that project in
+Release (`dotnet build`, not `dotnet publish` — a VSIX isn't a
+self-contained app) and stages the resulting `.vsix` into
+`installer\vsix\` before `ISCC.exe` runs, which bundles it into the
+installer's own compressed payload (`[Files] ... DestDir: "{tmp}"`).
+Detection is Inno Pascal Script in the `.iss`'s own `[Code]` section
+(`DetectVisualStudio`), using `vswhere.exe` — shipped at the same stable
+path (`{commonpf32}\Microsoft Visual Studio\Installer\vswhere.exe`) by
+every VS2017+ install, and the documented, supported way to find an
+edition's install directory without guessing at per-edition/version
+registry keys. Queried with `-latest -version "[17.0,19.0)"` — the same
+range as the VSIX manifest's own `InstallationTarget`, so Setup doesn't
+hand the package to an incompatible edition just to have it fail to
+register inside VS later. `InitializeSetup` runs the detection once and
+caches the result (`VSDetected`/`VSInstallPath`) for the `[Run]` entry's
+`Check: ShouldInstallVsExtension`; that entry calls the detected
+`VSIXInstaller.exe` directly with `/quiet` (no `/admin` — matching this
+installer's own per-user default) so the install is silent, with no
+second wizard popping up inside the first one. `[UninstallRun]` mirrors
+this to remove the extension again (`/uninstall:<vsixID> /quiet`), but
+re-runs `DetectVisualStudio` fresh (`ShouldUninstallVsExtension`) rather
+than trusting a value from install time, since VS could have been added,
+removed, or moved in the meantime — confirmed live end-to-end (installed
+once, uninstalled the extension by hand, ran the installer again: exit
+code 0 and a correctly-registered `.pkgdef`). This is also the one piece
+of external integration this installer manages without an in-app
+Instalar/Desinstalar button the way Atividade da IA's Claude Code hook
+has (see `[UninstallRun]`'s own comment in the .iss for why: it's the one
+thing *this installer* put there silently, with no equivalent deliberate
+user action to undo it, so removing it again is this installer's job too
+— unlike the Claude Code hook, which the uninstaller leaves alone below).
+
+The uninstaller otherwise deliberately leaves `%AppData%\Brobot` (settings,
+weather/game caches) and any Claude Code hook entries `ClaudeCodeHookInstaller`
 wrote to `%USERPROFILE%\.claude\settings.json` untouched — those are the
 user's own data/config, not installed program files; anyone who installed
 the hook should click "Desinstalar" on MiMo Sender's own Atividade da IA

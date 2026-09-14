@@ -32,6 +32,36 @@ if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish falhou (exit code $LASTEXITCODE)"
 }
 
+Write-Host "== Compilando a extensao do Visual Studio (Brobot.VSExtension) ==" -ForegroundColor Cyan
+# Not dotnet-published like Brobot.Sender above -- a VSIX isn't a
+# self-contained app, it's a package VSIXInstaller.exe copies into VS's own
+# extensions folder, so a plain Release build (which is what already
+# produces the .vsix via the project's own CreateVsixContainer target -- see
+# Brobot.VSExtension.csproj's own comments) is all that's needed here. The
+# installer bundles this .vsix and, at install time, conditionally hands it
+# to VSIXInstaller.exe only on a machine where Visual Studio is actually
+# detected (see BrobotSenderSetup.iss's [Code] section) -- most people
+# running this installer won't have VS at all, so this must never be a hard
+# requirement to build or run MiMo Sender itself.
+$vsExtensionCsproj = Join-Path $repoRoot "src\Brobot.VSExtension\Brobot.VSExtension.csproj"
+$vsixStagingDir = Join-Path $installerDir "vsix"
+if (Test-Path $vsixStagingDir) {
+    Remove-Item $vsixStagingDir -Recurse -Force
+}
+New-Item -ItemType Directory -Path $vsixStagingDir | Out-Null
+
+dotnet build $vsExtensionCsproj -c Release --nologo -v quiet
+
+if ($LASTEXITCODE -ne 0) {
+    throw "dotnet build da extensao do Visual Studio falhou (exit code $LASTEXITCODE)"
+}
+
+$builtVsix = Join-Path $repoRoot "src\Brobot.VSExtension\bin\Release\net472\Brobot.VSExtension.vsix"
+if (-not (Test-Path $builtVsix)) {
+    throw "Brobot.VSExtension.vsix nao foi gerado em $builtVsix"
+}
+Copy-Item $builtVsix (Join-Path $vsixStagingDir "Brobot.VSExtension.vsix") -Force
+
 Write-Host "== Localizando o Inno Setup (ISCC.exe) ==" -ForegroundColor Cyan
 $isccCommand = Get-Command ISCC.exe -ErrorAction SilentlyContinue
 if ($isccCommand) {

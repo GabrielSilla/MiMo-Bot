@@ -39,6 +39,12 @@
          RAM load, GPU load, GPU temperature) all come from sources that need
          no kernel driver at all. -->
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <!-- MsBuildProcessMonitor's process command-line reads (Process itself
+         exposes a name and PID, never its arguments for anyone else's
+         process) — not included by default in a net8.0-windows TFM the way
+         it was on .NET Framework. Version pinned to match (not undercut)
+         LibreHardwareMonitorLib's own transitive floor on this package. -->
+    <PackageReference Include="System.Management" Version="10.0.2" />
   </ItemGroup>
 
   <PropertyGroup>

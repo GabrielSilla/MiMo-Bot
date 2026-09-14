@@ -1,0 +1,96 @@
+<Project>
+
+  <!-- Explicit two-import form (Sdk.props / Sdk.targets) instead of the
+       usual <Project Sdk="Microsoft.NET.Sdk"> one-liner — deliberate: that
+       shorthand always inserts this whole file's body *before* the SDK's
+       own closing targets import, which is exactly where $(TargetPath) gets
+       defined. VsSDK.targets' own PropertyGroup reads $(TargetPath) once,
+       at file-evaluation time, to default $(CreatePkgDefAssemblyToProcess)
+       — imported too early, that default silently evaluates to empty and
+       GeneratePkgDef has nothing to process (confirmed live: the target ran
+       but produced no .pkgdef, then CopyPkgDef failed trying to copy a file
+       that was never written). Importing VsSDK.targets only *after* the
+       SDK's own closing import is what actually fixes it. -->
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <!-- net472, not net8.0 — deliberate: devenv.exe itself is still a
+         .NET Framework process even in this modern VS ("18"), so anything
+         loaded in-process (an AsyncPackage/MEF component) has to target
+         classic .NET Framework, unlike every other Brobot.* project here.
+         Kept out of BrobotVirtualDisplay.slnx for that reason, same
+         "separate build, doesn't slow down the normal dev loop" treatment
+         BrobotCore/native already gets. -->
+    <TargetFramework>net472</TargetFramework>
+    <UseWindowsForms>false</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+    <StartAction>Program</StartAction>
+    <!-- DeployExtension defaults to true (it's what F5 experimental-instance
+         debugging uses), and VsSDK.targets hard-refuses that combined with
+         'dotnet build' (MSBuildRuntimeType=Core) — "VSIX deployment is not
+         supported with 'dotnet build'". This project is only ever built from
+         the CLI (no VS "extension development" workload here, see above), so
+         there's no F5 deploy step to preserve; turning it off is what lets
+         CreateVsixContainer still produce the .vsix on its own. -->
+    <DeployExtension>false</DeployExtension>
+    <!-- Confirmed live: without this, GeneratePkgDef writes an "Assembly"
+         registry value with no "CodeBase" entry, so on load VS falls back to
+         plain .NET assembly-probing (devenv.exe's own IDE folder and its
+         standard PublicAssemblies/PrivateAssemblies/... subfolders) instead
+         of the actual extension install directory under
+         %LocalAppData%\Microsoft\VisualStudio\...\Extensions\<hash>\ —
+         FileNotFoundException every time, package never loads. The classic
+         (non-SDK) VSIX project template always sets this; an SDK-style
+         project has to opt in by hand since nothing else here implies it. -->
+    <RegisterWithCodebase>true</RegisterWithCodebase>
+    <!-- No "VS extension development" workload installed on this machine —
+         GeneratePkgDefFile/VSSDK build tooling comes entirely from the
+         NuGet packages below, same as a CI build would use, so the IDE
+         workload (project templates, F5 experimental-instance debugging)
+         isn't needed just to compile and package this. -->
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.10.2178" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.10.40171" ExcludeAssets="runtime" />
+    <PackageReference Include="EnvDTE" Version="17.11.40262" />
+    <PackageReference Include="EnvDTE80" Version="17.11.40262" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!-- The NuGet package's own auto-imported props/targets only set up
+       VsSDKInstall/VSToolsPath and one small helper target — the big
+       targets file that actually defines CreateVsixContainer/GeneratePkgDef
+       (what turns this into a real .vsix) is something the classic VSIX
+       project template imports explicitly, not something NuGet restore
+       wires up on its own for an SDK-style project like this one. Placed
+       *after* Sdk.targets specifically so $(TargetPath) is already defined
+       by the time it evaluates (see this file's own top comment). -->
+  <Import Project="$(VsSDKInstall)\Microsoft.VsSDK.targets" Condition="Exists('$(VsSDKInstall)\Microsoft.VsSDK.targets')" />
+
+  <!-- The classic VsSDK.targets file only *extends* $(PrepareForRunDependsOn)
+       to add GeneratePkgDef/CreateVsixContainer/etc — it assumes something
+       else already defines a PrepareForRun target that respects that list,
+       which is true for a traditional non-SDK project but not reliably here.
+       Requesting those targets directly after Build sidesteps that
+       fragility instead of fighting it. -->
+  <Target Name="BrobotCreateVsix" AfterTargets="Build" DependsOnTargets="GeneratePkgDef;CopyPkgDef;CreateVsixContainer" />
+
+</Project>
