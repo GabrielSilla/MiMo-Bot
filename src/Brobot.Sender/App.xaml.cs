@@ -43,6 +43,7 @@ public partial class App : System.Windows.Application
         }
 
         DispatcherUnhandledException += OnDispatcherUnhandledException;
+        SessionEnding += OnSessionEnding;
 
         // Must happen before MainWindow is constructed: its XAML resolves
         // brush DynamicResources against Application.Resources as soon as
@@ -63,5 +64,15 @@ public partial class App : System.Windows.Application
         System.Windows.MessageBox.Show($"Erro inesperado: {e.Exception.Message}", "MiMo",
             MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;
+    }
+
+    // The one termination path the tray's own "Sair" (MainWindow.
+    // ExitApplication) never sees: Windows logging the user off or shutting
+    // down, with nobody having clicked anything in this app. Not cancelled —
+    // there's no reason for this app to block a shutdown the user asked for,
+    // only to say goodbye to MiMo first if it's actually reachable right now.
+    private void OnSessionEnding(object? sender, SessionEndingCancelEventArgs e)
+    {
+        (MainWindow as MainWindow)?.SendFarewellForShutdown();
     }
 }

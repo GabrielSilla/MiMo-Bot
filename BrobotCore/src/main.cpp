@@ -36,6 +36,14 @@ WiFiClient protocolClient;
 // const char*; the string is assigned once and never mutated afterward, so
 // its c_str() pointer stays valid for the rest of the program.
 String pcWaitingMessage;
+
+// Whether any PC app has connected at all since this boot. The waiting
+// screen above exists purely to get a *first* connection going -- once
+// that's happened, a later disconnect (Brobot.Sender's tray "Sair", a
+// Windows shutdown/logoff, or just a dropped link) should look like the
+// device actually switched off, not loop back to "please connect" forever.
+// See loop()'s render section.
+bool everConnected = false;
 #endif
 
 Personality personality;
@@ -137,6 +145,7 @@ void loop() {
     }
     bool pcConnected = protocolClient && protocolClient.connected();
     if (pcConnected) {
+        everConnected = true;
         protocol.poll(protocolClient, now);
     }
 #else
@@ -221,19 +230,28 @@ void loop() {
             rpgBattle.render(display, now);
         } else {
 #if defined(ESP32)
-            if (!pcConnected) {
-                // No PC app connected right now (still waiting after boot, or
-                // Brobot.Sender dropped) — show the persistent IP message
-                // instead of Personality's own idle face, bypassing Personality
-                // entirely (same trick the config-portal screen in setup()
-                // uses): this has to stay up indefinitely, and with no PC
-                // connected there's no FACE/MSG command that could arrive to
-                // drive Personality's own message system anyway.
+            if (!pcConnected && !everConnected) {
+                // Still waiting for the very first connection since boot —
+                // show the persistent IP message instead of Personality's own
+                // idle face, bypassing Personality entirely (same trick the
+                // config-portal screen in setup() uses): this has to stay up
+                // indefinitely, and with no PC connected there's no FACE/MSG
+                // command that could arrive to drive Personality's own
+                // message system anyway.
                 FaceState waitingState;
                 waitingState.expression = Expression::FINISHED;
                 waitingState.message = pcWaitingMessage.c_str();
                 waitingState.nowMs = now;
                 Face::render(display, waitingState);
+            } else if (!pcConnected) {
+                // A PC app has connected before and just isn't right now —
+                // Brobot.Sender already said its goodbye over NOTIFY BYE
+                // while the link was still open (see MainWindow's
+                // SendFarewellAndWait), so by the time the disconnect
+                // actually lands here the screen should just go dark, the
+                // same as a real device switched off, rather than resurrect
+                // the "please connect" screen every single time. Nothing to
+                // draw — display.clear() above already left the frame black.
             } else {
                 renderPersonalityFrame(now);
             }

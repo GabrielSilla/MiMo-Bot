@@ -537,6 +537,11 @@ public partial class MainWindow : Window
             _connection.SendCommand("SCANLINES OFF");
         }
         if (connected && !_wasConnected) {
+            // A time-of-day greeting, same as Pausa/Clima's own canned
+            // lines — picked here rather than on Core, since Core has no
+            // RTC and no memory of previous days (see GreetingMessages).
+            (string greetingFace, string greetingText) = GreetingMessages.ForConnect(DateTime.Now);
+            _connection.SendCommand($"NOTIFY {greetingFace} {greetingText}");
             _achievements.OnConnected();
         }
         _achievements.Tick(connected);
@@ -2692,8 +2697,48 @@ public partial class MainWindow : Window
         RootScrollViewer.ScrollToTop();
     }
 
+    /// <summary>
+    /// Extra time (beyond however long the farewell text takes to type
+    /// itself in — see CoreTypingCharIntervalMs) to actually hold the
+    /// connection open before disconnecting, so there's a moment to read
+    /// the line rather than disconnecting the instant it finishes typing.
+    /// </summary>
+    private const int FarewellReadMarginMs = 1200;
+
+    /// <summary>
+    /// Sends a time-of-day goodbye (see GreetingMessages.ForDisconnect) and
+    /// blocks long enough for it to actually show before the caller tears
+    /// the connection down. Blocking matters specifically on real hardware:
+    /// the instant the TCP link drops, Core falls back to its own "MiMo
+    /// Configurado" waiting screen (see BrobotCore/src/main.cpp's
+    /// pcConnected check), so without this pause the farewell would be
+    /// visible for at most a frame, if at all. No-op if MiMo isn't even
+    /// connected right now — there's nothing to say goodbye to.
+    /// </summary>
+    private void SendFarewellAndWait()
+    {
+        if (!_connection.IsConnected)
+        {
+            return;
+        }
+        (string face, string text) = GreetingMessages.ForDisconnect(DateTime.Now);
+        _connection.SendCommand($"NOTIFY {face} {text}");
+        System.Threading.Thread.Sleep(text.Length * CoreTypingCharIntervalMs + FarewellReadMarginMs);
+    }
+
+    /// <summary>
+    /// Called from App.OnSessionEnding when Windows is logging off or
+    /// shutting down — the one termination path ExitApplication() never
+    /// sees, since nobody clicked "Sair". Same farewell, same blocking
+    /// wait; Windows allows a few seconds here before forcing the process
+    /// closed, and FarewellReadMarginMs plus a short line's typing time
+    /// comfortably fits inside that.
+    /// </summary>
+    internal void SendFarewellForShutdown() => SendFarewellAndWait();
+
     private void ExitApplication()
     {
+        SendFarewellAndWait();
         _trayIcon!.Visible = false;
         _trayIcon.Dispose();
         _mediaMonitor?.Dispose();

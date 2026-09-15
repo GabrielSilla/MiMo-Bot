@@ -2822,6 +2822,27 @@ void drawCoffeeNotification(IDisplay& display, const FaceState& state, const Not
                     p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
 }
 
+// The Sender-triggered "MiMo says hi/bye" notification (see PROTOCOL.md's
+// NOTIFY and GreetingMessages.cs on the PC side, which picks the text by
+// time of day) reuses BYE's own established layout wholesale — the plain
+// foreground BYE_EYES_CENTER_X/EYE_Y/EYE_SIZE/EYE_GAP and drawByeHand's
+// default (unmirrored) pivot — rather than inventing a NOTIF_BYE_* set like
+// every other icon above: that layout was already sized for the full
+// 160x128 frame, and both eyes and the hand's full swing already sit well
+// inside the notification's own y<NOTIFICATION_TEXT_TOP_Y art area, so
+// there was nothing to retune. Blink comes from the ordinary openFactor
+// parameter (state.blinkAmount), exactly like every other icon notification
+// here -- unlike a *foreground* BYE, raising a notification never touches
+// _renderExpression (see Personality::raiseNotification), so the hold-still
+// branch that normally zeroes BYE's blink never engages here.
+void drawByeNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                         float openFactor) {
+    drawNotificationEyes(display, BYE_EYES_CENTER_X, BYE_EYE_Y,
+                         BYE_EYE_SIZE, BYE_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+    drawByeHand(display, state.nowMs, p.inkR, p.inkG, p.inkB);
+}
+
 // Weather alerts. One notification screen serves every condition: the token
 // on the wire is just WEATHER, and which artwork gets drawn comes from
 // FaceState::weatherCondition — the same value the WEATHER command already
@@ -3677,6 +3698,8 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
         drawEmailNotification(display, state, p, 1.0f - state.blinkAmount);
     } else if (state.expression == Expression::MEETING) {
         drawMeetingNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::BYE) {
+        drawByeNotification(display, state, p, 1.0f - state.blinkAmount);
     } else {
         // Any notification without artwork of its own: just MiMo, blinking,
         // with the message below. There is deliberately no placeholder
