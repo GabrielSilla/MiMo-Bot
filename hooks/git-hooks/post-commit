@@ -1,8 +1,9 @@
 #!/bin/sh
 # Installed via core.hooksPath by GitHookInstaller (see
 # src/Brobot.Sender/GitHookInstaller.cs) -- static, never rewritten. Resolves
-# mimo-git-hook.ps1 relative to this file's own folder so the shim keeps
-# working wherever Brobot.Sender.exe (and this copied-to-output folder)
-# happens to be installed.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/mimo-git-hook.ps1" -EventName GitCommit
+# mimo-git-hook.ps1 relative to this file's own folder (one level up --
+# mimo-git-hook.ps1 is copied to the output root, this shim to output/git-hooks/,
+# see the csproj) so it keeps working wherever Brobot.Sender.exe (and this
+# copied-to-output folder) happens to be installed.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/../mimo-git-hook.ps1" -EventName GitCommit
 exit 0

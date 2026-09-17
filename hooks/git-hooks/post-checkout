@@ -8,6 +8,6 @@
 # mimo-git-hook.ps1 so a noisy file-restore checkout never even spawns
 # powershell.exe.
 if [ "$3" = "1" ]; then
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/mimo-git-hook.ps1" -EventName GitCheckout
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/../mimo-git-hook.ps1" -EventName GitCheckout
 fi
 exit 0
