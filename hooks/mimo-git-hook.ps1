@@ -76,7 +76,7 @@ switch ($EventName) {
         $subject = (git log -1 --pretty=%s 2>$null)
         $branch = Get-CurrentBranch
         if ($subject) {
-            $text = if ($branch) { "[$branch] $subject" } else { $subject }
+            $text = if ($branch) { "Commit: $subject. Branch: $branch" } else { "Commit: $subject" }
         }
     }
 
@@ -95,7 +95,7 @@ switch ($EventName) {
 
     "GitPush" {
         $branch = Get-CurrentBranch
-        if ($branch) { $text = "Push de $branch..." }
+        $text = if ($branch) { "push iniciado para branch: $branch" } else { "push iniciado" }
     }
 }
 
