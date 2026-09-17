@@ -597,27 +597,27 @@ void Personality::onAchievementCommand(const char* args, unsigned long now) {
     raiseNotification(Expression::ACHIEVEMENT, text, now);
 }
 
-// "REPORT <buildOk> <buildFail> <meetingMin> <mediaMin> <gameMin> <RATING>
-// <texto>" — Brobot.Sender's own daily Relatório (see DailyReportTracker.cs
-// on the PC side), same one-atomic-line, own-top-level-command shape as
-// ACHIEVEMENT above and for the same reason: it carries more structure than
-// a plain NOTIFY <expressao> <texto> can. The five integers are parsed the
-// same strtol-advancing-a-cursor way onStatsCommand parses STATS below —
-// except a missing/malformed field here just stays 0 rather than -1, since
-// Sender always has real accumulated numbers for these, never "no source"
-// the way a hardware sensor STATS reads from can. <RATING> is then split
-// off the remainder exactly like ACHIEVEMENT's own <ID> above. Core, not
-// Brobot.Sender, decides how the numbers actually read on screen
-// (drawReportNotification in Face.cpp) — Sender only ever hands over what
-// happened today.
+// "REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <gameMin>
+// <RATING> <texto>" — Brobot.Sender's own daily Relatório (see
+// DailyReportTracker.cs on the PC side), same one-atomic-line, own-top-
+// level-command shape as ACHIEVEMENT above and for the same reason: it
+// carries more structure than a plain NOTIFY <expressao> <texto> can. The
+// six integers are parsed the same strtol-advancing-a-cursor way
+// onStatsCommand parses STATS below — except a missing/malformed field
+// here just stays 0 rather than -1, since Sender always has real
+// accumulated numbers for these, never "no source" the way a hardware
+// sensor STATS reads from can. <RATING> is then split off the remainder
+// exactly like ACHIEVEMENT's own <ID> above. Core, not Brobot.Sender,
+// decides how the numbers actually read on screen (drawReportNotification
+// in Face.cpp) — Sender only ever hands over what happened today.
 void Personality::onReportCommand(const char* args, unsigned long now) {
     if (args[0] == '\0') {
         return;
     }
 
-    int values[5] = {0, 0, 0, 0, 0};
+    int values[6] = {0, 0, 0, 0, 0, 0};
     const char* cursor = args;
-    for (int i = 0; i < 5 && cursor != nullptr && *cursor != '\0'; i++) {
+    for (int i = 0; i < 6 && cursor != nullptr && *cursor != '\0'; i++) {
         char* end = nullptr;
         long parsed = strtol(cursor, &end, 10);
         if (end == cursor) {
@@ -652,9 +652,10 @@ void Personality::onReportCommand(const char* args, unsigned long now) {
 
     _notificationReportBuildOk = values[0];
     _notificationReportBuildFail = values[1];
-    _notificationReportMeetingMin = values[2];
-    _notificationReportMediaMin = values[3];
-    _notificationReportGameMin = values[4];
+    _notificationReportCommits = values[2];
+    _notificationReportMeetingMin = values[3];
+    _notificationReportMediaMin = values[4];
+    _notificationReportGameMin = values[5];
     _notificationReportRating = parseDailyRating(nameBuf);
     raiseNotification(Expression::REPORT, text, now);
 }
@@ -901,6 +902,7 @@ FaceState Personality::currentState() const {
         state.achievementIcon = _notificationAchievementIcon;
         state.reportBuildOk = _notificationReportBuildOk;
         state.reportBuildFail = _notificationReportBuildFail;
+        state.reportCommits = _notificationReportCommits;
         state.reportMeetingMin = _notificationReportMeetingMin;
         state.reportMediaMin = _notificationReportMediaMin;
         state.reportGameMin = _notificationReportGameMin;

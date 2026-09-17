@@ -12,11 +12,13 @@ MSG <text>                    (empty text clears the message)
 WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears the badge)
 TIME <HH:MM>                  (empty clears the clock)
 NOTIFY <FACE> <text>          (top-priority full-screen interruption, auto-clears after 10s)
-REPORT <buildOk> <buildFail> <meetingMin> <mediaMin> <gameMin> <RATING> <text>
+REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <gameMin> <RATING> <text>
                                (Relatório do dia — same tier/atomicity as NOTIFY, but Core
-                               draws the 5 numbers as 6 stacked lines with small top-pinned
+                               draws the 6 numbers as 7 stacked lines with small top-pinned
                                eyes instead of word-wrapping one string; RATING is one of
-                               PESSIMO|RUIM|QUESTIONAVEL|MEDIO|BOM|EXCELENTE)
+                               PESSIMO|RUIM|QUESTIONAVEL|MEDIO|BOM|EXCELENTE; commits comes
+                               from hooks/mimo-git-hook.ps1's post-commit hook, not a
+                               Windows monitor like the other fields)
 THEME <DEFAULT|MATRIX|MI2MO2|MI84> (persistent, like WEATHER/TIME — see Face.cpp's theme notes)
 CLASSICCOLOR <BLUE|GREEN|AMBER|RED|PINK|WHITE> (DEFAULT theme's own primary
                                color — eyes, corner icons, weather/clock

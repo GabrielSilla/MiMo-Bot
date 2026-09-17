@@ -1059,7 +1059,7 @@ public partial class MainWindow : Window
         string ratingToken = DailyReportMessages.WireToken(result.Rating);
         string ratingLabel = DailyReportMessages.RatingLabel(result.Rating);
 
-        string command = $"REPORT {result.BuildSuccessCount} {result.BuildFailCount} " +
+        string command = $"REPORT {result.BuildSuccessCount} {result.BuildFailCount} {result.CommitCount} " +
             $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.GameMinutes)} " +
             $"{ratingToken} {heading} {message}";
 
@@ -2466,6 +2466,7 @@ public partial class MainWindow : Window
                 case "GitCommit":
                     _connection.SendCommand("FACE FINISHED");
                     SendAiMessage(thought.Text, fallback: "Commit feito!");
+                    _dailyReport.RecordCommit();
                     break;
 
                 case "GitMerge":

@@ -136,6 +136,7 @@ private:
     // _notificationAchievementIcon just above.
     int _notificationReportBuildOk = 0;
     int _notificationReportBuildFail = 0;
+    int _notificationReportCommits = 0;
     int _notificationReportMeetingMin = 0;
     int _notificationReportMediaMin = 0;
     int _notificationReportGameMin = 0;

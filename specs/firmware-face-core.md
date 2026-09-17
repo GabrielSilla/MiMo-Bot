@@ -76,19 +76,21 @@
   in PROTOCOL.md) is the one notification whose eyes shrink **up** instead
   of **left**: every other notification with its own artwork (`COFFEE`/
   `EMAIL`/`MEETING`/`ACHIEVEMENT`) frees the right side of the frame for an
-  icon, but this one needs the *entire* frame below the eyes for six
+  icon, but this one needs the *entire* frame below the eyes for seven
   stacked stat lines instead of one wrapped sentence — a real usability
   complaint on the physical display, everything running together in prose
   instead of being scannable per item. `NOTIF_REPORT_EYE_SIZE`/`_GAP`/`_Y`
   pin small (18px) eyes to top-center via the same generic
   `drawNotificationEyes(centerX, topY, ...)` every other notification icon
   already calls — no changes needed there, it already took position as
-  plain parameters. Six `display.drawText` calls follow at
+  plain parameters. Seven `display.drawText` calls follow at
   `MESSAGE_LINE_HEIGHT` (9px) pitch, left-aligned at `NOTIF_REPORT_STATS_X`:
-  build success/fail counts, meeting/media/game time (`formatReportMinutes`,
-  `"Xh20"`/`"Nmin"`), and the rating (`dailyRatingLabel`, no accents — same
-  convention as `BEDTIME_MESSAGES` in Personality.cpp). None of these six
-  type in — they're numbers Sender already computed, not speech, same
+  build success/fail counts, git commit count (from `hooks/mimo-git-hook.ps1`'s
+  `post-commit` hook, not a Windows monitor), meeting/media/game time
+  (`formatReportMinutes`, `"Xh20"`/`"Nmin"`), and the rating
+  (`dailyRatingLabel`, no accents — same convention as `BEDTIME_MESSAGES` in
+  Personality.cpp). None of these seven type in — they're numbers Sender
+  already computed, not speech, same
   reasoning the coffee cup or trophy badge never animate character-by-
   character either. `drawNotificationText` (the shared word-wrapped message
   renderer every notification's trailing casual text goes through) gained a

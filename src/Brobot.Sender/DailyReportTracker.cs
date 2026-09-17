@@ -51,6 +51,14 @@ public sealed class DailyReportTracker
         DailyReportStore.Save(_progress);
     }
 
+    /// <summary>Call from OnAiThoughtReceived's "GitCommit" case (see hooks/mimo-git-hook.ps1's post-commit shim) — once per real commit, same immediate-save treatment as the two build counters above.</summary>
+    public void RecordCommit()
+    {
+        RollOverDayIfNeeded();
+        _progress.CommitCount++;
+        DailyReportStore.Save(_progress);
+    }
+
     /// <summary>Call from GameMonitor's own GameChanged handler (and when the Jogos checkbox turns off) with whether a game is currently detected.</summary>
     public void SetGameActive(bool active) => _gameActive = active;
 
@@ -112,7 +120,7 @@ public sealed class DailyReportTracker
     {
         RollOverDayIfNeeded();
         return DailyReportScoring.Evaluate(
-            _progress.BuildSuccessCount, _progress.BuildFailCount,
+            _progress.BuildSuccessCount, _progress.BuildFailCount, _progress.CommitCount,
             _progress.MeetingSeconds, _progress.MediaSeconds, _progress.GameSeconds);
     }
 
@@ -127,6 +135,7 @@ public sealed class DailyReportTracker
         _progress.Date = today;
         _progress.BuildSuccessCount = 0;
         _progress.BuildFailCount = 0;
+        _progress.CommitCount = 0;
         _progress.MeetingSeconds = 0;
         _progress.MediaSeconds = 0;
         _progress.GameSeconds = 0;

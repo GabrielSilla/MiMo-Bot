@@ -32,28 +32,32 @@
   slot (`RelatorioCheckBox_CheckedChanged`/`CheckReportTime`, mirroring
   `PausaCheckBox_CheckedChanged`/`CheckBreakTime`). On a match,
   `SendDailyReport` (via the shared `SendReport(heading)`) sends one
-  `REPORT <buildOk> <buildFail> <meetingMin> <mediaMin> <gameMin> <RATING>
-  <texto>` line (see PROTOCOL.md) — same atomic/top-priority tier as
-  `NOTIFY`, but its own top-level command, same reasoning `ACHIEVEMENT`
-  already established: it carries more structure (five numbers plus a
+  `REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <gameMin>
+  <RATING> <texto>` line (see PROTOCOL.md) — same atomic/top-priority tier
+  as `NOTIFY`, but its own top-level command, same reasoning `ACHIEVEMENT`
+  already established: it carries more structure (six numbers plus a
   rating token) than a plain expression+text notification can. Sender only
   ever hands over `DailyReportTracker.BuildReport()`'s raw numbers and
   `DailyReportMessages.WireToken(rating)` — Core decides how those numbers
-  actually read on screen (six stacked stat lines with small top-pinned
+  actually read on screen (seven stacked stat lines with small top-pinned
   eyes, see `specs/firmware-face-core.md`'s `drawReportNotification`), not
   Sender; an earlier version hand-formatted one long `NOTIFY <FACE> <text>`
   string here and it read badly on the real display, everything running
   together instead of being scannable per item — REPORT replaced it.
   Unlike every other card here,
   Relatório doesn't watch a live signal of its own; it sums signals the
-  other cards already raise (`DailyReportTracker`, mirroring
-  `AchievementMonitor`'s own accumulate-daily-counters/`Tick`/
-  `RollOverDayIfNeeded` shape almost exactly, but as its own class over its
-  own `daily-report.json` — unrelated concern from achievements, kept
-  separate the same way `SenderSettings` and `AchievementProgress` already
-  are): `RecordBuildSuccess`/`RecordBuildFailure` from
-  `OnBuildStateChanged`'s `Successful`/`Failed` cases (not `Started`, or one
-  build would double-count), `SetMeetingActive` from `OnLiveCallChanged`
+  other cards (plus one non-card source, see `RecordCommit` below) already
+  raise (`DailyReportTracker`, mirroring `AchievementMonitor`'s own
+  accumulate-daily-counters/`Tick`/`RollOverDayIfNeeded` shape almost
+  exactly, but as its own class over its own `daily-report.json` —
+  unrelated concern from achievements, kept separate the same way
+  `SenderSettings` and `AchievementProgress` already are):
+  `RecordBuildSuccess`/`RecordBuildFailure` from `OnBuildStateChanged`'s
+  `Successful`/`Failed` cases (not `Started`, or one build would
+  double-count), `RecordCommit` from `OnAiThoughtReceived`'s `"GitCommit"`
+  case (the git hook bridge below, not a checkbox card of its own — a
+  commit counts toward the day regardless of whether any monitor happens
+  to be running), `SetMeetingActive` from `OnLiveCallChanged`
   (`_activeCalls.Count > 0`), `SetGameActive` from `OnGameChanged`/Jogos'
   unchecked branch, and `SetMediaActive` from `OnNowPlayingChanged`/Mídia's
   unchecked branch — deliberately broader than `AchievementMonitor.
@@ -72,8 +76,11 @@
   a `Baseline` of 50 (a totally quiet day lands exactly on Médio — "nothing
   happened" isn't a verdict in either direction), successful builds worth
   more than failed ones but **both positive** (either one means work
-  happened — a deliberate product decision, not an oversight), meeting time
-  worth points per 30 min (it's work too), and game time free for the first
+  happened — a deliberate product decision, not an oversight), a git commit
+  worth points too (`CommitPoints`, between `BuildFailPoints` and
+  `BuildSuccessPoints` — real progress, but not the same signal as a build
+  actually passing), meeting time worth points per 30 min (it's work too),
+  and game time free for the first
   30 min/day then penalized on a **triangular ramp** per extra 30-min block
   (block *n* costs `n * GamePenaltyPerBlock` on top of every block before
   it, so a two-hour session hurts far more than proportionally) —

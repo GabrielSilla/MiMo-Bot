@@ -19,6 +19,7 @@ public sealed class DailyReportProgress
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
     public int BuildSuccessCount { get; set; }
     public int BuildFailCount { get; set; }
+    public int CommitCount { get; set; }
     public double MeetingSeconds { get; set; }
     public double MediaSeconds { get; set; }
     public double GameSeconds { get; set; }

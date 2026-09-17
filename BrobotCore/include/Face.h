@@ -191,6 +191,7 @@ struct FaceState {
     // achievementIcon above.
     int reportBuildOk = 0;
     int reportBuildFail = 0;
+    int reportCommits = 0;
     int reportMeetingMin = 0;
     int reportMediaMin = 0;
     int reportGameMin = 0;

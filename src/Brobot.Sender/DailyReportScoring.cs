@@ -8,8 +8,10 @@ namespace Brobot.Sender;
 ///
 /// Rules, straight from the product decision behind this feature: successful
 /// AND failed builds both count positive (either one means work happened —
-/// success just means more of it), meeting time counts positive (it's work
-/// too), game time is free for the first half hour of the day and then
+/// success just means more of it), a git commit counts positive the same
+/// way (see hooks/mimo-git-hook.ps1's GitCommit event), meeting time counts
+/// positive (it's work too), game time is free for the first half hour of
+/// the day and then
 /// penalizes *increasingly* per extra half hour (not a flat per-minute
 /// rate — a two-hour session should hurt a lot more per-minute than a
 /// forty-minute one), and media (music/video) time is deliberately left out
@@ -28,6 +30,7 @@ public enum DailyPerformanceRating
 public readonly record struct DailyReportResult(
     int BuildSuccessCount,
     int BuildFailCount,
+    int CommitCount,
     double MeetingMinutes,
     double MediaMinutes,
     double GameMinutes,
@@ -42,6 +45,10 @@ public static class DailyReportScoring
 
     private const double BuildSuccessPoints = 8;
     private const double BuildFailPoints = 3;
+    // Between the two build weights: a commit is real, concrete progress —
+    // more than a failed build's "at least you tried", but a commit alone
+    // isn't the same signal as a build actually passing.
+    private const double CommitPoints = 5;
     private const double MeetingPointsPer30Min = 4;
 
     // First half hour of gaming is free; every half hour after that costs
@@ -58,7 +65,7 @@ public static class DailyReportScoring
     private const double BomCeiling = 90;
 
     public static DailyReportResult Evaluate(
-        int buildSuccessCount, int buildFailCount,
+        int buildSuccessCount, int buildFailCount, int commitCount,
         double meetingSeconds, double mediaSeconds, double gameSeconds)
     {
         double meetingMinutes = meetingSeconds / 60.0;
@@ -68,6 +75,7 @@ public static class DailyReportScoring
         double score = Baseline
             + BuildSuccessPoints * buildSuccessCount
             + BuildFailPoints * buildFailCount
+            + CommitPoints * commitCount
             + MeetingPointsPer30Min * (meetingMinutes / 30.0)
             - GamePenalty(gameMinutes);
 
@@ -80,7 +88,7 @@ public static class DailyReportScoring
             DailyPerformanceRating.Excelente;
 
         return new DailyReportResult(
-            buildSuccessCount, buildFailCount,
+            buildSuccessCount, buildFailCount, commitCount,
             meetingMinutes, mediaMinutes, gameMinutes,
             score, rating);
     }
