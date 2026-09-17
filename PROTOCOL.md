@@ -27,6 +27,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `AISTATS <contexto%> <custoCents> <limite5h%> <limite7d%> <modelo>` | Telemetria da sessão de IA (ver abaixo). Os quatro primeiros são inteiros com a mesma convenção do `STATS`: **-1** = "o app do PC não tinha esse dado", desenhado como `--`. O custo vai em **centavos de dólar** porque o protocolo só carrega inteiros; o Core imprime de volta como `$1.24`. `<modelo>` é texto livre até o fim da linha (pode ter espaço, pode ser vazio). `AISTATS` sem argumentos limpa. Persistente e sem contar como interação, exatamente como `STATS`. |
 | `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 10s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
 | `ACHIEVEMENT <ID> <texto>` | Uma notificação especial pra uma das 10 conquistas do MiMo (ver abaixo) — mesma prioridade/duração/formato atômico do `NOTIFY`, só que `<ID>` escolhe qual acabamento único some ao troféu em vez de uma expressão comum. `<ID>`: `FIRST_CONTACT`, `EARLY_BIRD`, `NIGHT_OWL`, `COFFEE_MACHINE`, `ONE_MORE_GAME`, `VICTORY_ROYALE`, `AI_OVERLOAD`, `AUDIOPHILE`, `BREAK_TAKER`, `IDENTITY_CRISIS`. Um `<ID>` não reconhecido cai no acabamento de `FIRST_CONTACT` em vez de falhar a notificação inteira. |
+| `REPORT <buildOk> <buildFail> <minReuniao> <minMidia> <minJogo> <RATING> <texto>` | O Relatório do dia do Brobot.Sender (ver abaixo) — mesma prioridade/duração/formato atômico do `NOTIFY`/`ACHIEVEMENT`, com cinco inteiros e um `<RATING>` (`PESSIMO`, `RUIM`, `QUESTIONAVEL`, `MEDIO`, `BOM`, `EXCELENTE`) antes do texto livre. O Core desenha os seis números como seis linhas separadas, não como frase — é a única notificação com olhos pequenos **no topo** em vez de à esquerda. |
 | `PONG START` | Liga o minijogo Pong (ver abaixo), o "ANTI STRESS BUTTON" do Brobot.Sender — exclusivo, acima até de `NOTIFY`. |
 | `PONG KEY <LEFT\|RIGHT> <DOWN\|UP>` | Estado bruto de uma tecla de seta (pressionada/solta) — quem decide velocidade/física da raquete é o Core, o app do PC só reporta a transição. |
 | `PONG STOP` | Encerra o Pong na hora, jogo em andamento ou já na tela de fim de jogo, e volta ao normal. |
@@ -538,6 +539,27 @@ a necessidade de placeholder.
     ativo no momento.
   Um `<ID>` que o Core não reconhece cai no acabamento do `FIRST_CONTACT`
   em vez de falhar a notificação inteira.
+- **`REPORT`** (o Relatório do dia do Brobot.Sender, ver `DailyReportTracker.cs`
+  e o card Relatório): a única notificação cujos olhos encolhem **pra cima**
+  em vez de pra esquerda — toda outra notificação com arte própria libera o
+  lado direito para um ícone (xícara, envelope, câmera, troféu); esta
+  precisa da tela inteira **abaixo** dos olhos para seis linhas empilhadas,
+  uma por item, em vez de uma frase só. Chega numa linha própria, atômica
+  como `ACHIEVEMENT`, mas com **cinco números** antes do texto:
+  `REPORT <buildOk> <buildFail> <minutosReuniao> <minutosMidia>
+  <minutosJogo> <RATING> <texto>`. `<RATING>` é um de `PESSIMO`, `RUIM`,
+  `QUESTIONAVEL`, `MEDIO`, `BOM`, `EXCELENTE` — o veredito que
+  `DailyReportScoring.cs` já calculou; o Core não julga o dia, só decide
+  como o veredito **aparece** na tela. As seis linhas (`Builds OK: N`,
+  `Builds Falha: N`, `Reuniao: <fmt>`, `Midia: <fmt>`, `Jogo: <fmt>`,
+  `Desempenho: <rótulo>`) são escritas de uma vez, sem efeito de máquina de
+  escrever — são dado, não fala, o mesmo motivo pelo qual a xícara do
+  `COFFEE` ou o troféu do `ACHIEVEMENT` nunca digitam. Só o texto livre no
+  fim da linha (o título que diferencia relatório completo de parcial, mais
+  a frase descontraída sorteada por `DailyReportMessages.cs`) tipa e quebra
+  linha como em qualquer outra notificação, só que começando mais embaixo
+  na tela — depois das seis linhas de números, não na posição fixa de
+  sempre.
 
 Toda arte de notificação recebe a **cor de fundo por parâmetro** em vez de
 assumir preto. Isso não é estilo: o truque de "recortar um buraco" usado no

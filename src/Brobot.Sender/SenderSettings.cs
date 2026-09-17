@@ -18,6 +18,8 @@ public sealed class SenderSettings
     public bool PausaEnabled { get; set; }
     public string PausaManha { get; set; } = "10:00";
     public string PausaTarde { get; set; } = "15:30";
+    public bool RelatorioEnabled { get; set; }
+    public string RelatorioHora { get; set; } = "18:00";
     public string PensamentosIaProvider { get; set; } = "Claude";
     public bool MidiaEnabled { get; set; }
     public bool JogosEnabled { get; set; }

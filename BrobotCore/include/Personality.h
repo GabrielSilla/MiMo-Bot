@@ -20,6 +20,7 @@ public:
     void onAchievementCommand(const char* args, unsigned long now);
     void onStatsCommand(const char* args, unsigned long now);
     void onAiStatsCommand(const char* args, unsigned long now);
+    void onReportCommand(const char* args, unsigned long now);
 
     void update(unsigned long now);
     FaceState currentState() const;
@@ -130,6 +131,15 @@ private:
     // notifications lean on _weatherCondition below rather than a field of
     // their own.
     AchievementIcon _notificationAchievementIcon = AchievementIcon::FIRST_CONTACT;
+    // Only meaningful while _notificationExpression == REPORT — set by
+    // onReportCommand alongside raiseNotification, same convention as
+    // _notificationAchievementIcon just above.
+    int _notificationReportBuildOk = 0;
+    int _notificationReportBuildFail = 0;
+    int _notificationReportMeetingMin = 0;
+    int _notificationReportMediaMin = 0;
+    int _notificationReportGameMin = 0;
+    DailyRating _notificationReportRating = DailyRating::MEDIO;
 
     // SLEEPY's own periodic "go to bed" nudge. It used to have a
     // TypedMessage of its own, shown only while _renderExpression ==

@@ -2455,7 +2455,7 @@ constexpr int NOTIFICATION_TEXT_MAX_CHARS = 26; // 160px / CHAR_ADVANCE_PX
 // typewriter keeps revealing more text, the same "oldest visible line
 // scrolls off, like a terminal" behavior the message box already has — no
 // separate scroll-position state to track here either.
-void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_t g, uint8_t b) {
+void drawNotificationText(IDisplay& display, const char* text, int topY, uint8_t r, uint8_t g, uint8_t b) {
     if (text == nullptr || text[0] == '\0') {
         return;
     }
@@ -2502,7 +2502,7 @@ void drawNotificationText(IDisplay& display, const char* text, uint8_t r, uint8_
     int visibleCount = lineCount - visibleStart;
 
     char buffer[NOTIFICATION_TEXT_MAX_CHARS + 1];
-    int y = NOTIFICATION_TEXT_TOP_Y;
+    int y = topY;
     for (int i = 0; i < visibleCount; i++) {
         int lineIndex = visibleStart + i;
         int take = lineLength[lineIndex];
@@ -2612,6 +2612,24 @@ constexpr int NOTIF_COFFEE_CUP_W = 36;
 constexpr int NOTIF_COFFEE_CUP_H = 28;
 constexpr int NOTIF_COFFEE_CUP_Y = 48;
 constexpr int NOTIF_COFFEE_STEAM_RISE_PX = 26;
+
+// Relatório do dia: unlike every other notification above, which shrinks
+// the eyes to one side to make room for a side illustration, REPORT needs
+// the entire rest of the frame for six stacked stat lines — so the eyes
+// shrink further still and move to the top-center instead, freeing
+// everything below them rather than everything beside them.
+constexpr int NOTIF_REPORT_EYE_SIZE = 18;
+constexpr int NOTIF_REPORT_EYE_GAP = 8;
+constexpr int NOTIF_REPORT_EYE_Y = 3;
+// Left margin for the stat list — tighter than the ordinary message box's
+// MESSAGE_MARGIN_X, since "Desempenho: Questionavel" is already right at
+// the char-per-line budget this margin leaves (24 chars at CHAR_ADVANCE_PX).
+constexpr int NOTIF_REPORT_STATS_X = 4;
+constexpr int NOTIF_REPORT_STATS_TOP_Y = NOTIF_REPORT_EYE_Y + NOTIF_REPORT_EYE_SIZE + 5;
+// Six lines at MESSAGE_LINE_HEIGHT, then a small gap before the casual
+// phrase below them — see drawReportNotification and drawNotificationScreen's
+// own textTopY selection.
+constexpr int NOTIF_REPORT_MESSAGE_TOP_Y = NOTIF_REPORT_STATS_TOP_Y + 6 * MESSAGE_LINE_HEIGHT + 4;
 
 // MiMo taking a sip: the cup rises and drifts toward the face, is held
 // there for a beat, and comes back down to the saucer line. Purely
@@ -2820,6 +2838,83 @@ void drawCoffeeNotification(IDisplay& display, const FaceState& state, const Not
                     NOTIF_COFFEE_CUP_X + sipDx, NOTIF_COFFEE_CUP_Y + sipDy,
                     NOTIF_COFFEE_CUP_W, NOTIF_COFFEE_CUP_H, NOTIF_COFFEE_STEAM_RISE_PX,
                     p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+}
+
+// "Xh20"/"45min" — same shape the PC side used to format these in before
+// REPORT existed, now owned by Core like everything else a notification
+// draws. Unlike formatStatValue there's no -1/"unknown" case: Sender always
+// has a real accumulated number here, even if it's 0.
+void formatReportMinutes(char* out, size_t size, int totalMinutes) {
+    if (totalMinutes < 0) {
+        totalMinutes = 0;
+    }
+    int hours = totalMinutes / 60;
+    int remainder = totalMinutes % 60;
+    if (hours > 0) {
+        snprintf(out, size, "%dh%02d", hours, remainder);
+    } else {
+        snprintf(out, size, "%dmin", totalMinutes);
+    }
+}
+
+// No accents — same convention every other Core-hardcoded PT-BR string
+// follows (BEDTIME_MESSAGES in Personality.cpp, the MATRIX/MI84 log tabs),
+// unlike the free-form text a PC app sends over the wire.
+const char* dailyRatingLabel(DailyRating rating) {
+    switch (rating) {
+        case DailyRating::PESSIMO:      return "Pessimo";
+        case DailyRating::RUIM:         return "Ruim";
+        case DailyRating::QUESTIONAVEL: return "Questionavel";
+        case DailyRating::BOM:          return "Bom";
+        case DailyRating::EXCELENTE:    return "Excelente";
+        default:                        return "Medio";
+    }
+}
+
+// Relatório do dia (see REPORT in PROTOCOL.md): small eyes at top-center
+// (NOTIF_REPORT_*, see their own comment above), then six left-aligned
+// lines stacked at MESSAGE_LINE_HEIGHT pitch — one stat per line, unlike
+// every other notification's single wrapped message, because the whole
+// point of this screen is that each number reads on its own instead of
+// running together in prose. None of these six lines type in: they're
+// data, not speech, same as the coffee cup or trophy badge never do
+// either — only the casual phrase drawNotificationScreen draws afterward
+// (state.message, at NOTIF_REPORT_MESSAGE_TOP_Y) uses the typewriter.
+void drawReportNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                            float openFactor) {
+    drawNotificationEyes(display, display.width() / 2, NOTIF_REPORT_EYE_Y,
+                         NOTIF_REPORT_EYE_SIZE, NOTIF_REPORT_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+
+    char line[32];
+    char value[12];
+    int y = NOTIF_REPORT_STATS_TOP_Y;
+
+    snprintf(line, sizeof(line), "Builds OK: %d", state.reportBuildOk);
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    y += MESSAGE_LINE_HEIGHT;
+
+    snprintf(line, sizeof(line), "Builds Falha: %d", state.reportBuildFail);
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    y += MESSAGE_LINE_HEIGHT;
+
+    formatReportMinutes(value, sizeof(value), state.reportMeetingMin);
+    snprintf(line, sizeof(line), "Reuniao: %s", value);
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    y += MESSAGE_LINE_HEIGHT;
+
+    formatReportMinutes(value, sizeof(value), state.reportMediaMin);
+    snprintf(line, sizeof(line), "Midia: %s", value);
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    y += MESSAGE_LINE_HEIGHT;
+
+    formatReportMinutes(value, sizeof(value), state.reportGameMin);
+    snprintf(line, sizeof(line), "Jogo: %s", value);
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    y += MESSAGE_LINE_HEIGHT;
+
+    snprintf(line, sizeof(line), "Desempenho: %s", dailyRatingLabel(state.reportRating));
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
 }
 
 // The Sender-triggered "MiMo says hi/bye" notification (see PROTOCOL.md's
@@ -3700,6 +3795,8 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
         drawMeetingNotification(display, state, p, 1.0f - state.blinkAmount);
     } else if (state.expression == Expression::BYE) {
         drawByeNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::REPORT) {
+        drawReportNotification(display, state, p, 1.0f - state.blinkAmount);
     } else {
         // Any notification without artwork of its own: just MiMo, blinking,
         // with the message below. There is deliberately no placeholder
@@ -3710,7 +3807,14 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
                              p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
     }
 
-    drawNotificationText(display, state.message, p.textR, p.textG, p.textB);
+    // REPORT's own six stat lines already occupy the frame's upper two
+    // thirds (see NOTIF_REPORT_MESSAGE_TOP_Y) — the casual phrase below
+    // them needs a lower start than every other notification's fixed
+    // bottom-third spot, or it would collide with "Desempenho: ...".
+    int textTopY = (state.expression == Expression::REPORT)
+        ? NOTIF_REPORT_MESSAGE_TOP_Y
+        : NOTIFICATION_TEXT_TOP_Y;
+    drawNotificationText(display, state.message, textTopY, p.textR, p.textG, p.textB);
 }
 
 } // namespace

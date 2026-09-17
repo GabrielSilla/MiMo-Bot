@@ -68,6 +68,8 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         _personality.onStatsCommand(args, now);
     } else if (commandLength == 7 && strncmp(line, "AISTATS", 7) == 0) {
         _personality.onAiStatsCommand(args, now);
+    } else if (commandLength == 6 && strncmp(line, "REPORT", 6) == 0) {
+        _personality.onReportCommand(args, now);
     } else if (commandLength == 4 && strncmp(line, "PONG", 4) == 0) {
         if (!_rpgBattle.isActive()) {
             _pongGame.onCommand(args, now);

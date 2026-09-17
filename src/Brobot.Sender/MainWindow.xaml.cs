@@ -53,6 +53,8 @@ public partial class MainWindow : Window
     private readonly AchievementMonitor _achievements;
     private readonly Dictionary<string, (Border Card, TextBlock Icon, TextBlock Description, TextBlock Status)> _achievementCards = new();
 
+    private readonly DailyReportTracker _dailyReport = new();
+
     private WindowsMediaMonitor? _mediaMonitor;
     private bool _mediaFaceActive;
 
@@ -103,6 +105,12 @@ public partial class MainWindow : Window
     private DispatcherTimer? _breakTimer;
     private DateOnly? _breakMorningFiredOn; // date each slot last fired on, so it fires once per day instead of every tick during that whole minute
     private DateOnly? _breakAfternoonFiredOn;
+
+    private DispatcherTimer? _reportTimer;
+    private DateOnly? _reportFiredOn; // same once-per-day guard as _breakMorningFiredOn, one slot instead of two
+
+    private const uint VK_F10 = 0x79;
+    private readonly GlobalHotkey _reportHotkey;
 
     // Caring "go stretch your legs" nudges — one random pick per trigger,
     // same flat-pool pattern as the bedtime messages in Personality.cpp,
@@ -222,6 +230,28 @@ public partial class MainWindow : Window
 
         SetupTrayIcon();
         Closing += MainWindow_Closing;
+
+        // CTRL+SHIFT+F10, system-wide, so "check the partial Relatório"
+        // works no matter what has focus (or whether this window is even
+        // shown) — see GlobalHotkey's own header comment for why this isn't
+        // built on GlobalKeyboardHook. Plain ALT+F10 was tried first and
+        // dropped — confirmed live (RegisterHotKey returning false) that
+        // something else on a real dev machine already owns it, most likely
+        // OEM/laptop software grabbing a bare F-key combo, which is common
+        // enough that a Ctrl+Shift modifier pair is safer by default.
+        // Best-effort either way: if another app already owns the combo,
+        // IsRegistered comes back false and this app just quietly doesn't
+        // get the shortcut, same as every other optional signal here
+        // (Afterburner, TeamsNotificationWatcher, ...).
+        _reportHotkey = new GlobalHotkey(this, HotkeyModifiers.Control | HotkeyModifiers.Shift, VK_F10);
+        if (_reportHotkey.IsRegistered)
+        {
+            _reportHotkey.Pressed += ShowPartialReport;
+        }
+        else
+        {
+            LogAiEvent("GlobalHotkey CTRL+SHIFT+F10 registration failed (combo already in use?).");
+        }
 
         _connectionStatusTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _connectionStatusTimer.Tick += (_, _) => UpdateConnectionStatus();
@@ -545,6 +575,10 @@ public partial class MainWindow : Window
             _achievements.OnConnected();
         }
         _achievements.Tick(connected);
+        // Not gated on `connected` — meeting/media/game detection all
+        // happen at the OS level, independent of whether MiMo is currently
+        // reachable (see DailyReportTracker.Tick's own comment).
+        _dailyReport.Tick();
         _wasConnected = connected;
     }
 
@@ -951,6 +985,88 @@ public partial class MainWindow : Window
     private static bool TryParseTime(string text, out TimeOnly time) =>
         TimeOnly.TryParseExact(text.Trim(), "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
 
+    /// <summary>Same shape as PausaCheckBox_CheckedChanged, one slot instead of two.</summary>
+    private void RelatorioCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+    {
+        if (RelatorioCheckBox.IsChecked == true)
+        {
+            DateTime now = DateTime.Now;
+            DateOnly today = DateOnly.FromDateTime(now);
+            TimeOnly nowTime = TimeOnly.FromDateTime(now);
+
+            _reportFiredOn = (TryParseTime(RelatorioHoraTextBox.Text, out TimeOnly target) && nowTime >= target)
+                ? today : (DateOnly?)null;
+
+            _reportTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _reportTimer.Tick += (_, _) => CheckReportTime();
+            _reportTimer.Start();
+            RelatorioStatusText.Text = string.Empty;
+        }
+        else
+        {
+            _reportTimer?.Stop();
+            _reportTimer = null;
+            RelatorioStatusText.Text = string.Empty;
+        }
+    }
+
+    private void CheckReportTime()
+    {
+        DateTime now = DateTime.Now;
+        DateOnly today = DateOnly.FromDateTime(now);
+        TimeOnly nowTime = TimeOnly.FromDateTime(now);
+
+        if (TryParseTime(RelatorioHoraTextBox.Text, out TimeOnly target)
+            && _reportFiredOn != today && nowTime >= target)
+        {
+            _reportFiredOn = today;
+            SendDailyReport();
+        }
+    }
+
+    /// <summary>
+    /// One NOTIFY line, same atomic-and-top-priority reasoning as
+    /// SendBreakReminder — the report is exactly the kind of thing MiMo
+    /// should interrupt you for. DailyReportScoring decides the rating,
+    /// DailyReportMessages picks the line/face that go with it; this method
+    /// only formats the numbers and sends what it's handed.
+    /// </summary>
+    private void SendDailyReport() => SendReport("Relatório do dia!");
+
+    /// <summary>
+    /// ALT+F10's handler (see GlobalHotkey in the constructor) — same
+    /// NOTIFY as the scheduled 18h report, just a different heading and
+    /// whatever DailyReportTracker has accumulated *so far*: BuildReport()
+    /// is a plain read with no notion of "final", so there's nothing to
+    /// distinguish here except the wording. Deliberately doesn't touch
+    /// _reportFiredOn — checking in early must not skip today's scheduled
+    /// report later.
+    /// </summary>
+    private void ShowPartialReport() => SendReport("Relatório parcial (até agora)!");
+
+    /// <summary>
+    /// Sends the structured REPORT line (see PROTOCOL.md) instead of a
+    /// hand-formatted NOTIFY string — Core owns the six stat lines'
+    /// wording/layout (drawReportNotification in Face.cpp), Sender only
+    /// ever hands over today's numbers plus the heading/casual phrase that
+    /// types in below them. `heading` is what tells a scheduled 18h report
+    /// apart from an ALT-hotkey partial one on MiMo's own screen.
+    /// </summary>
+    private void SendReport(string heading)
+    {
+        DailyReportResult result = _dailyReport.BuildReport();
+        string message = DailyReportMessages.RandomFor(result.Rating);
+        string ratingToken = DailyReportMessages.WireToken(result.Rating);
+        string ratingLabel = DailyReportMessages.RatingLabel(result.Rating);
+
+        string command = $"REPORT {result.BuildSuccessCount} {result.BuildFailCount} " +
+            $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.GameMinutes)} " +
+            $"{ratingToken} {heading} {message}";
+
+        _connection.SendCommand(command);
+        RelatorioStatusText.Text = $"Último relatório: {ratingLabel}";
+    }
+
     private async void MediaCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
     {
         if (MediaCheckBox.IsChecked == true)
@@ -975,6 +1091,7 @@ public partial class MainWindow : Window
             MediaStatusText.Text = string.Empty;
             ClearMediaFaceIfActive();
             _achievements.SetMusicActive(false);
+            _dailyReport.SetMediaActive(false);
         }
     }
 
@@ -988,6 +1105,7 @@ public partial class MainWindow : Window
                 MediaStatusText.Text = "Nada tocando";
                 ClearMediaFaceIfActive();
                 _achievements.SetMusicActive(false);
+                _dailyReport.SetMediaActive(false);
                 return;
             }
 
@@ -999,6 +1117,9 @@ public partial class MainWindow : Window
             // Audiophile is specifically about music, not video — WATCHING
             // (a browser tab, VLC, ...) doesn't count.
             _achievements.SetMusicActive(nowPlaying.IsLikelyAudioOnly);
+            // The daily report's "tempo de mídia" is broader than Audiophile:
+            // music and video both count here, it's just logged, never scored.
+            _dailyReport.SetMediaActive(true);
         });
     }
 
@@ -1138,6 +1259,8 @@ public partial class MainWindow : Window
             {
                 _activeCalls[appName] = (sourceLabel, label);
             }
+
+            _dailyReport.SetMeetingActive(_activeCalls.Count > 0);
 
             if (_activeCalls.Count > 0)
             {
@@ -1310,6 +1433,7 @@ public partial class MainWindow : Window
             GameStatusText.Text = string.Empty;
             ClearGameFaceIfActive();
             _achievements.SetGameActive(false);
+            _dailyReport.SetGameActive(false);
         }
     }
 
@@ -1319,6 +1443,7 @@ public partial class MainWindow : Window
         Dispatcher.Invoke(() =>
         {
             _achievements.SetGameActive(game != null);
+            _dailyReport.SetGameActive(game != null);
 
             if (game == null)
             {
@@ -1833,10 +1958,12 @@ public partial class MainWindow : Window
                 case BuildState.Successful:
                     _connection.SendCommand("FACE FINISHED");
                     _connection.SendCommand($"MSG Build {subject} concluído!");
+                    _dailyReport.RecordBuildSuccess();
                     break;
                 case BuildState.Failed:
                     _connection.SendCommand("FACE ERROR");
                     _connection.SendCommand($"MSG Build {subject} falhou!");
+                    _dailyReport.RecordBuildFailure();
                     break;
             }
         });
@@ -2567,6 +2694,11 @@ public partial class MainWindow : Window
         {
             settings.PausaTarde = PausaTardeTextBox.Text.Trim();
         }
+        settings.RelatorioEnabled = RelatorioCheckBox.IsChecked == true;
+        if (TryParseTime(RelatorioHoraTextBox.Text, out _))
+        {
+            settings.RelatorioHora = RelatorioHoraTextBox.Text.Trim();
+        }
         settings.PensamentosIaProvider = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string ?? "Claude";
         settings.MidiaEnabled = MediaCheckBox.IsChecked == true;
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
@@ -2635,6 +2767,8 @@ public partial class MainWindow : Window
         PausaManhaTextBox.Text = settings.PausaManha;
         PausaTardeTextBox.Text = settings.PausaTarde;
         PausaCheckBox.IsChecked = settings.PausaEnabled;
+        RelatorioHoraTextBox.Text = settings.RelatorioHora;
+        RelatorioCheckBox.IsChecked = settings.RelatorioEnabled;
         MediaCheckBox.IsChecked = settings.MidiaEnabled;
         GameCheckBox.IsChecked = settings.JogosEnabled;
         NotificationsCheckBox.IsChecked = settings.NotificationsEnabled;
@@ -2764,6 +2898,8 @@ public partial class MainWindow : Window
         _rpgStartTimer?.Stop();
         _clockTimer?.Stop();
         _breakTimer?.Stop();
+        _reportTimer?.Stop();
+        _reportHotkey.Dispose();
         _connectionStatusTimer.Stop();
         // A sweep in flight holds up to MaxConcurrentProbes sockets open;
         // cancelling lets them close instead of lingering past shutdown.

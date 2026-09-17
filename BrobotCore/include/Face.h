@@ -27,7 +27,13 @@
 // WEATHER's own artwork choice — so a new achievement costs one enumerator
 // in AchievementIcon and one `case` in drawAchievementNotification, not a
 // new command or a new Expression each time.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING };
+// REPORT is WEATHER/ACHIEVEMENT's own trick, reused again: it names no mood
+// either, and only ever reaches the notification tier via its own top-level
+// REPORT command (see PROTOCOL.md), never plain FACE. Brobot.Sender's daily
+// Relatório numbers ride alongside it on FaceState (see reportBuildOk etc.
+// below and DailyRating), the same way weatherCondition/achievementIcon
+// carry WEATHER/ACHIEVEMENT's own extra picks.
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING, REPORT };
 
 // Which of MiMo's 10 achievements a notification is celebrating (see
 // ACHIEVEMENT in PROTOCOL.md) — every one shows the same trophy
@@ -46,6 +52,14 @@ enum class AchievementIcon : uint8_t {
 // PROTOCOL.md). Deliberately small — just enough categories to read clearly
 // as a ~10px icon, not a full meteorological classification.
 enum class WeatherCondition : uint8_t { CLEAR, CLOUDY, RAIN, STORM, SNOW, FOG };
+
+// Brobot.Sender's own verdict on the day (see DailyReportScoring.cs) —
+// REPORT's <RATING> token picks one of these, and drawReportNotification
+// turns it into the "Desempenho: ..." line's display text (Face.cpp's
+// dailyRatingLabel). Core never computes the rating itself, same as it
+// never picks which of the 10 achievements unlocked — it only ever renders
+// a choice Sender already made.
+enum class DailyRating : uint8_t { PESSIMO, RUIM, QUESTIONAVEL, MEDIO, BOM, EXCELENTE };
 
 // Overall rendering style, set via THEME (see PROTOCOL.md) — independent of
 // Expression/message content, which stay exactly the same regardless of
@@ -171,6 +185,16 @@ struct FaceState {
     // Copied every frame regardless, same harmless-when-unused convention
     // weatherCondition already follows.
     AchievementIcon achievementIcon = AchievementIcon::FIRST_CONTACT;
+    // Only meaningful while expression == REPORT — today's raw numbers for
+    // the six stat lines drawReportNotification draws (see REPORT in
+    // PROTOCOL.md). Same "copied every frame regardless" convention as
+    // achievementIcon above.
+    int reportBuildOk = 0;
+    int reportBuildFail = 0;
+    int reportMeetingMin = 0;
+    int reportMediaMin = 0;
+    int reportGameMin = 0;
+    DailyRating reportRating = DailyRating::MEDIO;
 
     unsigned long nowMs = 0;       // clock time, used to animate the sleeping "Z Z Z"
 
