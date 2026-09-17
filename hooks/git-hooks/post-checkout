@@ -1,0 +1,13 @@
+#!/bin/sh
+# Installed via core.hooksPath by GitHookInstaller (see
+# src/Brobot.Sender/GitHookInstaller.cs) -- static, never rewritten.
+#
+# git passes 3 positional args here: $1 previous HEAD, $2 new HEAD, $3 a flag
+# that's 1 for a real branch checkout and 0 for a plain file checkout
+# (`git checkout -- some/file`) -- filtered here rather than in
+# mimo-git-hook.ps1 so a noisy file-restore checkout never even spawns
+# powershell.exe.
+if [ "$3" = "1" ]; then
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/mimo-git-hook.ps1" -EventName GitCheckout
+fi
+exit 0

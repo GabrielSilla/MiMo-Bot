@@ -1,4 +1,4 @@
-# Brobot.Sender Internals — Simple Feature Cards (Hora, Clima, Pausa, Relatório, Notificações, Build)
+# Brobot.Sender Internals — Simple Feature Cards (Hora, Clima, Pausa, Relatório, Notificações, Ferramentas de Dev)
 
 - **Hora** and **Clima** are independent checkboxes (they used to be one
   combined "Previsão do tempo e hora" box) — Hora only drives the clock
@@ -111,17 +111,22 @@
   below for the main one (polling Windows' own notification platform) and
   `TeamsNotificationWatcher.cs` for the second, Teams-only one it needed on
   top of that, and why.
-- **Build** is a plain checkbox card, same shape as Mídia/Jogos, whose
-  checked state starts/stops exactly two of this app's own build monitors —
+- **Ferramentas de Dev** (still `BuildCheckBox`/`SenderSettings.BuildEnabled`
+  internally — only the card's user-facing text changed when git joined it,
+  to avoid losing existing users' saved checkbox state on upgrade) is a
+  plain checkbox card, same shape as Mídia/Jogos, whose checked state
+  starts/stops four things: two of this app's own build monitors —
   `GradleBuildLogMonitor` (tails a Gradle daemon log for `BUILD SUCCESSFUL`/
   `BUILD FAILED`) and `MsBuildProcessMonitor` (polls WMI for
   `MSBuild.exe`/`dotnet.exe` processes, excluding any `/nodemode`-tagged
   worker to avoid counting one real build several times over — confirmed
-  live that a plain `dotnet build` spawns several of those). Both raise a
-  `BuildStateChanged(BuildState, string? projectName)` event that
-  `MainWindow.OnBuildStateChanged` turns into `FACE BUILDING`/`FINISHED`/
-  `ERROR` plus `MSG Build <project> iniciado!/concluído!/falhou!` — the
-  project name is the whole point of the message (`(sourceLabel)` in
+  live that a plain `dotnet build` spawns several of those) — plus
+  `GitHookInstaller.Install()`/`Uninstall()` and, alongside it,
+  `AiThoughtsListener` (see below and specs/sender-ai-bridge.md). Both build
+  monitors raise a `BuildStateChanged(BuildState, string? projectName)`
+  event that `MainWindow.OnBuildStateChanged` turns into `FACE BUILDING`/
+  `FINISHED`/`ERROR` plus `MSG Build <project> iniciado!/concluído!/falhou!`
+  — the project name is the whole point of the message (`(sourceLabel)` in
   parens is only a fallback for the rare case a source couldn't extract
   one). **Visual Studio's own builds are not covered by either of these**,
   and deliberately don't get a third monitor in this process at all —
@@ -152,3 +157,46 @@
   — the solution-level pair has no project name to report at all, and
   `SolutionBuild.LastBuildInfo`'s failed-project *count* is a strictly
   worse signal than a same-project success bool handed to you directly.
+
+  **Git** ("coisas que ocorrem no Git" — commit/merge/checkout/push) is the
+  card's other half, added alongside build detection rather than as its own
+  checkbox: there's no separate provider choice to make the way Atividade da
+  IA's Claude/Codex/Gemini/Cursor picker has, so folding it into one existing
+  checkbox (per an explicit product call) was simpler than introducing a
+  section header this app's card list has never needed before.
+  `GitHookInstaller.cs` sets git's own **global** `core.hooksPath` (not a
+  per-repo `.git/hooks` edit) to a folder copied next to the running exe —
+  same "applies to every project, not just whichever one happens to be
+  open" reasoning `ClaudeCodeHookInstaller` already uses for
+  `~/.claude/settings.json` — containing four static POSIX-shell shims
+  (`hooks/git-hooks/post-commit`/`post-merge`/`post-checkout`/`pre-push`,
+  pinned to LF line endings via `.gitattributes` since a CRLF-mangled
+  `#!/bin/sh` shebang fails to execute at all under Git for Windows' bundled
+  `sh.exe`, which is what `core.autocrlf=true` would otherwise silently
+  produce on checkout). Each shim just calls `hooks/mimo-git-hook.ps1`
+  (mirrors `mimo-claude-hook.ps1`'s own socket-write-to-`AiThoughtsListener`
+  core almost verbatim) with a fixed `-EventName`, resolved via
+  `$(dirname "$0")` so the shim keeps working wherever this folder actually
+  lands rather than baking in an absolute path. `post-checkout` filters its
+  own third hook argument (`1` for a real branch switch, `0` for a plain
+  `git checkout -- file`) before ever spawning PowerShell, so restoring a
+  file never fires a git event. **Never overwrites a `core.hooksPath` the
+  user already had of their own** — same "claim only if empty or already
+  ours" caution `ClaudeCodeHookInstaller` applies to Claude Code's
+  `statusLine` entry, just for a config scalar instead of a JSON object:
+  `Install()` no-ops if the current value isn't empty and isn't already
+  ours, and `Uninstall()` only unsets a value it confirms is still ours.
+  There's no client-side git hook for "push succeeded" — `pre-push` is the
+  only push-related hook and fires before the network round-trip — so
+  `GitPush` can only ever mean "a push just started" (see
+  `MainWindow.OnAiThoughtReceived`'s `GitCommit`/`GitMerge`/`GitCheckout`/
+  `GitPush` cases for the exact FACE/MSG each one sends); `GitCommit`/
+  `GitMerge`, by contrast, only fire once git has already applied them
+  successfully — a failed or conflicted one stops before invoking the hook
+  at all — so neither needs a `BuildState`-style Started/Successful/Failed
+  shape, unlike the build monitors above. This card's checkbox is also what
+  starts/stops the shared `AiThoughtsListener` now (previously only
+  Atividade da IA's install button did): `MainWindow.
+  StopAiThoughtsListenerIfUnused` is the "does anyone still need it" guard
+  both features' off-switches run through, so toggling one off never
+  silences whichever event source the other one still needs.

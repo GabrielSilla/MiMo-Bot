@@ -67,10 +67,14 @@ src/
                                      AiThoughtsListener are the live data sources so far (Notificações also
                                      runs TeamsNotificationWatcher alongside NotificationMonitor — see
                                      specs/sender-monitors.md for why Teams needs its own, much more
-                                     fragile capture path), Build runs GradleBuildLogMonitor and
-                                     MsBuildProcessMonitor (see specs/sender-feature-cards.md for why
-                                     Visual Studio's own builds need a completely separate mechanism —
-                                     Brobot.VSExtension, not a monitor in this process at all),
+                                     fragile capture path), Ferramentas de Dev (still internally
+                                     BuildCheckBox/BuildEnabled — see specs/sender-feature-cards.md)
+                                     runs GradleBuildLogMonitor and MsBuildProcessMonitor and also
+                                     installs a global git hook (GitHookInstaller, reporting over
+                                     AiThoughtsListener same as the AI bridge below — see
+                                     specs/sender-feature-cards.md for why Visual Studio's own builds
+                                     still need a completely separate mechanism, Brobot.VSExtension,
+                                     not a monitor in this process at all),
                                      ClaudeCodeHookInstaller edits
                                      Claude Code's own settings.json, ClaudeCodeAccount reads (never writes)
                                      ~/.claude.json to detect an account switch, SenderSettings persists
@@ -103,7 +107,10 @@ hooks/                               mimo-claude-hook.ps1 (the Claude Code hook 
                                      mimo-claude-statusline.ps1 (its statusLine command — a different
                                      contract, see specs/sender-ai-bridge.md); both wired up by ClaudeCodeHookInstaller and
                                      copied to Brobot.Sender's build output (see its csproj) rather
-                                     than run from here.
+                                     than run from here. mimo-git-hook.ps1 and git-hooks/
+                                     (post-commit/post-merge/post-checkout/pre-push, static shims
+                                     pinned to LF via .gitattributes) are the git-side equivalent,
+                                     wired up by GitHookInstaller — see specs/sender-feature-cards.md.
 BrobotCore/                         PlatformIO project (Arduino/C++)
   include/, src/                    Config, IDisplay, SerialVirtualDisplay, ST7735PhysicalDisplay,
                                      WifiSetup (ESP32 only — WiFi provisioning, see specs/firmware-platform.md),

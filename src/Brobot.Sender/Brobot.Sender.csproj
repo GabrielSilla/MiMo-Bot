@@ -28,6 +28,32 @@
       <Link>mimo-claude-statusline.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Same reasoning, for GitHookInstaller: core.hooksPath points straight
+         at the copied-to-output git-hooks\ folder below, so mimo-git-hook.ps1
+         needs to actually exist next to the running exe too. -->
+    <None Include="..\..\hooks\mimo-git-hook.ps1">
+      <Link>mimo-git-hook.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Static shims (see GitHookInstaller.cs): git invokes these by exact
+         name via their own #!/bin/sh shebang, so unlike the .ps1 scripts
+         above they can't carry a .ps1/.cs-friendly extension. -->
+    <None Include="..\..\hooks\git-hooks\post-commit">
+      <Link>git-hooks\post-commit</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\hooks\git-hooks\post-merge">
+      <Link>git-hooks\post-merge</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\hooks\git-hooks\post-checkout">
+      <Link>git-hooks\post-checkout</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\hooks\git-hooks\pre-push">
+      <Link>git-hooks\pre-push</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

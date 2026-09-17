@@ -1759,10 +1759,7 @@ public partial class MainWindow : Window
             if (ClaudeCodeHookInstaller.IsInstalled())
             {
                 ClaudeCodeHookInstaller.Uninstall();
-                _aiThoughtsListener?.Dispose();
-                _aiThoughtsListener = null;
-                ClearAiThoughtFaceIfActive();
-                ClearAiStatsIfActive();
+                StopAiThoughtsListenerIfUnused();
             }
             else
             {
@@ -1856,11 +1853,19 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// Starts/stops the Gradle- and MSBuild/dotnet-build-via-process-watching
-    /// monitors -- same one-checkbox-many-watchers shape Notificações
-    /// already uses for
+    /// monitors, plus the global git hook (GitHookInstaller) and the
+    /// AiThoughtsListener it reports through -- same one-checkbox-many-
+    /// watchers shape Notificações already uses for
     /// NotificationMonitor/TeamsNotificationWatcher/LiveCallMonitor. Each is
     /// independently best-effort: one failing to start never blocks the
     /// others or the checkbox itself.
+    ///
+    /// The git hook and the AI-hooks bridge (Atividade da IA) both report
+    /// over the same AiThoughtsListener/port 5591, so this only stops the
+    /// listener when *neither* feature still needs it -- unchecking this box
+    /// must not cut off Atividade da IA if that's separately installed, and
+    /// uninstalling Atividade da IA (PensamentosIaInstallButton_Click) must
+    /// not cut off this box's git events either.
     ///
     /// Visual Studio's own build reporting comes from a completely separate
     /// path now: Brobot.VSExtension, a real VSIX package loaded in-process by
@@ -1917,6 +1922,16 @@ public partial class MainWindow : Window
                 _msBuildProcessMonitor?.Dispose();
                 _msBuildProcessMonitor = null;
             }
+
+            try
+            {
+                GitHookInstaller.Install();
+                StartAiThoughtsListener();
+            }
+            catch (Exception ex)
+            {
+                LogAiEvent($"GitHookInstaller.Install threw: {ex}");
+            }
         }
         else
         {
@@ -1924,7 +1939,36 @@ public partial class MainWindow : Window
             _gradleBuildMonitor = null;
             _msBuildProcessMonitor?.Dispose();
             _msBuildProcessMonitor = null;
+
+            try
+            {
+                GitHookInstaller.Uninstall();
+            }
+            catch (Exception ex)
+            {
+                LogAiEvent($"GitHookInstaller.Uninstall threw: {ex}");
+            }
+            StopAiThoughtsListenerIfUnused();
         }
+    }
+
+    /// <summary>
+    /// The git hook and Atividade da IA share one AiThoughtsListener -- this
+    /// is the "does anyone still need it" check both features' off-switches
+    /// run through before actually tearing the listener down, so turning one
+    /// off never silences the other.
+    /// </summary>
+    private void StopAiThoughtsListenerIfUnused()
+    {
+        if (ClaudeCodeHookInstaller.IsInstalled() || GitHookInstaller.IsInstalled())
+        {
+            return;
+        }
+
+        _aiThoughtsListener?.Dispose();
+        _aiThoughtsListener = null;
+        ClearAiThoughtFaceIfActive();
+        ClearAiStatsIfActive();
     }
 
     /// <summary>
@@ -2408,6 +2452,42 @@ public partial class MainWindow : Window
 
                 case "VsBuildFailed":
                     OnBuildStateChanged("Visual Studio", BuildState.Failed, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
+
+                // From mimo-git-hook.ps1 via a global git hook (see
+                // GitHookInstaller) -- same AiThoughtsListener wire as the
+                // Claude Code bridge and the VSIX, installed/uninstalled
+                // alongside the Gradle/MSBuild monitors by
+                // BuildCheckBox_CheckedChanged ("Ferramentas de Dev").
+                // post-commit/post-merge only ever fire once the operation
+                // already succeeded -- git itself stops before invoking them
+                // on a failed/conflicted one -- so there's no Failed case to
+                // mirror OnBuildStateChanged's three-state shape with.
+                case "GitCommit":
+                    _connection.SendCommand("FACE FINISHED");
+                    SendAiMessage(thought.Text, fallback: "Commit feito!");
+                    break;
+
+                case "GitMerge":
+                    _connection.SendCommand("FACE FINISHED");
+                    SendAiMessage(thought.Text, fallback: "Merge concluído!");
+                    break;
+
+                case "GitCheckout":
+                    // No FACE: switching branches isn't an outcome the way a
+                    // commit/merge/push is, same "housekeeping" reasoning as
+                    // CwdChanged above.
+                    SendAiMessage(thought.Text, fallback: "Trocou de branch.");
+                    break;
+
+                case "GitPush":
+                    // There's no client-side git hook for "push succeeded" --
+                    // pre-push is the only push hook available, and it fires
+                    // before the network round-trip. BUILDING reads as "an
+                    // operation is in flight", which fits a push in progress
+                    // better than inventing a new expression Core doesn't have.
+                    _connection.SendCommand("FACE BUILDING");
+                    SendAiMessage(thought.Text, fallback: "Enviando push...");
                     break;
             }
 

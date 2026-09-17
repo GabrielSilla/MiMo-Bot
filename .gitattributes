@@ -1,0 +1,6 @@
+# These are POSIX shell scripts executed by Git for Windows' bundled sh.exe
+# via their #!/bin/sh shebang -- a CRLF-mangled shebang line fails to
+# execute at all. core.autocrlf=true would otherwise convert them to CRLF on
+# checkout like every other text file in this repo, so they're pinned to LF
+# explicitly (see GitHookInstaller.cs / hooks/git-hooks/*).
+hooks/git-hooks/* text eol=lf

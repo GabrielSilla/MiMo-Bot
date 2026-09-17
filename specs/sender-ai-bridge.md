@@ -165,7 +165,20 @@
 - **`AiThoughtsListener.cs`**: a plain `TcpListener` on `127.0.0.1:5591`
   (`MainWindow.AiThoughtsPort`), not `HttpListener` — `HttpListener` needs
   either Administrator or a `netsh` URL ACL reservation to bind a prefix on
-  Windows, even a loopback one, which a tray app shouldn't require. Wire
+  Windows, even a loopback one, which a tray app shouldn't require. Three
+  independent sources feed it, each its own external process reporting over
+  the exact same one-line wire shape: the Claude Code hook script below, the
+  `Brobot.VSExtension` VSIX (`VsBuildStarted`/`VsBuildSucceeded`/
+  `VsBuildFailed`, see specs/sender-feature-cards.md), and now
+  `hooks/mimo-git-hook.ps1` via the global git hook `GitHookInstaller`
+  installs (`GitCommit`/`GitMerge`/`GitCheckout`/`GitPush` — also
+  specs/sender-feature-cards.md). Two independent features start/stop this
+  one shared listener now — Atividade da IA's install button and
+  "Ferramentas de Dev"'s checkbox — so `MainWindow.
+  StopAiThoughtsListenerIfUnused` is what either one's off-switch actually
+  calls: it only tears the listener down once *neither*
+  `ClaudeCodeHookInstaller.IsInstalled()` nor `GitHookInstaller.IsInstalled()`
+  is true, so turning one off never silences the other's events. Wire
   format is one line per event, `EVENTNAME optional free text...` (mirrors
   PROTOCOL.md's own `FACE`/`MSG` line shape, just inbound instead of
   outbound). Connections are accepted on one thread and **read on a single

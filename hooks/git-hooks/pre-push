@@ -1,0 +1,9 @@
+#!/bin/sh
+# Installed via core.hooksPath by GitHookInstaller (see
+# src/Brobot.Sender/GitHookInstaller.cs) -- static, never rewritten.
+#
+# pre-push is NOT advisory: a non-zero exit here aborts the push outright.
+# `exit 0` always runs regardless of what powershell.exe does, so a slow or
+# failing mimo-git-hook.ps1 can never block a real push.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/mimo-git-hook.ps1" -EventName GitPush
+exit 0

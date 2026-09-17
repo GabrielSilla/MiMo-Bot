@@ -585,7 +585,7 @@
                 </Grid>
             </Border>
 
-            <!-- Build (Gradle) -->
+            <!-- Ferramentas de Dev (Build + Git) -->
             <Border Grid.Row="8" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -598,10 +598,10 @@
                                                      Foreground="{DynamicResource InkBrush}"/>
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="Build" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Avisa o MiMo quando uma build começa e termina (Gradle, Visual Studio ou MSBuild/dotnet build)"
+                        <TextBlock Text="Ferramentas de Dev" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Avisa o MiMo quando uma build começa/termina (Gradle, Visual Studio ou MSBuild/dotnet build) e quando você faz commit, merge, checkout de branch ou push"
                                    Style="{StaticResource CardDescriptionStyle}"/>
-                        <TextBlock Text="Gradle: pelo log do daemon (IntelliJ, Android Studio ou terminal). Visual Studio: lendo a própria janela de Saída (precisa estar mostrando o canal &quot;Compilação&quot;). MSBuild/dotnet build: rodado fora de uma IDE. Não pega Maven nem o compilador nativo do IntelliJ (JPS)."
+                        <TextBlock Text="Gradle: pelo log do daemon (IntelliJ, Android Studio ou terminal). Visual Studio: lendo a própria janela de Saída (precisa estar mostrando o canal &quot;Compilação&quot;). MSBuild/dotnet build: rodado fora de uma IDE. Não pega Maven nem o compilador nativo do IntelliJ (JPS). Git: via hook global (core.hooksPath), vale pra qualquer repositório da máquina; não mexe se você já tiver um hooksPath próprio configurado."
                                    Style="{StaticResource CardNoteStyle}"/>
                     </StackPanel>
                     <CheckBox x:Name="BuildCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
