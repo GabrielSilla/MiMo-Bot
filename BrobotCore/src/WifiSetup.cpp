@@ -5,41 +5,111 @@
 #include <Preferences.h>
 #include <WebServer.h>
 #include <WiFi.h>
+#include <vector>
 
 namespace {
 
 constexpr const char* kPrefsNamespace = "wifi";
 constexpr const char* kApSsid = "MiMo-Setup";
-constexpr unsigned long kConnectTimeoutMs = 15000;
+// Per-network attempt — kept short since a boot can walk through up to
+// kMaxSavedNetworks of these before falling back to the portal.
+constexpr unsigned long kConnectTimeoutMs = 5000;
+// Remembers the last few networks MiMo has actually connected to (most
+// recent first) rather than just one, since it moves between a small set of
+// known places (home, work, ...) rather than staying on a single network.
+constexpr uint8_t kMaxSavedNetworks = 5;
 
-bool tryConnectSaved() {
+struct SavedNetwork {
+    String ssid;
+    String password;
+};
+
+std::vector<SavedNetwork> loadSavedNetworks() {
     Preferences prefs;
     prefs.begin(kPrefsNamespace, /*readOnly=*/true);
-    String ssid = prefs.getString("ssid", "");
-    String password = prefs.getString("pass", "");
-    prefs.end();
+    uint8_t count = prefs.getUChar("count", 0);
+    if (count > kMaxSavedNetworks) {
+        count = kMaxSavedNetworks;
+    }
 
-    if (ssid.isEmpty()) {
+    std::vector<SavedNetwork> networks;
+    networks.reserve(count);
+    for (uint8_t i = 0; i < count; i++) {
+        String ssid = prefs.getString(("ssid" + String(i)).c_str(), "");
+        String password = prefs.getString(("pass" + String(i)).c_str(), "");
+        networks.push_back({ssid, password});
+    }
+    prefs.end();
+    return networks;
+}
+
+void persistSavedNetworks(const std::vector<SavedNetwork>& networks) {
+    Preferences prefs;
+    prefs.begin(kPrefsNamespace, /*readOnly=*/false);
+    uint8_t count = networks.size() < kMaxSavedNetworks ? static_cast<uint8_t>(networks.size()) : kMaxSavedNetworks;
+    prefs.putUChar("count", count);
+    for (uint8_t i = 0; i < count; i++) {
+        prefs.putString(("ssid" + String(i)).c_str(), networks[i].ssid);
+        prefs.putString(("pass" + String(i)).c_str(), networks[i].password);
+    }
+    prefs.end();
+}
+
+// Moves ssid to the front of the list (inserting it if it isn't already
+// there), evicting the oldest entry once there are more than
+// kMaxSavedNetworks — this is what turns the list into "last N networks
+// connected to" rather than just "every network ever entered".
+void rememberNetwork(std::vector<SavedNetwork>& networks, const String& ssid, const String& password) {
+    for (size_t i = 0; i < networks.size(); i++) {
+        if (networks[i].ssid == ssid) {
+            networks.erase(networks.begin() + i);
+            break;
+        }
+    }
+    networks.insert(networks.begin(), {ssid, password});
+    if (networks.size() > kMaxSavedNetworks) {
+        networks.resize(kMaxSavedNetworks);
+    }
+}
+
+// Tries each saved network in most-recent-first order, one kConnectTimeoutMs
+// attempt each. A hit anywhere but the front promotes that network back to
+// most-recent, so a place MiMo visits often naturally floats to the top of
+// the list (and survives longest once the list fills up).
+bool tryConnectSavedNetworks() {
+    std::vector<SavedNetwork> networks = loadSavedNetworks();
+    if (networks.empty()) {
         return false;
     }
 
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid.c_str(), password.c_str());
+    for (size_t i = 0; i < networks.size(); i++) {
+        const SavedNetwork& network = networks[i];
+        WiFi.begin(network.ssid.c_str(), network.password.c_str());
 
-    unsigned long start = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - start < kConnectTimeoutMs) {
-        delay(250);
+        unsigned long start = millis();
+        while (WiFi.status() != WL_CONNECTED && millis() - start < kConnectTimeoutMs) {
+            delay(250);
+        }
+
+        if (WiFi.status() == WL_CONNECTED) {
+            if (i != 0) {
+                rememberNetwork(networks, network.ssid, network.password);
+                persistSavedNetworks(networks);
+            }
+            return true;
+        }
+
+        WiFi.disconnect();
     }
 
-    return WiFi.status() == WL_CONNECTED;
+    return false;
 }
 
 void saveCredentials(const String& ssid, const String& password) {
-    Preferences prefs;
-    prefs.begin(kPrefsNamespace, /*readOnly=*/false);
-    prefs.putString("ssid", ssid);
-    prefs.putString("pass", password);
-    prefs.end();
+    std::vector<SavedNetwork> networks = loadSavedNetworks();
+    rememberNetwork(networks, ssid, password);
+    persistSavedNetworks(networks);
 }
 
 String htmlEscape(const String& input) {
@@ -135,7 +205,7 @@ void runConfigPortal(const std::function<void()>& onPortalTick) {
 namespace WifiSetup {
 
 void connectOrStartPortal(const std::function<void()>& onPortalTick) {
-    if (tryConnectSaved()) {
+    if (tryConnectSavedNetworks()) {
         return;
     }
 
