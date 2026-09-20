@@ -58,6 +58,21 @@ public partial class MainWindow : Window
     private WindowsMediaMonitor? _mediaMonitor;
     private bool _mediaFaceActive;
 
+    // Re-checks YouTube tab focus on a short poll while WATCHING is a
+    // YouTube tab — a plain tab switch away from an already-playing video
+    // raises no SMTC event of its own (title/playback status don't
+    // change), so relying only on WindowsMediaMonitor's own
+    // NowPlayingChanged would leave the focused/background label (and
+    // DailyReportTracker's video-time counter) stuck at whatever was true
+    // the moment playback last started.
+    private DispatcherTimer? _youTubeFocusTimer;
+    private NowPlaying? _lastNowPlaying;
+    // Dedupes SendWatchingMessage's own MSG — Core restarts a message's
+    // typewriter animation on every MSG it receives, even an identical
+    // one, so a 3s poll re-sending the same text would read as the message
+    // flickering/retyping for no reason.
+    private string? _lastWatchingMessage;
+
     private NotificationMonitor? _notificationMonitor;
     private TeamsNotificationWatcher? _teamsWatcher;
     private readonly List<LiveCallMonitor> _liveCallMonitors = new();
@@ -214,6 +229,8 @@ public partial class MainWindow : Window
         _achievements = new AchievementMonitor();
         _achievements.Unlocked += OnAchievementUnlocked;
         BuildAchievementCards();
+
+        _dailyReport.VideoWatchMilestoneReached += OnVideoWatchMilestoneReached;
 
         _agendaTracker.Changed += OnAgendaChanged;
         _agendaTracker.ReminderDue += OnAgendaReminderDue;
@@ -1034,34 +1051,54 @@ public partial class MainWindow : Window
     private void SendDailyReport() => SendReport("Relatório do dia!");
 
     /// <summary>
-    /// ALT+F10's handler (see GlobalHotkey in the constructor) — same
-    /// NOTIFY as the scheduled 18h report, just a different heading and
-    /// whatever DailyReportTracker has accumulated *so far*: BuildReport()
-    /// is a plain read with no notion of "final", so there's nothing to
-    /// distinguish here except the wording. Deliberately doesn't touch
+    /// DailyReportTracker.VideoWatchMilestoneReached's handler — same
+    /// atomic NOTIFY shape as SendBreakReminder, fired every 15 minutes of
+    /// *focused* YouTube watching (see the tracker's own comment on why).
+    /// FACE NEUTRAL rather than something judgier (SAD/ANGRY): this is a
+    /// screen-time nudge, not a scolding. The minutes penalty this racks up
+    /// lives in DailyReportScoring, not here — this method only ever says
+    /// what MiMo shows, never what it means for the score.
+    /// </summary>
+    private void OnVideoWatchMilestoneReached(int minutes)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _connection.SendCommand($"NOTIFY NEUTRAL Você já está a {minutes} minutos assistindo!");
+        });
+    }
+
+    /// <summary>
+    /// CTRL+SHIFT+F10's handler (see GlobalHotkey in the constructor) —
+    /// same REPORT line as the scheduled 18h report and whatever
+    /// DailyReportTracker has accumulated *so far*: BuildReport() is a
+    /// plain read with no notion of "final", so there's no heading to add
+    /// here — just the casual phrase, same as the scheduled one minus its
+    /// "Relatório do dia!" label. Deliberately doesn't touch
     /// _reportFiredOn — checking in early must not skip today's scheduled
     /// report later.
     /// </summary>
-    private void ShowPartialReport() => SendReport("Relatório parcial (até agora)!");
+    private void ShowPartialReport() => SendReport(null);
 
     /// <summary>
     /// Sends the structured REPORT line (see PROTOCOL.md) instead of a
     /// hand-formatted NOTIFY string — Core owns the six stat lines'
     /// wording/layout (drawReportNotification in Face.cpp), Sender only
-    /// ever hands over today's numbers plus the heading/casual phrase that
-    /// types in below them. `heading` is what tells a scheduled 18h report
-    /// apart from an ALT-hotkey partial one on MiMo's own screen.
+    /// ever hands over today's numbers plus whatever trailing text types
+    /// in below them. `heading`, when given, is what tells a scheduled 18h
+    /// report apart from an on-demand one on MiMo's own screen; null means
+    /// just the casual phrase, no label in front of it.
     /// </summary>
-    private void SendReport(string heading)
+    private void SendReport(string? heading)
     {
         DailyReportResult result = _dailyReport.BuildReport();
         string message = DailyReportMessages.RandomFor(result.Rating);
         string ratingToken = DailyReportMessages.WireToken(result.Rating);
         string ratingLabel = DailyReportMessages.RatingLabel(result.Rating);
+        string text = string.IsNullOrEmpty(heading) ? message : $"{heading} {message}";
 
         string command = $"REPORT {result.BuildSuccessCount} {result.BuildFailCount} {result.CommitCount} " +
-            $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.GameMinutes)} " +
-            $"{ratingToken} {heading} {message}";
+            $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.VideoFocusedMinutes)} " +
+            $"{Math.Round(result.GameMinutes)} {ratingToken} {text}";
 
         _connection.SendCommand(command);
         RelatorioStatusText.Text = $"Último relatório: {ratingLabel}";
@@ -1090,8 +1127,11 @@ public partial class MainWindow : Window
             _mediaMonitor = null;
             MediaStatusText.Text = string.Empty;
             ClearMediaFaceIfActive();
+            StopYouTubeFocusTimer();
+            _lastNowPlaying = null;
             _achievements.SetMusicActive(false);
             _dailyReport.SetMediaActive(false);
+            _dailyReport.SetVideoFocused(false);
         }
     }
 
@@ -1100,19 +1140,37 @@ public partial class MainWindow : Window
         // WindowsMediaMonitor raises this off the WinRT event thread, not the UI thread.
         Dispatcher.Invoke(() =>
         {
+            _lastNowPlaying = nowPlaying;
+
             if (nowPlaying == null)
             {
                 MediaStatusText.Text = "Nada tocando";
                 ClearMediaFaceIfActive();
+                StopYouTubeFocusTimer();
                 _achievements.SetMusicActive(false);
                 _dailyReport.SetMediaActive(false);
+                _dailyReport.SetVideoFocused(false);
                 return;
             }
 
-            MediaStatusText.Text = $"{nowPlaying.Artist} - {nowPlaying.Title}";
             string face = nowPlaying.IsLikelyAudioOnly ? "MUSIC" : "WATCHING";
             _connection.SendCommand($"FACE {face}");
-            _connection.SendCommand($"MSG {nowPlaying.Artist} - {nowPlaying.Title}");
+
+            if (nowPlaying.IsLikelyAudioOnly)
+            {
+                StopYouTubeFocusTimer();
+                _lastWatchingMessage = null;
+                _dailyReport.SetVideoFocused(false);
+                string message = $"{nowPlaying.Artist} - {nowPlaying.Title}";
+                _connection.SendCommand($"MSG {message}");
+                MediaStatusText.Text = message;
+            }
+            else
+            {
+                StartYouTubeFocusTimer();
+                SendWatchingMessage(nowPlaying);
+            }
+
             _mediaFaceActive = true;
             // Audiophile is specifically about music, not video — WATCHING
             // (a browser tab, VLC, ...) doesn't count.
@@ -1121,6 +1179,59 @@ public partial class MainWindow : Window
             // music and video both count here, it's just logged, never scored.
             _dailyReport.SetMediaActive(true);
         });
+    }
+
+    /// <summary>
+    /// Composes and sends WATCHING's MSG plus updates the report's
+    /// video-focus flag — shared by OnNowPlayingChanged (a real SMTC
+    /// change) and _youTubeFocusTimer's tick (a plain tab switch, which
+    /// raises no SMTC event of its own). SMTC alone only ever says "a
+    /// browser is playing something" — YouTubeTabDetector is what tells
+    /// YouTube apart from any other site, and whether that tab is the one
+    /// actually in front of the user right now (see its own header
+    /// comment).
+    /// </summary>
+    private void SendWatchingMessage(NowPlaying nowPlaying)
+    {
+        bool? youTubeFocused = YouTubeTabDetector.TryFindFocused();
+        string message = youTubeFocused switch
+        {
+            true => $"YouTube: {nowPlaying.Title}",
+            false => $"YouTube (ao fundo): {nowPlaying.Title}",
+            null => $"{nowPlaying.Artist} - {nowPlaying.Title}",
+        };
+        _dailyReport.SetVideoFocused(youTubeFocused == true);
+
+        if (message == _lastWatchingMessage)
+        {
+            return;
+        }
+        _lastWatchingMessage = message;
+        _connection.SendCommand($"MSG {message}");
+        MediaStatusText.Text = message;
+    }
+
+    private void StartYouTubeFocusTimer()
+    {
+        if (_youTubeFocusTimer != null)
+        {
+            return;
+        }
+        _youTubeFocusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _youTubeFocusTimer.Tick += (_, _) =>
+        {
+            if (_lastNowPlaying is { IsLikelyAudioOnly: false } nowPlaying)
+            {
+                SendWatchingMessage(nowPlaying);
+            }
+        };
+        _youTubeFocusTimer.Start();
+    }
+
+    private void StopYouTubeFocusTimer()
+    {
+        _youTubeFocusTimer?.Stop();
+        _youTubeFocusTimer = null;
     }
 
     /// <summary>
@@ -1145,6 +1256,7 @@ public partial class MainWindow : Window
         _connection.SendCommand("FACE IDLE_MEDIA");
         _connection.SendCommand("MSG");
         _mediaFaceActive = false;
+        _lastWatchingMessage = null;
     }
 
     private async void NotificationsCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
@@ -2980,6 +3092,7 @@ public partial class MainWindow : Window
         _clockTimer?.Stop();
         _breakTimer?.Stop();
         _reportTimer?.Stop();
+        _youTubeFocusTimer?.Stop();
         _reportHotkey.Dispose();
         _connectionStatusTimer.Stop();
         // A sweep in flight holds up to MaxConcurrentProbes sockets open;

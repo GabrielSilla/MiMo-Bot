@@ -2615,7 +2615,7 @@ constexpr int NOTIF_COFFEE_STEAM_RISE_PX = 26;
 
 // Relatório do dia: unlike every other notification above, which shrinks
 // the eyes to one side to make room for a side illustration, REPORT needs
-// the entire rest of the frame for seven stacked stat lines — so the eyes
+// the entire rest of the frame for eight stacked stat lines — so the eyes
 // shrink further still and move to the top-center instead, freeing
 // everything below them rather than everything beside them.
 constexpr int NOTIF_REPORT_EYE_SIZE = 18;
@@ -2625,13 +2625,18 @@ constexpr int NOTIF_REPORT_EYE_Y = 3;
 // MESSAGE_MARGIN_X, since "Desempenho: Questionavel" is already right at
 // the char-per-line budget this margin leaves (24 chars at CHAR_ADVANCE_PX).
 constexpr int NOTIF_REPORT_STATS_X = 4;
-constexpr int NOTIF_REPORT_STATS_TOP_Y = NOTIF_REPORT_EYE_Y + NOTIF_REPORT_EYE_SIZE + 5;
-// Seven lines at MESSAGE_LINE_HEIGHT (build OK/fail, commits, meeting,
-// media, game, rating), then a small gap before the casual phrase below
-// them — see drawReportNotification and drawNotificationScreen's own
-// textTopY selection. Still comfortably inside the 128px frame with the
-// message's own 3 lines below it (7*9 + 4 + 3*9 = 94px under the eyes).
-constexpr int NOTIF_REPORT_MESSAGE_TOP_Y = NOTIF_REPORT_STATS_TOP_Y + 7 * MESSAGE_LINE_HEIGHT + 4;
+// Tighter gap than the other notifications' art get (3px, not 5+) — eight
+// stat lines plus the message's own 3 lines is a tight fit on a 128px
+// frame, so every spare pixel here is deliberate, not just unused margin.
+constexpr int NOTIF_REPORT_STATS_TOP_Y = NOTIF_REPORT_EYE_Y + NOTIF_REPORT_EYE_SIZE + 3;
+// Eight lines at MESSAGE_LINE_HEIGHT (build OK/fail, commits, meeting,
+// media, video, game, rating), then a small gap before the casual phrase
+// below them — see drawReportNotification and drawNotificationScreen's own
+// textTopY selection. Still fits the 128px frame with the message's own 3
+// lines below it (24 + 8*9 + 2 + 3*9 = 125px under the very top, 3px to
+// spare) — confirmed by hand, not just assumed; retune the +3/+2 gaps
+// above/here first if a future line is ever added.
+constexpr int NOTIF_REPORT_MESSAGE_TOP_Y = NOTIF_REPORT_STATS_TOP_Y + 8 * MESSAGE_LINE_HEIGHT + 2;
 
 // MiMo taking a sip: the cup rises and drifts toward the face, is held
 // there for a beat, and comes back down to the saucer line. Purely
@@ -2874,11 +2879,11 @@ const char* dailyRatingLabel(DailyRating rating) {
 }
 
 // Relatório do dia (see REPORT in PROTOCOL.md): small eyes at top-center
-// (NOTIF_REPORT_*, see their own comment above), then seven left-aligned
+// (NOTIF_REPORT_*, see their own comment above), then eight left-aligned
 // lines stacked at MESSAGE_LINE_HEIGHT pitch — one stat per line, unlike
 // every other notification's single wrapped message, because the whole
 // point of this screen is that each number reads on its own instead of
-// running together in prose. None of these seven lines type in: they're
+// running together in prose. None of these eight lines type in: they're
 // data, not speech, same as the coffee cup or trophy badge never do
 // either — only the casual phrase drawNotificationScreen draws afterward
 // (state.message, at NOTIF_REPORT_MESSAGE_TOP_Y) uses the typewriter.
@@ -2911,6 +2916,11 @@ void drawReportNotification(IDisplay& display, const FaceState& state, const Not
 
     formatReportMinutes(value, sizeof(value), state.reportMediaMin);
     snprintf(line, sizeof(line), "Midia: %s", value);
+    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    y += MESSAGE_LINE_HEIGHT;
+
+    formatReportMinutes(value, sizeof(value), state.reportVideoMin);
+    snprintf(line, sizeof(line), "Video: %s", value);
     display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
     y += MESSAGE_LINE_HEIGHT;
 

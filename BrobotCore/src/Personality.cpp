@@ -597,12 +597,15 @@ void Personality::onAchievementCommand(const char* args, unsigned long now) {
     raiseNotification(Expression::ACHIEVEMENT, text, now);
 }
 
-// "REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <gameMin>
-// <RATING> <texto>" — Brobot.Sender's own daily Relatório (see
-// DailyReportTracker.cs on the PC side), same one-atomic-line, own-top-
-// level-command shape as ACHIEVEMENT above and for the same reason: it
-// carries more structure than a plain NOTIFY <expressao> <texto> can. The
-// six integers are parsed the same strtol-advancing-a-cursor way
+// "REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin>
+// <videoMin> <gameMin> <RATING> <texto>" — Brobot.Sender's own daily
+// Relatório (see DailyReportTracker.cs on the PC side), same one-atomic-
+// line, own-top-level-command shape as ACHIEVEMENT above and for the same
+// reason: it carries more structure than a plain NOTIFY <expressao>
+// <texto> can. <videoMin> is a subset of <mediaMin> — specifically time
+// with a YouTube tab both playing and focused, see
+// Brobot.Sender's YouTubeTabDetector.cs — not a separate activity. The
+// seven integers are parsed the same strtol-advancing-a-cursor way
 // onStatsCommand parses STATS below — except a missing/malformed field
 // here just stays 0 rather than -1, since Sender always has real
 // accumulated numbers for these, never "no source" the way a hardware
@@ -615,9 +618,9 @@ void Personality::onReportCommand(const char* args, unsigned long now) {
         return;
     }
 
-    int values[6] = {0, 0, 0, 0, 0, 0};
+    int values[7] = {0, 0, 0, 0, 0, 0, 0};
     const char* cursor = args;
-    for (int i = 0; i < 6 && cursor != nullptr && *cursor != '\0'; i++) {
+    for (int i = 0; i < 7 && cursor != nullptr && *cursor != '\0'; i++) {
         char* end = nullptr;
         long parsed = strtol(cursor, &end, 10);
         if (end == cursor) {
@@ -655,7 +658,8 @@ void Personality::onReportCommand(const char* args, unsigned long now) {
     _notificationReportCommits = values[2];
     _notificationReportMeetingMin = values[3];
     _notificationReportMediaMin = values[4];
-    _notificationReportGameMin = values[5];
+    _notificationReportVideoMin = values[5];
+    _notificationReportGameMin = values[6];
     _notificationReportRating = parseDailyRating(nameBuf);
     raiseNotification(Expression::REPORT, text, now);
 }
@@ -905,6 +909,7 @@ FaceState Personality::currentState() const {
         state.reportCommits = _notificationReportCommits;
         state.reportMeetingMin = _notificationReportMeetingMin;
         state.reportMediaMin = _notificationReportMediaMin;
+        state.reportVideoMin = _notificationReportVideoMin;
         state.reportGameMin = _notificationReportGameMin;
         state.reportRating = _notificationReportRating;
         state.message = _notificationMessage.visible;

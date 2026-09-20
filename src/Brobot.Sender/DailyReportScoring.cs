@@ -14,8 +14,14 @@ namespace Brobot.Sender;
 /// the day and then
 /// penalizes *increasingly* per extra half hour (not a flat per-minute
 /// rate — a two-hour session should hurt a lot more per-minute than a
-/// forty-minute one), and media (music/video) time is deliberately left out
+/// forty-minute one), and media (music/video) time in general is left out
 /// of the score entirely — it's logged in the report, never judged.
+/// VideoFocusedMinutes is the one exception: unlike ordinary media time,
+/// it's specifically YouTube with the tab actually focused (see
+/// YouTubeTabDetector.cs) — undivided attention, not something playing
+/// alongside other work — and it does cost points, a flat penalty per
+/// 15-minute block, the same cadence MainWindow's own
+/// VideoWatchMilestoneReached nudge fires on.
 /// </summary>
 public enum DailyPerformanceRating
 {
@@ -33,6 +39,7 @@ public readonly record struct DailyReportResult(
     int CommitCount,
     double MeetingMinutes,
     double MediaMinutes,
+    double VideoFocusedMinutes,
     double GameMinutes,
     double Score,
     DailyPerformanceRating Rating);
@@ -58,6 +65,12 @@ public static class DailyReportScoring
     private const double GameFreeMinutes = 30;
     private const double GamePenaltyPerBlock = 5;
 
+    // Flat, not a ramp like GamePenaltyPerBlock — the 15-min nudge itself
+    // is the "this is adding up" signal; the score just needs to agree
+    // with it, not escalate past it.
+    private const double VideoWatchMilestoneMinutes = 15;
+    private const double VideoWatchPenaltyPerMilestone = 6;
+
     private const double PessimoCeiling = 15;
     private const double RuimCeiling = 35;
     private const double QuestionavelCeiling = 50;
@@ -66,10 +79,11 @@ public static class DailyReportScoring
 
     public static DailyReportResult Evaluate(
         int buildSuccessCount, int buildFailCount, int commitCount,
-        double meetingSeconds, double mediaSeconds, double gameSeconds)
+        double meetingSeconds, double mediaSeconds, double videoFocusedSeconds, double gameSeconds)
     {
         double meetingMinutes = meetingSeconds / 60.0;
         double mediaMinutes = mediaSeconds / 60.0;
+        double videoFocusedMinutes = videoFocusedSeconds / 60.0;
         double gameMinutes = gameSeconds / 60.0;
 
         double score = Baseline
@@ -77,7 +91,8 @@ public static class DailyReportScoring
             + BuildFailPoints * buildFailCount
             + CommitPoints * commitCount
             + MeetingPointsPer30Min * (meetingMinutes / 30.0)
-            - GamePenalty(gameMinutes);
+            - GamePenalty(gameMinutes)
+            - VideoWatchPenalty(videoFocusedMinutes);
 
         DailyPerformanceRating rating =
             score < PessimoCeiling ? DailyPerformanceRating.Pessimo :
@@ -89,7 +104,7 @@ public static class DailyReportScoring
 
         return new DailyReportResult(
             buildSuccessCount, buildFailCount, commitCount,
-            meetingMinutes, mediaMinutes, gameMinutes,
+            meetingMinutes, mediaMinutes, videoFocusedMinutes, gameMinutes,
             score, rating);
     }
 
@@ -111,5 +126,17 @@ public static class DailyReportScoring
 
         double extraBlocks = Math.Ceiling(extraMinutes / 30.0);
         return GamePenaltyPerBlock * extraBlocks * (extraBlocks + 1) / 2.0;
+    }
+
+    /// <summary>
+    /// One VideoWatchPenaltyPerMilestone for every full 15-minute block of
+    /// *focused* YouTube time — same threshold MainWindow's
+    /// VideoWatchMilestoneReached nudge fires on, so a day that got warned
+    /// N times is docked for exactly those N milestones, never more or less.
+    /// </summary>
+    private static double VideoWatchPenalty(double videoFocusedMinutes)
+    {
+        double milestones = Math.Floor(videoFocusedMinutes / VideoWatchMilestoneMinutes);
+        return milestones * VideoWatchPenaltyPerMilestone;
     }
 }

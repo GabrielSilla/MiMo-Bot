@@ -76,26 +76,30 @@
   in PROTOCOL.md) is the one notification whose eyes shrink **up** instead
   of **left**: every other notification with its own artwork (`COFFEE`/
   `EMAIL`/`MEETING`/`ACHIEVEMENT`) frees the right side of the frame for an
-  icon, but this one needs the *entire* frame below the eyes for seven
+  icon, but this one needs the *entire* frame below the eyes for eight
   stacked stat lines instead of one wrapped sentence — a real usability
   complaint on the physical display, everything running together in prose
   instead of being scannable per item. `NOTIF_REPORT_EYE_SIZE`/`_GAP`/`_Y`
   pin small (18px) eyes to top-center via the same generic
   `drawNotificationEyes(centerX, topY, ...)` every other notification icon
   already calls — no changes needed there, it already took position as
-  plain parameters. Seven `display.drawText` calls follow at
-  `MESSAGE_LINE_HEIGHT` (9px) pitch, left-aligned at `NOTIF_REPORT_STATS_X`:
-  build success/fail counts, git commit count (from `hooks/mimo-git-hook.ps1`'s
-  `post-commit` hook, not a Windows monitor), meeting/media/game time
-  (`formatReportMinutes`, `"Xh20"`/`"Nmin"`), and the rating
-  (`dailyRatingLabel`, no accents — same convention as `BEDTIME_MESSAGES` in
-  Personality.cpp). None of these seven type in — they're numbers Sender
-  already computed, not speech, same
+  plain parameters. Eight `display.drawText` calls follow at
+  `MESSAGE_LINE_HEIGHT` (9px) pitch, left-aligned at `NOTIF_REPORT_STATS_X`
+  (tight, hand-checked gaps — 8 stat lines plus the message's own 3 below
+  them leaves only ~3px of the 128px frame to spare, see
+  `NOTIF_REPORT_STATS_TOP_Y`/`_MESSAGE_TOP_Y`'s own comments): build
+  success/fail counts, git commit count (from `hooks/mimo-git-hook.ps1`'s
+  `post-commit` hook, not a Windows monitor), meeting/media/video/game time
+  (`formatReportMinutes`, `"Xh20"`/`"Nmin"` — video is a subset of media,
+  specifically a focused YouTube tab, see `YouTubeTabDetector.cs` on the PC
+  side), and the rating (`dailyRatingLabel`, no accents — same convention
+  as `BEDTIME_MESSAGES` in Personality.cpp). None of these eight type in —
+  they're numbers Sender already computed, not speech, same
   reasoning the coffee cup or trophy badge never animate character-by-
   character either. `drawNotificationText` (the shared word-wrapped message
   renderer every notification's trailing casual text goes through) gained a
   `topY` parameter specifically for this: REPORT's own casual phrase still
   types in and word-wraps exactly like any other notification's message,
-  just starting at `NOTIF_REPORT_MESSAGE_TOP_Y` (below the six stat lines)
+  just starting at `NOTIF_REPORT_MESSAGE_TOP_Y` (below the eight stat lines)
   instead of the fixed `NOTIFICATION_TEXT_TOP_Y` every other notification
   uses.

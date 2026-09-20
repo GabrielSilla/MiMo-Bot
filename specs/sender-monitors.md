@@ -16,6 +16,51 @@
   wrongly interrupting whatever the AI happened to be showing at that moment.
   And `IDLE_MEDIA` rather than bare `IDLE`, which clears the game tier too —
   stopping the music must not wipe a game that's still open.
+  `MSG` for a `WATCHING` session isn't always just `<artist> - <title>`
+  either — `YouTubeTabDetector.cs` (via `MainWindow.SendWatchingMessage`,
+  shared by `OnNowPlayingChanged` and `_youTubeFocusTimer`'s own 3s
+  re-check poll — see that timer's own comment for why a plain tab switch
+  needs polling on top of SMTC's events) is a
+  second, independent signal on top of SMTC: SMTC alone only ever says
+  *which app* is playing (Spotify, Edge, Chrome, VLC, ...), never which
+  site inside a browser, since that's the browser's own business. Same UI
+  Automation tab walk `LiveCallMonitor`'s `BrowserTabCallFinder` already
+  does for Meet tabs (`msedge`/`chrome`/`brave` — Firefox isn't covered,
+  matching `BrowserTabCallFinder`'s own scope), confirmed live rather than
+  assumed: a Chromium tab's accessible `Name` carries an audio-playing
+  descriptor for as long as that tab is actually producing sound — the
+  same convention Edge already appends `"- Gravação de microfone"` to a
+  live call's tab with (`LiveCallApps.Edge`'s own comment) — so matching
+  `"YouTube"` in a tab's name is already gated on it being what SMTC is
+  reporting as playing, not a stale paused tab sitting open. Confirmed live
+  against both Edge/Chrome (`"<title> - YouTube - Áudio em reprodução - Uso
+  de memória - N MB"`) and Brave (`"Uso da memória em <title> - YouTube -
+  Reprodução de áudio: N MB"`, memory-first, different wording entirely for
+  the audio cue) — matching is a plain substring, so the exact phrasing/
+  ordering a given Chromium build uses doesn't matter. Each `TabItem` also
+  exposes `SelectionItemPattern.IsSelected`, confirmed to stay accurate for
+  a *background* tab too (tested by switching to a second tab in the same
+  window: the YouTube tab kept its audio-playing suffix, but `IsSelected`
+  flipped to `false`) — `TryFindFocused()` returns that as a
+  `bool?` (`null` = no YouTube tab found in any watched browser window,
+  e.g. VLC or a non-YouTube site), which is what lets the message read
+  `"YouTube: <title>"` when it's the front-and-center tab and
+  `"YouTube (ao fundo): <title>"` when it's merely still open and playing
+  behind something else — `<title>` still comes from SMTC's own
+  `nowPlaying.Title`, not parsed out of the tab's own noisier name (memory
+  usage, "Áudio em reprodução" suffix, browser profile). `SendWatchingMessage`
+  dedupes against `_lastWatchingMessage` before actually sending `MSG` —
+  Core restarts a message's typewriter animation on every `MSG` it
+  receives, even an identical one, so the 3s poll re-sending unchanged text
+  would read as the message flickering/retyping for no reason.
+  Deliberately doesn't feed `AchievementMonitor` at all (audio-only
+  `SetMusicActive` is a different question), but it *does* feed
+  `DailyReportTracker.SetVideoFocused` — unlike ordinary media time (logged,
+  never judged), focused YouTube time specifically costs points in
+  `DailyReportScoring` and triggers a 15-minute screen-time nudge (see
+  `specs/sender-feature-cards.md`'s Relatório entry for both) — a
+  background YouTube tab still counts as ordinary media time exactly like
+  before, only a *focused* one is treated as its own, judged thing.
 - **`NotificationMonitor.cs`**: shows Windows' own toast notifications (any
   app, not just this one) on MiMo, via `Windows.UI.Notifications.Management.
   UserNotificationListener` — the same WinRT surface Action Center itself is

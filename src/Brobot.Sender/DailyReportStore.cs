@@ -22,6 +22,10 @@ public sealed class DailyReportProgress
     public int CommitCount { get; set; }
     public double MeetingSeconds { get; set; }
     public double MediaSeconds { get; set; }
+    // Subset of MediaSeconds: specifically time spent with a YouTube tab
+    // both playing and focused (see YouTubeTabDetector.cs) — MediaSeconds
+    // itself doesn't care about source or focus, this one cares about both.
+    public double VideoFocusedSeconds { get; set; }
     public double GameSeconds { get; set; }
 }
 

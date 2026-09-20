@@ -186,7 +186,7 @@ struct FaceState {
     // weatherCondition already follows.
     AchievementIcon achievementIcon = AchievementIcon::FIRST_CONTACT;
     // Only meaningful while expression == REPORT — today's raw numbers for
-    // the six stat lines drawReportNotification draws (see REPORT in
+    // the eight stat lines drawReportNotification draws (see REPORT in
     // PROTOCOL.md). Same "copied every frame regardless" convention as
     // achievementIcon above.
     int reportBuildOk = 0;
@@ -194,6 +194,9 @@ struct FaceState {
     int reportCommits = 0;
     int reportMeetingMin = 0;
     int reportMediaMin = 0;
+    // Subset of reportMediaMin: specifically time spent with a YouTube tab
+    // both playing and focused (see Brobot.Sender's YouTubeTabDetector.cs).
+    int reportVideoMin = 0;
     int reportGameMin = 0;
     DailyRating reportRating = DailyRating::MEDIO;
 
