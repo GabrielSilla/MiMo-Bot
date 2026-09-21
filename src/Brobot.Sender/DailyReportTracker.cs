@@ -20,16 +20,20 @@ public sealed class DailyReportTracker
 {
     private static readonly TimeSpan PeriodicSaveInterval = TimeSpan.FromMinutes(1);
 
-    // "A cada 15 minutos com a aba do YouTube focada" — a product decision,
-    // not a technical one, so it's named rather than folded into a raw
-    // literal.
+    // "A cada 15 minutos com a aba do YouTube/rede social focada" — a
+    // product decision, not a technical one, so it's named rather than
+    // folded into a raw literal. Two separate constants (not one shared)
+    // since video and social are two independently-tunable nudges that
+    // just happen to share a value today.
     private const double VideoWatchMilestoneSeconds = 15 * 60;
+    private const double SocialWatchMilestoneSeconds = 15 * 60;
 
     private readonly DailyReportProgress _progress;
 
     private bool _gameActive;
     private bool _mediaActive;
     private bool _videoFocused;
+    private bool _socialFocused;
     private bool _meetingActive;
     private DateTime _lastTick;
     private DateTime _lastPeriodicSave = DateTime.MinValue;
@@ -41,6 +45,7 @@ public sealed class DailyReportTracker
     // later the same day) doesn't immediately re-fire for milestones
     // already passed before this run started.
     private int _lastNotifiedVideoMilestone;
+    private int _lastNotifiedSocialMilestone;
 
     /// <summary>
     /// Raised once per each 15-minute milestone of *focused* YouTube
@@ -51,12 +56,16 @@ public sealed class DailyReportTracker
     /// </summary>
     public event Action<int>? VideoWatchMilestoneReached;
 
+    /// <summary>Same shape as VideoWatchMilestoneReached, for focused TikTok/Instagram/Facebook time instead.</summary>
+    public event Action<int>? SocialWatchMilestoneReached;
+
     public DailyReportTracker()
     {
         _progress = DailyReportStore.Load();
         _lastTick = DateTime.Now;
         RollOverDayIfNeeded();
         _lastNotifiedVideoMilestone = (int)(_progress.VideoFocusedSeconds / VideoWatchMilestoneSeconds);
+        _lastNotifiedSocialMilestone = (int)(_progress.SocialFocusedSeconds / SocialWatchMilestoneSeconds);
     }
 
     /// <summary>Call from OnBuildStateChanged's BuildState.Successful case only — not Started, to avoid double-counting one build.</summary>
@@ -104,6 +113,17 @@ public sealed class DailyReportTracker
     /// of media time, never counted on its own without it too being true.
     /// </summary>
     public void SetVideoFocused(bool focused) => _videoFocused = focused;
+
+    /// <summary>
+    /// Call from MainWindow's own _socialMediaTimer poll (see
+    /// SocialMediaTabDetector.cs for why this needs polling rather than
+    /// riding a WindowsMediaMonitor event the way SetVideoFocused does —
+    /// TikTok/Instagram/Facebook never register an SMTC session just from
+    /// being open) with whether a TikTok/Instagram/Facebook tab is both
+    /// open and focused right now. Independent of SetMediaActive/
+    /// SetVideoFocused — this is its own bucket, not a subset of either.
+    /// </summary>
+    public void SetSocialFocused(bool focused) => _socialFocused = focused;
 
     /// <summary>Call from OnLiveCallChanged with whether _activeCalls is non-empty — a live call in any watched app counts as "in a meeting".</summary>
     public void SetMeetingActive(bool active) => _meetingActive = active;
@@ -153,6 +173,18 @@ public sealed class DailyReportTracker
             }
         }
 
+        if (_socialFocused)
+        {
+            _progress.SocialFocusedSeconds += elapsed;
+
+            int socialMilestone = (int)(_progress.SocialFocusedSeconds / SocialWatchMilestoneSeconds);
+            if (socialMilestone > _lastNotifiedSocialMilestone)
+            {
+                _lastNotifiedSocialMilestone = socialMilestone;
+                SocialWatchMilestoneReached?.Invoke(socialMilestone * 15);
+            }
+        }
+
         if (_gameActive)
         {
             _progress.GameSeconds += elapsed;
@@ -167,7 +199,8 @@ public sealed class DailyReportTracker
         RollOverDayIfNeeded();
         return DailyReportScoring.Evaluate(
             _progress.BuildSuccessCount, _progress.BuildFailCount, _progress.CommitCount,
-            _progress.MeetingSeconds, _progress.MediaSeconds, _progress.VideoFocusedSeconds, _progress.GameSeconds);
+            _progress.MeetingSeconds, _progress.MediaSeconds, _progress.VideoFocusedSeconds,
+            _progress.SocialFocusedSeconds, _progress.GameSeconds);
     }
 
     private void RollOverDayIfNeeded()
@@ -185,8 +218,10 @@ public sealed class DailyReportTracker
         _progress.MeetingSeconds = 0;
         _progress.MediaSeconds = 0;
         _progress.VideoFocusedSeconds = 0;
+        _progress.SocialFocusedSeconds = 0;
         _progress.GameSeconds = 0;
         _lastNotifiedVideoMilestone = 0;
+        _lastNotifiedSocialMilestone = 0;
     }
 
     /// <summary>Tick() runs every 200ms — this throttles the write to once a minute, same as AchievementMonitor.MaybeSave. RecordBuildSuccess/Failure save immediately regardless, same as AchievementMonitor's discrete-event methods.</summary>

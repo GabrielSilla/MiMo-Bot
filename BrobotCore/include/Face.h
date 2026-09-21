@@ -109,6 +109,17 @@ enum class ClassicColor : uint8_t { BLUE, GREEN, AMBER, RED, PINK, WHITE };
 // keeps the two from silently drifting apart.
 constexpr unsigned long TYPING_CHAR_INTERVAL_MS = 40;
 
+// REPORT's own notification duration — shared the same way, between
+// Personality::raiseNotification (which needs it to set _notificationUntil)
+// and Face.cpp's drawReportNotification (which needs it to pick a page
+// from elapsed time). 5s per page (product decision — shorter than the
+// ordinary NOTIFICATION_DURATION_MS (10s) every other notification gets,
+// since each REPORT page only has to be read, not typed out character by
+// character like a message), so the two pages together total 10s — the
+// same overall length a single-page notification always had.
+constexpr unsigned long NOTIF_REPORT_PAGE_DURATION_MS = 5000;
+constexpr unsigned long NOTIF_REPORT_TOTAL_DURATION_MS = 2 * NOTIF_REPORT_PAGE_DURATION_MS;
+
 // Fixed capacity for MATRIX's console log — shared between Personality
 // (which owns the actual ring buffer) and FaceState/Face::render (which
 // only ever sees read-only pointers into it), so the two can't drift apart.
@@ -186,7 +197,7 @@ struct FaceState {
     // weatherCondition already follows.
     AchievementIcon achievementIcon = AchievementIcon::FIRST_CONTACT;
     // Only meaningful while expression == REPORT — today's raw numbers for
-    // the eight stat lines drawReportNotification draws (see REPORT in
+    // the nine stat lines drawReportNotification draws (see REPORT in
     // PROTOCOL.md). Same "copied every frame regardless" convention as
     // achievementIcon above.
     int reportBuildOk = 0;
@@ -197,6 +208,9 @@ struct FaceState {
     // Subset of reportMediaMin: specifically time spent with a YouTube tab
     // both playing and focused (see Brobot.Sender's YouTubeTabDetector.cs).
     int reportVideoMin = 0;
+    // Independent of reportVideoMin — TikTok/Instagram/Facebook, its own
+    // bucket, not a merge with YouTube (see SocialMediaTabDetector.cs).
+    int reportSocialMin = 0;
     int reportGameMin = 0;
     DailyRating reportRating = DailyRating::MEDIO;
 

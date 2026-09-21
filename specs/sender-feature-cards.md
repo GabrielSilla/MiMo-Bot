@@ -33,18 +33,21 @@
   `PausaCheckBox_CheckedChanged`/`CheckBreakTime`). On a match,
   `SendDailyReport` (via the shared `SendReport(heading)`) sends one
   `REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <videoMin>
-  <gameMin> <RATING> <texto>` line (see PROTOCOL.md) — same atomic/top-priority
-  tier as `NOTIFY`, but its own top-level command, same reasoning
-  `ACHIEVEMENT` already established: it carries more structure (seven
-  numbers plus a rating token) than a plain expression+text notification
-  can. Sender only ever hands over `DailyReportTracker.BuildReport()`'s raw
-  numbers and `DailyReportMessages.WireToken(rating)` — Core decides how
-  those numbers actually read on screen (eight stacked stat lines with
-  small top-pinned eyes, see `specs/firmware-face-core.md`'s
-  `drawReportNotification`), not Sender; an earlier version hand-formatted
-  one long `NOTIFY <FACE> <text>` string here and it read badly on the real
-  display, everything running together instead of being scannable per item
-  — REPORT replaced it.
+  <socialMin> <gameMin> <RATING> <texto>` line (see PROTOCOL.md) — same
+  atomic/top-priority tier as `NOTIFY`, but its own top-level command, same
+  reasoning `ACHIEVEMENT` already established: it carries more structure
+  (eight numbers plus a rating token) than a plain expression+text
+  notification can. Sender only ever hands over
+  `DailyReportTracker.BuildReport()`'s raw numbers and
+  `DailyReportMessages.WireToken(rating)` — Core decides how those numbers
+  actually read on screen (nine stacked stat lines with small top-pinned
+  eyes, spread across two pages of up to six items each, 5s per page — see
+  `specs/firmware-face-core.md`'s `drawReportNotification` — for the same
+  10s total every other notification gets, just split in two), not Sender;
+  an earlier version hand-formatted one long `NOTIFY <FACE> <text>` string
+  here and it read badly on the real display, everything running together
+  instead of being scannable per item — REPORT
+  replaced it.
   Unlike every other card here,
   Relatório doesn't watch a live signal of its own; it sums signals the
   other cards (plus one non-card source, see `RecordCommit` below) already
@@ -64,17 +67,24 @@
   unchecked branch — deliberately broader than `AchievementMonitor.
   SetMusicActive`, which is audio-only for the unrelated Audiophile
   criterion: the report's "tempo de mídia" counts music *and* video, since
-  it's only ever logged, never scored (see below) — and `SetVideoFocused`
-  from `MainWindow.SendWatchingMessage` (both the real `NowPlayingChanged`
-  event and its own 3s `_youTubeFocusTimer` re-check — a plain tab switch
-  away from an already-playing video raises no SMTC event of its own, so
+  it's only ever logged, never scored (see below) — `SetVideoFocused` from
+  `MainWindow.SendWatchingMessage` (both the real `NowPlayingChanged` event
+  and its own 3s `_youTubeFocusTimer` re-check — a plain tab switch away
+  from an already-playing video raises no SMTC event of its own, so
   polling is what keeps this one accurate; see `specs/sender-monitors.md`'s
   `YouTubeTabDetector` entry), a strict subset of media time that *does*
-  feed the score, unlike media time in general (see below). None of this
-  is gated on Core being connected — meeting/media/game detection all
-  happen at the OS level — so `Tick()` runs off the same 200ms
-  `_connectionStatusTimer` poll `AchievementMonitor.Tick` already rides,
-  just without that one's `connected` gate.
+  feed the score, unlike media time in general (see below) — and
+  `SetSocialFocused` from `MainWindow`'s own `_socialMediaTimer`, a plain
+  5s poll independent of any WindowsMediaMonitor event at all: unlike
+  YouTube, TikTok/Instagram/Facebook never register an SMTC session just
+  from being open (confirmed live), so there's no event to piggyback on in
+  the first place (see `specs/sender-monitors.md`'s `SocialMediaTabDetector`
+  entry) — this timer is started/stopped alongside `_mediaMonitor` in
+  `MediaCheckBox_CheckedChanged`, so it only runs while Mídia is checked.
+  None of this is gated on Core being connected — meeting/media/game
+  detection all happen at the OS level — so `Tick()` runs off the same
+  200ms `_connectionStatusTimer` poll `AchievementMonitor.Tick` already
+  rides, just without that one's `connected` gate.
 
   `DailyReportScoring.Evaluate` turns the day's raw numbers into a
   `DailyPerformanceRating` (`Pessimo`/`Ruim`/`Questionavel`/`Medio`/`Bom`/
@@ -94,22 +104,28 @@
   `GamePenalty`'s own comment has the exact block math. Media minutes in
   general are computed and returned alongside the score but never feed into
   it: logged, never judged, per the same product decision — except
-  `VideoFocusedMinutes`, a subset of media time specifically meaning a
-  focused YouTube tab (undivided attention, not something playing behind
-  other work), which *does* cost a flat `VideoWatchPenaltyPerMilestone` per
-  full 15-minute block, the same threshold `DailyReportTracker.
-  VideoWatchMilestoneReached` fires MainWindow's `OnVideoWatchMilestoneReached`
-  nudge on (`NOTIFY NEUTRAL Você já está a N minutos assistindo!`, every 15
-  min of focused watching — no dedicated artwork, so it falls through to
-  the plain centered-eyes notification, see PROTOCOL.md's "any other"
-  case). The milestone counter that decides *when* to fire lives entirely
-  in the tracker (in-memory only, seeded from today's already-persisted
-  `VideoFocusedSeconds` at construction so a same-day restart doesn't
-  immediately re-fire for milestones already passed); the score, in
-  `DailyReportScoring.VideoWatchPenalty`, is computed independently straight
-  from `VideoFocusedMinutes` rather than reading that counter, so it always
-  agrees with however many nudges actually landed today, even across a
-  restart. `DailyReportMessages` picks
+  `VideoFocusedMinutes` (focused YouTube) and `SocialFocusedMinutes`
+  (focused TikTok/Instagram/Facebook combined), two independent exceptions
+  kept as their own separate buckets rather than merged into one
+  "distraction" total (product decision — YouTube stays its own thing).
+  Each costs a flat `VideoWatchPenaltyPerMilestone`/
+  `SocialWatchPenaltyPerMilestone` per full 15-minute block, the same
+  threshold `DailyReportTracker.VideoWatchMilestoneReached`/
+  `SocialWatchMilestoneReached` fire MainWindow's
+  `OnVideoWatchMilestoneReached`/`OnSocialWatchMilestoneReached` nudges on
+  (`NOTIFY NEUTRAL Você já está a N minutos assistindo!` /
+  `NOTIFY NEUTRAL Você está a N minutos em Redes Sociais!`, every 15 min of
+  focused time in each — no dedicated artwork for either, so both fall
+  through to the plain centered-eyes notification, see PROTOCOL.md's "any
+  other" case). Each milestone counter that decides *when* to fire lives
+  entirely in the tracker (in-memory only, seeded from today's
+  already-persisted `VideoFocusedSeconds`/`SocialFocusedSeconds` at
+  construction so a same-day restart doesn't immediately re-fire for
+  milestones already passed); the score, in
+  `DailyReportScoring.VideoWatchPenalty`/`SocialWatchPenalty`, is computed
+  independently straight from the minutes rather than reading that
+  counter, so it always agrees with however many nudges actually landed
+  today, even across a restart. `DailyReportMessages` picks
   the casual PT-BR line that goes with whichever rating came out (one flat
   pool per rating, same `GreetingMessages`/`PausaMessages` shape and voice
   rules — casual buddy tone, never implies memory of *other* days, only

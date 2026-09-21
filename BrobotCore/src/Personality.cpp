@@ -312,11 +312,16 @@ bool Personality::notificationActive(unsigned long now) const {
 // The one entry point for raising a notification, shared by the NOTIFY
 // command and by Core's own bedtime nudge — which has no PC app behind it
 // at all, and is exactly why this isn't folded into onNotifyCommand.
+// REPORT is the one expression with its own longer duration
+// (NOTIF_REPORT_TOTAL_DURATION_MS, see Face.h) — its two pages each need
+// the same reading time a normal one-page notification gets, so the total
+// window is twice as long as everything else's NOTIFICATION_DURATION_MS.
 void Personality::raiseNotification(Expression e, const char* text, unsigned long now) {
     _notificationExpression = e;
     _notificationMessage.set(text, now);
     _notificationStartedAt = now;
-    _notificationUntil = now + NOTIFICATION_DURATION_MS;
+    unsigned long duration = (e == Expression::REPORT) ? NOTIF_REPORT_TOTAL_DURATION_MS : NOTIFICATION_DURATION_MS;
+    _notificationUntil = now + duration;
     // Deliberately does NOT touch _lastInteractionAt: a notification is
     // MiMo interrupting you, not you interacting with MiMo, and counting it
     // would mean a machine left alone overnight could never fall asleep —
@@ -598,29 +603,32 @@ void Personality::onAchievementCommand(const char* args, unsigned long now) {
 }
 
 // "REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin>
-// <videoMin> <gameMin> <RATING> <texto>" — Brobot.Sender's own daily
-// Relatório (see DailyReportTracker.cs on the PC side), same one-atomic-
-// line, own-top-level-command shape as ACHIEVEMENT above and for the same
-// reason: it carries more structure than a plain NOTIFY <expressao>
-// <texto> can. <videoMin> is a subset of <mediaMin> — specifically time
-// with a YouTube tab both playing and focused, see
-// Brobot.Sender's YouTubeTabDetector.cs — not a separate activity. The
-// seven integers are parsed the same strtol-advancing-a-cursor way
-// onStatsCommand parses STATS below — except a missing/malformed field
-// here just stays 0 rather than -1, since Sender always has real
-// accumulated numbers for these, never "no source" the way a hardware
-// sensor STATS reads from can. <RATING> is then split off the remainder
-// exactly like ACHIEVEMENT's own <ID> above. Core, not Brobot.Sender,
-// decides how the numbers actually read on screen (drawReportNotification
-// in Face.cpp) — Sender only ever hands over what happened today.
+// <videoMin> <socialMin> <gameMin> <RATING> <texto>" — Brobot.Sender's own
+// daily Relatório (see DailyReportTracker.cs on the PC side), same
+// one-atomic-line, own-top-level-command shape as ACHIEVEMENT above and
+// for the same reason: it carries more structure than a plain NOTIFY
+// <expressao> <texto> can. <videoMin> (YouTube) and <socialMin>
+// (TikTok/Instagram/Facebook combined) are both subsets of <mediaMin>, but
+// kept as two independent numbers rather than one merged "distraction"
+// total — see Brobot.Sender's YouTubeTabDetector.cs/
+// SocialMediaTabDetector.cs, a deliberate product decision, not a
+// technical one. The eight integers are parsed the same
+// strtol-advancing-a-cursor way onStatsCommand parses STATS below —
+// except a missing/malformed field here just stays 0 rather than -1,
+// since Sender always has real accumulated numbers for these, never "no
+// source" the way a hardware sensor STATS reads from can. <RATING> is
+// then split off the remainder exactly like ACHIEVEMENT's own <ID> above.
+// Core, not Brobot.Sender, decides how the numbers actually read on
+// screen (drawReportNotification in Face.cpp) — Sender only ever hands
+// over what happened today.
 void Personality::onReportCommand(const char* args, unsigned long now) {
     if (args[0] == '\0') {
         return;
     }
 
-    int values[7] = {0, 0, 0, 0, 0, 0, 0};
+    int values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     const char* cursor = args;
-    for (int i = 0; i < 7 && cursor != nullptr && *cursor != '\0'; i++) {
+    for (int i = 0; i < 8 && cursor != nullptr && *cursor != '\0'; i++) {
         char* end = nullptr;
         long parsed = strtol(cursor, &end, 10);
         if (end == cursor) {
@@ -659,7 +667,8 @@ void Personality::onReportCommand(const char* args, unsigned long now) {
     _notificationReportMeetingMin = values[3];
     _notificationReportMediaMin = values[4];
     _notificationReportVideoMin = values[5];
-    _notificationReportGameMin = values[6];
+    _notificationReportSocialMin = values[6];
+    _notificationReportGameMin = values[7];
     _notificationReportRating = parseDailyRating(nameBuf);
     raiseNotification(Expression::REPORT, text, now);
 }
@@ -910,6 +919,7 @@ FaceState Personality::currentState() const {
         state.reportMeetingMin = _notificationReportMeetingMin;
         state.reportMediaMin = _notificationReportMediaMin;
         state.reportVideoMin = _notificationReportVideoMin;
+        state.reportSocialMin = _notificationReportSocialMin;
         state.reportGameMin = _notificationReportGameMin;
         state.reportRating = _notificationReportRating;
         state.message = _notificationMessage.visible;

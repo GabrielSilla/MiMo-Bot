@@ -16,12 +16,16 @@ namespace Brobot.Sender;
 /// rate — a two-hour session should hurt a lot more per-minute than a
 /// forty-minute one), and media (music/video) time in general is left out
 /// of the score entirely — it's logged in the report, never judged.
-/// VideoFocusedMinutes is the one exception: unlike ordinary media time,
-/// it's specifically YouTube with the tab actually focused (see
+/// VideoFocusedMinutes is one exception: unlike ordinary media time, it's
+/// specifically YouTube with the tab actually focused (see
 /// YouTubeTabDetector.cs) — undivided attention, not something playing
 /// alongside other work — and it does cost points, a flat penalty per
 /// 15-minute block, the same cadence MainWindow's own
-/// VideoWatchMilestoneReached nudge fires on.
+/// VideoWatchMilestoneReached nudge fires on. SocialFocusedMinutes
+/// (TikTok/Instagram/Facebook, see SocialMediaTabDetector.cs) is the other
+/// exception, scored the same way but as its own separate bucket — YouTube
+/// stays its own thing on purpose, per product decision, not merged into
+/// "social media" even though both are screen-time distractions.
 /// </summary>
 public enum DailyPerformanceRating
 {
@@ -40,6 +44,7 @@ public readonly record struct DailyReportResult(
     double MeetingMinutes,
     double MediaMinutes,
     double VideoFocusedMinutes,
+    double SocialFocusedMinutes,
     double GameMinutes,
     double Score,
     DailyPerformanceRating Rating);
@@ -70,6 +75,8 @@ public static class DailyReportScoring
     // with it, not escalate past it.
     private const double VideoWatchMilestoneMinutes = 15;
     private const double VideoWatchPenaltyPerMilestone = 6;
+    private const double SocialWatchMilestoneMinutes = 15;
+    private const double SocialWatchPenaltyPerMilestone = 6;
 
     private const double PessimoCeiling = 15;
     private const double RuimCeiling = 35;
@@ -79,11 +86,13 @@ public static class DailyReportScoring
 
     public static DailyReportResult Evaluate(
         int buildSuccessCount, int buildFailCount, int commitCount,
-        double meetingSeconds, double mediaSeconds, double videoFocusedSeconds, double gameSeconds)
+        double meetingSeconds, double mediaSeconds, double videoFocusedSeconds,
+        double socialFocusedSeconds, double gameSeconds)
     {
         double meetingMinutes = meetingSeconds / 60.0;
         double mediaMinutes = mediaSeconds / 60.0;
         double videoFocusedMinutes = videoFocusedSeconds / 60.0;
+        double socialFocusedMinutes = socialFocusedSeconds / 60.0;
         double gameMinutes = gameSeconds / 60.0;
 
         double score = Baseline
@@ -92,7 +101,8 @@ public static class DailyReportScoring
             + CommitPoints * commitCount
             + MeetingPointsPer30Min * (meetingMinutes / 30.0)
             - GamePenalty(gameMinutes)
-            - VideoWatchPenalty(videoFocusedMinutes);
+            - VideoWatchPenalty(videoFocusedMinutes)
+            - SocialWatchPenalty(socialFocusedMinutes);
 
         DailyPerformanceRating rating =
             score < PessimoCeiling ? DailyPerformanceRating.Pessimo :
@@ -104,7 +114,7 @@ public static class DailyReportScoring
 
         return new DailyReportResult(
             buildSuccessCount, buildFailCount, commitCount,
-            meetingMinutes, mediaMinutes, videoFocusedMinutes, gameMinutes,
+            meetingMinutes, mediaMinutes, videoFocusedMinutes, socialFocusedMinutes, gameMinutes,
             score, rating);
     }
 
@@ -138,5 +148,12 @@ public static class DailyReportScoring
     {
         double milestones = Math.Floor(videoFocusedMinutes / VideoWatchMilestoneMinutes);
         return milestones * VideoWatchPenaltyPerMilestone;
+    }
+
+    /// <summary>Same shape as VideoWatchPenalty, for focused TikTok/Instagram/Facebook time instead — its own bucket, its own milestone count.</summary>
+    private static double SocialWatchPenalty(double socialFocusedMinutes)
+    {
+        double milestones = Math.Floor(socialFocusedMinutes / SocialWatchMilestoneMinutes);
+        return milestones * SocialWatchPenaltyPerMilestone;
     }
 }

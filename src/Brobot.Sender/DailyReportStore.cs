@@ -26,6 +26,11 @@ public sealed class DailyReportProgress
     // both playing and focused (see YouTubeTabDetector.cs) — MediaSeconds
     // itself doesn't care about source or focus, this one cares about both.
     public double VideoFocusedSeconds { get; set; }
+    // Independent of both fields above: time with a TikTok/Instagram/
+    // Facebook tab focused (see SocialMediaTabDetector.cs) — a deliberately
+    // separate bucket from VideoFocusedSeconds, not a merge of the two, per
+    // product decision (YouTube stays its own thing).
+    public double SocialFocusedSeconds { get; set; }
     public double GameSeconds { get; set; }
 }
 

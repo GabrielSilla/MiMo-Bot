@@ -140,6 +140,7 @@ private:
     int _notificationReportMeetingMin = 0;
     int _notificationReportMediaMin = 0;
     int _notificationReportVideoMin = 0;
+    int _notificationReportSocialMin = 0;
     int _notificationReportGameMin = 0;
     DailyRating _notificationReportRating = DailyRating::MEDIO;
 

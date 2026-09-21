@@ -76,30 +76,51 @@
   in PROTOCOL.md) is the one notification whose eyes shrink **up** instead
   of **left**: every other notification with its own artwork (`COFFEE`/
   `EMAIL`/`MEETING`/`ACHIEVEMENT`) frees the right side of the frame for an
-  icon, but this one needs the *entire* frame below the eyes for eight
-  stacked stat lines instead of one wrapped sentence — a real usability
-  complaint on the physical display, everything running together in prose
-  instead of being scannable per item. `NOTIF_REPORT_EYE_SIZE`/`_GAP`/`_Y`
-  pin small (18px) eyes to top-center via the same generic
-  `drawNotificationEyes(centerX, topY, ...)` every other notification icon
-  already calls — no changes needed there, it already took position as
-  plain parameters. Eight `display.drawText` calls follow at
-  `MESSAGE_LINE_HEIGHT` (9px) pitch, left-aligned at `NOTIF_REPORT_STATS_X`
-  (tight, hand-checked gaps — 8 stat lines plus the message's own 3 below
-  them leaves only ~3px of the 128px frame to spare, see
-  `NOTIF_REPORT_STATS_TOP_Y`/`_MESSAGE_TOP_Y`'s own comments): build
-  success/fail counts, git commit count (from `hooks/mimo-git-hook.ps1`'s
-  `post-commit` hook, not a Windows monitor), meeting/media/video/game time
-  (`formatReportMinutes`, `"Xh20"`/`"Nmin"` — video is a subset of media,
-  specifically a focused YouTube tab, see `YouTubeTabDetector.cs` on the PC
-  side), and the rating (`dailyRatingLabel`, no accents — same convention
-  as `BEDTIME_MESSAGES` in Personality.cpp). None of these eight type in —
-  they're numbers Sender already computed, not speech, same
-  reasoning the coffee cup or trophy badge never animate character-by-
-  character either. `drawNotificationText` (the shared word-wrapped message
-  renderer every notification's trailing casual text goes through) gained a
-  `topY` parameter specifically for this: REPORT's own casual phrase still
-  types in and word-wraps exactly like any other notification's message,
-  just starting at `NOTIF_REPORT_MESSAGE_TOP_Y` (below the eight stat lines)
-  instead of the fixed `NOTIFICATION_TEXT_TOP_Y` every other notification
-  uses.
+  icon, but this one needs the frame below the eyes for stacked stat lines
+  instead of one wrapped sentence — a real usability complaint on the
+  physical display, everything running together in prose instead of being
+  scannable per item. Nine items total don't fit one screen readably (a
+  previous version tried — cramped 16px eyes, a 2-line message with
+  almost no margin) — `REPORT` now spans **two pages**, up to
+  `NOTIF_REPORT_PAGE_ITEMS` (6) items each (today: 6 then 3, since nine
+  doesn't split evenly), each page getting the exact same roomy layout the
+  original 6-line design had (`NOTIF_REPORT_EYE_SIZE` back to 18px).
+  `reportOnSecondPage(sinceStart)` compares elapsed time against
+  `NOTIF_REPORT_PAGE_DURATION_MS` (5s — shorter than every other
+  notification's 10s, product decision: a page is only ever read, never
+  typed out character-by-character like the casual phrase is — defined in
+  Face.h since `Personality::raiseNotification` needs it too, see below)
+  to pick a page; `reportItemsOnPage(secondPage)` says how many stat lines that page
+  actually has, which both `drawReportNotification` (to know which slice
+  of its 9-item array to draw) and `drawNotificationScreen` (to know where
+  the casual phrase should start on *this* page) need to agree on.
+  `display.drawText` calls follow at `MESSAGE_LINE_HEIGHT` (9px) pitch,
+  left-aligned at `NOTIF_REPORT_STATS_X`: build success/fail counts, git
+  commit count (from `hooks/mimo-git-hook.ps1`'s `post-commit` hook, not a
+  Windows monitor), meeting/media/video/social/game time
+  (`formatReportMinutes`, `"Xh20"`/`"Nmin"` — video (labeled "Youtube" on
+  screen) and "Rede Social" are both subsets of media, specifically a
+  focused YouTube tab (`YouTubeTabDetector.cs`) and a focused
+  TikTok/Instagram/Facebook tab (`SocialMediaTabDetector.cs`)
+  respectively, kept as two separate lines rather than merged into one —
+  product decision, not technical), and the rating (`dailyRatingLabel`, no
+  accents — same convention as `BEDTIME_MESSAGES` in Personality.cpp).
+  None of these type in — they're numbers Sender already computed, not
+  speech, same reasoning the coffee cup or trophy badge never animate
+  character-by-character either. `drawNotificationText` (the shared
+  word-wrapped message renderer every notification's trailing casual text
+  goes through) gained `topY` and `lines` parameters specifically for
+  this: REPORT's own casual phrase still types in and word-wraps exactly
+  like any other notification's message, just starting lower — and, with
+  the two-page split freeing up room again, back to the usual
+  `NOTIFICATION_TEXT_LINES` (3) visible lines rather than a pinched 2. The
+  phrase itself is identical on both pages (Sender only ever picks one per
+  report) and, since it finishes typing well inside the first page's own
+  5s (these phrases are short, and TYPING_CHAR_INTERVAL_MS is only 40ms/char),
+  the second page just shows it already fully revealed — no retyping.
+  `Personality::raiseNotification` gives `REPORT` its own total duration
+  (`NOTIF_REPORT_TOTAL_DURATION_MS`, 10s — exactly 2x
+  `NOTIF_REPORT_PAGE_DURATION_MS`, both in Face.h so Face.cpp and
+  Personality.cpp can't drift apart on what "a page" means) instead of
+  `NOTIFICATION_DURATION_MS` directly — same 10s total every other
+  notification gets, just split across two pages instead of shown as one.

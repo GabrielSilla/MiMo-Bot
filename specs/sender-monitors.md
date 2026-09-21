@@ -23,10 +23,27 @@
   needs polling on top of SMTC's events) is a
   second, independent signal on top of SMTC: SMTC alone only ever says
   *which app* is playing (Spotify, Edge, Chrome, VLC, ...), never which
-  site inside a browser, since that's the browser's own business. Same UI
-  Automation tab walk `LiveCallMonitor`'s `BrowserTabCallFinder` already
-  does for Meet tabs (`msedge`/`chrome`/`brave` — Firefox isn't covered,
-  matching `BrowserTabCallFinder`'s own scope), confirmed live rather than
+  site inside a browser, since that's the browser's own business. The
+  actual UI Automation tab walk lives in `ChromiumTabFocusFinder.cs` —
+  factored out once `SocialMediaTabDetector.cs` (below) needed the exact
+  same walk against a different name pattern, same "one shared
+  implementation" reasoning `LiveCallMonitor`'s own `BrowserTabCallFinder`
+  already follows for Meet tabs (`msedge`/`chrome`/`brave` — Firefox isn't
+  covered, matching `BrowserTabCallFinder`'s own scope), just one level up
+  (`BrowserTabCallFinder`'s own `TryFindLabel` never had to read
+  `SelectionItemPattern`, so it couldn't be reused as-is here). "Focused"
+  means the **OS foreground window**, not just a tab's own
+  `SelectionItemPattern.IsSelected` within whatever window it happens to
+  sit in — a real bug, reported directly: a tab can stay the selected one
+  of its own browser window indefinitely while that whole window sits in
+  the background and a completely different app (an IDE, a game, anything)
+  is what's actually in front of the user. `TryFind` now checks
+  `Win32Windows.GetForegroundWindowHandle()`'s own owning process against
+  the watched browser list *before* walking any tabs at all — if the
+  foreground window isn't even one of them, it returns `null` immediately,
+  the same answer as "no matching tab found," without an unnecessary UI
+  Automation walk. Only the foreground window's own tabs are ever
+  inspected now, never a background one's. Confirmed live rather than
   assumed: a Chromium tab's accessible `Name` carries an audio-playing
   descriptor for as long as that tab is actually producing sound — the
   same convention Edge already appends `"- Gravação de microfone"` to a
@@ -61,6 +78,51 @@
   `specs/sender-feature-cards.md`'s Relatório entry for both) — a
   background YouTube tab still counts as ordinary media time exactly like
   before, only a *focused* one is treated as its own, judged thing.
+- **`SocialMediaTabDetector.cs`**: same `ChromiumTabFocusFinder` walk as
+  `YouTubeTabDetector.cs` above, matching TikTok/Instagram/Facebook instead
+  (confirmed live: all three carry their own name plainly in the tab's
+  accessible `Name` — `"... | TikTok"`, `"Instagram (...) ..."`,
+  `"(7) Facebook ..."` — so a plain per-site substring match is enough, no
+  special-cased status suffix to key on this time). `TryFindFocusedSite()`
+  runs one `ChromiumTabFocusFinder.TryFind` per site (three short walks,
+  not one combined-pattern walk) specifically so the caller learns *which*
+  site matched, not just that one did — `MainWindow.UpdateSocialMediaState`
+  needs the name to put in the message (see below). Kept as its own class
+  rather than a fourth pattern bolted onto `YouTubeTabDetector`, because the
+  two feed genuinely separate `DailyReportTracker` counters ("Tempo de
+  Vídeo" vs "Tempo de Rede Social", each with its own 15-min nudge and score
+  penalty) — YouTube stays its own thing on purpose, a product decision.
+  The bigger difference from YouTube: confirmed live that none of the three
+  ever register an SMTC session just from being open — scrolling a feed, or
+  a TikTok/Reels video autoplaying muted-by-default, raised nothing in
+  `GlobalSystemMediaTransportControlsSessionManager.GetSessions()` at all —
+  so there's no `WindowsMediaMonitor.NowPlayingChanged` event to hang this
+  off the way YouTube's detector does. `MainWindow`'s own `_socialMediaTimer`
+  (a plain 5s `DispatcherTimer`, started/stopped alongside `_mediaMonitor`
+  in `MediaCheckBox_CheckedChanged`) is what drives it instead — the only
+  poller among these monitors that runs independent of any live signal at
+  all, checking browser tab state on a flat interval for as long as Mídia
+  is checked.
+
+  `UpdateSocialMediaState` (the timer's own tick handler) sends
+  `FACE WATCHING` + `MSG Navegando na rede social: <Site>` on a focused
+  match — the exact same shared sticky slot `SendWatchingMessage` already
+  uses for YouTube/Spotify, a deliberate simplicity tradeoff rather than an
+  oversight: `FACE MEETING` once shared that same kind of slot with
+  `MUSIC`/`WATCHING` and a video starting mid-call silently overwrote the
+  meeting message, which is exactly why `MEETING` got split into its own
+  tier (see PROTOCOL.md). Here the equivalent conflict was accepted on
+  purpose instead of adding a new Core tier just for this: real media
+  (`_lastNowPlaying` non-null) always wins the slot when both are true at
+  once, and `UpdateSocialMediaState` checks that first and simply leaves the
+  slot alone rather than fighting `OnNowPlayingChanged` for it. `_lastSocialSite`
+  tracks whether *this* timer is the one currently showing something, so
+  when the focused tab moves on to something else it clears the slot itself
+  (`ClearMediaFaceIfActive`) rather than risk clearing a real "now playing"
+  message that took over in the meantime; `_lastWatchingMessage` — shared
+  with `SendWatchingMessage` — is what dedupes the actual `MSG` send, same
+  "don't restart Core's typewriter on unchanged text" reasoning as the
+  YouTube path.
 - **`NotificationMonitor.cs`**: shows Windows' own toast notifications (any
   app, not just this one) on MiMo, via `Windows.UI.Notifications.Management.
   UserNotificationListener` — the same WinRT surface Action Center itself is

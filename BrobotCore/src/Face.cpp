@@ -2446,16 +2446,18 @@ constexpr int NOTIFICATION_TEXT_MAX_CHARS = 26; // 160px / CHAR_ADVANCE_PX
 //
 // Two passes, same shape as drawWrappedMessage: first wrap the *whole*
 // string (up to MESSAGE_COMPUTE_LINES, the same generous cap that function
-// uses) into lines, then draw only the last NOTIFICATION_TEXT_LINES of
-// them. A single pass that stopped after the first 3 lines used to mean a
-// message that wrapped to 4+ lines silently lost everything past line 3 —
-// never shown, not even once — instead of scrolling. Since `text` here is
-// TypedMessage's own *typed-so-far* substring, recomputing "the last 3
-// lines" fresh every frame is what makes the oldest line disappear as the
-// typewriter keeps revealing more text, the same "oldest visible line
-// scrolls off, like a terminal" behavior the message box already has — no
-// separate scroll-position state to track here either.
-void drawNotificationText(IDisplay& display, const char* text, int topY, uint8_t r, uint8_t g, uint8_t b) {
+// uses) into lines, then draw only the last `lines` of them (every caller
+// but REPORT passes NOTIFICATION_TEXT_LINES; REPORT passes its own smaller
+// NOTIF_REPORT_TEXT_LINES, since its nine stat lines leave no room for the
+// usual three). A single pass that stopped after the first N lines used to
+// mean a message that wrapped past that limit silently lost everything
+// past it — never shown, not even once — instead of scrolling. Since
+// `text` here is TypedMessage's own *typed-so-far* substring, recomputing
+// "the last N lines" fresh every frame is what makes the oldest line
+// disappear as the typewriter keeps revealing more text, the same "oldest
+// visible line scrolls off, like a terminal" behavior the message box
+// already has — no separate scroll-position state to track here either.
+void drawNotificationText(IDisplay& display, const char* text, int topY, int lines, uint8_t r, uint8_t g, uint8_t b) {
     if (text == nullptr || text[0] == '\0') {
         return;
     }
@@ -2498,7 +2500,7 @@ void drawNotificationText(IDisplay& display, const char* text, int topY, uint8_t
         }
     }
 
-    int visibleStart = (lineCount > NOTIFICATION_TEXT_LINES) ? (lineCount - NOTIFICATION_TEXT_LINES) : 0;
+    int visibleStart = (lineCount > lines) ? (lineCount - lines) : 0;
     int visibleCount = lineCount - visibleStart;
 
     char buffer[NOTIFICATION_TEXT_MAX_CHARS + 1];
@@ -2615,9 +2617,14 @@ constexpr int NOTIF_COFFEE_STEAM_RISE_PX = 26;
 
 // Relatório do dia: unlike every other notification above, which shrinks
 // the eyes to one side to make room for a side illustration, REPORT needs
-// the entire rest of the frame for eight stacked stat lines — so the eyes
-// shrink further still and move to the top-center instead, freeing
-// everything below them rather than everything beside them.
+// the frame below the eyes for stacked stat lines — so the eyes shrink
+// further still and move to the top-center instead, freeing everything
+// below them rather than everything beside them. Nine stat lines no longer
+// fit comfortably on one screen (that was the previous design — cramped
+// eyes, a 2-line message with almost no margin), so REPORT now splits
+// across two pages of up to NOTIF_REPORT_PAGE_ITEMS lines each, back to
+// the same roomy layout the very first (6-line) version of this screen
+// had. See drawReportNotification for the actual paging logic.
 constexpr int NOTIF_REPORT_EYE_SIZE = 18;
 constexpr int NOTIF_REPORT_EYE_GAP = 8;
 constexpr int NOTIF_REPORT_EYE_Y = 3;
@@ -2625,18 +2632,17 @@ constexpr int NOTIF_REPORT_EYE_Y = 3;
 // MESSAGE_MARGIN_X, since "Desempenho: Questionavel" is already right at
 // the char-per-line budget this margin leaves (24 chars at CHAR_ADVANCE_PX).
 constexpr int NOTIF_REPORT_STATS_X = 4;
-// Tighter gap than the other notifications' art get (3px, not 5+) — eight
-// stat lines plus the message's own 3 lines is a tight fit on a 128px
-// frame, so every spare pixel here is deliberate, not just unused margin.
-constexpr int NOTIF_REPORT_STATS_TOP_Y = NOTIF_REPORT_EYE_Y + NOTIF_REPORT_EYE_SIZE + 3;
-// Eight lines at MESSAGE_LINE_HEIGHT (build OK/fail, commits, meeting,
-// media, video, game, rating), then a small gap before the casual phrase
-// below them — see drawReportNotification and drawNotificationScreen's own
-// textTopY selection. Still fits the 128px frame with the message's own 3
-// lines below it (24 + 8*9 + 2 + 3*9 = 125px under the very top, 3px to
-// spare) — confirmed by hand, not just assumed; retune the +3/+2 gaps
-// above/here first if a future line is ever added.
-constexpr int NOTIF_REPORT_MESSAGE_TOP_Y = NOTIF_REPORT_STATS_TOP_Y + 8 * MESSAGE_LINE_HEIGHT + 2;
+constexpr int NOTIF_REPORT_STATS_TOP_Y = NOTIF_REPORT_EYE_Y + NOTIF_REPORT_EYE_SIZE + 5;
+// Back to the usual NOTIFICATION_TEXT_LINES-equivalent (3) — with only up
+// to 6 stat lines per page now, there's room for a full 3-line message
+// again, no longer the pinched 2 the nine-line single-page version needed.
+constexpr int NOTIF_REPORT_TEXT_LINES = 3;
+// Total stat items and the max shown per page — 9 items over 2 pages of
+// up to 6 means today's actual split is 6 + 3, not an even 6 + 6; the
+// second page's message simply gets extra breathing room rather than
+// padding out empty lines to look "full".
+constexpr int NOTIF_REPORT_ITEM_COUNT = 9;
+constexpr int NOTIF_REPORT_PAGE_ITEMS = 6;
 
 // MiMo taking a sip: the cup rises and drifts toward the face, is held
 // there for a beat, and comes back down to the saucer line. Purely
@@ -2878,59 +2884,74 @@ const char* dailyRatingLabel(DailyRating rating) {
     }
 }
 
+// True for the second half of REPORT's own longer notification window (see
+// NOTIF_REPORT_PAGE_DURATION_MS in Face.h) — shared between
+// drawReportNotification (which uses it to pick which stat lines to draw)
+// and drawNotificationScreen (which needs the same answer to know where
+// the casual phrase should start, since that depends on how many stat
+// lines the current page actually has).
+bool reportOnSecondPage(unsigned long sinceStart) {
+    return sinceStart >= NOTIF_REPORT_PAGE_DURATION_MS;
+}
+
+// How many stat lines the given REPORT page actually shows — page 0 is a
+// full NOTIF_REPORT_PAGE_ITEMS, page 1 is whatever's left over
+// (NOTIF_REPORT_ITEM_COUNT - NOTIF_REPORT_PAGE_ITEMS; today that's 3, not
+// a full 6, since 9 items don't split evenly across two 6-item pages).
+int reportItemsOnPage(bool secondPage) {
+    return secondPage ? (NOTIF_REPORT_ITEM_COUNT - NOTIF_REPORT_PAGE_ITEMS) : NOTIF_REPORT_PAGE_ITEMS;
+}
+
 // Relatório do dia (see REPORT in PROTOCOL.md): small eyes at top-center
-// (NOTIF_REPORT_*, see their own comment above), then eight left-aligned
-// lines stacked at MESSAGE_LINE_HEIGHT pitch — one stat per line, unlike
-// every other notification's single wrapped message, because the whole
-// point of this screen is that each number reads on its own instead of
-// running together in prose. None of these eight lines type in: they're
+// (NOTIF_REPORT_*, see their own comment above), then up to
+// NOTIF_REPORT_PAGE_ITEMS left-aligned lines stacked at MESSAGE_LINE_HEIGHT
+// pitch — one stat per line, unlike every other notification's single
+// wrapped message, because the whole point of this screen is that each
+// number reads on its own instead of running together in prose. Nine
+// items total don't fit one screen this way (a previous single-page
+// version tried, and needed cramped eyes plus a pinched 2-line message to
+// just barely fit) — REPORT now spans two pages instead, flipping halfway
+// through its own longer notification window (see NOTIF_REPORT_PAGE_
+// DURATION_MS/reportOnSecondPage). None of these lines type in: they're
 // data, not speech, same as the coffee cup or trophy badge never do
 // either — only the casual phrase drawNotificationScreen draws afterward
-// (state.message, at NOTIF_REPORT_MESSAGE_TOP_Y) uses the typewriter.
+// (state.message, at a page-dependent Y — see its own textTopY comment)
+// uses the typewriter, and reads the same on both pages since it's
+// already fully typed well within the first page's 10s.
 void drawReportNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
                             float openFactor) {
     drawNotificationEyes(display, display.width() / 2, NOTIF_REPORT_EYE_Y,
                          NOTIF_REPORT_EYE_SIZE, NOTIF_REPORT_EYE_GAP, openFactor,
                          p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
 
-    char line[32];
+    char items[NOTIF_REPORT_ITEM_COUNT][32];
     char value[12];
-    int y = NOTIF_REPORT_STATS_TOP_Y;
 
-    snprintf(line, sizeof(line), "Builds OK: %d", state.reportBuildOk);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
-
-    snprintf(line, sizeof(line), "Builds Falha: %d", state.reportBuildFail);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
-
-    snprintf(line, sizeof(line), "Commits: %d", state.reportCommits);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
-
+    snprintf(items[0], sizeof(items[0]), "Builds OK: %d", state.reportBuildOk);
+    snprintf(items[1], sizeof(items[1]), "Builds Falha: %d", state.reportBuildFail);
+    snprintf(items[2], sizeof(items[2]), "Commits: %d", state.reportCommits);
     formatReportMinutes(value, sizeof(value), state.reportMeetingMin);
-    snprintf(line, sizeof(line), "Reuniao: %s", value);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
-
+    snprintf(items[3], sizeof(items[3]), "Reuniao: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportMediaMin);
-    snprintf(line, sizeof(line), "Midia: %s", value);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
-
+    snprintf(items[4], sizeof(items[4]), "Midia: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportVideoMin);
-    snprintf(line, sizeof(line), "Video: %s", value);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
-
+    snprintf(items[5], sizeof(items[5]), "Youtube: %s", value);
+    formatReportMinutes(value, sizeof(value), state.reportSocialMin);
+    snprintf(items[6], sizeof(items[6]), "Rede Social: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportGameMin);
-    snprintf(line, sizeof(line), "Jogo: %s", value);
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
-    y += MESSAGE_LINE_HEIGHT;
+    snprintf(items[7], sizeof(items[7]), "Jogo: %s", value);
+    snprintf(items[8], sizeof(items[8]), "Desempenho: %s", dailyRatingLabel(state.reportRating));
 
-    snprintf(line, sizeof(line), "Desempenho: %s", dailyRatingLabel(state.reportRating));
-    display.drawText(line, NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+    unsigned long sinceStart = state.nowMs - state.notificationStartedMs;
+    bool secondPage = reportOnSecondPage(sinceStart);
+    int startIndex = secondPage ? NOTIF_REPORT_PAGE_ITEMS : 0;
+    int endIndex = startIndex + reportItemsOnPage(secondPage);
+
+    int y = NOTIF_REPORT_STATS_TOP_Y;
+    for (int i = startIndex; i < endIndex; i++) {
+        display.drawText(items[i], NOTIF_REPORT_STATS_X, y, p.textR, p.textG, p.textB);
+        y += MESSAGE_LINE_HEIGHT;
+    }
 }
 
 // The Sender-triggered "MiMo says hi/bye" notification (see PROTOCOL.md's
@@ -3823,14 +3844,20 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
                              p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
     }
 
-    // REPORT's own six stat lines already occupy the frame's upper two
-    // thirds (see NOTIF_REPORT_MESSAGE_TOP_Y) — the casual phrase below
-    // them needs a lower start than every other notification's fixed
-    // bottom-third spot, or it would collide with "Desempenho: ...".
-    int textTopY = (state.expression == Expression::REPORT)
-        ? NOTIF_REPORT_MESSAGE_TOP_Y
-        : NOTIFICATION_TEXT_TOP_Y;
-    drawNotificationText(display, state.message, textTopY, p.textR, p.textG, p.textB);
+    // REPORT's stat lines occupy the top of the frame — the casual phrase
+    // below them needs a lower, page-dependent start than every other
+    // notification's fixed bottom-third spot (page 1 has more stat lines
+    // than page 2, so its message starts further down), or it would
+    // collide with the last stat line drawn.
+    bool isReport = state.expression == Expression::REPORT;
+    int textTopY = NOTIFICATION_TEXT_TOP_Y;
+    int textLines = NOTIFICATION_TEXT_LINES;
+    if (isReport) {
+        int itemsThisPage = reportItemsOnPage(reportOnSecondPage(sinceStart));
+        textTopY = NOTIF_REPORT_STATS_TOP_Y + itemsThisPage * MESSAGE_LINE_HEIGHT + 4;
+        textLines = NOTIF_REPORT_TEXT_LINES;
+    }
+    drawNotificationText(display, state.message, textTopY, textLines, p.textR, p.textG, p.textB);
 }
 
 } // namespace

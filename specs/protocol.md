@@ -12,15 +12,26 @@ MSG <text>                    (empty text clears the message)
 WEATHER <tempC> <condition>   (CLEAR|CLOUDY|RAIN|STORM|SNOW|FOG; empty clears the badge)
 TIME <HH:MM>                  (empty clears the clock)
 NOTIFY <FACE> <text>          (top-priority full-screen interruption, auto-clears after 10s)
-REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <videoMin> <gameMin> <RATING> <text>
+REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <videoMin> <socialMin> <gameMin> <RATING> <text>
                                (Relatório do dia — same tier/atomicity as NOTIFY, but Core
-                               draws the 7 numbers as 8 stacked lines with small top-pinned
-                               eyes instead of word-wrapping one string; RATING is one of
-                               PESSIMO|RUIM|QUESTIONAVEL|MEDIO|BOM|EXCELENTE; commits comes
-                               from hooks/mimo-git-hook.ps1's post-commit hook, not a
-                               Windows monitor like the other fields; videoMin is a subset
-                               of mediaMin — YouTube specifically, tab focused, see
-                               YouTubeTabDetector.cs — not a separate activity)
+                               draws the 8 numbers as 9 stacked lines with small top-pinned
+                               eyes instead of word-wrapping one string, spread across TWO
+                               PAGES of up to NOTIF_REPORT_PAGE_ITEMS (6) lines each — today
+                               that's 6 + 3, not an even split — each page holding for
+                               NOTIF_REPORT_PAGE_DURATION_MS (5s, shorter than every other
+                               notification's 10s — a page is only ever read, never typed
+                               character-by-character), so REPORT's own total duration
+                               (NOTIF_REPORT_TOTAL_DURATION_MS) is 10s either way, just split
+                               across two pages instead of one (see reportOnSecondPage in
+                               Face.cpp);
+                               RATING is one of PESSIMO|RUIM|QUESTIONAVEL|MEDIO|BOM|EXCELENTE;
+                               commits comes from hooks/mimo-git-hook.ps1's post-commit hook,
+                               not a Windows monitor like the other fields; videoMin
+                               (labeled "Youtube" on screen, see YouTubeTabDetector.cs) and
+                               socialMin (TikTok/Instagram/Facebook combined, see
+                               SocialMediaTabDetector.cs) are both subsets of mediaMin, kept
+                               as two separate numbers rather than merged — a product
+                               decision, not a technical one)
 THEME <DEFAULT|MATRIX|MI2MO2|MI84> (persistent, like WEATHER/TIME — see Face.cpp's theme notes)
 CLASSICCOLOR <BLUE|GREEN|AMBER|RED|PINK|WHITE> (DEFAULT theme's own primary
                                color — eyes, corner icons, weather/clock

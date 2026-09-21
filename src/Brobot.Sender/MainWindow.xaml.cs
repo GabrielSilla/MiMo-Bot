@@ -73,6 +73,22 @@ public partial class MainWindow : Window
     // flickering/retyping for no reason.
     private string? _lastWatchingMessage;
 
+    // TikTok/Instagram/Facebook never register an SMTC session just from
+    // being open (confirmed live — scrolling a feed, or a muted-by-default
+    // autoplay, raises nothing in GlobalSystemMediaTransportControlsSessionManager),
+    // so unlike YouTube there's no NowPlayingChanged to hang a check off at
+    // all — this timer is the only thing driving SocialMediaTabDetector,
+    // running independently for as long as Mídia is checked.
+    private DispatcherTimer? _socialMediaTimer;
+    // Which site (if any) UpdateSocialMediaState last showed on MiMo's
+    // screen — null once nothing social is focused, or once real media
+    // (_lastNowPlaying) took the shared WATCHING slot back over. Tracked
+    // separately from _lastWatchingMessage so the timer knows whether *it*
+    // is the one that needs to clear the slot when social focus ends,
+    // rather than clearing a real "now playing" message that took over in
+    // the meantime.
+    private string? _lastSocialSite;
+
     private NotificationMonitor? _notificationMonitor;
     private TeamsNotificationWatcher? _teamsWatcher;
     private readonly List<LiveCallMonitor> _liveCallMonitors = new();
@@ -231,6 +247,7 @@ public partial class MainWindow : Window
         BuildAchievementCards();
 
         _dailyReport.VideoWatchMilestoneReached += OnVideoWatchMilestoneReached;
+        _dailyReport.SocialWatchMilestoneReached += OnSocialWatchMilestoneReached;
 
         _agendaTracker.Changed += OnAgendaChanged;
         _agendaTracker.ReminderDue += OnAgendaReminderDue;
@@ -1067,6 +1084,15 @@ public partial class MainWindow : Window
         });
     }
 
+    /// <summary>DailyReportTracker.SocialWatchMilestoneReached's handler — same shape as OnVideoWatchMilestoneReached, its own wording per product decision (YouTube stays "assistindo", social media gets its own phrase).</summary>
+    private void OnSocialWatchMilestoneReached(int minutes)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _connection.SendCommand($"NOTIFY NEUTRAL Você está a {minutes} minutos em Redes Sociais!");
+        });
+    }
+
     /// <summary>
     /// CTRL+SHIFT+F10's handler (see GlobalHotkey in the constructor) —
     /// same REPORT line as the scheduled 18h report and whatever
@@ -1098,7 +1124,7 @@ public partial class MainWindow : Window
 
         string command = $"REPORT {result.BuildSuccessCount} {result.BuildFailCount} {result.CommitCount} " +
             $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.VideoFocusedMinutes)} " +
-            $"{Math.Round(result.GameMinutes)} {ratingToken} {text}";
+            $"{Math.Round(result.SocialFocusedMinutes)} {Math.Round(result.GameMinutes)} {ratingToken} {text}";
 
         _connection.SendCommand(command);
         RelatorioStatusText.Text = $"Último relatório: {ratingLabel}";
@@ -1120,6 +1146,11 @@ public partial class MainWindow : Window
                 MediaStatusText.Text = $"Falha ao observar mídia: {ex.Message}";
                 MediaCheckBox.IsChecked = false;
             }
+
+            // Independent of WindowsMediaMonitor's own events — see
+            // SocialMediaTabDetector's header comment for why TikTok/
+            // Instagram/Facebook need polling instead of an SMTC hook.
+            StartSocialMediaTimer();
         }
         else
         {
@@ -1128,11 +1159,78 @@ public partial class MainWindow : Window
             MediaStatusText.Text = string.Empty;
             ClearMediaFaceIfActive();
             StopYouTubeFocusTimer();
+            StopSocialMediaTimer();
             _lastNowPlaying = null;
             _achievements.SetMusicActive(false);
             _dailyReport.SetMediaActive(false);
             _dailyReport.SetVideoFocused(false);
+            _dailyReport.SetSocialFocused(false);
         }
+    }
+
+    private void StartSocialMediaTimer()
+    {
+        if (_socialMediaTimer != null)
+        {
+            return;
+        }
+        _socialMediaTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _socialMediaTimer.Tick += (_, _) => UpdateSocialMediaState();
+        _socialMediaTimer.Start();
+    }
+
+    private void StopSocialMediaTimer()
+    {
+        _socialMediaTimer?.Stop();
+        _socialMediaTimer = null;
+        _lastSocialSite = null;
+    }
+
+    /// <summary>
+    /// Shows "Navegando na rede social: &lt;Site&gt;" on the same shared
+    /// FACE WATCHING/MSG slot media already uses — a deliberate simplicity
+    /// tradeoff, not an oversight: MEETING once shared that exact slot with
+    /// MUSIC/WATCHING and a video starting mid-call silently overwrote the
+    /// meeting message (see PROTOCOL.md's MEETING notes), which is why it
+    /// got its own tier. Reusing the slot here means real media (`_lastNowPlaying`
+    /// non-null) always wins over a social message when both are true at
+    /// once — accepted on purpose rather than adding a new Core tier just
+    /// for this.
+    /// </summary>
+    private void UpdateSocialMediaState()
+    {
+        string? site = SocialMediaTabDetector.TryFindFocusedSite();
+        _dailyReport.SetSocialFocused(site != null);
+
+        if (_lastNowPlaying != null)
+        {
+            // Real media already owns the slot — OnNowPlayingChanged is the
+            // authority for it, this tick just leaves it alone.
+            _lastSocialSite = null;
+            return;
+        }
+
+        if (site != null)
+        {
+            string message = $"Navegando na rede social: {site}";
+            if (message != _lastWatchingMessage)
+            {
+                _lastWatchingMessage = message;
+                _connection.SendCommand("FACE WATCHING");
+                _connection.SendCommand($"MSG {message}");
+                MediaStatusText.Text = message;
+                _mediaFaceActive = true;
+            }
+        }
+        else if (_lastSocialSite != null)
+        {
+            // We were the one showing a social message and the focused tab
+            // moved on — clear it (no real media took over, or this tick
+            // would have returned above already).
+            ClearMediaFaceIfActive();
+        }
+
+        _lastSocialSite = site;
     }
 
     private void OnNowPlayingChanged(NowPlaying? nowPlaying)
@@ -3093,6 +3191,7 @@ public partial class MainWindow : Window
         _breakTimer?.Stop();
         _reportTimer?.Stop();
         _youTubeFocusTimer?.Stop();
+        _socialMediaTimer?.Stop();
         _reportHotkey.Dispose();
         _connectionStatusTimer.Stop();
         // A sweep in flight holds up to MaxConcurrentProbes sockets open;

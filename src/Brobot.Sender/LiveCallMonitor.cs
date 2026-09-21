@@ -345,6 +345,19 @@ internal static class Win32Windows
     [DllImport("user32.dll")]
     private static extern bool IsWindowVisible(IntPtr hWnd);
 
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    /// <summary>The window the user is actually looking at right now (Alt-Tab's own notion of "active") — IntPtr.Zero if none (e.g. mid-transition, or the desktop itself).</summary>
+    internal static IntPtr GetForegroundWindowHandle() => GetForegroundWindow();
+
+    /// <summary>The owning process id of any window handle — exposes the same GetWindowThreadProcessId FindVisibleTopLevelWindows already uses internally, for callers that only have one hWnd (e.g. the foreground window) rather than a whole enumeration to filter.</summary>
+    internal static uint GetProcessId(IntPtr hWnd)
+    {
+        GetWindowThreadProcessId(hWnd, out uint pid);
+        return pid;
+    }
+
     internal static List<IntPtr> FindVisibleTopLevelWindows(IReadOnlySet<uint> pids)
     {
         var found = new List<IntPtr>();
