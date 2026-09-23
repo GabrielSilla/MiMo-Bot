@@ -362,10 +362,6 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Conexão: MiMo's IP address on the local network (WiFi — see
@@ -444,72 +440,8 @@
                 </Grid>
             </Border>
 
-            <!-- Pausa -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
-                        <iconPacks:PackIconMaterial Kind="CoffeeOutline" Width="24" Height="24"
-                                                     Foreground="{DynamicResource InkBrush}"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="Pausa" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Lembra de esticar as pernas nos horários abaixo" Style="{StaticResource CardDescriptionStyle}"/>
-                        <TextBlock x:Name="PausaStatusText" Style="{StaticResource CardStatusStyle}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,6,0">
-                        <TextBlock Text="Manhã" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
-                        <TextBox x:Name="PausaManhaTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0">
-                        <TextBlock Text="Tarde" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
-                        <TextBox x:Name="PausaTardeTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
-                    </StackPanel>
-                    <CheckBox x:Name="PausaCheckBox" Grid.Column="4" Style="{StaticResource MimoCheckBoxStyle}"
-                              Checked="PausaCheckBox_CheckedChanged" Unchecked="PausaCheckBox_CheckedChanged"/>
-                </Grid>
-            </Border>
-
-            <!-- Pensamentos da IA -->
-            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
-                        <iconPacks:PackIconMaterial Kind="Brain" Width="26" Height="26"
-                                                     Foreground="{DynamicResource InkBrush}"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="Atividade da IA" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Envia a atividade da IA selecionada" Style="{StaticResource CardDescriptionStyle}"/>
-                        <TextBlock x:Name="PensamentosIaStatusText" Style="{StaticResource CardStatusStyle}"/>
-                    </StackPanel>
-                    <ComboBox x:Name="PensamentosIaComboBox" Grid.Column="2" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"
-                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
-                              SelectedIndex="0" SelectionChanged="PensamentosIaComboBox_SelectionChanged">
-                        <ComboBoxItem Content="Claude"/>
-                        <ComboBoxItem Content="Codex"/>
-                        <ComboBoxItem Content="Gemini"/>
-                        <ComboBoxItem Content="Cursor"/>
-                        <ComboBoxItem Content="Outro"/>
-                    </ComboBox>
-                    <Button x:Name="PensamentosIaInstallButton" Grid.Column="3" Content="Instalar" VerticalAlignment="Center"
-                            Style="{StaticResource InstallButtonStyle}" Click="PensamentosIaInstallButton_Click"/>
-                </Grid>
-            </Border>
-
             <!-- Mídia -->
-            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -531,7 +463,7 @@
             </Border>
 
             <!-- Jogos -->
-            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="4" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -564,7 +496,7 @@
             </Border>
 
             <!-- Alertas de desempenho (see ResourceAlertMonitor) -->
-            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="5" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -589,7 +521,7 @@
             </Border>
 
             <!-- Notificações -->
-            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="6" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -611,59 +543,8 @@
                 </Grid>
             </Border>
 
-            <!-- Ferramentas de Dev (Build + Git) -->
-            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
-                        <iconPacks:PackIconMaterial Kind="HammerWrench" Width="24" Height="24"
-                                                     Foreground="{DynamicResource InkBrush}"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="Ferramentas de Dev" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Avisa o MiMo quando uma build começa/termina (Gradle, Visual Studio ou MSBuild/dotnet build) e quando você faz commit, merge, checkout de branch ou push"
-                                   Style="{StaticResource CardDescriptionStyle}"/>
-                        <TextBlock Text="Gradle: pelo log do daemon (IntelliJ, Android Studio ou terminal). Visual Studio: lendo a própria janela de Saída (precisa estar mostrando o canal &quot;Compilação&quot;). MSBuild/dotnet build: rodado fora de uma IDE. Não pega Maven nem o compilador nativo do IntelliJ (JPS). Git: via hook global (core.hooksPath), vale pra qualquer repositório da máquina; não mexe se você já tiver um hooksPath próprio configurado."
-                                   Style="{StaticResource CardNoteStyle}"/>
-                    </StackPanel>
-                    <CheckBox x:Name="BuildCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
-                              Checked="BuildCheckBox_CheckedChanged" Unchecked="BuildCheckBox_CheckedChanged"/>
-                </Grid>
-            </Border>
-
-            <!-- Relatório -->
-            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
-                        <iconPacks:PackIconMaterial Kind="ChartBoxOutline" Width="24" Height="24"
-                                                     Foreground="{DynamicResource InkBrush}"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
-                        <TextBlock Text="Relatório" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Resumo do dia (builds, reunião, mídia, jogo) e um desempenho no horário abaixo" Style="{StaticResource CardDescriptionStyle}"/>
-                        <TextBlock x:Name="RelatorioStatusText" Style="{StaticResource CardStatusStyle}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0">
-                        <TextBlock Text="Horário" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
-                        <TextBox x:Name="RelatorioHoraTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
-                    </StackPanel>
-                    <CheckBox x:Name="RelatorioCheckBox" Grid.Column="3" Style="{StaticResource MimoCheckBoxStyle}"
-                              Checked="RelatorioCheckBox_CheckedChanged" Unchecked="RelatorioCheckBox_CheckedChanged"/>
-                </Grid>
-            </Border>
-
             <!-- Tema -->
-            <Border Grid.Row="11" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="7" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -716,7 +597,7 @@
             </Border>
 
             <!-- Sons -->
-            <Border Grid.Row="12" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -737,7 +618,7 @@
             </Border>
 
             <!-- Scanlines -->
-            <Border Grid.Row="13" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -758,7 +639,7 @@
             </Border>
 
             <!-- Info -->
-            <Border Grid.Row="14" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
+            <Border Grid.Row="10" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="36" Height="36" CornerRadius="11" Background="{DynamicResource BadgeBrush}">
                         <iconPacks:PackIconMaterial Kind="InformationOutline" Width="18" Height="18"
@@ -778,7 +659,7 @@
                  possible from inside this app: the ESP32 accepts one TCP
                  client at a time, so an external script can't reach MiMo
                  without closing Brobot.Sender first. -->
-            <Border Grid.Row="15" x:Name="TesteCard" Style="{StaticResource CardStyle}"
+            <Border Grid.Row="11" x:Name="TesteCard" Style="{StaticResource CardStyle}"
                     Visibility="Collapsed" Margin="0,4,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -833,9 +714,139 @@
                 </Grid>
             </Border>
 
-            <Button Grid.Row="16" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+            <Button Grid.Row="12" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
                     Click="SaveButton_Click"/>
         </Grid>
+    </ScrollViewer>
+    </TabItem>
+
+    <!-- Trabalho — the work-day cards (Pausa, Atividade da IA, Ferramentas
+         de Dev, Relatório) pulled out of Configurações Gerais so that tab
+         stays about MiMo itself (conexão, tema, sons...) rather than a long
+         mixed list. Same controls/names as before, so every handler and
+         SaveButton_Click read them exactly as they did; this tab carries its
+         own save button since Pausa/Relatório's times only persist on save. -->
+    <TabItem Header="Trabalho" Style="{StaticResource MimoTabItemStyle}">
+    <ScrollViewer x:Name="TrabalhoScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+        <StackPanel Margin="32,20,24,28">
+            <!-- Pausa -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="CoffeeOutline" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Pausa" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Lembra de esticar as pernas nos horários abaixo" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="PausaStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <TextBlock Text="Manhã" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
+                        <TextBox x:Name="PausaManhaTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock Text="Tarde" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
+                        <TextBox x:Name="PausaTardeTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="PausaCheckBox" Grid.Column="4" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="PausaCheckBox_CheckedChanged" Unchecked="PausaCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Pensamentos da IA -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="Brain" Width="26" Height="26"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Atividade da IA" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Envia a atividade da IA selecionada" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="PensamentosIaStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <ComboBox x:Name="PensamentosIaComboBox" Grid.Column="2" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"
+                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              SelectedIndex="0" SelectionChanged="PensamentosIaComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Claude"/>
+                        <ComboBoxItem Content="Codex"/>
+                        <ComboBoxItem Content="Gemini"/>
+                        <ComboBoxItem Content="Cursor"/>
+                        <ComboBoxItem Content="Outro"/>
+                    </ComboBox>
+                    <Button x:Name="PensamentosIaInstallButton" Grid.Column="3" Content="Instalar" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="PensamentosIaInstallButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Ferramentas de Dev (Build + Git) -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="HammerWrench" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Ferramentas de Dev" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Avisa o MiMo quando uma build começa/termina (Gradle, Visual Studio ou MSBuild/dotnet build) e quando você faz commit, merge, checkout de branch ou push"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Gradle: pelo log do daemon (IntelliJ, Android Studio ou terminal). Visual Studio: lendo a própria janela de Saída (precisa estar mostrando o canal &quot;Compilação&quot;). MSBuild/dotnet build: rodado fora de uma IDE. Não pega Maven nem o compilador nativo do IntelliJ (JPS). Git: via hook global (core.hooksPath), vale pra qualquer repositório da máquina; não mexe se você já tiver um hooksPath próprio configurado."
+                                   Style="{StaticResource CardNoteStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="BuildCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="BuildCheckBox_CheckedChanged" Unchecked="BuildCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Relatório -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="ChartBoxOutline" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Relatório" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Resumo do dia (builds, reunião, mídia, jogo) e um desempenho no horário abaixo" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="RelatorioStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock Text="Horário" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
+                        <TextBox x:Name="RelatorioHoraTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="RelatorioCheckBox" Grid.Column="3" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="RelatorioCheckBox_CheckedChanged" Unchecked="RelatorioCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <Button x:Name="TrabalhoSaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+                    Margin="0,4,0,0" Click="SaveButton_Click"/>
+        </StackPanel>
     </ScrollViewer>
     </TabItem>
 

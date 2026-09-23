@@ -47,6 +47,16 @@ the way up and would fire this handler too — guarded by comparing
 `sender` (which is always `MainTabControl`, the object the handler is
 attached to, regardless of which nested control actually raised the event).
 
+The **Trabalho** tab (second, right after Configurações Gerais) holds the
+work-day cards — Pausa, Atividade da IA, Ferramentas de Dev, Relatório —
+moved out of Configurações Gerais so that tab stays about MiMo itself. The
+controls kept their names, so handlers and `SaveButton_Click` are unchanged;
+Trabalho has its own `TrabalhoSaveButton` wired to the same handler (it saves
+everything, and flashes "Salvo!" on whichever button was clicked), since
+Pausa's and Relatório's times only persist on save. Tab order is Configurações
+Gerais, Trabalho, Mini Games, Conquistas, Agenda — `MainTabControl_SelectionChanged`
+maps subtitles by index, so reordering tabs means updating that switch.
+
 The **Configurações Gerais** tab (six feature cards — Conexão, Hora, Clima,
 Atividade da IA, Mídia, Jogos — a Tema card, an info card, a "Salvar
 configurações" button, warm cream/tan palette) follows a supplied design

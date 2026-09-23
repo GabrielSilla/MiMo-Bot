@@ -105,7 +105,10 @@
   of its 9-item array to draw) and `drawNotificationScreen` (to know where
   the casual phrase should start on *this* page) need to agree on.
   `display.drawText` calls follow at `MESSAGE_LINE_HEIGHT` (9px) pitch,
-  left-aligned at `NOTIF_REPORT_STATS_X`: build success/fail counts, git
+  left-aligned at `NOTIF_REPORT_STATS_X` (the three build/commit lines are
+  omitted when Sender sent -1 for them — its Ferramentas de Dev card is
+  off — see `reportHasDevTools`/`reportItemCount`; the remaining 6 items
+  fit one page, which then simply stays up for the whole 10s): build success/fail counts, git
   commit count (from `hooks/mimo-git-hook.ps1`'s `post-commit` hook, not a
   Windows monitor), meeting/media/video/social/game time
   (`formatReportMinutes`, `"Xh20"`/`"Nmin"` — video (labeled "Youtube" on

@@ -1135,13 +1135,19 @@ public partial class MainWindow : Window
     /// </summary>
     private void SendReport(string? heading)
     {
-        DailyReportResult result = _dailyReport.BuildReport();
+        DailyReportResult result = _dailyReport.BuildReport(includeDevTools: BuildCheckBox.IsChecked == true);
         string message = DailyReportMessages.RandomFor(result.Rating);
         string ratingToken = DailyReportMessages.WireToken(result.Rating);
         string ratingLabel = DailyReportMessages.RatingLabel(result.Rating);
         string text = string.IsNullOrEmpty(heading) ? message : $"{heading} {message}";
 
-        string command = $"REPORT {result.BuildSuccessCount} {result.BuildFailCount} {result.CommitCount} " +
+        // -1 tells Core to leave the Builds/Commits lines out entirely (see
+        // REPORT in PROTOCOL.md) — with Ferramentas de Dev off there's no
+        // build/git monitoring, so a 0 there would be misleading.
+        string devFields = result.DevToolsIncluded
+            ? $"{result.BuildSuccessCount} {result.BuildFailCount} {result.CommitCount}"
+            : "-1 -1 -1";
+        string command = $"REPORT {devFields} " +
             $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.VideoFocusedMinutes)} " +
             $"{Math.Round(result.SocialFocusedMinutes)} {Math.Round(result.GameMinutes)} {ratingToken} {text}";
 
@@ -2884,8 +2890,9 @@ public partial class MainWindow : Window
         TabSubtitleText.Text = MainTabControl.SelectedIndex switch
         {
             0 => "Escolha as informações que o MiMo pode receber",
-            1 => "O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado",
-            3 => "Reuniões detectadas nas notificações do Outlook",
+            1 => "O que o MiMo acompanha durante o seu dia de trabalho",
+            2 => "O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado",
+            4 => "Reuniões detectadas nas notificações do Outlook",
             _ => string.Empty,
         };
     }
@@ -3123,12 +3130,15 @@ public partial class MainWindow : Window
 
         settings.Save();
 
-        string original = SaveButton.Content as string ?? "Salvar configurações";
-        SaveButton.Content = "Salvo!";
+        // Configurações Gerais and Trabalho each have their own save button
+        // (both save everything), so the feedback goes on whichever was clicked.
+        var button = (System.Windows.Controls.Button)sender;
+        string original = button.Content as string ?? "Salvar configurações";
+        button.Content = "Salvo!";
         var resetTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
         resetTimer.Tick += (_, _) =>
         {
-            SaveButton.Content = original;
+            button.Content = original;
             resetTimer.Stop();
         };
         resetTimer.Start();
@@ -3235,6 +3245,7 @@ public partial class MainWindow : Window
         // first checkbox), clipping the logo at the top — force it back to the
         // top explicitly every time the window is (re)shown.
         RootScrollViewer.ScrollToTop();
+        TrabalhoScrollViewer.ScrollToTop();
     }
 
     /// <summary>

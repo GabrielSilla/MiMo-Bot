@@ -194,10 +194,11 @@ public sealed class DailyReportTracker
     }
 
     /// <summary>Pure read for SendDailyReport — today's counts run through DailyReportScoring, with no side effects of its own.</summary>
-    public DailyReportResult BuildReport()
+    public DailyReportResult BuildReport(bool includeDevTools)
     {
         RollOverDayIfNeeded();
         return DailyReportScoring.Evaluate(
+            includeDevTools,
             _progress.BuildSuccessCount, _progress.BuildFailCount, _progress.CommitCount,
             _progress.MeetingSeconds, _progress.MediaSeconds, _progress.VideoFocusedSeconds,
             _progress.SocialFocusedSeconds, _progress.GameSeconds);

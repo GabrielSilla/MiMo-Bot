@@ -2696,10 +2696,12 @@ constexpr int NOTIF_REPORT_STATS_TOP_Y = NOTIF_REPORT_EYE_Y + NOTIF_REPORT_EYE_S
 // to 6 stat lines per page now, there's room for a full 3-line message
 // again, no longer the pinched 2 the nine-line single-page version needed.
 constexpr int NOTIF_REPORT_TEXT_LINES = 3;
-// Total stat items and the max shown per page — 9 items over 2 pages of
-// up to 6 means today's actual split is 6 + 3, not an even 6 + 6; the
+// Max stat items and the max shown per page — 9 items over 2 pages of
+// up to 6 means the full split is 6 + 3, not an even 6 + 6; the
 // second page's message simply gets extra breathing room rather than
-// padding out empty lines to look "full".
+// padding out empty lines to look "full". With the Builds/Commits lines
+// omitted (Sender sent -1, see reportItemCount) only 6 remain, and those
+// fit one page held for the whole REPORT window instead.
 constexpr int NOTIF_REPORT_ITEM_COUNT = 9;
 constexpr int NOTIF_REPORT_PAGE_ITEMS = 6;
 
@@ -2953,12 +2955,34 @@ bool reportOnSecondPage(unsigned long sinceStart) {
     return sinceStart >= NOTIF_REPORT_PAGE_DURATION_MS;
 }
 
-// How many stat lines the given REPORT page actually shows — page 0 is a
-// full NOTIF_REPORT_PAGE_ITEMS, page 1 is whatever's left over
-// (NOTIF_REPORT_ITEM_COUNT - NOTIF_REPORT_PAGE_ITEMS; today that's 3, not
-// a full 6, since 9 items don't split evenly across two 6-item pages).
-int reportItemsOnPage(bool secondPage) {
-    return secondPage ? (NOTIF_REPORT_ITEM_COUNT - NOTIF_REPORT_PAGE_ITEMS) : NOTIF_REPORT_PAGE_ITEMS;
+// Sender sends -1 for Builds OK/Builds Falha/Commits when its "Ferramentas
+// de Dev" card is off (no build/git monitoring at all, so a 0 would be a
+// lie) — those three lines are then left out rather than drawn as 0.
+bool reportHasDevTools(const FaceState& state) {
+    return state.reportBuildOk >= 0;
+}
+
+int reportItemCount(const FaceState& state) {
+    return reportHasDevTools(state) ? NOTIF_REPORT_ITEM_COUNT : NOTIF_REPORT_ITEM_COUNT - 3;
+}
+
+// Whether the given half of the REPORT window shows the overflow page —
+// only when there *is* overflow; a list that fits one page just stays on
+// it for both halves.
+bool reportShowsOverflowPage(const FaceState& state, bool secondPage) {
+    return secondPage && reportItemCount(state) > NOTIF_REPORT_PAGE_ITEMS;
+}
+
+// How many stat lines the given REPORT page actually shows — page 0 is up
+// to a full NOTIF_REPORT_PAGE_ITEMS, page 1 is whatever's left over (3
+// with all 9 items, since they don't split evenly across two 6-item
+// pages), or the same single page again when everything fit on page 0.
+int reportItemsOnPage(const FaceState& state, bool secondPage) {
+    int count = reportItemCount(state);
+    if (reportShowsOverflowPage(state, secondPage)) {
+        return count - NOTIF_REPORT_PAGE_ITEMS;
+    }
+    return count < NOTIF_REPORT_PAGE_ITEMS ? count : NOTIF_REPORT_PAGE_ITEMS;
 }
 
 // Relatório do dia (see REPORT in PROTOCOL.md): small eyes at top-center
@@ -2985,26 +3009,29 @@ void drawReportNotification(IDisplay& display, const FaceState& state, const Not
 
     char items[NOTIF_REPORT_ITEM_COUNT][32];
     char value[12];
+    int n = 0;
 
-    snprintf(items[0], sizeof(items[0]), "Builds OK: %d", state.reportBuildOk);
-    snprintf(items[1], sizeof(items[1]), "Builds Falha: %d", state.reportBuildFail);
-    snprintf(items[2], sizeof(items[2]), "Commits: %d", state.reportCommits);
+    if (reportHasDevTools(state)) {
+        snprintf(items[n++], sizeof(items[0]), "Builds OK: %d", state.reportBuildOk);
+        snprintf(items[n++], sizeof(items[0]), "Builds Falha: %d", state.reportBuildFail);
+        snprintf(items[n++], sizeof(items[0]), "Commits: %d", state.reportCommits);
+    }
     formatReportMinutes(value, sizeof(value), state.reportMeetingMin);
-    snprintf(items[3], sizeof(items[3]), "Reuniao: %s", value);
+    snprintf(items[n++], sizeof(items[0]), "Reuniao: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportMediaMin);
-    snprintf(items[4], sizeof(items[4]), "Midia: %s", value);
+    snprintf(items[n++], sizeof(items[0]), "Midia: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportVideoMin);
-    snprintf(items[5], sizeof(items[5]), "Youtube: %s", value);
+    snprintf(items[n++], sizeof(items[0]), "Youtube: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportSocialMin);
-    snprintf(items[6], sizeof(items[6]), "Rede Social: %s", value);
+    snprintf(items[n++], sizeof(items[0]), "Rede Social: %s", value);
     formatReportMinutes(value, sizeof(value), state.reportGameMin);
-    snprintf(items[7], sizeof(items[7]), "Jogo: %s", value);
-    snprintf(items[8], sizeof(items[8]), "Desempenho: %s", dailyRatingLabel(state.reportRating));
+    snprintf(items[n++], sizeof(items[0]), "Jogo: %s", value);
+    snprintf(items[n++], sizeof(items[0]), "Desempenho: %s", dailyRatingLabel(state.reportRating));
 
     unsigned long sinceStart = state.nowMs - state.notificationStartedMs;
     bool secondPage = reportOnSecondPage(sinceStart);
-    int startIndex = secondPage ? NOTIF_REPORT_PAGE_ITEMS : 0;
-    int endIndex = startIndex + reportItemsOnPage(secondPage);
+    int startIndex = reportShowsOverflowPage(state, secondPage) ? NOTIF_REPORT_PAGE_ITEMS : 0;
+    int endIndex = startIndex + reportItemsOnPage(state, secondPage);
 
     int y = NOTIF_REPORT_STATS_TOP_Y;
     for (int i = startIndex; i < endIndex; i++) {
@@ -3935,7 +3962,7 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     int textTopY = NOTIFICATION_TEXT_TOP_Y;
     int textLines = NOTIFICATION_TEXT_LINES;
     if (isReport) {
-        int itemsThisPage = reportItemsOnPage(reportOnSecondPage(sinceStart));
+        int itemsThisPage = reportItemsOnPage(state, reportOnSecondPage(sinceStart));
         textTopY = NOTIF_REPORT_STATS_TOP_Y + itemsThisPage * MESSAGE_LINE_HEIGHT + 4;
         textLines = NOTIF_REPORT_TEXT_LINES;
     }

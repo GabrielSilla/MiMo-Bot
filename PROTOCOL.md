@@ -563,7 +563,11 @@ a necessidade de placeholder.
   <minutosVideo> <minutosRedeSocial> <minutosJogo> <RATING> <texto>`.
   `<commits>` vem do hook de git que roda em `post-commit`
   (`hooks/mimo-git-hook.ps1`/`hooks/git-hooks/post-commit`), não de um
-  monitor do Windows como os outros números. `<minutosVideo>` (YouTube) e
+  monitor do Windows como os outros números. `<buildOk>`/`<buildFail>`/
+  `<commits>` chegam como `-1` quando o card "Ferramentas de Dev" do Sender
+  está desligado (sem monitor de build/git, um 0 ali mentiria) — o Core
+  então **omite** essas três linhas, e os 6 itens restantes cabem numa
+  página só, que fica na tela pelos 10s inteiros. `<minutosVideo>` (YouTube) e
   `<minutosRedeSocial>` (TikTok, Instagram e Facebook somados) são ambos
   subconjuntos de `<minutosMidia>` — não atividades separadas — mas contados
   cada um por si, não somados entre si: um é sobre vídeo com aba focada

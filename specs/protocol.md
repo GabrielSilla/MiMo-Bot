@@ -25,6 +25,8 @@ REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <videoMin> <socia
                                across two pages instead of one (see reportOnSecondPage in
                                Face.cpp);
                                RATING is one of PESSIMO|RUIM|QUESTIONAVEL|MEDIO|BOM|EXCELENTE;
+                               buildOk/buildFail/commits are all -1 when Sender's Ferramentas
+                               de Dev card is off — Core then omits those three lines;
                                commits comes from hooks/mimo-git-hook.ps1's post-commit hook,
                                not a Windows monitor like the other fields; videoMin
                                (labeled "Youtube" on screen, see YouTubeTabDetector.cs) and

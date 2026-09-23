@@ -48,6 +48,12 @@
   here and it read badly on the real display, everything running together
   instead of being scannable per item — REPORT
   replaced it.
+  **Builds/commits depend on Ferramentas de Dev**: with `BuildCheckBox` off
+  there's no build/git monitoring, so `SendReport` passes
+  `includeDevTools: false` — `DailyReportScoring.Evaluate` drops the
+  build/commit points from the score, and the REPORT line sends
+  `-1 -1 -1` in those three fields so Core omits the "Builds OK"/"Builds
+  Falha"/"Commits" lines (a 0 there would read as "no work happened").
   Unlike every other card here,
   Relatório doesn't watch a live signal of its own; it sums signals the
   other cards (plus one non-card source, see `RecordCommit` below) already

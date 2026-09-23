@@ -615,9 +615,10 @@ void Personality::onAchievementCommand(const char* args, unsigned long now) {
 // SocialMediaTabDetector.cs, a deliberate product decision, not a
 // technical one. The eight integers are parsed the same
 // strtol-advancing-a-cursor way onStatsCommand parses STATS below —
-// except a missing/malformed field here just stays 0 rather than -1,
-// since Sender always has real accumulated numbers for these, never "no
-// source" the way a hardware sensor STATS reads from can. <RATING> is
+// except a missing/malformed field here just stays 0 rather than -1.
+// The one explicit -1 is Sender's own: <buildOk>/<buildFail>/<commits>
+// arrive as -1 when its "Ferramentas de Dev" card is off, and
+// drawReportNotification then omits those three lines entirely. <RATING> is
 // then split off the remainder exactly like ACHIEVEMENT's own <ID> above.
 // Core, not Brobot.Sender, decides how the numbers actually read on
 // screen (drawReportNotification in Face.cpp) — Sender only ever hands

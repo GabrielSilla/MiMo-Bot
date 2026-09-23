@@ -26,6 +26,12 @@ namespace Brobot.Sender;
 /// exception, scored the same way but as its own separate bucket — YouTube
 /// stays its own thing on purpose, per product decision, not merged into
 /// "social media" even though both are screen-time distractions.
+///
+/// Builds and commits only count when "Ferramentas de Dev" is on
+/// (includeDevTools): with it off there's no build/git monitoring at all,
+/// so zero builds says nothing about the day and must not read as "no work
+/// happened" — those terms simply drop out of the score (and the REPORT
+/// line sends -1 so Core omits those lines too).
 /// </summary>
 public enum DailyPerformanceRating
 {
@@ -38,6 +44,7 @@ public enum DailyPerformanceRating
 }
 
 public readonly record struct DailyReportResult(
+    bool DevToolsIncluded,
     int BuildSuccessCount,
     int BuildFailCount,
     int CommitCount,
@@ -85,6 +92,7 @@ public static class DailyReportScoring
     private const double BomCeiling = 90;
 
     public static DailyReportResult Evaluate(
+        bool includeDevTools,
         int buildSuccessCount, int buildFailCount, int commitCount,
         double meetingSeconds, double mediaSeconds, double videoFocusedSeconds,
         double socialFocusedSeconds, double gameSeconds)
@@ -95,10 +103,14 @@ public static class DailyReportScoring
         double socialFocusedMinutes = socialFocusedSeconds / 60.0;
         double gameMinutes = gameSeconds / 60.0;
 
+        double devToolsPoints = includeDevTools
+            ? BuildSuccessPoints * buildSuccessCount
+              + BuildFailPoints * buildFailCount
+              + CommitPoints * commitCount
+            : 0;
+
         double score = Baseline
-            + BuildSuccessPoints * buildSuccessCount
-            + BuildFailPoints * buildFailCount
-            + CommitPoints * commitCount
+            + devToolsPoints
             + MeetingPointsPer30Min * (meetingMinutes / 30.0)
             - GamePenalty(gameMinutes)
             - VideoWatchPenalty(videoFocusedMinutes)
@@ -113,6 +125,7 @@ public static class DailyReportScoring
             DailyPerformanceRating.Excelente;
 
         return new DailyReportResult(
+            includeDevTools,
             buildSuccessCount, buildFailCount, commitCount,
             meetingMinutes, mediaMinutes, videoFocusedMinutes, socialFocusedMinutes, gameMinutes,
             score, rating);
