@@ -77,18 +77,31 @@ internal static class ChromiumTabFocusFinder
 
         foreach (AutomationElement tab in tabs)
         {
-            string name = tab.Current.Name ?? string.Empty;
-            if (name.Length == 0 || !isMatch(name))
+            // FindAll only snapshots the tree — a tab closed, dragged out
+            // or re-created by the browser in the meantime throws
+            // ElementNotAvailableException on first property access here.
+            // Confirmed live (sender-errors.log), and it surfaced as an
+            // "Erro inesperado" dialog from the 5s social-media tick. Just
+            // skip that tab; the next tick walks a fresh tree.
+            try
+            {
+                string name = tab.Current.Name ?? string.Empty;
+                if (name.Length == 0 || !isMatch(name))
+                {
+                    continue;
+                }
+
+                if (tab.TryGetCurrentPattern(SelectionItemPattern.Pattern, out object? patternObj)
+                    && patternObj is SelectionItemPattern selectionPattern)
+                {
+                    return selectionPattern.Current.IsSelected;
+                }
+                return false; // found a match but couldn't read its selection state — safer to say "not focused" than to claim it is
+            }
+            catch (ElementNotAvailableException)
             {
                 continue;
             }
-
-            if (tab.TryGetCurrentPattern(SelectionItemPattern.Pattern, out object? patternObj)
-                && patternObj is SelectionItemPattern selectionPattern)
-            {
-                return selectionPattern.Current.IsSelected;
-            }
-            return false; // found a match but couldn't read its selection state — safer to say "not focused" than to claim it is
         }
 
         return null;

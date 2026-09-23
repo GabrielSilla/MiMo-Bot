@@ -1,3 +1,4 @@
+using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -43,6 +44,20 @@ public partial class App : System.Windows.Application
         }
 
         DispatcherUnhandledException += OnDispatcherUnhandledException;
+        // Off-UI-thread failures (fire-and-forget tasks, WinRT callbacks)
+        // never reach the dispatcher handler above — log them too.
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                LogError("AppDomain", ex);
+            }
+        };
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            LogError("Task", args.Exception);
+            args.SetObserved();
+        };
         SessionEnding += OnSessionEnding;
 
         // Must happen before MainWindow is constructed: its XAML resolves
@@ -60,10 +75,39 @@ public partial class App : System.Windows.Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         // A malformed line from Core, or a connection hiccup, should never take
-        // the whole app down — surface it and keep the window open.
-        System.Windows.MessageBox.Show($"Erro inesperado: {e.Exception.Message}", "MiMo",
+        // the whole app down — surface it and keep the window open. The dialog
+        // only has room for the message, so the full stack trace goes to
+        // ErrorLogPath for diagnosing it afterwards.
+        LogError("Dispatcher", e.Exception);
+        System.Windows.MessageBox.Show($"Erro inesperado: {e.Exception.Message}\n\nDetalhes em {ErrorLogPath}", "MiMo",
             MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;
+    }
+
+    private static readonly string ErrorLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "Brobot", "sender-errors.log");
+
+    // Same size-cap-then-start-over approach as MainWindow's ai-events.log.
+    private const long MaxErrorLogBytes = 1024 * 1024;
+
+    internal static void LogError(string source, Exception ex)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(ErrorLogPath)!);
+            var info = new FileInfo(ErrorLogPath);
+            if (info.Exists && info.Length > MaxErrorLogBytes)
+            {
+                File.Delete(ErrorLogPath);
+            }
+            File.AppendAllText(ErrorLogPath,
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] ({source}) {ex}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch
+        {
+            // Logging must never be the thing that crashes the app.
+        }
     }
 
     // The one termination path the tray's own "Sair" (MainWindow.

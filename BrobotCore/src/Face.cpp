@@ -34,6 +34,7 @@ ExpressionShape shapeFor(Expression expression) {
         case Expression::BYE: return {1.00f, 0, 0}; // eyes open — the waving hands carry the expression
         case Expression::FINISHED: return {1.00f, 0, 0}; // eyes open — drawEyeCaret replaces the shape entirely
         case Expression::THINKING: return {1.00f, 0, 0}; // eyes open — drawEyeGlitch replaces the shape entirely
+        case Expression::SWEATING: return {1.00f, 0, 2}; // full height, slightly lowered — drawEyeWorried slants the tops, the sweat drop carries the rest
         case Expression::NEUTRAL:
         default:                 return {1.00f, 0, 0};
     }
@@ -786,6 +787,64 @@ void drawWrappedMessageMi2Mo2(IDisplay& display, const char* message,
 void drawEye(IDisplay& display, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b,
              uint8_t bgR = BG_R, uint8_t bgG = BG_G, uint8_t bgB = BG_B) {
     fillRoundedRect(display, x, y, w, h, r, g, b, bgR, bgG, bgB);
+}
+
+// SWEATING's eye: the normal rounded square with its top edge slanted —
+// high at the inner corner (nearest the other eye), dropping toward the
+// outer one, the raised-inner-brow line that reads as worried. Cut out of
+// the finished eye in background color, one row per pixel of slant (same
+// "cut a gap from a filled block" trick as the corners), so it costs a
+// handful of fillRects rather than one per column. The slant scales with
+// the eye's current height, so a blink still closes cleanly to a line.
+constexpr float WORRIED_SLANT_FACTOR = 0.24f;
+
+void drawEyeWorried(IDisplay& display, int x, int y, int w, int h, bool isLeftEye,
+                    uint8_t r, uint8_t g, uint8_t b,
+                    uint8_t bgR = BG_R, uint8_t bgG = BG_G, uint8_t bgB = BG_B) {
+    drawEye(display, x, y, w, h, r, g, b, bgR, bgG, bgB);
+
+    int slant = (int)(h * WORRIED_SLANT_FACTOR);
+    for (int row = 0; row < slant; row++) {
+        // Row 0 is cut almost all the way to the inner edge, the last row
+        // barely at all — a straight diagonal from inner-top to outer side.
+        int cutW = (int)(w * (1.0f - (row + 0.5f) / slant));
+        if (cutW <= 0) {
+            continue;
+        }
+        int cutX = isLeftEye ? x : x + w - cutW; // the outer side is where the lid drops
+        display.fillRect(cutX, y + row, cutW, 1, bgR, bgG, bgB);
+    }
+}
+
+int worriedSlantPx(int h) {
+    return (int)(h * WORRIED_SLANT_FACTOR);
+}
+
+// SWEATING's sweat drop: a teardrop (pointed top, round bottom) that
+// appears beside the outer corner of the right eye and slides down with a
+// gravity ease (slow start, speeding up), vanishes for a beat, then starts
+// over. Off free-running nowMs rather than an expression start time — it's
+// a loop with no "first frame" that matters.
+constexpr unsigned long SWEAT_CYCLE_MS = 1900;
+constexpr unsigned long SWEAT_SLIDE_MS = 1500; // the rest of the cycle it's hidden
+constexpr int SWEAT_DROP_ROWS[] = {1, 1, 3, 3, 5, 5, 5, 5, 3};
+constexpr int SWEAT_DROP_HEIGHT = (int)(sizeof(SWEAT_DROP_ROWS) / sizeof(SWEAT_DROP_ROWS[0]));
+constexpr int SWEAT_DROP_WIDTH = 5;
+
+// x is the drop's left edge; startY where its tip starts; travelPx how far
+// it slides before disappearing.
+void drawSweatDrop(IDisplay& display, int x, int startY, int travelPx, unsigned long nowMs,
+                   uint8_t r, uint8_t g, uint8_t b) {
+    unsigned long t = nowMs % SWEAT_CYCLE_MS;
+    if (t >= SWEAT_SLIDE_MS) {
+        return;
+    }
+    float k = (float)t / SWEAT_SLIDE_MS;
+    int y = startY + (int)(travelPx * k * k);
+    for (int row = 0; row < SWEAT_DROP_HEIGHT; row++) {
+        int rowW = SWEAT_DROP_ROWS[row];
+        display.fillRect(x + (SWEAT_DROP_WIDTH - rowW) / 2, y + row, rowW, 1, r, g, b);
+    }
 }
 
 // MI2MO2's eye shape: a plain filled ellipse (a circle whenever w == h,
@@ -3792,6 +3851,27 @@ void drawAchievementNotification(IDisplay& display, const FaceState& state, cons
     drawTrophyBadge(display, TROPHY_BADGE_CX, badgeTopY + badgeOffset, p.inkR, p.inkG, p.inkB);
 }
 
+// SWEATING as a notification (Brobot.Sender's Alertas de desempenho): the
+// usual centered notification eyes, but worried-slanted, with the sweat
+// drop sliding down beside the right one. Its travel stops well short of
+// NOTIFICATION_TEXT_TOP_Y, so it never runs into the message.
+void drawSweatingNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                              float eyeOpenFactor) {
+    int h = (int)(NOTIF_EYE_SIZE * eyeOpenFactor);
+    if (h < MIN_EYE_HEIGHT) {
+        h = MIN_EYE_HEIGHT;
+    }
+    int leftX = display.width() / 2 - (NOTIF_EYE_SIZE * 2 + NOTIF_EYE_GAP) / 2;
+    int rightX = leftX + NOTIF_EYE_SIZE + NOTIF_EYE_GAP;
+    int top = NOTIF_EYE_Y + (NOTIF_EYE_SIZE - h) / 2;
+    drawEyeWorried(display, leftX, top, NOTIF_EYE_SIZE, h, true, p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+    drawEyeWorried(display, rightX, top, NOTIF_EYE_SIZE, h, false, p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+    // The message's own color: plain white in CLASSIC (distinct from the
+    // eyes' ink whatever CLASSICCOLOR is), the theme ink elsewhere.
+    drawSweatDrop(display, rightX + NOTIF_EYE_SIZE + 3, top + worriedSlantPx(h), 28, state.nowMs,
+                  p.textR, p.textG, p.textB);
+}
+
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     NotificationPalette p = notificationPalette(state);
 
@@ -3834,6 +3914,8 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
         drawByeNotification(display, state, p, 1.0f - state.blinkAmount);
     } else if (state.expression == Expression::REPORT) {
         drawReportNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::SWEATING) {
+        drawSweatingNotification(display, state, p, 1.0f - state.blinkAmount);
     } else {
         // Any notification without artwork of its own: just MiMo, blinking,
         // with the message below. There is deliberately no placeholder
@@ -4086,6 +4168,19 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         // would be a third simultaneous signal for one state.
         drawEyeGlitch(display, leftX, eyeTop, eyeSize, eyeHeight, state.nowMs, 0, eyeR, eyeG, eyeB);
         drawEyeGlitch(display, rightX, eyeTop, eyeSize, eyeHeight, state.nowMs, 1, eyeR, eyeG, eyeB);
+    } else if (state.expression == Expression::SWEATING) {
+        drawEyeWorried(display, leftX, eyeTop, eyeSize, eyeHeight, true, eyeR, eyeG, eyeB);
+        drawEyeWorried(display, rightX, eyeTop, eyeSize, eyeHeight, false, eyeR, eyeG, eyeB);
+        // White in CLASSIC so it stands apart from the eyes whatever
+        // CLASSICCOLOR is (blue eyes + a blue drop would merge); the
+        // theme's own single ink everywhere else (MATRIX's recolor would
+        // flatten it to green regardless). Not in MI2MO2 — that branch
+        // above owns the whole face and has no twin eyes to sweat beside.
+        uint8_t dropR = isMi84 ? eyeR : MSG_R;
+        uint8_t dropG = isMi84 ? eyeG : MSG_G;
+        uint8_t dropB = isMi84 ? eyeB : MSG_B;
+        drawSweatDrop(display, rightX + eyeSize + 3, eyeTop + worriedSlantPx(eyeHeight),
+                      (int)(eyeSize * 0.7f), state.nowMs, dropR, dropG, dropB);
     } else {
         drawEye(display, leftX, eyeTop, eyeSize, eyeHeight, eyeR, eyeG, eyeB);
         drawEye(display, rightX, eyeTop, eyeSize, eyeHeight, eyeR, eyeG, eyeB);

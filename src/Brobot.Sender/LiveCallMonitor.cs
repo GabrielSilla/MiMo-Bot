@@ -474,7 +474,17 @@ internal static class BrowserTabCallFinder
 
             foreach (AutomationElement tab in tabs)
             {
-                string name = tab.Current.Name ?? string.Empty;
+                // Same race as ChromiumTabFocusFinder: a tab closed since
+                // FindAll's snapshot throws on first property access.
+                string name;
+                try
+                {
+                    name = tab.Current.Name ?? string.Empty;
+                }
+                catch (ElementNotAvailableException)
+                {
+                    continue;
+                }
                 if (name.Length > 0 && isCallTabName(name))
                 {
                     return extractLabel(name);

@@ -56,8 +56,8 @@ replacement.
   — the Mini Games tab (Pong/Batalha RPG launch flow, `GlobalKeyboardHook`)
   and the Conquistas tab (`AchievementMonitor`/`AchievementCatalog`).
 - [specs/sender-feature-cards.md](specs/sender-feature-cards.md) — the
-  simpler checkbox cards: Hora/Clima, Pausa (break reminders), Notificações
-  (intro), Build (Gradle/MSBuild/Visual Studio detection).
+  simpler checkbox cards: Hora/Clima, Pausa (break reminders), Alertas de
+  desempenho (CPU/RAM > 90%), Notificações (intro), Build (Gradle/MSBuild/Visual Studio detection).
 - [specs/sender-monitors.md](specs/sender-monitors.md) — the live data
   sources: `WindowsMediaMonitor`, `NotificationMonitor` +
   `TeamsNotificationWatcher`, `WeatherMonitor`, `SystemStatsMonitor` +

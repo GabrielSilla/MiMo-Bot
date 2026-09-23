@@ -33,7 +33,10 @@
 // Relatório numbers ride alongside it on FaceState (see reportBuildOk etc.
 // below and DailyRating), the same way weatherCondition/achievementIcon
 // carry WEATHER/ACHIEVEMENT's own extra picks.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING, REPORT };
+// SWEATING is an ordinary mood (worried eyes + a sliding sweat drop, see
+// drawEyeWorried/drawSweatDrop in Face.cpp) — Brobot.Sender's Alertas de
+// desempenho sends it as NOTIFY SWEATING when CPU/RAM stay above 90%.
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING, REPORT, SWEATING };
 
 // Which of MiMo's 10 achievements a notification is celebrating (see
 // ACHIEVEMENT in PROTOCOL.md) — every one shows the same trophy

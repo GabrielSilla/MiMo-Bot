@@ -164,6 +164,7 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "EMAIL") == 0) return Expression::EMAIL;
     if (strcmp(name, "MEETING") == 0) return Expression::MEETING;
     if (strcmp(name, "BUILDING") == 0) return Expression::BUILDING;
+    if (strcmp(name, "SWEATING") == 0) return Expression::SWEATING;
     return Expression::NEUTRAL;
 }
 

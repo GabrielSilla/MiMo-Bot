@@ -365,6 +365,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Conexão: MiMo's IP address on the local network (WiFi — see
@@ -562,8 +563,33 @@
                 </Grid>
             </Border>
 
-            <!-- Notificações -->
+            <!-- Alertas de desempenho (see ResourceAlertMonitor) -->
             <Border Grid.Row="7" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="Speedometer" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Alertas de desempenho" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="O MiMo avisa quando a CPU ou a RAM ficam acima de 90% por mais de 15 segundos"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Fica pausado enquanto um jogo estiver aberto (com o card Jogos ligado). Depois de um alerta, só avisa de novo quando o uso cair abaixo de 80% e tiverem passado 10 minutos."
+                                   Style="{StaticResource CardNoteStyle}"/>
+                        <TextBlock x:Name="ResourceAlertStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <CheckBox x:Name="ResourceAlertCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                              Checked="ResourceAlertCheckBox_CheckedChanged" Unchecked="ResourceAlertCheckBox_CheckedChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Notificações -->
+            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -586,7 +612,7 @@
             </Border>
 
             <!-- Ferramentas de Dev (Build + Git) -->
-            <Border Grid.Row="8" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -610,7 +636,7 @@
             </Border>
 
             <!-- Relatório -->
-            <Border Grid.Row="9" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -637,7 +663,7 @@
             </Border>
 
             <!-- Tema -->
-            <Border Grid.Row="10" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="11" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -690,7 +716,7 @@
             </Border>
 
             <!-- Sons -->
-            <Border Grid.Row="11" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="12" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -711,7 +737,7 @@
             </Border>
 
             <!-- Scanlines -->
-            <Border Grid.Row="12" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="13" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -732,7 +758,7 @@
             </Border>
 
             <!-- Info -->
-            <Border Grid.Row="13" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
+            <Border Grid.Row="14" Style="{StaticResource CardStyle}" Margin="0,4,0,20">
                 <StackPanel Orientation="Horizontal">
                     <Border Width="36" Height="36" CornerRadius="11" Background="{DynamicResource BadgeBrush}">
                         <iconPacks:PackIconMaterial Kind="InformationOutline" Width="18" Height="18"
@@ -752,7 +778,7 @@
                  possible from inside this app: the ESP32 accepts one TCP
                  client at a time, so an external script can't reach MiMo
                  without closing Brobot.Sender first. -->
-            <Border Grid.Row="14" x:Name="TesteCard" Style="{StaticResource CardStyle}"
+            <Border Grid.Row="15" x:Name="TesteCard" Style="{StaticResource CardStyle}"
                     Visibility="Collapsed" Margin="0,4,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -807,7 +833,7 @@
                 </Grid>
             </Border>
 
-            <Button Grid.Row="15" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
+            <Button Grid.Row="16" x:Name="SaveButton" Content="Salvar configurações" Style="{StaticResource SaveButtonStyle}"
                     Click="SaveButton_Click"/>
         </Grid>
     </ScrollViewer>

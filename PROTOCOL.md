@@ -15,7 +15,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 
 | Comando        | Descrição                                              |
 |----------------|----------------------------------------------------------|
-| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `MEETING`, `BUILDING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `BYE`, `IDLE` (limpa reunião+jogo+mídia de uma vez), `IDLE_MEETING`, `IDLE_GAME`, `IDLE_MEDIA` (cada um limpa só o próprio tier, ver Notificações abaixo) |
+| `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SWEATING`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `MEETING`, `BUILDING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `BYE`, `IDLE` (limpa reunião+jogo+mídia de uma vez), `IDLE_MEETING`, `IDLE_GAME`, `IDLE_MEDIA` (cada um limpa só o próprio tier, ver Notificações abaixo) |
 | `MSG <texto>`  | Define o texto exibido abaixo dos olhos (resto da linha). `MSG` sem texto limpa a mensagem. |
 | `WEATHER <tempC> <condicao>` | Selo persistente de clima (canto superior esquerdo). `tempC` é inteiro (pode ser negativo). Condições: `CLEAR`, `CLOUDY`, `RAIN`, `STORM`, `SNOW`, `FOG`. `WEATHER` sem argumentos limpa o selo. |
 | `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. |
@@ -500,8 +500,21 @@ a necessidade de placeholder.
   `notificationStartedMs`, e não de `nowMs` solto, para o ciclo sempre
   começar acordado — de um relógio livre ele poderia abrir no meio da queda,
   o que lê como falha e não como sono.
+- **`SWEATING`** (Alertas de desempenho do Brobot.Sender, CPU/RAM acima de
+  90%): os olhos centralizados de sempre, mas **preocupados** — o topo de
+  cada olho é inclinado, alto no canto de dentro e caindo para o de fora
+  (sobrancelha interna erguida), recortado do olho pronto em cor de fundo,
+  uma linha por pixel de inclinação. Uma **gotinha de suor** (ponta em cima,
+  redonda embaixo) aparece ao lado do canto externo do olho direito e
+  escorre com aceleração de gravidade, some por um instante e recomeça
+  (ciclo de 1,9s). A gota usa a cor do texto — branca no `DEFAULT`, para
+  não se misturar com os olhos seja qual for o `CLASSICCOLOR`. Também vale
+  como `FACE SWEATING` fora de notificação (sem gota no `MI2MO2`, que não
+  tem olhos gêmeos).
 - **Qualquer outra**: o rosto centralizado, piscando no ritmo normal do
-  `Personality`, com a mensagem embaixo.
+  `Personality`, com a mensagem embaixo. **Atenção:** isso inclui `ANGRY`/
+  `SAD`, que aqui **não** mudam o formato dos olhos — o fallback desenha
+  sempre os olhos neutros.
 - **`ACHIEVEMENT`** (uma das 10 conquistas do MiMo, ver `AchievementMonitor`
   no Brobot.Sender): olhos pequenos à esquerda (a mesma posição/tamanho do
   `COFFEE`) e um **troféu** saltando para dentro do quadro à direita — a
@@ -600,7 +613,7 @@ uma vez.
 pelo app PC que envia o comando):
 
 - **Foreground (prioridade alta)** — `THINKING`, `READING`, `FINISHED`,
-  `HAPPY`, `SAD`, `ANGRY`, `SLEEPING`, `SLEEPY`, `COFFEE`, `ERROR`, `NEUTRAL`.
+  `HAPPY`, `SAD`, `ANGRY`, `SWEATING`, `SLEEPING`, `SLEEPY`, `COFFEE`, `ERROR`, `NEUTRAL`.
   É o que Pensamentos da IA usa. Sempre que ativo, cobre a tela inteira (rosto +
   mensagem), independente do que estava sendo exibido antes.
 - **`SLEEPY`** também é escolhido automaticamente pelo Core (sem nenhum app

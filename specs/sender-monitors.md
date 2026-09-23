@@ -60,10 +60,15 @@
   window: the YouTube tab kept its audio-playing suffix, but `IsSelected`
   flipped to `false`) — `TryFindFocused()` returns that as a
   `bool?` (`null` = no YouTube tab found in any watched browser window,
-  e.g. VLC or a non-YouTube site), which is what lets the message read
-  `"YouTube: <title>"` when it's the front-and-center tab and
-  `"YouTube (ao fundo): <title>"` when it's merely still open and playing
-  behind something else — `<title>` still comes from SMTC's own
+  e.g. VLC or a non-YouTube site). Focused vs background only feeds the
+  daily report's focused-video counter; MiMo's message is a single
+  `"YouTube: <title>"` either way (a separate "ao fundo" label used to
+  exist, but made every tab switch retype the message). Once a YouTube tab
+  has matched for the current now-playing item, `_nowPlayingIsYouTube`
+  keeps the label sticky — the UIA walk transiently returns `null` while
+  the user is interacting with the browser, which used to flip the text to
+  `"<channel> - <title>"` and back. `FACE MUSIC/WATCHING` is likewise
+  deduped via `_lastMediaFace`. `<title>` still comes from SMTC's own
   `nowPlaying.Title`, not parsed out of the tab's own noisier name (memory
   usage, "Áudio em reprodução" suffix, browser profile). `SendWatchingMessage`
   dedupes against `_lastWatchingMessage` before actually sending `MSG` —

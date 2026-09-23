@@ -1,4 +1,4 @@
-# Brobot.Sender Internals — Simple Feature Cards (Hora, Clima, Pausa, Relatório, Notificações, Ferramentas de Dev)
+# Brobot.Sender Internals — Simple Feature Cards (Hora, Clima, Pausa, Relatório, Alertas de desempenho, Notificações, Ferramentas de Dev)
 
 - **Hora** and **Clima** are independent checkboxes (they used to be one
   combined "Previsão do tempo e hora" box) — Hora only drives the clock
@@ -152,6 +152,26 @@
   card's own checkbox unchecked, since `DailyReportTracker` accumulates
   unconditionally (see above) — the checkbox only gates the 18h auto-fire.
 
+- **Alertas de desempenho** (`ResourceAlertCheckBox`/
+  `SenderSettings.AlertasDesempenhoEnabled`, card right below Jogos) runs
+  `ResourceAlertMonitor.cs`: an always-on, deliberately lightweight CPU/RAM
+  sampler, separate from Game Mode's `SystemStatsMonitor` (which only runs
+  during a game and enumerates hardware through LibreHardwareMonitor). It
+  reads Win32 directly — `GetSystemTimes` deltas for CPU, `GlobalMemoryStatusEx`'s
+  `dwMemoryLoad` for RAM, the same figures Task Manager shows — every 5s.
+  Sends `NOTIFY SWEATING CPU em N%! ...` / `NOTIFY SWEATING RAM em N%! ...` only
+  after 3 consecutive samples (15s) at or above 90%, so ordinary spikes
+  (an app launching, a build starting) never fire; after an alert, that
+  resource stays disarmed until it drops under 80% *and* 10 minutes pass.
+  SWEATING is a Core expression added for this (worried slanted eyes + a
+  sliding sweat drop, see firmware-face-core.md) — ANGRY was tried first,
+  but on the notification screen it falls through to the generic
+  neutral-eyes fallback and didn't read as an alert.
+  **Paused while a game is running** (by product decision: a game maxing
+  out the machine is expected) — `OnGameChanged` sets `_gameRunning` and
+  `RefreshResourceAlertMonitor` stops/restarts the sampler. That signal
+  only exists while the Jogos card is on; with it off, alerts just run
+  unconditionally.
 - **Notificações** is a plain checkbox card, same shape as Mídia/Jogos, that
   starts two independent watchers at once — see `NotificationMonitor.cs`
   below for the main one (polling Windows' own notification platform) and

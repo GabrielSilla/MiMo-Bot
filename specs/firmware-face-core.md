@@ -26,7 +26,17 @@
   size, or the two diagonal strokes leave a gap exactly where they cross in the
   middle), **FINISHED** draws a "^" caret per eye (`drawEyeCaret`, self-centered in
   the eye box, since a squint alone reads as closed/sleepy rather than happy), and
-  **READING** keeps normal eyes but sweeps them with a deliberately asymmetric
+  **SWEATING** (`drawEyeWorried`) slants each eye's top edge — high at the
+  inner corner, dropping `WORRIED_SLANT_FACTOR` (24%) of the eye's height
+  toward the outer side — by cutting background-colored rows off the
+  finished rounded square, and adds `drawSweatDrop`: a 5x9 teardrop beside
+  the right eye's outer corner that slides down with a `k²` gravity ease
+  over 1.5s, hides for 0.4s, and loops off free-running `nowMs`. White in
+  CLASSIC (so it never merges with a blue/teal CLASSICCOLOR), the theme ink
+  elsewhere, skipped in MI2MO2. It also has its own notification screen
+  (`drawSweatingNotification`) — unlike ANGRY/SAD, whose shape tweaks the
+  generic notification fallback ignores. Added for Brobot.Sender's Alertas
+  de desempenho (`NOTIFY SWEATING`). **READING** keeps normal eyes but sweeps them with a deliberately asymmetric
   timing (`readingSweep`: slow left-to-right, fast snap back — like scanning a line
   then jumping to the next one) plus a small bobbing book icon in the corner, and
   **THINKING** slices each eye into horizontal bands (`drawEyeGlitch`) and shifts

@@ -19,9 +19,8 @@ namespace Brobot.Sender;
 /// SelectionItemPattern.IsSelected, confirmed live to stay accurate for a
 /// background tab too (tested by switching to a second tab in the same
 /// window: the YouTube tab kept its audio-playing suffix but IsSelected
-/// flipped to false) — which is what lets MiMo say "tocando ao fundo"
-/// instead of silently treating background playback the same as actively
-/// watching.
+/// flipped to false) — which is what lets the daily report count only
+/// actively watched time, not background playback.
 ///
 /// Edge/Chrome phrase that descriptor as "<title> - YouTube - Áudio em
 /// reprodução - Uso de memória - N MB"; Brave (also confirmed live, same

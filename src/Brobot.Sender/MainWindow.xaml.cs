@@ -72,6 +72,17 @@ public partial class MainWindow : Window
     // one, so a 3s poll re-sending the same text would read as the message
     // flickering/retyping for no reason.
     private string? _lastWatchingMessage;
+    // Same idea for the FACE half: re-sending FACE WATCHING/MUSIC on every
+    // SMTC event restarts the face on Core too. Null once the media face
+    // is cleared, so the next real playback always sends it again.
+    private string? _lastMediaFace;
+    // Whether YouTubeTabDetector has already matched a YouTube tab for the
+    // current _lastNowPlaying. The UI Automation tab walk is flaky while
+    // the user is interacting with the browser (a transient null mid-walk),
+    // and without this the label would bounce between "YouTube: <title>"
+    // and "<channel> - <title>" on every mouse move. Reset whenever the
+    // now-playing item itself changes.
+    private bool _nowPlayingIsYouTube;
 
     // TikTok/Instagram/Facebook never register an SMTC session just from
     // being open (confirmed live — scrolling a feed, or a muted-by-default
@@ -113,6 +124,14 @@ public partial class MainWindow : Window
     // screen these numbers appear on, and polling hardware sensors every two
     // seconds for a display nobody is looking at would be pure waste.
     private SystemStatsMonitor? _statsMonitor;
+
+    // Alertas de desempenho. Only runs while its checkbox is on *and* no
+    // game is detected: a game pegging CPU/RAM is expected, not something
+    // to nag about (and Game Mode's own STATS screen already shows the
+    // numbers). With the Jogos card off there's no game detection at all,
+    // so _gameRunning just stays false and alerts run unconditionally.
+    private ResourceAlertMonitor? _resourceAlertMonitor;
+    private bool _gameRunning;
 
     private WeatherMonitor? _weatherMonitor;
     private WeatherReading? _lastWeatherReading; // resent on reconnect (see UpdateConnectionStatus) instead of waiting out WeatherMonitor's own 30-min cycle
@@ -1216,7 +1235,7 @@ public partial class MainWindow : Window
             if (message != _lastWatchingMessage)
             {
                 _lastWatchingMessage = message;
-                _connection.SendCommand("FACE WATCHING");
+                SendMediaFace("WATCHING");
                 _connection.SendCommand($"MSG {message}");
                 MediaStatusText.Text = message;
                 _mediaFaceActive = true;
@@ -1238,6 +1257,10 @@ public partial class MainWindow : Window
         // WindowsMediaMonitor raises this off the WinRT event thread, not the UI thread.
         Dispatcher.Invoke(() =>
         {
+            if (!Equals(nowPlaying, _lastNowPlaying))
+            {
+                _nowPlayingIsYouTube = false;
+            }
             _lastNowPlaying = nowPlaying;
 
             if (nowPlaying == null)
@@ -1251,17 +1274,19 @@ public partial class MainWindow : Window
                 return;
             }
 
-            string face = nowPlaying.IsLikelyAudioOnly ? "MUSIC" : "WATCHING";
-            _connection.SendCommand($"FACE {face}");
+            SendMediaFace(nowPlaying.IsLikelyAudioOnly ? "MUSIC" : "WATCHING");
 
             if (nowPlaying.IsLikelyAudioOnly)
             {
                 StopYouTubeFocusTimer();
-                _lastWatchingMessage = null;
                 _dailyReport.SetVideoFocused(false);
                 string message = $"{nowPlaying.Artist} - {nowPlaying.Title}";
-                _connection.SendCommand($"MSG {message}");
-                MediaStatusText.Text = message;
+                if (message != _lastWatchingMessage)
+                {
+                    _lastWatchingMessage = message;
+                    _connection.SendCommand($"MSG {message}");
+                    MediaStatusText.Text = message;
+                }
             }
             else
             {
@@ -1292,12 +1317,17 @@ public partial class MainWindow : Window
     private void SendWatchingMessage(NowPlaying nowPlaying)
     {
         bool? youTubeFocused = YouTubeTabDetector.TryFindFocused();
-        string message = youTubeFocused switch
+        if (youTubeFocused != null)
         {
-            true => $"YouTube: {nowPlaying.Title}",
-            false => $"YouTube (ao fundo): {nowPlaying.Title}",
-            null => $"{nowPlaying.Artist} - {nowPlaying.Title}",
-        };
+            _nowPlayingIsYouTube = true;
+        }
+        // Focused vs background still matters for the daily report's
+        // video-time counter, but not for what MiMo shows — a single
+        // "YouTube: <title>" either way, so switching tabs doesn't retype
+        // the message.
+        string message = _nowPlayingIsYouTube
+            ? $"YouTube: {nowPlaying.Title}"
+            : $"{nowPlaying.Artist} - {nowPlaying.Title}";
         _dailyReport.SetVideoFocused(youTubeFocused == true);
 
         if (message == _lastWatchingMessage)
@@ -1355,6 +1385,18 @@ public partial class MainWindow : Window
         _connection.SendCommand("MSG");
         _mediaFaceActive = false;
         _lastWatchingMessage = null;
+        _lastMediaFace = null;
+    }
+
+    /// <summary>Sends FACE MUSIC/WATCHING only when it differs from the one already showing — see _lastMediaFace.</summary>
+    private void SendMediaFace(string face)
+    {
+        if (face == _lastMediaFace)
+        {
+            return;
+        }
+        _lastMediaFace = face;
+        _connection.SendCommand($"FACE {face}");
     }
 
     private async void NotificationsCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
@@ -1611,6 +1653,73 @@ public partial class MainWindow : Window
         });
     }
 
+    private void ResourceAlertCheckBox_CheckedChanged(object sender, RoutedEventArgs e) => RefreshResourceAlertMonitor();
+
+    /// <summary>Starts/stops ResourceAlertMonitor to match "checkbox on and no game running" — see _resourceAlertMonitor.</summary>
+    private void RefreshResourceAlertMonitor()
+    {
+        bool shouldRun = ResourceAlertCheckBox.IsChecked == true && !_gameRunning;
+        if (shouldRun && _resourceAlertMonitor == null)
+        {
+            _resourceAlertMonitor = new ResourceAlertMonitor();
+            _resourceAlertMonitor.Sampled += OnResourceSampled;
+            _resourceAlertMonitor.AlertRaised += OnResourceAlert;
+            _resourceAlertMonitor.Start();
+            ResourceAlertStatusText.Text = "Monitorando...";
+        }
+        else if (!shouldRun && _resourceAlertMonitor != null)
+        {
+            _resourceAlertMonitor.Sampled -= OnResourceSampled;
+            _resourceAlertMonitor.AlertRaised -= OnResourceAlert;
+            _resourceAlertMonitor.Dispose();
+            _resourceAlertMonitor = null;
+        }
+
+        if (!shouldRun)
+        {
+            ResourceAlertStatusText.Text = ResourceAlertCheckBox.IsChecked == true
+                ? "Pausado: jogo em execução"
+                : string.Empty;
+        }
+    }
+
+    private void OnResourceSampled(int? cpu, int? ram)
+    {
+        // ResourceAlertMonitor samples on a thread-pool timer.
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_resourceAlertMonitor == null)
+            {
+                return; // stopped while this was queued
+            }
+            static string Fmt(int? v) => v is { } p ? $"{p}%" : "--";
+            ResourceAlertStatusText.Text = $"CPU {Fmt(cpu)} · RAM {Fmt(ram)}";
+        });
+    }
+
+    /// <summary>
+    /// One atomic NOTIFY, same reasoning as SendBreakReminder — a machine
+    /// about to choke is worth interrupting for. SWEATING (worried eyes +
+    /// sliding sweat drop, see PROTOCOL.md) was added to Core for exactly
+    /// this — ANGRY fell through to the notification screen's plain
+    /// neutral-eyes fallback, which didn't read as an alert at all.
+    /// </summary>
+    private void OnResourceAlert(ResourceKind kind, int percent)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_resourceAlertMonitor == null)
+            {
+                return;
+            }
+            string message = kind == ResourceKind.Cpu
+                ? $"CPU em {percent}%! O PC está sofrendo"
+                : $"RAM em {percent}%! Hora de fechar algumas coisas";
+            _connection.SendCommand($"NOTIFY SWEATING {message}");
+            ResourceAlertStatusText.Text = $"Último alerta ({DateTime.Now:HH:mm}): {message}";
+        });
+    }
+
     private void GameCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
     {
         if (GameCheckBox.IsChecked == true)
@@ -1644,6 +1753,8 @@ public partial class MainWindow : Window
             ClearGameFaceIfActive();
             _achievements.SetGameActive(false);
             _dailyReport.SetGameActive(false);
+            _gameRunning = false;
+            RefreshResourceAlertMonitor();
         }
     }
 
@@ -1654,6 +1765,8 @@ public partial class MainWindow : Window
         {
             _achievements.SetGameActive(game != null);
             _dailyReport.SetGameActive(game != null);
+            _gameRunning = game != null;
+            RefreshResourceAlertMonitor();
 
             if (game == null)
             {
@@ -2995,6 +3108,7 @@ public partial class MainWindow : Window
         settings.JogosEnabled = GameCheckBox.IsChecked == true;
         settings.NotificationsEnabled = NotificationsCheckBox.IsChecked == true;
         settings.BuildEnabled = BuildCheckBox.IsChecked == true;
+        settings.AlertasDesempenhoEnabled = ResourceAlertCheckBox.IsChecked == true;
         settings.SonsEnabled = SonsCheckBox.IsChecked == true;
         settings.ScanlinesEnabled = ScanlinesCheckBox.IsChecked == true;
         // Carried through rather than read off the UI: the address isn't
@@ -3064,6 +3178,7 @@ public partial class MainWindow : Window
         GameCheckBox.IsChecked = settings.JogosEnabled;
         NotificationsCheckBox.IsChecked = settings.NotificationsEnabled;
         BuildCheckBox.IsChecked = settings.BuildEnabled;
+        ResourceAlertCheckBox.IsChecked = settings.AlertasDesempenhoEnabled;
         SonsCheckBox.IsChecked = settings.SonsEnabled;
         ScanlinesCheckBox.IsChecked = settings.ScanlinesEnabled;
 
@@ -3178,6 +3293,7 @@ public partial class MainWindow : Window
         _agendaTracker.Dispose();
         _gameMonitor?.Dispose();
         _statsMonitor?.Dispose();
+        _resourceAlertMonitor?.Dispose();
         _weatherMonitor?.Dispose();
         _aiThoughtsListener?.Dispose();
         // A system-wide keyboard hook must not outlive the process that
