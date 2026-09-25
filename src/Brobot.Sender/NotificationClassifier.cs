@@ -11,7 +11,7 @@ public enum NotificationCategory
 
 /// <summary>
 /// Sorts a PcNotification into a broad category so MainWindow can phrase it
-/// differently on MiMo's screen ("Você recebeu um email: &lt;título&gt;"
+/// differently on Peemo's screen ("Você recebeu um email: &lt;título&gt;"
 /// instead of the generic "&lt;App&gt;: &lt;texto&gt;") -- starting with
 /// just Email, the one category actually asked for so far; more categories
 /// (chat, calendar, ...) are a matter of adding another marker list and
@@ -70,7 +70,7 @@ public static class NotificationClassifier
     }
 
     /// <summary>
-    /// "10:15" -&gt; "10h15", the PT-BR time separator MiMo's own font/wire
+    /// "10:15" -&gt; "10h15", the PT-BR time separator Peemo's own font/wire
     /// already writes everywhere else (see PROTOCOL.md's TIME command).
     /// Null only if Classify already returned something other than Meeting
     /// for this same notification -- TimePattern is what Classify itself

@@ -65,6 +65,18 @@ public partial class App : System.Windows.Application
         // it's parsed, so the theme needs to already be merged in by then.
         ThemeManager.Apply(SenderSettings.Load().Theme);
 
+        // Upgrade from before the MiMo -> Peemo rename (see LegacyNames):
+        // re-point an already-installed Claude Code hook at the renamed
+        // scripts. Best-effort — a failure here must never stop the app.
+        try
+        {
+            ClaudeCodeHookInstaller.MigrateLegacyInstall();
+        }
+        catch (Exception ex)
+        {
+            LogError("MigrateLegacyInstall", ex);
+        }
+
         // Deliberately not shown: the app lives in the tray until its icon
         // is clicked. Assigning MainWindow (rather than just letting it be
         // garbage-collected) is what keeps ShutdownMode.OnExplicitShutdown
@@ -79,7 +91,7 @@ public partial class App : System.Windows.Application
         // only has room for the message, so the full stack trace goes to
         // ErrorLogPath for diagnosing it afterwards.
         LogError("Dispatcher", e.Exception);
-        System.Windows.MessageBox.Show($"Erro inesperado: {e.Exception.Message}\n\nDetalhes em {ErrorLogPath}", "MiMo",
+        System.Windows.MessageBox.Show($"Erro inesperado: {e.Exception.Message}\n\nDetalhes em {ErrorLogPath}", "Peemo",
             MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;
     }
@@ -114,7 +126,7 @@ public partial class App : System.Windows.Application
     // ExitApplication) never sees: Windows logging the user off or shutting
     // down, with nobody having clicked anything in this app. Not cancelled —
     // there's no reason for this app to block a shutdown the user asked for,
-    // only to say goodbye to MiMo first if it's actually reachable right now.
+    // only to say goodbye to Peemo first if it's actually reachable right now.
     private void OnSessionEnding(object? sender, SessionEndingCancelEventArgs e)
     {
         (MainWindow as MainWindow)?.SendFarewellForShutdown();

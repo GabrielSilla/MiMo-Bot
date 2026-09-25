@@ -98,7 +98,7 @@ void setup() {
         // message auto-clears ~10s after typing finishes (intended for the
         // "Pensamentos da IA" Terminei! status, see CLAUDE.md), which isn't
         // what's wanted for a setup screen that needs to stay up for
-        // however long it takes someone to find the "MiMo-Setup" network
+        // however long it takes someone to find the "Peemo-Setup" network
         // and fill in the form. A plain FaceState with the full text set
         // has no typing/expiry timers to fight — it just always shows.
         unsigned long now = millis();
@@ -106,7 +106,7 @@ void setup() {
             lastFrameAt = now;
             FaceState portalState;
             portalState.expression = Expression::FINISHED;
-            portalState.message = "Acesse a rede MiMo-Setup. http://192.168.4.1 para configurar";
+            portalState.message = "Acesse a rede Peemo-Setup. http://192.168.4.1 para configurar";
             portalState.nowMs = now;
             display.clear(0, 0, 0);
             Face::render(display, portalState);
@@ -124,7 +124,7 @@ void setup() {
     // on the physical screen for however long it takes to open Brobot.Sender
     // and fill in the Conexão card, no Serial monitor needed. Same "IP:porta"
     // shape as that card's own text field, so it can be typed in verbatim.
-    pcWaitingMessage = "MiMo Configurado! IP: " + WiFi.localIP().toString() + ":" + String(PROTOCOL_TCP_PORT);
+    pcWaitingMessage = "Peemo Configurado! IP: " + WiFi.localIP().toString() + ":" + String(PROTOCOL_TCP_PORT);
 #endif
 
     // Last thing before loop() takes over, on every path (portal or not) —

@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 namespace Brobot.Sender;
 
 /// <summary>
-/// A system-wide WH_KEYBOARD_LL hook shared by both of MiMo's minigames (the
+/// A system-wide WH_KEYBOARD_LL hook shared by both of Peemo's minigames (the
 /// Anti-Stress Pong card and the Batalha RPG card): while either is up, the
-/// player is looking at MiMo's own screen, not this app's window, so control
+/// player is looking at Peemo's own screen, not this app's window, so control
 /// has to work no matter what has focus on the PC. Each minigame installs
 /// and owns its own instance (see MainWindow.xaml.cs's _pongHook/_rpgHook) —
 /// this class itself has no notion of which game is using it. This was the

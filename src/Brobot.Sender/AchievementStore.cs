@@ -48,6 +48,10 @@ public static class AchievementStore
                 AchievementProgress? progress = JsonSerializer.Deserialize<AchievementProgress>(json);
                 if (progress != null)
                 {
+                    // Theme tokens saved before the rename (see LegacyNames)
+                    // still count toward IDENTITY_CRISIS under their new names.
+                    progress.ThemesUsed = new HashSet<string>(
+                        progress.ThemesUsed.Select(LegacyNames.CoreTheme), StringComparer.OrdinalIgnoreCase);
                     return progress;
                 }
             }

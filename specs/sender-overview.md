@@ -1,7 +1,7 @@
 # Brobot.Sender Internals — Overview, Tabs, Conexão, Tema
 
 This is the app for whoever actually assembled a Brobot — not a dev tool, and
-user-facing branded **"MiMo"** throughout (window titles, tray tooltip, every
+user-facing branded **"Peemo"** throughout (window titles, tray tooltip, every
 string an end user sees) even though the code/project/namespace keep the
 Brobot name everywhere. It runs in the system tray and, when opened, shows
 three tabs — **no separate settings window**: there used to be one
@@ -14,8 +14,8 @@ watcher that decides *when* to send something; it never decides *how it
 should look* — that's still 100% Core's call per [overview.md](overview.md)'s
 "The one rule that matters".
 
-**MiMo wordmark, then a shared subtitle, then three tabs — Configurações
-Gerais, Mini Games, Conquistas** (`MimoTabControlStyle`/`MimoTabItemStyle` in
+**Peemo wordmark, then a shared subtitle, then three tabs — Configurações
+Gerais, Mini Games, Conquistas** (`PeemoTabControlStyle`/`PeemoTabItemStyle` in
 `MainWindow.xaml`'s `Window.Resources`) — replaced what used to be a plain-
 `Visibility` page swap between the checklist and an Anti-Stress button's game
 picker: with a third, permanent destination (Conquistas, deliberately empty
@@ -25,12 +25,12 @@ subtitle both sit in the outer `Grid` *above* the `TabControl`, not inside any
 one `TabItem`'s own content — the logo is the app's own identity, shared by
 all three tabs, and a single `TabSubtitleText` swaps its own text to match
 whichever tab is selected rather than each tab carrying a duplicate copy.
-`MimoTabControlStyle` retemplates `TabControl` down to a `TabPanel` header row
+`PeemoTabControlStyle` retemplates `TabControl` down to a `TabPanel` header row
 (`HorizontalAlignment="Center"`, so the three pills sit centered under the
 subtitle rather than pinned to the left) over a plain `ContentPresenter` — the
 stock template draws a bordered content box that doesn't match this window's
 flat-card look at all, same reasoning every other retemplated control here
-already has. `MimoTabItemStyle` is a flat pill header (`InkBrush` fill when
+already has. `PeemoTabItemStyle` is a flat pill header (`InkBrush` fill when
 selected, `HighlightBrush` otherwise) — its selected/unselected foreground
 swap has to reach through `ContentPresenter`'s own auto-generated `TextBlock`
 via the `TextElement.Foreground` attached property on a named
@@ -49,7 +49,7 @@ attached to, regardless of which nested control actually raised the event).
 
 The **Trabalho** tab (second, right after Configurações Gerais) holds the
 work-day cards — Pausa, Atividade da IA, Ferramentas de Dev, Relatório —
-moved out of Configurações Gerais so that tab stays about MiMo itself. The
+moved out of Configurações Gerais so that tab stays about Peemo itself. The
 controls kept their names, so handlers and `SaveButton_Click` are unchanged;
 Trabalho has its own `TrabalhoSaveButton` wired to the same handler (it saves
 everything, and flashes "Salvo!" on whichever button was clicked), since
@@ -64,7 +64,7 @@ reference closely — see `MainWindow.xaml`'s `Window.Resources` for the
 color brushes and the custom `CheckBox`/`ComboBox`/`Button`/`TextBox`
 control templates (WPF's stock chrome doesn't look anything like flat
 rounded cards, so all four are fully retemplated rather than just
-re-colored). The checkmark `Path` inside `MimoCheckBoxStyle` needs explicit `HorizontalAlignment`/
+re-colored). The checkmark `Path` inside `PeemoCheckBoxStyle` needs explicit `HorizontalAlignment`/
 `VerticalAlignment="Center"` — its `Data` uses absolute coordinates for a
 small checkmark shape, and a `Path` with `Stretch="None"` (the default)
 draws that geometry anchored to its layout slot's top-left corner, not
@@ -85,10 +85,10 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   clicking it hit the *reconnect* branch instead of actually disconnecting
   anything — read as "the button doesn't work". This was a real bug, fixed
   once. The address is a **readout, not a field** — a `TextBlock`, not a
-  `TextBox`: MiMo's IP is discovered, never typed, and the app's own
+  `TextBox`: Peemo's IP is discovered, never typed, and the app's own
   `_coreHost`/`_corePort` are the source of truth the card displays. It used
   to be the other way round, with the text in an editable box *being* the
-  truth, which is precisely what broke every time DHCP moved MiMo — the
+  truth, which is precisely what broke every time DHCP moved Peemo — the
   address was only ever as correct as whatever someone last typed. (With the
   field gone, `TryParseAddress` and its "Endereço inválido" message went with
   it; there's no longer any input to be invalid.)
@@ -96,27 +96,27 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   **deliberately does not connect to it** — every launch starts with a fresh
   sweep (`StartNetworkSweep(trustPreviousAddress: false)`) instead. Between
   one run and the next the app may have been closed for days: long enough for
-  MiMo to have been given a different address, and for DHCP to have handed its
-  old one to some other device — where `MimoDiscovery`'s
+  Peemo to have been given a different address, and for DHCP to have handed its
+  old one to some other device — where `PeemoDiscovery`'s
   "unconfirmed-but-listening at the address already in use" fallback would
   adopt a stranger. Asking the network beats trusting a note from last time,
   and it costs one ~3.2s sweep at startup. That's the entire difference
   between the two `trustPreviousAddress` cases: a mid-session recovery *does*
-  trust the address, because it was demonstrably reaching MiMo moments ago.
-  Because a saved address goes stale on its own whenever DHCP moves MiMo,
+  trust the address, because it was demonstrably reaching Peemo moments ago.
+  Because a saved address goes stale on its own whenever DHCP moves Peemo,
   `UpdateConnectionStatus` also drives an automatic network sweep
-  (`TryStartNetworkSweep` → `MimoDiscovery`, see [connection.md](connection.md)):
+  (`TryStartNetworkSweep` → `PeemoDiscovery`, see [connection.md](connection.md)):
   once `ConnectTcp` has been getting nowhere for `SweepAfterFailingFor` (8s),
   the address itself is treated as the suspect and the network is searched for
-  MiMo; whatever is found replaces the field's text, reconnects, and is written
+  Peemo; whatever is found replaces the field's text, reconnects, and is written
   **straight to the settings file without waiting for "Salvar configurações"**
-  (`PersistDiscoveredAddress`) — unlike every other setting there, MiMo's
+  (`PersistDiscoveredAddress`) — unlike every other setting there, Peemo's
   address isn't a preference someone chose, it's a fact about where the device
   currently is, and not saving it would mean re-sweeping on every launch.
-  The 8s delay is what keeps an ordinary blip (MiMo still booting, WiFi
+  The 8s delay is what keeps an ordinary blip (Peemo still booting, WiFi
   reassociating) from triggering a sweep that `ConnectTcp`'s own 500ms retry
   loop was about to make unnecessary, and `SweepCooldown` (30s) is what keeps
-  MiMo simply being *switched off* — indistinguishable from MiMo having moved,
+  Peemo simply being *switched off* — indistinguishable from Peemo having moved,
   without sweeping — from sweeping back-to-back forever. This is polled rather
   than event-driven because `BrobotConnection` has no "gave up" event to
   subscribe to: `ConnectTcp` retries forever by design, so "how long has this
@@ -140,13 +140,13 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   address at all.
   The address readout only ever shows an address that means something at that
   moment: the one being probed while a sweep runs, the one that actually
-  reached MiMo while connected, and nothing at all otherwise. In particular it
+  reached Peemo while connected, and nothing at all otherwise. In particular it
   stays blank while merely *connecting* — printing the address being retried
   next to "Conectando..." reads as though that address were live, which is
   exactly backwards when the usual reason for being stuck there is that the
   address is dead.
   While a sweep runs, the card's address readout shows the address currently
-  being probed and the status line shows `Procurando MiMo... 87/253`, both
+  being probed and the status line shows `Procurando Peemo... 87/253`, both
   repainted by a dedicated `SweepProgressTickInterval` (333ms) `DispatcherTimer`
   rather than by the progress reports themselves. `OnSweepProgress` only
   records where the sweep has got to; the tick is what paints. Repainting per
@@ -154,7 +154,7 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   tick also keeps the cadence independent of how the probes happen to bunch
   up (see `ProbeLaunchStagger`, which fixes the bunching itself).
   `ShowTransientStatus` exists because `ConnectionStatusText` is otherwise
-  rewritten by the 200ms poll: a one-off message ("Endereço inválido", "MiMo
+  rewritten by the 200ms poll: a one-off message ("Endereço inválido", "Peemo
   não encontrado na rede") set directly would be overwritten on the very next
   tick, before anyone could read it — which was already true of the
   invalid-address message before the sweep existed.
@@ -171,7 +171,7 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   implicit (no `x:Key`) `Style` targeting `PackIconMaterial` centers every
   icon in its badge — `Border` doesn't center a fixed-size child by default,
   so without it every icon sits pinned to the badge's top-left corner.
-- **`src/mimo-trimmed.png`** is the supplied `mimo.png` wordmark with its
+- **`src/peemo-trimmed.png`** is the supplied `peemo.png` wordmark with its
   transparent margin cropped off. The source is a 1254x1254 *square* for a
   wordmark that's actually wide and short (the glyphs occupy roughly
   x:206-1084, y:524-754 of that square) — displayed directly at a normal
@@ -186,17 +186,17 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   the card list would sit permanently scrolled just out of view.
 
 - **Tema** is a `ComboBox` (`TemaComboBox`, `ThemeManager.Available`) picking
-  between "MiMo Classic", "MiMo Matrix", "MiMo Mi2-Mo2" and "MiMo-84" — one control driving two
+  between "Peemo Classic", "Peemo Matrix", "Peemo P2-M2" and "Peemo-84" — one control driving two
   unrelated systems: `ThemeManager.Apply` swaps this app's own WPF skin
   (`ThemeInfo.ResourcePath`), and `TemaComboBox_SelectionChanged` also sends
   Core its own `THEME <CoreTheme>` command (`ThemeInfo.CoreTheme`,
   `DEFAULT`/`MATRIX` — see PROTOCOL.md), which changes how Core itself draws
   the display. They just happen to both be about "appearance", and from the
-  user's point of view MiMo Classic/MiMo Matrix reads as one choice, not
+  user's point of view Peemo Classic/Peemo Matrix reads as one choice, not
   two — this used to be two separate cards (Tema for the WPF skin, a "Tela
-  do MiMo" checkbox for Core's `THEME`), folded into this one picker
-  instead. "MiMo Matrix", "MiMo Mi2-Mo2" and "MiMo-84" all reuse the same
-  `MiMoClassic.xaml` resource as "MiMo Classic" — there's no dedicated WPF
+  do Peemo" checkbox for Core's `THEME`), folded into this one picker
+  instead. "Peemo Matrix", "Peemo P2-M2" and "Peemo-84" all reuse the same
+  `PeemoClassic.xaml` resource as "Peemo Classic" — there's no dedicated WPF
   skin for any of them in this app's own UI (yet), only for Core's display,
   so selecting them changes what Core shows without changing how
   Brobot.Sender itself looks. Like Clima's `WEATHER`
@@ -205,16 +205,16 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   (checking `TemaComboBox`'s currently-selected `ThemeInfo.CoreTheme`) the
   same way it resends the last weather reading — for any non-`DEFAULT`
   value, not just `MATRIX`: that check was literally `== "MATRIX"` until
-  Mi2-Mo2 was added, which would have silently dropped the new theme on
+  P2-M2 was added, which would have silently dropped the new theme on
   every reconnect. `DEFAULT` still needs no resend, since that's already
   Core's own boot default.
   A second `ComboBox` (`ClassicColorComboBox`,
   `ThemeManager.AvailableClassicColors`) sits beside it, sending Core's own
-  `CLASSICCOLOR <CoreColor>` (see PROTOCOL.md) — MiMo Classic's selectable
+  `CLASSICCOLOR <CoreColor>` (see PROTOCOL.md) — Peemo Classic's selectable
   primary color (eyes, corner icons, weather/clock badge): Azul (original),
-  Verde (reuses MiMo Matrix's own green), Âmbar (reuses MiMo-84's own
+  Verde (reuses Peemo Matrix's own green), Âmbar (reuses Peemo-84's own
   amber), Vermelho, Rosa, Branco. Hidden (`Visibility.Collapsed`, not
-  disabled) whenever anything but "MiMo Classic" is selected
+  disabled) whenever anything but "Peemo Classic" is selected
   (`RefreshClassicColorVisibility`, called from `TemaComboBox_SelectionChanged`)
   since Core ignores `CLASSICCOLOR` entirely on every other theme — a picker
   left visible-but-inert there would imply a choice that does nothing.
@@ -234,8 +234,8 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   `MessageBox`, `Brushes`, `Color` etc. ambiguous with their WPF namesakes
   everywhere in this project — spelled out fully, or aliased as `Forms`/`Drawing`/
   `Media`, throughout) is built at runtime (`CreateTrayIcon`) from
-  `src/mimo-b.png` (a "MiMo" wordmark on black, ships as a `Resource` item
-  same as `mimo-trimmed.png`) via `Application.GetResourceStream` +
+  `src/peemo-b.png` (a "Peemo" wordmark on black, ships as a `Resource` item
+  same as `peemo-trimmed.png`) via `Application.GetResourceStream` +
   `System.Drawing.Image.FromStream`, scaled down to the small size a tray
   icon actually needs — not a shipped `.ico` asset, and not the flat teal
   square it used to be before that PNG existed. `MainWindow.xaml`'s

@@ -84,7 +84,7 @@ public sealed class DailyReportTracker
         DailyReportStore.Save(_progress);
     }
 
-    /// <summary>Call from OnAiThoughtReceived's "GitCommit" case (see hooks/mimo-git-hook.ps1's post-commit shim) — once per real commit, same immediate-save treatment as the two build counters above.</summary>
+    /// <summary>Call from OnAiThoughtReceived's "GitCommit" case (see hooks/peemo-git-hook.ps1's post-commit shim) — once per real commit, same immediate-save treatment as the two build counters above.</summary>
     public void RecordCommit()
     {
         RollOverDayIfNeeded();
@@ -133,7 +133,7 @@ public sealed class DailyReportTracker
     /// 200ms UpdateConnectionStatus tick that already drives
     /// AchievementMonitor.Tick, but unlike that one this isn't gated on Core
     /// being connected: meeting/media/game detection all happen at the OS
-    /// level, independent of whether MiMo is currently reachable.
+    /// level, independent of whether Peemo is currently reachable.
     /// </summary>
     public void Tick()
     {

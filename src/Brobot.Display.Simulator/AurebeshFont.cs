@@ -2,8 +2,8 @@ namespace Brobot.Display.Simulator;
 
 /// <summary>
 /// A 5x7 pixel font rendering A-Z/0-9 as the Star Wars "Aurebesh" script,
-/// used by MI2MO2's typing effect (see <see cref="SimulatorDisplay.DrawText"/>
-/// and <c>Face.cpp</c>'s <c>drawWrappedMessageMi2Mo2</c>): a message's
+/// used by P2M2's typing effect (see <see cref="SimulatorDisplay.DrawText"/>
+/// and <c>Face.cpp</c>'s <c>drawWrappedMessageP2M2</c>): a message's
 /// characters are drawn in this font right after being revealed, then swap
 /// to <see cref="Font5x7"/> a moment later — reads as the message
 /// "translating" from alien script into Portuguese in real time.

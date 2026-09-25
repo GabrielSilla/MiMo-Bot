@@ -9,7 +9,7 @@
 // FaceState already model (Personality's own doc comment is explicit that
 // it "knows nothing about how any of this gets drawn"). Both default to
 // enabled so a PC app that never sends either command sees the same
-// behavior MiMo already had before these toggles existed.
+// behavior Peemo already had before these toggles existed.
 class DeviceSettings {
 public:
     void onSoundCommand(const char* args) { _soundEnabled = parseOnOff(args, _soundEnabled); }

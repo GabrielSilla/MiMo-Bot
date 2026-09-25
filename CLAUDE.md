@@ -32,8 +32,8 @@ replacement.
   base eye/expression rendering (HAPPY/SAD/FAILED/READING/THINKING/PLAYING/
   COFFEE/weather+clock badges/...).
 - [specs/firmware-face-themes.md](specs/firmware-face-themes.md) —
-  `Face.cpp`'s whole-frame theme reskins: `Theme::MATRIX`, `Theme::MI2MO2`
-  (R2D2), `Theme::MI84` (amber CRT terminal).
+  `Face.cpp`'s whole-frame theme reskins: `Theme::MATRIX`, `Theme::P2M2`
+  (R2D2), `Theme::PEEMO84` (amber CRT terminal).
 - [specs/firmware-personality.md](specs/firmware-personality.md) —
   `Personality.cpp`: blink/look-around, priority tiers, boot animation,
   `SLEEPY`/bedtime messages.
@@ -47,10 +47,10 @@ replacement.
 - [specs/simulator.md](specs/simulator.md) — Brobot.Display.Simulator (WPF):
   `Font5x7`, `SerialDisplayBridge`, `MainWindow`.
 - [specs/connection.md](specs/connection.md) — `Brobot.Connection`:
-  `BrobotConnection` (Serial/TCP, frame batching) and `MimoDiscovery`
-  (network sweep to find MiMo's DHCP-assigned IP).
+  `BrobotConnection` (Serial/TCP, frame batching) and `PeemoDiscovery`
+  (network sweep to find Peemo's DHCP-assigned IP).
 - [specs/sender-overview.md](specs/sender-overview.md) — Brobot.Sender
-  (MiMo Sender) branding/tabs overview, the Conexão card, Tema/ClassicColor,
+  (Peemo Sender) branding/tabs overview, the Conexão card, Tema/ClassicColor,
   and misc UI (icons, wordmark, tray icon).
 - [specs/sender-minigames-achievements.md](specs/sender-minigames-achievements.md)
   — the Mini Games tab (Pong/Batalha RPG launch flow, `GlobalKeyboardHook`)
@@ -63,8 +63,8 @@ replacement.
   `TeamsNotificationWatcher`, `WeatherMonitor`, `SystemStatsMonitor` +
   `AfterburnerSensors`, `GameMonitor`.
 - [specs/sender-ai-bridge.md](specs/sender-ai-bridge.md) — Atividade da IA:
-  `ClaudeCodeHookInstaller`, `hooks/mimo-claude-hook.ps1`,
-  `hooks/mimo-claude-statusline.ps1`, `AiThoughtsListener`, `SenderSettings`.
+  `ClaudeCodeHookInstaller`, `hooks/peemo-claude-hook.ps1`,
+  `hooks/peemo-claude-statusline.ps1`, `AiThoughtsListener`, `SenderSettings`.
 
 ## Ops
 
@@ -72,6 +72,6 @@ replacement.
   timing, ESP32-C3 SuperMini strapping pins, native USB-CDC + `SerialPort`
   quirks.
 - [specs/installer.md](specs/installer.md) — `build-installer.ps1` /
-  Inno Setup packaging of MiMo Sender, incl. the silent `Brobot.VSExtension`
+  Inno Setup packaging of Peemo Sender, incl. the silent `Brobot.VSExtension`
   VSIX install.
 - [specs/testing.md](specs/testing.md) — verifying firmware/WPF behavior.

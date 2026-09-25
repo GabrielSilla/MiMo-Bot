@@ -1,4 +1,4 @@
-; Installer for Brobot.Sender ("MiMo Sender"), built with Inno Setup 6
+; Installer for Brobot.Sender ("Peemo Sender"), built with Inno Setup 6
 ; (https://jrsoftware.org/isdl.php — not part of this repo, install it
 ; separately to run ISCC.exe). Compiled via build-installer.ps1 in this
 ; same folder, which publishes the app first and points ISCC at the
@@ -6,11 +6,11 @@
 ;
 ; AppMutex matches the named Mutex App.xaml.cs creates for its own
 ; single-instance check (Brobot.Sender.SingleInstance) — this is what lets
-; Setup notice a running MiMo Sender and offer to close it automatically
+; Setup notice a running Peemo Sender and offer to close it automatically
 ; before installing/uninstalling, instead of failing on a locked .exe.
 
-#define MyAppName "MiMo Sender"
-#define MyAppVersion "1.2.0"
+#define MyAppName "Peemo Sender"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "Brobot"
 #define MyAppExeName "Brobot.Sender.exe"
 #define MyPublishDir "publish"
@@ -24,6 +24,9 @@ AppMutex=Brobot.Sender.SingleInstance
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+; Otherwise an upgrade from MiMo Sender would keep reusing the old
+; "MiMo Sender" Start Menu group name (see [InstallDelete]).
+UsePreviousGroup=no
 ; Runs without admin rights by default (installs per-user under
 ; LocalAppData\Programs, same pattern VS Code/Discord use) so a non-technical
 ; user isn't blocked by a UAC prompt on a machine where they aren't an admin;
@@ -34,8 +37,8 @@ PrivilegesRequiredOverridesAllowed=commandline dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=output
-OutputBaseFilename=MiMoSenderSetup-{#MyAppVersion}
-SetupIconFile=..\src\Brobot.Sender\src\mimo.ico
+OutputBaseFilename=PeemoSenderSetup-{#MyAppVersion}
+SetupIconFile=..\src\Brobot.Sender\src\peemo.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/max
 SolidCompression=yes
@@ -57,6 +60,21 @@ Source: "{#MyPublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdi
 ; no real savings. What actually gates the install is the [Run] entry below.
 Source: "vsix\Brobot.VSExtension.vsix"; DestDir: "{tmp}"
 
+; Upgrade from before the MiMo -> Peemo rename: same AppId, so Setup
+; installs over the old copy (into its existing folder), but the shortcuts
+; and hook scripts carried the old name and would otherwise linger next to
+; the new ones — two "start with Windows" entries, a stale Start Menu group.
+; The app itself re-points an installed Claude Code hook at the renamed
+; scripts on startup (ClaudeCodeHookInstaller.MigrateLegacyInstall), so
+; deleting the old scripts here doesn't break it.
+[InstallDelete]
+Type: files; Name: "{userstartup}\MiMo Sender.lnk"
+Type: files; Name: "{autodesktop}\MiMo Sender.lnk"
+Type: filesandordirs; Name: "{autoprograms}\MiMo Sender"
+Type: files; Name: "{app}\mimo-claude-hook.ps1"
+Type: files; Name: "{app}\mimo-claude-statusline.ps1"
+Type: files; Name: "{app}\mimo-git-hook.ps1"
+
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Desinstalar {#MyAppName}"; Filename: "{uninstallexe}"
@@ -75,7 +93,7 @@ Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: st
 ; Visual Studio-only and the app has no UI to show/hide before VS is even
 ; known to be present. If this ever needs to be user-toggleable the same way,
 ; that button belongs in the app, not here.
-Filename: "{code:GetVsixInstallerPath}"; Parameters: "/quiet ""{tmp}\Brobot.VSExtension.vsix"""; Check: ShouldInstallVsExtension; StatusMsg: "Instalando a extensão do MiMo para o Visual Studio..."; Flags: runhidden waituntilterminated
+Filename: "{code:GetVsixInstallerPath}"; Parameters: "/quiet ""{tmp}\Brobot.VSExtension.vsix"""; Check: ShouldInstallVsExtension; StatusMsg: "Instalando a extensão do Peemo para o Visual Studio..."; Flags: runhidden waituntilterminated
 Filename: "{app}\{#MyAppExeName}"; Description: "Iniciar o {#MyAppName} agora"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
@@ -97,7 +115,7 @@ Filename: "{code:GetVsixInstallerPath}"; Parameters: "/uninstall:872793e5-5485-4
 ; %USERPROFILE%\.claude\settings.json — those are the user's own data/config,
 ; not installed program files, and silently deleting either on a routine
 ; uninstall would be a surprise. Anyone who installed the Claude Code hook
-; should click "Desinstalar" on MiMo Sender's own Atividade da IA card
+; should click "Desinstalar" on Peemo Sender's own Atividade da IA card
 ; before uninstalling the app, same as they would to turn it off normally.
 
 [Code]

@@ -29,7 +29,7 @@
   replaced it).
   `GlobalKeyboardHook.cs` (one of this app's two P/Invoke consumers — see
   `TeamsNotificationWatcher.cs` below for the other) is a system-wide
-  `WH_KEYBOARD_LL` hook: the player is watching MiMo's own screen while
+  `WH_KEYBOARD_LL` hook: the player is watching Peemo's own screen while
   playing, not this window, so arrow/Enter/Escape have to reach Core
   regardless of what has focus on the PC. Installed from the UI thread, its
   callback then runs synchronously on that same thread's message pump — the
@@ -67,7 +67,7 @@
   `OnFrameReceived`'s `RPG OVER VICTORY` case) counts toward **Victory
   Royale**; `OnBreakReminderSent` (from `SendBreakReminder`) toward **Break
   Taker**; `OnThemeSelected` (from `TemaComboBox_SelectionChanged`, keyed on
-  `CoreTheme` — `DEFAULT`/`MATRIX`/`MI2MO2`/`MI84`) tracks **Identity
+  `CoreTheme` — `DEFAULT`/`MATRIX`/`P2M2`/`PEEMO84`) tracks **Identity
   Crisis**'s "used every theme" set.
   `Tick(connected)` is what drives every duration-based accumulator —
   **Coffee Machine** (4h connected in a day), **One More Game** (3h with a
@@ -77,7 +77,7 @@
   `UpdateConnectionStatus`'s existing 200ms poll rather than a timer of its
   own, since that poll already knows `connected` at every tick. None of the
   duration criteria are a real activity/idle detector — nothing here watches
-  mouse/keyboard input, so "Coffee Machine" really measures "MiMo was
+  mouse/keyboard input, so "Coffee Machine" really measures "Peemo was
   connected", not "you were at the keyboard"; honest enough for a
   Tamagotchi-style nudge, not a timesheet. Daily accumulators
   (`TodayConnectedSeconds`/`TodayGameSeconds`/`TodayAiActiveSeconds`) reset
@@ -87,7 +87,7 @@
   whole gap to whatever was active before it.
   `TryUnlock` saves immediately the instant something actually unlocks (an
   unlock is a fact worth persisting right away, same reasoning
-  `MimoDiscovery`'s `PersistDiscoveredAddress` already follows) but the
+  `PeemoDiscovery`'s `PersistDiscoveredAddress` already follows) but the
   accumulators themselves are only flushed to disk once a minute
   (`MaybeSave`) — `Tick` fires every 200ms and `OnAiActivity` on every AI hook
   event, and writing the file on every one of those would be pure waste.
@@ -103,7 +103,7 @@
   reduced opacity; the moment `AchievementMonitor.Unlocked` fires
   (`OnAchievementUnlocked`), the card swaps in the real emoji, the flavor
   quote, the unlock date, and full opacity.
-  **Unlocking also reaches MiMo's own screen**, reusing Core's existing
+  **Unlocking also reaches Peemo's own screen**, reusing Core's existing
   top-priority `NOTIFY` tier rather than adding any new protocol command or
   firmware feature — `NOTIFY HAPPY Conquista desbloqueada: <NOME> - <frase>`
   gets every behavior every other notification already has for free

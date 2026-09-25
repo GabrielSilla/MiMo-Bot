@@ -5,34 +5,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- MiMo wordmark, used as the header graphic in MainWindow. mimo-trimmed.png is
-         mimo.png with its huge transparent margin (the source is a 1254x1254 square
+    <!-- Peemo wordmark, used as the header graphic in MainWindow. peemo-trimmed.png is
+         peemo.png with its huge transparent margin (the source is a 1254x1254 square
          for what's actually a wide, short wordmark) cropped down to the glyphs'
          real bounding box, so it renders at a legible size instead of a tiny sliver. -->
-    <Resource Include="src\mimo.png" />
-    <Resource Include="src\mimo-trimmed.png" />
-    <!-- Tray icon source (see MainWindow.CreateTrayIcon) — a square "MiMo"
-         wordmark on black, unlike mimo.png/mimo-trimmed.png above. -->
-    <Resource Include="src\mimo-b.png" />
+    <Resource Include="src\peemo.png" />
+    <Resource Include="src\peemo-trimmed.png" />
+    <!-- Tray icon source (see MainWindow.CreateTrayIcon) — a square "Peemo"
+         wordmark on black, unlike peemo.png/peemo-trimmed.png above. -->
+    <Resource Include="src\peemo-b.png" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Copied (not embedded as a Resource) so ClaudeCodeHookInstaller can point
          a Claude Code hook command at a real file path next to the running exe,
          rather than a source-repo path that only exists on the dev machine. -->
-    <None Include="..\..\hooks\mimo-claude-hook.ps1">
-      <Link>mimo-claude-hook.ps1</Link>
+    <None Include="..\..\hooks\peemo-claude-hook.ps1">
+      <Link>peemo-claude-hook.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\hooks\mimo-claude-statusline.ps1">
-      <Link>mimo-claude-statusline.ps1</Link>
+    <None Include="..\..\hooks\peemo-claude-statusline.ps1">
+      <Link>peemo-claude-statusline.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <!-- Same reasoning, for GitHookInstaller: core.hooksPath points straight
-         at the copied-to-output git-hooks\ folder below, so mimo-git-hook.ps1
+         at the copied-to-output git-hooks\ folder below, so peemo-git-hook.ps1
          needs to actually exist next to the running exe too. -->
-    <None Include="..\..\hooks\mimo-git-hook.ps1">
-      <Link>mimo-git-hook.ps1</Link>
+    <None Include="..\..\hooks\peemo-git-hook.ps1">
+      <Link>peemo-git-hook.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <!-- Static shims (see GitHookInstaller.cs): git invokes these by exact
@@ -61,7 +61,7 @@
     <!-- Game Mode's CPU/GPU/RAM sensors (see SystemStatsMonitor). 0.9.6 or
          later specifically: that's the release that swapped the WinRing0
          driver for PawnIO. Neither is installed here, and neither needs to be
-         — the four figures MiMo actually reads from this library (CPU load,
+         — the four figures Peemo actually reads from this library (CPU load,
          RAM load, GPU load, GPU temperature) all come from sources that need
          no kernel driver at all. -->
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
@@ -87,14 +87,14 @@
 
     <!-- Bakes the icon into the .exe itself (Explorer, taskbar, Alt+Tab, shortcuts) —
          separate from MainWindow.xaml's own Window.Icon, which only affects the
-         title bar and only once WPF has started up. mimo.ico is generated from
-         src/mimo-b.png (same source as the runtime tray icon) so all three stay
+         title bar and only once WPF has started up. peemo.ico is generated from
+         src/peemo-b.png (same source as the runtime tray icon) so all three stay
          visually consistent. -->
-    <ApplicationIcon>src\mimo.ico</ApplicationIcon>
-    <Product>MiMo Sender</Product>
-    <AssemblyTitle>MiMo Sender</AssemblyTitle>
+    <ApplicationIcon>src\peemo.ico</ApplicationIcon>
+    <Product>Peemo Sender</Product>
+    <AssemblyTitle>Peemo Sender</AssemblyTitle>
     <Description>Envia hora, clima, mídia e atividade de IA para o seu Brobot</Description>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <NeutralLanguage>pt-BR</NeutralLanguage>
 
     <!-- The app's own UI has no other language, but WPF/WinForms still ship a

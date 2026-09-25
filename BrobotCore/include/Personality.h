@@ -34,7 +34,7 @@ private:
     // falls to the highest tier that currently has something (see
     // resolveExpression):
     //
-    //   NOTIFICATION  Pausa/Clima/bedtime — the things MiMo interrupts you
+    //   NOTIFICATION  Pausa/Clima/bedtime — the things Peemo interrupts you
     //                 *for*. Takes the whole screen (see
     //                 FaceState::isNotification), outranks even AI, and
     //                 expires on its own after NOTIFICATION_DURATION_MS.
@@ -126,6 +126,9 @@ private:
     TypedMessage _notificationMessage;
     unsigned long _notificationUntil = 0;   // 0 / past = no notification showing
     unsigned long _notificationStartedAt = 0;
+    // SATELLITE/SPACE's real text, parked while the intro line shows —
+    // empty whenever nothing is waiting (see raiseNotification).
+    char _notificationPendingMessage[MESSAGE_CAPACITY] = {0};
     // Only meaningful while _notificationExpression == ACHIEVEMENT — set by
     // onAchievementCommand alongside raiseNotification, the same way WEATHER
     // notifications lean on _weatherCondition below rather than a field of
@@ -171,7 +174,7 @@ private:
     Theme _theme = Theme::CLASSIC;
     // When the last THEME command arrived — handed to Face via
     // FaceState::themeStartedMs, which see for why a stateless renderer
-    // needs it. Only MI84 reads it (its boot sequence).
+    // needs it. Only PEEMO84 reads it (its boot sequence).
     unsigned long _themeChangedAt = 0;
     // CLASSIC's own primary color (see Face.h's ClassicColor) — held
     // exactly like _theme above regardless of which theme is currently

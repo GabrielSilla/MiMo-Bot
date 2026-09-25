@@ -51,7 +51,7 @@ public sealed record PcNotification(string AppName, string Text, string? Title =
 ///
 /// Only reacts to notifications not already seen -- StartAsync seeds the
 /// seen-set from whatever's already sitting in Action Center, so the first
-/// poll doesn't dump a burst of stale notifications onto MiMo's screen the
+/// poll doesn't dump a burst of stale notifications onto Peemo's screen the
 /// instant the checkbox is checked.
 /// </summary>
 public sealed class NotificationMonitor : IDisposable

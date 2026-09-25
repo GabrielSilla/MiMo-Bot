@@ -34,25 +34,25 @@ IO2/IO8/IO9 are strapping pins sampled at boot, and IO8 also drives the
 SuperMini's onboard WS2812 LED.
 
 WiFi has no hardcoded credentials — on first boot (or once none of the last
-5 networks MiMo has connected to can be reached), the board serves its own
-**"MiMo-Setup"** access point with a small captive-ish config page at
+5 networks Peemo has connected to can be reached), the board serves its own
+**"Peemo-Setup"** access point with a small captive-ish config page at
 `http://192.168.4.1` (scans and lists nearby networks instead of requiring
 the SSID to be typed by hand; `WifiSetup.cpp`, see
 [firmware-platform.md](firmware-platform.md) for the multi-network
 remember/promote logic). Submitting the form saves the credentials to flash
 (`Preferences`/NVS) and reboots into station mode — see `WifiSetup.h`'s doc
 comment for the exact fallback logic. While the portal is open, the screen
-shows a static "connect to MiMo-Setup" `FACE FINISHED` message built
+shows a static "connect to Peemo-Setup" `FACE FINISHED` message built
 directly as a `FaceState` (bypassing `Personality` entirely, since its
 FINISHED-tier message auto-expires after ~10s, which isn't wanted for a
 setup screen that needs to stay up indefinitely). Once connected, `main.cpp`'s
-`loop()` shows a persistent "MiMo Configurado! IP: <ip>" message (same
+`loop()` shows a persistent "Peemo Configurado! IP: <ip>" message (same
 FaceState-bypass trick, and prints once over Serial) for as long as no PC
 app is connected over TCP — not just briefly at boot; if Brobot.Sender later
 disconnects, the message reappears until it (or another client) reconnects.
 Once a client connects, the screen reverts to Personality's own face on the
 very next frame. This screen is no longer something anyone has to act on —
-Brobot.Sender finds MiMo by itself (see `MimoDiscovery`) and its Conexão card
+Brobot.Sender finds Peemo by itself (see `PeemoDiscovery`) and its Conexão card
 has no field to type an address into — but it stays useful as the one place
 that says, from the device's own point of view, whether WiFi came up and at
 which address.
@@ -98,12 +98,12 @@ C:\Projects\MiMo-Bot\BrobotCore\native\build\brobot_native.exe
 ```
 
 **Brobot.Sender can't reach this build as easily any more**, and it's worth
-knowing why before trying. Its address field is gone (MiMo is discovered, not
-typed — see `MimoDiscovery`), and a sweep deliberately skips both loopback
+knowing why before trying. Its address field is gone (Peemo is discovered, not
+typed — see `PeemoDiscovery`), and a sweep deliberately skips both loopback
 adapters and the PC's own address, so a Core listening on `127.0.0.1` is
 invisible to it *by design*: nothing on the real network can ever be there.
 The workaround is to write the address into
-`%AppData%\Brobot\mimo-sender-settings.json` by hand (`"TcpHost": "127.0.0.1"`)
+`%AppData%\Brobot\peemo-sender-settings.json` by hand (`"TcpHost": "127.0.0.1"`)
 and click Conectar — startup ignores the saved address and sweeps, but the
 button's "known address, nothing trying it" path connects directly. Running
 `brobot_native.exe 0.0.0.0 5555` doesn't help on its own either, since the

@@ -1,15 +1,15 @@
-# Installer (Brobot.Sender / "MiMo Sender")
+# Installer (Brobot.Sender / "Peemo Sender")
 
 `installer/BrobotSenderSetup.iss` + `installer/build-installer.ps1` package
 Brobot.Sender for whoever assembled a Brobot — a real end-user installer, not
-a dev tool, since this app is already the one branded "MiMo" throughout (see
+a dev tool, since this app is already the one branded "Peemo" throughout (see
 [sender-overview.md](sender-overview.md)). Requires Inno Setup 6
 (https://jrsoftware.org/isdl.php, not part of this repo/solution — installs
 its own `ISCC.exe` compiler) on whichever machine builds the installer.
 
 ```powershell
 C:\Projects\MiMo-Bot\installer\build-installer.ps1
-# Output: installer\output\MiMoSenderSetup-<version>.exe
+# Output: installer\output\PeemoSenderSetup-<version>.exe
 ```
 
 `build-installer.ps1` looks for `ISCC.exe` on PATH first, then falls back to
@@ -39,7 +39,7 @@ administrator" launch install per-machine into Program Files instead.
 
 `AppMutex=Brobot.Sender.SingleInstance` in the .iss matches a real named
 `Mutex` `App.xaml.cs` now creates on startup (`_singleInstanceMutex`) — this
-is what lets Setup detect a running MiMo Sender and offer to close it before
+is what lets Setup detect a running Peemo Sender and offer to close it before
 install/uninstall instead of failing on a locked .exe. The mutex is also
 what makes a second launch a well-defined no-op (silently `Shutdown()`s
 rather than opening a second tray icon/second `AiThoughtsListener` fighting
@@ -52,7 +52,7 @@ ever launched by hand, so the collision wasn't a real scenario yet.
 layout and [sender-feature-cards.md](sender-feature-cards.md)) when Visual Studio is present on
 the machine, and only then — most people running this installer won't have
 Visual Studio at all, so this must never be a hard requirement to build or
-install MiMo Sender itself. `build-installer.ps1` builds that project in
+install Peemo Sender itself. `build-installer.ps1` builds that project in
 Release (`dotnet build`, not `dotnet publish` — a VSIX isn't a
 self-contained app) and stages the resulting `.vsix` into
 `installer\vsix\` before `ISCC.exe` runs, which bundles it into the
@@ -88,15 +88,38 @@ The uninstaller otherwise deliberately leaves `%AppData%\Brobot` (settings,
 weather/game caches) and any Claude Code hook entries `ClaudeCodeHookInstaller`
 wrote to `%USERPROFILE%\.claude\settings.json` untouched — those are the
 user's own data/config, not installed program files; anyone who installed
-the hook should click "Desinstalar" on MiMo Sender's own Atividade da IA
+the hook should click "Desinstalar" on Peemo Sender's own Atividade da IA
 card first, same as turning it off normally.
 
-`src/Brobot.Sender/src/mimo.ico` is a multi-resolution icon generated from
-the same `mimo-b.png` the runtime tray icon already uses (see
+`src/Brobot.Sender/src/peemo.ico` is a multi-resolution icon generated from
+the same `peemo-b.png` the runtime tray icon already uses (see
 `CreateTrayIcon`), so the taskbar/shortcut/installer icon all match — it
 isn't hand-drawn, and there's no build step that regenerates it
-automatically, so re-run the generation if `mimo-b.png` ever changes. Wired
+automatically, so re-run the generation if `peemo-b.png` ever changes. Wired
 in via `<ApplicationIcon>` in the csproj, which bakes it into the .exe
 itself; this is separate from and in addition to `MainWindow.xaml`'s own
 `Window.Icon` (title bar only, PNG, resolved at WPF startup rather than at
 the PE level).
+
+## The MiMo -> Peemo rename (1.3.0)
+
+The project was called **MiMo** until 1.2.0 and renamed to **Peemo** in
+1.3.0 (name conflict with an existing project). The `AppId` GUID was kept on
+purpose, so 1.3.0 installs as an *upgrade* over MiMo Sender rather than a
+second app — which also means it lands in the old install folder
+(`UsePreviousAppDir` default); only the folder name stays old, and that's
+cosmetic. Everything else that carried the old name is handled:
+
+- `[InstallDelete]` removes the old Start Menu group, the old desktop and
+  "start with Windows" shortcuts (otherwise there'd be two autostart
+  entries) and the old `mimo-*.ps1` scripts in `{app}`; `UsePreviousGroup=no`
+  keeps Setup from reusing the old group name.
+- Sender's `LegacyNames` is the one place in code that still knows the old
+  names, only to read them: the old `mimo-sender-settings.json` is adopted
+  once if the new file doesn't exist yet, old theme keys (`MiMoClassic`...)
+  and achievement theme tokens (`MI2MO2`/`MI84`) are translated on load,
+  and `ClaudeCodeHookInstaller.MigrateLegacyInstall` (run at startup)
+  re-registers a Claude Code hook that still points at the old script names.
+- Firmware and Sender must be updated together: discovery's identity reply
+  changed from `MIMO` to `PEEMO`, and the WiFi setup network from
+  `MiMo-Setup` to `Peemo-Setup`.

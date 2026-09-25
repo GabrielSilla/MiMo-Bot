@@ -18,7 +18,7 @@ public partial class App : Application
     {
         // A malformed line from the device, or a serial hiccup, should never take
         // the whole simulator down — surface it and keep the window open.
-        MessageBox.Show($"Erro inesperado: {e.Exception.Message}", "MiMo Virtual Display",
+        MessageBox.Show($"Erro inesperado: {e.Exception.Message}", "Peemo Virtual Display",
             MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;
     }

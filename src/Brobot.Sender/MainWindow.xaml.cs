@@ -12,10 +12,10 @@ namespace Brobot.Sender;
 
 /// <summary>
 /// The end-user-facing app for a Brobot someone has actually assembled —
-/// branded "MiMo" to whoever's looking at it, even though the code/project
+/// branded "Peemo" to whoever's looking at it, even though the code/project
 /// underneath keeps the Brobot name throughout. Runs quietly in the system
 /// tray, and when opened shows only a checklist of what to send Brobot,
-/// plus the Conexão card (MiMo's IP address on the local network) — Core is
+/// plus the Conexão card (Peemo's IP address on the local network) — Core is
 /// only ever reachable over WiFi from this app now, not Serial/USB (see
 /// BrobotConnection.cs's note on the ESP32-C3 SuperMini's native USB-CDC
 /// port hanging .NET's SerialPort); Brobot.Display.Simulator still supports
@@ -91,7 +91,7 @@ public partial class MainWindow : Window
     // all — this timer is the only thing driving SocialMediaTabDetector,
     // running independently for as long as Mídia is checked.
     private DispatcherTimer? _socialMediaTimer;
-    // Which site (if any) UpdateSocialMediaState last showed on MiMo's
+    // Which site (if any) UpdateSocialMediaState last showed on Peemo's
     // screen — null once nothing social is focused, or once real media
     // (_lastNowPlaying) took the shared WATCHING slot back over. Tracked
     // separately from _lastWatchingMessage so the timer knows whether *it*
@@ -107,7 +107,7 @@ public partial class MainWindow : Window
     // one app can be mid-call at once (Teams installed AND a Meet tab open),
     // so this is a set, not a single bool/label pair; FACE MEETING/MSG stay
     // up as long as it's non-empty, and clear only once every entry is gone.
-    // SourceLabel is carried alongside the title since it's what MiMo's
+    // SourceLabel is carried alongside the title since it's what Peemo's
     // message actually says the call is happening "in" (e.g. "Teams" vs
     // "Navegador" for either browser).
     private readonly Dictionary<string, (string SourceLabel, string Title)> _activeCalls = new();
@@ -162,24 +162,6 @@ public partial class MainWindow : Window
     private const uint VK_F10 = 0x79;
     private readonly GlobalHotkey _reportHotkey;
 
-    // Caring "go stretch your legs" nudges — one random pick per trigger,
-    // same flat-pool pattern as the bedtime messages in Personality.cpp,
-    // just Sender-side since this is plain wall-clock logic with no need
-    // for Core to know about it at all.
-    private static readonly string[] PausaMessages =
-    {
-        "Hora de esticar as pernas, bora pegar um cafe",
-        "Bora reabastecer o cafe!",
-        "Que tal uma pausinha? Levanta e da uma volta",
-        "Seus olhos merecem um descanso, bora cafe",
-        "Intervalo chegou! Estica essas pernas ai",
-        "Vai la, um cafezinho cai bem agora",
-        "Pausa estrategica: levanta, anda um pouco, hidrata",
-        "Cade aquele cafe? Hora de uma pausa",
-        "Corpo agradece: levanta e da uma esticada",
-        "Bora, um cafe rapido e volta com energia",
-    };
-    private static readonly Random PausaRng = new();
 
     // Anti-Stress Pong: the timer covers the 5s gap between the "Vamos jogar
     // um pouco?" greeting and the actual PONG START, and is null once that's
@@ -200,33 +182,33 @@ public partial class MainWindow : Window
 
     private readonly DispatcherTimer _connectionStatusTimer;
 
-    // MiMo's IP comes from the router's DHCP server, so it moves on its own —
-    // a power cycle (MiMo's or the router's) can hand it a different address,
+    // Peemo's IP comes from the router's DHCP server, so it moves on its own —
+    // a power cycle (Peemo's or the router's) can hand it a different address,
     // and the one saved in the Conexão card then points at nothing. Rather
     // than making that the user's problem, a failing connection eventually
-    // triggers a sweep of the local network for MiMo (see MimoDiscovery), and
+    // triggers a sweep of the local network for Peemo (see PeemoDiscovery), and
     // whatever it finds replaces the saved address.
     //
-    // Long enough that an ordinary blip (MiMo still booting, WiFi
+    // Long enough that an ordinary blip (Peemo still booting, WiFi
     // reassociating, the router's DHCP renewing) resolves itself on
     // ConnectTcp's own 500ms retry loop first — sweeping is for the case
     // where the address is genuinely wrong, not for every hiccup.
     private static readonly TimeSpan SweepAfterFailingFor = TimeSpan.FromSeconds(8);
 
-    // MiMo simply being switched off looks exactly like MiMo having moved,
+    // Peemo simply being switched off looks exactly like Peemo having moved,
     // and there's no way to tell them apart without sweeping. This is what
     // keeps that case from sweeping the network back-to-back forever.
     private static readonly TimeSpan SweepCooldown = TimeSpan.FromSeconds(30);
 
-    // Where MiMo is, as far as this app knows — the source of truth the
+    // Where Peemo is, as far as this app knows — the source of truth the
     // Conexão card merely displays. It used to be the text in an editable
-    // field, which is exactly what broke every time DHCP moved MiMo: the
+    // field, which is exactly what broke every time DHCP moved Peemo: the
     // address was only ever as right as whatever someone last typed. Now it
     // comes from settings on startup and from the sweep after that, and null
     // means "nowhere known yet", which is a cue to go looking rather than an
     // error.
     private string? _coreHost;
-    private int _corePort = MimoDiscovery.DefaultPort;
+    private int _corePort = PeemoDiscovery.DefaultPort;
 
     private DateTime? _connectingSince;
     private DateTime? _lastSweepFinishedAt;
@@ -238,7 +220,7 @@ public partial class MainWindow : Window
     // single place that touches them — the same reason the status text has
     // one writer instead of being set optimistically from everywhere, which
     // is a bug this card already had once.
-    private string _sweepProgressText = "Procurando MiMo na rede...";
+    private string _sweepProgressText = "Procurando Peemo na rede...";
     private string _sweepProbeAddress = "";
 
     // A sweep finishes ~254 probes in a couple of seconds; repainting on every
@@ -555,11 +537,11 @@ public partial class MainWindow : Window
             ConnectionStatusText.Text = connecting ? "Conectando..." : "Desconectado";
         }
 
-        // The address is a readout, never an input — MiMo's IP comes from the
+        // The address is a readout, never an input — Peemo's IP comes from the
         // sweep, and a stale hand-typed one is the whole problem this replaced.
         // It only ever shows an address that means something *right now*:
         // during a sweep, the one being probed; while connected, the one that
-        // actually reached MiMo. Every other state shows nothing at all,
+        // actually reached Peemo. Every other state shows nothing at all,
         // because the only address available then is one that is either
         // unproven or known not to work — and printing a dead address next to
         // "Conectando..." reads as if that address were the live one.
@@ -595,7 +577,7 @@ public partial class MainWindow : Window
         // Same reasoning as the weather resend above — THEME is another
         // persistent flag Core forgets on its own after a reboot. Any
         // non-DEFAULT selection needs resending; DEFAULT is already Core's
-        // own boot default, same as the "Tela do MiMo" checkbox this replaced.
+        // own boot default, same as the "Tela do Peemo" checkbox this replaced.
         if (connected && !_wasConnected && TemaComboBox.SelectedItem is ThemeManager.ThemeInfo currentTheme
             && currentTheme.CoreTheme != "DEFAULT") {
             _connection.SendCommand($"THEME {currentTheme.CoreTheme}");
@@ -629,7 +611,7 @@ public partial class MainWindow : Window
         }
         _achievements.Tick(connected);
         // Not gated on `connected` — meeting/media/game detection all
-        // happen at the OS level, independent of whether MiMo is currently
+        // happen at the OS level, independent of whether Peemo is currently
         // reachable (see DailyReportTracker.Tick's own comment).
         _dailyReport.Tick();
         _wasConnected = connected;
@@ -669,12 +651,12 @@ public partial class MainWindow : Window
         }
 
         // Mid-session recovery: whatever address this was using was reaching
-        // MiMo until moments ago, so it's worth probing first.
+        // Peemo until moments ago, so it's worth probing first.
         StartNetworkSweep(trustPreviousAddress: true);
     }
 
     /// <summary>
-    /// Sweeps the local network for MiMo and, if it finds one, repoints the
+    /// Sweeps the local network for Peemo and, if it finds one, repoints the
     /// connection (and the saved address) at it. async void because it's
     /// driven by UI events/timers exactly like a click handler is; everything
     /// after each await is back on the UI thread, so touching controls and
@@ -682,10 +664,10 @@ public partial class MainWindow : Window
     /// </summary>
     /// <param name="trustPreviousAddress">
     /// Whether the address currently in use gets probed first and, if it
-    /// answers but won't identify itself, accepted anyway (see MimoDiscovery).
+    /// answers but won't identify itself, accepted anyway (see PeemoDiscovery).
     /// True for a mid-session recovery, where that address was demonstrably
-    /// MiMo moments ago. False at startup: the app may have been closed for
-    /// days, MiMo may have moved, and DHCP may well have handed that address
+    /// Peemo moments ago. False at startup: the app may have been closed for
+    /// days, Peemo may have moved, and DHCP may well have handed that address
     /// to something else entirely — in which case trusting it would mean
     /// adopting a stranger. A clean startup sweep costs ~2.5s and can't make
     /// that mistake.
@@ -695,31 +677,31 @@ public partial class MainWindow : Window
         _sweepRunning = true;
         _sweepCts = new CancellationTokenSource();
         CancellationToken token = _sweepCts.Token;
-        _sweepProgressText = "Procurando MiMo na rede...";
+        _sweepProgressText = "Procurando Peemo na rede...";
         _sweepProbeAddress = "";
         _sweepProgressTimer = new DispatcherTimer { Interval = SweepProgressTickInterval };
         _sweepProgressTimer.Tick += (_, _) => UpdateConnectionStatus();
         _sweepProgressTimer.Start();
         UpdateConnectionStatus();
 
-        // The port comes from whatever MiMo was last reached on, so a device
+        // The port comes from whatever Peemo was last reached on, so a device
         // set up on a non-default port keeps being found there; a fresh
         // install with nothing known falls back to Core's own default. The
         // port survives even an untrusted startup sweep — an address goes
         // stale on its own, a port doesn't.
         string? previousHost = trustPreviousAddress ? _coreHost : null;
-        int port = _corePort > 0 ? _corePort : MimoDiscovery.DefaultPort;
+        int port = _corePort > 0 ? _corePort : PeemoDiscovery.DefaultPort;
 
         // Constructed on the UI thread, so it marshals every report back here
         // by itself — the sweep reports from whichever thread pool thread
         // finished a probe, and none of them may touch these fields directly.
-        var progress = new Progress<MimoDiscovery.SweepProgress>(OnSweepProgress);
+        var progress = new Progress<PeemoDiscovery.SweepProgress>(OnSweepProgress);
 
         string? found = null;
         bool sweepCancelled;
         try
         {
-            found = await MimoDiscovery.FindAsync(port, previousHost, progress, token);
+            found = await PeemoDiscovery.FindAsync(port, previousHost, progress, token);
         }
         catch (Exception)
         {
@@ -750,7 +732,7 @@ public partial class MainWindow : Window
 
         if (found == null)
         {
-            ShowTransientStatus("MiMo não encontrado na rede");
+            ShowTransientStatus("Peemo não encontrado na rede");
             return;
         }
 
@@ -771,7 +753,7 @@ public partial class MainWindow : Window
     /// the UI thread (see the Progress&lt;T&gt; that feeds it), so these fields
     /// need no locking against the tick that reads them.
     /// </summary>
-    private void OnSweepProgress(MimoDiscovery.SweepProgress progress)
+    private void OnSweepProgress(PeemoDiscovery.SweepProgress progress)
     {
         if (!_sweepRunning)
         {
@@ -781,7 +763,7 @@ public partial class MainWindow : Window
         }
 
         _sweepProbeAddress = progress.Address.ToString();
-        _sweepProgressText = $"Procurando MiMo... {progress.Completed}/{progress.Total}";
+        _sweepProgressText = $"Procurando Peemo... {progress.Completed}/{progress.Total}";
     }
 
     private void CancelNetworkSweep()
@@ -802,7 +784,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Writes a swept-out address straight to the settings file, without
     /// waiting for "Salvar configurações". Unlike every other setting there,
-    /// this isn't a preference the user chose — it's a fact about where MiMo
+    /// this isn't a preference the user chose — it's a fact about where Peemo
     /// currently is, and leaving it unsaved would mean re-sweeping the whole
     /// network on every launch. Load-then-mutate-then-save, so the checkbox
     /// state already on disk is carried through untouched rather than
@@ -848,7 +830,7 @@ public partial class MainWindow : Window
             // A known address and nothing currently trying it — worth one
             // direct shot before searching the whole network. This is the
             // reconnect-after-Desconectar path, where the address was reaching
-            // MiMo minutes ago. ConnectTcp retries on its own every 500ms and
+            // Peemo minutes ago. ConnectTcp retries on its own every 500ms and
             // never throws synchronously, so nothing is set optimistically
             // here; if the address has gone stale, TryStartNetworkSweep turns
             // those retries into a sweep after SweepAfterFailingFor.
@@ -1029,7 +1011,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void SendBreakReminder()
     {
-        string message = PausaMessages[PausaRng.Next(PausaMessages.Length)];
+        string message = PausaMessages.RandomNow();
         _connection.SendCommand($"NOTIFY COFFEE {message}");
         PausaStatusText.Text = $"Último lembrete: {message}";
         _achievements.OnBreakReminderSent();
@@ -1079,7 +1061,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// One NOTIFY line, same atomic-and-top-priority reasoning as
-    /// SendBreakReminder — the report is exactly the kind of thing MiMo
+    /// SendBreakReminder — the report is exactly the kind of thing Peemo
     /// should interrupt you for. DailyReportScoring decides the rating,
     /// DailyReportMessages picks the line/face that go with it; this method
     /// only formats the numbers and sends what it's handed.
@@ -1093,13 +1075,13 @@ public partial class MainWindow : Window
     /// FACE NEUTRAL rather than something judgier (SAD/ANGRY): this is a
     /// screen-time nudge, not a scolding. The minutes penalty this racks up
     /// lives in DailyReportScoring, not here — this method only ever says
-    /// what MiMo shows, never what it means for the score.
+    /// what Peemo shows, never what it means for the score.
     /// </summary>
     private void OnVideoWatchMilestoneReached(int minutes)
     {
         Dispatcher.Invoke(() =>
         {
-            _connection.SendCommand($"NOTIFY NEUTRAL Você já está a {minutes} minutos assistindo!");
+            _connection.SendCommand($"NOTIFY NEUTRAL {AlertMessages.ForVideoWatch(minutes)}");
         });
     }
 
@@ -1108,7 +1090,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            _connection.SendCommand($"NOTIFY NEUTRAL Você está a {minutes} minutos em Redes Sociais!");
+            _connection.SendCommand($"NOTIFY NEUTRAL {AlertMessages.ForSocialWatch(minutes)}");
         });
     }
 
@@ -1130,7 +1112,7 @@ public partial class MainWindow : Window
     /// wording/layout (drawReportNotification in Face.cpp), Sender only
     /// ever hands over today's numbers plus whatever trailing text types
     /// in below them. `heading`, when given, is what tells a scheduled 18h
-    /// report apart from an on-demand one on MiMo's own screen; null means
+    /// report apart from an on-demand one on Peemo's own screen; null means
     /// just the casual phrase, no label in front of it.
     /// </summary>
     private void SendReport(string? heading)
@@ -1328,7 +1310,7 @@ public partial class MainWindow : Window
             _nowPlayingIsYouTube = true;
         }
         // Focused vs background still matters for the daily report's
-        // video-time counter, but not for what MiMo shows — a single
+        // video-time counter, but not for what Peemo shows — a single
         // "YouTube: <title>" either way, so switching tabs doesn't retype
         // the message.
         string message = _nowPlayingIsYouTube
@@ -1502,7 +1484,7 @@ public partial class MainWindow : Window
     /// lasts, the same treatment WindowsMediaMonitor already gives
     /// MUSIC/WATCHING, not a 10s interruption. label == null means that one
     /// app's call ended, mirroring OnNowPlayingChanged's own null case --
-    /// but since more than one app can be mid-call at once, MiMo's screen
+    /// but since more than one app can be mid-call at once, Peemo's screen
     /// only clears once _activeCalls is empty, not on the first one to end.
     /// </summary>
     private void OnLiveCallChanged(string appName, string sourceLabel, string? label)
@@ -1541,7 +1523,7 @@ public partial class MainWindow : Window
     /// replaced the meeting, reported directly) — it holds until explicitly
     /// cleared, unlike most expressions which auto-revert after a few
     /// seconds, so the call ending (or the checkbox being unchecked
-    /// mid-call) has to explicitly send FACE IDLE_MEETING or MiMo would
+    /// mid-call) has to explicitly send FACE IDLE_MEETING or Peemo would
     /// stay showing a meeting that's already over. IDLE_MEETING, not
     /// NEUTRAL or IDLE_MEDIA — NEUTRAL only clears the foreground/AI tier
     /// (same reasoning WindowsMediaMonitor's own ClearMediaFaceIfActive
@@ -1589,7 +1571,7 @@ public partial class MainWindow : Window
     /// top-priority tier (full screen, 10s, outranks even AI activity —
     /// see PROTOCOL.md), not a plain FACE/MSG: a Windows notification is
     /// itself an interruption on the PC, so showing it as anything less on
-    /// MiMo would undersell what it is. READING is the expression — same
+    /// Peemo would undersell what it is. READING is the expression — same
     /// "look over here" cue PermissionRequest's own NOTIFY already uses,
     /// and asking for attention isn't a failure, so not ERROR. One atomic
     /// NOTIFY line rather than a FACE+MSG pair for the same reason every
@@ -1719,8 +1701,8 @@ public partial class MainWindow : Window
                 return;
             }
             string message = kind == ResourceKind.Cpu
-                ? $"CPU em {percent}%! O PC está sofrendo"
-                : $"RAM em {percent}%! Hora de fechar algumas coisas";
+                ? AlertMessages.ForCpu(percent)
+                : AlertMessages.ForRam(percent);
             _connection.SendCommand($"NOTIFY SWEATING {message}");
             ResourceAlertStatusText.Text = $"Último alerta ({DateTime.Now:HH:mm}): {message}";
         });
@@ -2110,8 +2092,8 @@ public partial class MainWindow : Window
     /// changes this app's own WPF skin, and the SendCommand below changes
     /// how Core itself draws the display (see PROTOCOL.md's THEME command)
     /// — they just happen to both be about "appearance". This used to be a
-    /// separate "Tela do MiMo" checkbox card; folded in here instead, since
-    /// from the user's point of view MiMo Classic/MiMo Matrix is a single
+    /// separate "Tela do Peemo" checkbox card; folded in here instead, since
+    /// from the user's point of view Peemo Classic/Peemo Matrix is a single
     /// choice, not two.
     /// </summary>
     private void TemaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -2132,7 +2114,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// The color picker only ever does anything on MiMo Classic — Core
+    /// The color picker only ever does anything on Peemo Classic — Core
     /// ignores CLASSICCOLOR on every other theme (see PROTOCOL.md/Face.cpp)
     /// — so it's hidden rather than left enabled-but-inert for the rest.
     /// </summary>
@@ -2146,7 +2128,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// CLASSICCOLOR is a persistent device flag exactly like THEME/SOUND/
     /// SCANLINES (see PROTOCOL.md) — Core just remembers whatever was last
-    /// sent. This picker is only visible while MiMo Classic is selected
+    /// sent. This picker is only visible while Peemo Classic is selected
     /// (see RefreshClassicColorVisibility), so this only ever fires then.
     /// </summary>
     private void ClassicColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -2315,7 +2297,7 @@ public partial class MainWindow : Window
     /// naming which internal mechanism noticed it. sourceLabel only shows up
     /// as a parenthesized fallback subject on the rare source/build that
     /// couldn't tell which project it was ("Build (Gradle) iniciado!"),
-    /// since MiMo's screen would otherwise say nothing about it at all.
+    /// since Peemo's screen would otherwise say nothing about it at all.
     /// </summary>
     private void OnBuildStateChanged(string sourceLabel, BuildState state, string? projectName)
     {
@@ -2395,7 +2377,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Reflects the *actual* on-disk install state (read fresh, not cached),
     /// so this stays correct even if settings.json was hand-edited or Claude
-    /// Code was reinstalled since MiMo last checked. Only Claude Code hooks
+    /// Code was reinstalled since Peemo last checked. Only Claude Code hooks
     /// are wired up so far — the button is disabled for the other providers
     /// in the combo until they get their own installer.
     /// </summary>
@@ -2422,7 +2404,7 @@ public partial class MainWindow : Window
     /// <summary>
     /// Appends one line to %AppData%\Broboti-events.log.
     ///
-    /// The AI bridge is a race between short-lived processes that MiMo shows
+    /// The AI bridge is a race between short-lived processes that Peemo shows
     /// the *result* of, one message at a time, so "the greeting vanished"
     /// looks identical from the outside whatever caused it — a clear, a
     /// message applied out of order, or a second event nobody expected. This
@@ -2704,7 +2686,7 @@ public partial class MainWindow : Window
                     break;
 
                 case "ContextUsage":
-                    // Sent by mimo-claude-statusline.ps1 (Claude Code's statusLine
+                    // Sent by peemo-claude-statusline.ps1 (Claude Code's statusLine
                     // command, not a hook — see ClaudeCodeHookInstaller) on every
                     // new assistant message. No FACE change, same reasoning as
                     // Notification — this is a stat, not an expression.
@@ -2728,7 +2710,7 @@ public partial class MainWindow : Window
                     // Deliberately always the fixed phrase, not
                     // thought.Text (the first sentence of last_assistant_message,
                     // still sent by the hook script): the actual answer text
-                    // ended up on MiMo's screen unfiltered, which reads fine
+                    // ended up on Peemo's screen unfiltered, which reads fine
                     // for a short reply but odd/exposing for a longer or more
                     // technical one — a plain "done" beat surfacing Claude's
                     // own words verbatim.
@@ -2783,7 +2765,7 @@ public partial class MainWindow : Window
                     OnBuildStateChanged("Visual Studio", BuildState.Failed, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
                     break;
 
-                // From mimo-git-hook.ps1 via a global git hook (see
+                // From peemo-git-hook.ps1 via a global git hook (see
                 // GitHookInstaller) -- same AiThoughtsListener wire as the
                 // Claude Code bridge and the VSIX, installed/uninstalled
                 // alongside the Gradle/MSBuild monitors by
@@ -2889,9 +2871,9 @@ public partial class MainWindow : Window
 
         TabSubtitleText.Text = MainTabControl.SelectedIndex switch
         {
-            0 => "Escolha as informações que o MiMo pode receber",
-            1 => "O que o MiMo acompanha durante o seu dia de trabalho",
-            2 => "O MiMo mostra o jogo na tela dele — você joga pelas setinhas do teclado",
+            0 => "Escolha as informações que o Peemo pode receber",
+            1 => "O que o Peemo acompanha durante o seu dia de trabalho",
+            2 => "O Peemo mostra o jogo na tela dele — você joga pelas setinhas do teclado",
             4 => "Reuniões detectadas nas notificações do Outlook",
             _ => string.Empty,
         };
@@ -2940,7 +2922,7 @@ public partial class MainWindow : Window
     ///
     /// '|' is therefore reserved and cannot appear inside a message; there is
     /// no escape for it. That is a fair trade in a dev-only box, where
-    /// sending a literal pipe to MiMo has no use and sending a sequence has
+    /// sending a literal pipe to Peemo has no use and sending a sequence has
     /// plenty.
     /// </summary>
     private void SendTestInput(string raw)
@@ -2952,7 +2934,7 @@ public partial class MainWindow : Window
 
         if (!_connection.IsConnected)
         {
-            ShowTestStatus("Sem conexão com o MiMo.");
+            ShowTestStatus("Sem conexão com o Peemo.");
             return;
         }
 
@@ -3026,7 +3008,7 @@ public partial class MainWindow : Window
     {
         if (!_connection.IsConnected)
         {
-            ShowTestStatus("Sem conexão com o MiMo.");
+            ShowTestStatus("Sem conexão com o Peemo.");
             return;
         }
 
@@ -3120,7 +3102,7 @@ public partial class MainWindow : Window
         settings.ScanlinesEnabled = ScanlinesCheckBox.IsChecked == true;
         // Carried through rather than read off the UI: the address isn't
         // typed any more, and the sweep already writes it here the moment it
-        // finds MiMo (see PersistDiscoveredAddress). This only matters for not
+        // finds Peemo (see PersistDiscoveredAddress). This only matters for not
         // wiping it when the user saves the rest of the checklist.
         if (_coreHost != null)
         {
@@ -3157,12 +3139,12 @@ public partial class MainWindow : Window
         // The saved address is loaded for display and for SaveSettings to
         // carry through, but is deliberately NOT connected to: every launch
         // starts with a fresh sweep instead. Between one run and the next the
-        // app may have been closed for days — long enough for MiMo to have
+        // app may have been closed for days — long enough for Peemo to have
         // been given a different address, and for its old one to have been
         // handed to some other device. Asking the network beats trusting a
         // note from last time, and it costs ~2.5s once at startup.
         _coreHost = string.IsNullOrWhiteSpace(settings.TcpHost) ? null : settings.TcpHost;
-        _corePort = settings.TcpPort > 0 ? settings.TcpPort : MimoDiscovery.DefaultPort;
+        _corePort = settings.TcpPort > 0 ? settings.TcpPort : PeemoDiscovery.DefaultPort;
         StartNetworkSweep(trustPreviousAddress: false);
         UpdateConnectionStatus();
 
@@ -3216,7 +3198,7 @@ public partial class MainWindow : Window
         {
             Icon = CreateTrayIcon(),
             Visible = true,
-            Text = "MiMo",
+            Text = "Peemo",
         };
         _trayIcon.DoubleClick += (_, _) => ShowFromTray();
         _trayIcon.MouseClick += (_, e) =>
@@ -3260,10 +3242,10 @@ public partial class MainWindow : Window
     /// Sends a time-of-day goodbye (see GreetingMessages.ForDisconnect) and
     /// blocks long enough for it to actually show before the caller tears
     /// the connection down. Blocking matters specifically on real hardware:
-    /// the instant the TCP link drops, Core falls back to its own "MiMo
+    /// the instant the TCP link drops, Core falls back to its own "Peemo
     /// Configurado" waiting screen (see BrobotCore/src/main.cpp's
     /// pcConnected check), so without this pause the farewell would be
-    /// visible for at most a frame, if at all. No-op if MiMo isn't even
+    /// visible for at most a frame, if at all. No-op if Peemo isn't even
     /// connected right now — there's nothing to say goodbye to.
     /// </summary>
     private void SendFarewellAndWait()
@@ -3328,10 +3310,10 @@ public partial class MainWindow : Window
         System.Windows.Application.Current.Shutdown();
     }
 
-    /// <summary>Builds the tray icon from src/mimo-b.png (a "MiMo" wordmark on black) at runtime, scaled to the small size a tray icon actually needs.</summary>
+    /// <summary>Builds the tray icon from src/peemo-b.png (a "Peemo" wordmark on black) at runtime, scaled to the small size a tray icon actually needs.</summary>
     private static Drawing.Icon CreateTrayIcon()
     {
-        var uri = new Uri("pack://application:,,,/Brobot.Sender;component/src/mimo-b.png");
+        var uri = new Uri("pack://application:,,,/Brobot.Sender;component/src/peemo-b.png");
         using System.IO.Stream resourceStream = System.Windows.Application.GetResourceStream(uri)!.Stream;
         using Drawing.Image source = Drawing.Image.FromStream(resourceStream);
 

@@ -4,5 +4,5 @@
 # fires for `git pull` (fetch + merge under the hood), which is deliberate:
 # there's no separate "pull" hook in git, and a pull is a merge from the
 # user's point of view either way.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/../mimo-git-hook.ps1" -EventName GitMerge
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/../peemo-git-hook.ps1" -EventName GitMerge
 exit 0

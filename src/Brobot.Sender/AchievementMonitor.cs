@@ -13,7 +13,7 @@ namespace Brobot.Sender;
 /// Time-based criteria (Coffee Machine, One More Game, Audiophile, AI
 /// Overload) are all approximations of "how long were you doing X", not a
 /// real activity/idle detector — nothing in this app watches mouse/keyboard
-/// input, so "Coffee Machine" really measures "MiMo was connected", and
+/// input, so "Coffee Machine" really measures "Peemo was connected", and
 /// "One More Game"/"Audiophile" measure "GameMonitor/WindowsMediaMonitor
 /// reported this as active", for as long as this app happened to be running
 /// to see it. Honest enough for a Tamagotchi-style nudge, not a precise
@@ -46,7 +46,7 @@ public sealed class AchievementMonitor
 
     private static readonly TimeSpan PeriodicSaveInterval = TimeSpan.FromMinutes(1);
 
-    private static readonly string[] AllCoreThemes = ["DEFAULT", "MATRIX", "MI2MO2", "MI84"];
+    private static readonly string[] AllCoreThemes = ["DEFAULT", "MATRIX", "P2M2", "PEEMO84"];
 
     private readonly AchievementProgress _progress;
 
@@ -122,7 +122,7 @@ public sealed class AchievementMonitor
         AchievementStore.Save(_progress);
     }
 
-    /// <summary>Call from TemaComboBox_SelectionChanged with the CoreTheme value just sent (DEFAULT/MATRIX/MI2MO2/MI84).</summary>
+    /// <summary>Call from TemaComboBox_SelectionChanged with the CoreTheme value just sent (DEFAULT/MATRIX/P2M2/PEEMO84).</summary>
     public void OnThemeSelected(string coreTheme)
     {
         _progress.ThemesUsed.Add(coreTheme);
@@ -222,7 +222,7 @@ public sealed class AchievementMonitor
 
         // Saved immediately rather than waiting for the next periodic save —
         // an unlock is a discrete fact worth persisting right away, same
-        // reasoning MimoDiscovery's PersistDiscoveredAddress already follows.
+        // reasoning PeemoDiscovery's PersistDiscoveredAddress already follows.
         _progress.UnlockedAt[id] = DateTime.Now;
         AchievementStore.Save(_progress);
 

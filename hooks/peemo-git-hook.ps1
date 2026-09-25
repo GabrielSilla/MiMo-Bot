@@ -11,17 +11,17 @@
     human-readable label out of the repo git itself is already sitting in
     (git hooks run with the working tree as CWD), then sends a single line
     "EVENTNAME [text]" to 127.0.0.1:<Port> — the exact same wire shape
-    mimo-claude-hook.ps1 already uses for the Claude Code bridge.
+    peemo-claude-hook.ps1 already uses for the Claude Code bridge.
 
     Must never fail the hook or block the git operation that invoked it: any
-    failure (MiMo not running, "Ferramentas de Dev" unchecked, git itself
+    failure (Peemo not running, "Ferramentas de Dev" unchecked, git itself
     missing) silently no-ops and this always exits 0. pre-push in particular
     is NOT advisory — a non-zero exit there aborts the push — so the calling
     shim also forces exit 0 regardless of what this script does.
 
 .NOTES
     This file carries a UTF-8 BOM on purpose, same reasoning as
-    mimo-claude-hook.ps1's own header comment: invoked via classic
+    peemo-claude-hook.ps1's own header comment: invoked via classic
     `powershell.exe -File`, not `pwsh`, and Windows PowerShell 5.1 reads a
     BOM-less script using the system ANSI codepage rather than UTF-8, which
     silently mangles any accented PT-BR text (commit messages, branch names)
@@ -56,7 +56,7 @@ function ConvertTo-SingleLine([string]$s) {
 function Limit-Length([string]$s, [int]$max = 100) {
     if ([string]::IsNullOrEmpty($s)) { return $s }
     if ($s.Length -le $max) { return $s }
-    # Three literal periods, not "…" — see mimo-claude-hook.ps1's own note:
+    # Three literal periods, not "…" — see peemo-claude-hook.ps1's own note:
     # Core reads the wire byte-at-a-time in single-byte Latin glyphs, so a
     # multi-byte UTF-8 ellipsis draws as invisible gaps instead of a visible
     # "this was cut" cue. A real bug there, avoided here from the start.
@@ -111,14 +111,14 @@ try {
     # almost instantly either way.
     $connectTask = $client.ConnectAsync("127.0.0.1", $Port)
     if ($connectTask.Wait(300) -and $client.Connected) {
-        # BOM-less UTF-8 on the wire — same as mimo-claude-hook.ps1.
+        # BOM-less UTF-8 on the wire — same as peemo-claude-hook.ps1.
         $writer = New-Object System.IO.StreamWriter($client.GetStream(), (New-Object System.Text.UTF8Encoding($false)))
         $writer.WriteLine($line)
         $writer.Flush()
     }
     $client.Close()
 } catch {
-    # MiMo not running, "Ferramentas de Dev" unchecked, or any other failure
+    # Peemo not running, "Ferramentas de Dev" unchecked, or any other failure
     # — must never surface as a hook error or block the git operation.
 }
 

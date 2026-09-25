@@ -11,14 +11,14 @@
     127.0.0.1:<Port> — the same one-line-per-event wire shape PROTOCOL.md's
     own FACE/MSG lines use, just inbound instead of outbound.
 
-    Must never fail the hook or block Claude Code: if MiMo isn't running, the
+    Must never fail the hook or block Claude Code: if Peemo isn't running, the
     "Atividade da IA" checkbox isn't on, or anything else goes wrong, this
     silently no-ops and always exits 0. UserPromptSubmit hooks specifically
     have their stdout appended to Claude's context, so this script is careful
     to never write anything to stdout.
 
 .NOTES
-    This file (and mimo-claude-statusline.ps1) carry a UTF-8 BOM on purpose —
+    This file (and peemo-claude-statusline.ps1) carry a UTF-8 BOM on purpose —
     do not strip it. ClaudeCodeHookInstaller invokes these via classic
     `powershell.exe -File`, not `pwsh`, and Windows PowerShell 5.1 reads a
     BOM-less script file using the system's ANSI codepage rather than UTF-8.
@@ -36,7 +36,7 @@
     PostToolUse (success), which carries nothing PreToolUse hasn't already
     said and would double the PowerShell processes spawned per tool call;
     and MessageDisplay / FileChanged / InstructionsLoaded / ConfigChange,
-    which fire often enough to turn MiMo's screen into a strobe rather than
+    which fire often enough to turn Peemo's screen into a strobe rather than
     a status display.
 #>
 param(
@@ -87,7 +87,7 @@ function Read-StdinJson {
     }
 }
 
-# The wire format is one line per event, so anything reaching MiMo has to
+# The wire format is one line per event, so anything reaching Peemo has to
 # survive being flattened onto a single line first. That's academic for a
 # tool description, but Stop's last_assistant_message is real prose —
 # multi-line, markdown, sometimes with fenced code in it — and one raw
@@ -102,7 +102,7 @@ function ConvertTo-SingleLine([string]$s) {
     return $s.Trim()
 }
 
-# MiMo gets the first *sentence* of a long answer, not its first 100
+# Peemo gets the first *sentence* of a long answer, not its first 100
 # characters: a hard cut lands mid-word and reads as truncation, while one
 # complete sentence reads as him actually saying something. The {10,} guard
 # keeps an abbreviation or a version number in the opening words from being
@@ -130,7 +130,7 @@ function Get-ModelName($value) {
 # The folder name is only worth saying when it names a *project*. A session
 # started from the home directory (which is where switching accounts lands
 # you) produced "Bora trabalhar em Gabriel!", and a drive root would produce
-# "Bora trabalhar em C:!" — both read as MiMo having misunderstood something.
+# "Bora trabalhar em C:!" — both read as Peemo having misunderstood something.
 # Returning null lets the caller fall back to a greeting with no place in it.
 function Get-FolderName([string]$path) {
     if ([string]::IsNullOrWhiteSpace($path)) { return $null }
@@ -257,7 +257,7 @@ if ($payload) {
         "PreToolUse" {
             $text = Get-PreToolUseText $payload
             # agent_type is present only while the call comes from a subagent,
-            # so this is the one place MiMo can tell "Claude is doing this"
+            # so this is the one place Peemo can tell "Claude is doing this"
             # apart from "something Claude delegated is doing this".
             if ($text -and $payload.agent_type) {
                 $text = "($($payload.agent_type)) $text"
@@ -301,7 +301,7 @@ if ($payload) {
 
         # The whole reason Stop is worth a payload read at all:
         # last_assistant_message is the actual text Claude just finished
-        # saying, so MiMo reports what he did instead of a fixed "Terminei!".
+        # saying, so Peemo reports what he did instead of a fixed "Terminei!".
         "Stop" { $text = Get-FirstSentence ([string]$payload.last_assistant_message) }
 
         "PreModelSwitch" {
@@ -343,7 +343,7 @@ try {
     }
     $client.Close()
 } catch {
-    # MiMo not running, "Atividade da IA" unchecked, or any other failure —
+    # Peemo not running, "Atividade da IA" unchecked, or any other failure —
     # this must never surface as a hook error or block Claude Code.
 }
 

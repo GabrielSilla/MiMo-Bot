@@ -1,17 +1,17 @@
 ﻿<#
 .SYNOPSIS
     Bridges Claude Code's statusLine feature to Brobot.Sender's
-    AiThoughtsListener, so MiMo can show token/context usage per turn.
+    AiThoughtsListener, so Peemo can show token/context usage per turn.
 
 .DESCRIPTION
     Invoked by Claude Code as the "statusLine" command (see
     ClaudeCodeHookInstaller.cs) — a different contract from the hooks in
-    mimo-claude-hook.ps1: it receives a much richer JSON payload (model,
+    peemo-claude-hook.ps1: it receives a much richer JSON payload (model,
     cost, context_window, rate_limits, workspace, ...) on stdin, and unlike
     a hook, THIS script's own stdout is what Claude Code actually renders as
     the terminal's status line, not just logged. So it both prints a short
     status for the terminal and, as a side effect, forwards what it read to
-    MiMo over TCP using the same one-line-per-event wire shape
+    Peemo over TCP using the same one-line-per-event wire shape
     AiThoughtsListener already understands.
 
     Two lines are sent, not one, because they answer different questions and
@@ -19,14 +19,14 @@
 
       ContextUsage <text>   the same sentence printed in the terminal, shown
                             as an ordinary MSG — this is what CLASSIC and
-                            MI2MO2 (which have no console log or stat panel)
+                            P2M2 (which have no console log or stat panel)
                             get, and it is unchanged from before.
       AiStats <fields>      the numbers as numbers, which become PROTOCOL.md's
                             AISTATS and get drawn as a persistent panel in
-                            the AI tab of the log themes (MATRIX, MI84).
+                            the AI tab of the log themes (MATRIX, PEEMO84).
 
     Must never leave the terminal's status line blank: any failure below
-    (bad/missing JSON, MiMo not running, ...) still falls through to
+    (bad/missing JSON, Peemo not running, ...) still falls through to
     printing something reasonable.
 
 .NOTES
@@ -40,7 +40,7 @@
 
     context_window.used_percentage would give the same figure pre-calculated,
     but the percentage is deliberately still computed here so the number in
-    the terminal and the number on MiMo's screen can never disagree: they are
+    the terminal and the number on Peemo's screen can never disagree: they are
     the same variable.
 #>
 param(
@@ -49,7 +49,7 @@ param(
 
 $ErrorActionPreference = "SilentlyContinue"
 
-# Same fix as mimo-claude-hook.ps1's own note: Windows PowerShell's default
+# Same fix as peemo-claude-hook.ps1's own note: Windows PowerShell's default
 # console input encoding isn't UTF-8, so a multi-byte character anywhere in
 # this payload (a model display name, say) would otherwise get silently
 # mis-decoded before ConvertFrom-Json ever sees it.
@@ -85,7 +85,7 @@ if ($payload -and $payload.context_window) {
 $statusText = "$lastRequestTokens tokens gastos na requisicao. $pct% do contexto utilizado"
 
 # This line IS Claude Code's own terminal status line — silence here isn't
-# optional the way it is in mimo-claude-hook.ps1.
+# optional the way it is in peemo-claude-hook.ps1.
 Write-Output $statusText
 
 # --- AISTATS ---------------------------------------------------------------
@@ -131,11 +131,11 @@ function Send-Line([string]$line) {
     try {
         $client = New-Object System.Net.Sockets.TcpClient
         # ConnectAsync + Wait (not a plain blocking Connect), same reasoning as
-        # mimo-claude-hook.ps1: bounds how long a hung/firewalled attempt can
+        # peemo-claude-hook.ps1: bounds how long a hung/firewalled attempt can
         # hold up Claude Code's status line refresh.
         $connectTask = $client.ConnectAsync("127.0.0.1", $Port)
         if ($connectTask.Wait(300) -and $client.Connected) {
-            # BOM-less UTF-8 — same reasoning as mimo-claude-hook.ps1's own
+            # BOM-less UTF-8 — same reasoning as peemo-claude-hook.ps1's own
             # writer (see CLAUDE.md's note on BrobotConnection.cs's original
             # version of this same bug).
             $writer = New-Object System.IO.StreamWriter($client.GetStream(), (New-Object System.Text.UTF8Encoding($false)))
@@ -144,7 +144,7 @@ function Send-Line([string]$line) {
         }
         $client.Close()
     } catch {
-        # MiMo not running, "Atividade da IA" unchecked, or any other failure —
+        # Peemo not running, "Atividade da IA" unchecked, or any other failure —
         # must never affect the terminal's own status line above.
     }
 }

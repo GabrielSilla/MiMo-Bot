@@ -12,7 +12,7 @@ using Task = System.Threading.Tasks.Task;
 namespace Brobot.VSExtension
 {
     /// <summary>
-    /// Reports a Visual Studio build starting/finishing to MiMo Sender --
+    /// Reports a Visual Studio build starting/finishing to Peemo Sender --
     /// this is the safe replacement for the two external-automation
     /// approaches that were tried and rejected before it (see
     /// VisualStudioOutputMonitor.cs on the Sender side for the full story):
@@ -38,13 +38,13 @@ namespace Brobot.VSExtension
     /// (reverted) DTE attempt used, just called safely from inside VS
     /// instead of from outside it.
     ///
-    /// Talks to MiMo Sender over the exact same wire shape
-    /// hooks/mimo-claude-hook.ps1 already uses for Claude Code events: one
+    /// Talks to Peemo Sender over the exact same wire shape
+    /// hooks/peemo-claude-hook.ps1 already uses for Claude Code events: one
     /// plain-text line, "EVENTNAME optional text...", to a fresh TCP
     /// connection on 127.0.0.1:5591 (AiThoughtsListener), then closes. Never
     /// throws out of an event handler and never blocks VS's UI thread on
     /// network I/O -- the socket write happens on a background thread, and
-    /// any failure (MiMo Sender not running, no listener) is swallowed the
+    /// any failure (Peemo Sender not running, no listener) is swallowed the
     /// same way the PowerShell hook script swallows its own failures: this
     /// must never be the thing that makes a Visual Studio build feel slow
     /// or broken.
@@ -52,7 +52,7 @@ namespace Brobot.VSExtension
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(PackageGuidString)]
     [ProvideAutoLoad(Microsoft.VisualStudio.VSConstants.UICONTEXT.SolutionExists_string, PackageAutoLoadFlags.BackgroundLoad)]
-    [InstalledProductRegistration("MiMo Build Watcher", "Reports Visual Studio build start/finish to MiMo.", "1.0")]
+    [InstalledProductRegistration("Peemo Build Watcher", "Reports Visual Studio build start/finish to Peemo.", "1.0")]
     public sealed class BrobotBuildWatcherPackage : AsyncPackage
     {
         public const string PackageGuidString = "bbe2cf98-e9ab-481a-81a8-427b16c9c3bc";
@@ -86,7 +86,7 @@ namespace Brobot.VSExtension
             // with no project name and no per-project result, so reporting
             // from it meant every message read as the *solution*'s name
             // ("NfePack") rather than whichever project was actually
-            // compiling ("NFePack.Service.Core"), which is what MiMo's
+            // compiling ("NFePack.Service.Core"), which is what Peemo's
             // screen is actually supposed to say. The per-project pair fires
             // once for each project MSBuild actually processes -- exactly
             // once for a single right-click "Build" on one project, several
@@ -133,7 +133,7 @@ namespace Brobot.VSExtension
         /// <summary>
         /// Fire-and-forget, deliberately not awaited from the build-event
         /// handlers above -- those run on VS's own UI thread, and a build
-        /// notification blocking on a TCP connect/write (MiMo Sender could
+        /// notification blocking on a TCP connect/write (Peemo Sender could
         /// be slow to accept, or simply not running) must never be what
         /// makes Visual Studio itself feel sluggish. The discarded task
         /// (`_ = ...`) still runs to completion on its own, just without the
@@ -152,7 +152,7 @@ namespace Brobot.VSExtension
                 Task connectTask = client.ConnectAsync("127.0.0.1", AiThoughtsListenerPort);
                 if (await Task.WhenAny(connectTask, Task.Delay(1000)).ConfigureAwait(false) != connectTask)
                 {
-                    return; // MiMo Sender isn't listening -- nothing to do
+                    return; // Peemo Sender isn't listening -- nothing to do
                 }
                 await connectTask.ConfigureAwait(false); // observe a connect failure, if any
 

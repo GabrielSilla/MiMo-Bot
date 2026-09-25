@@ -5,7 +5,7 @@
 // Answer to PING. The trailing number is the protocol revision, so a future
 // PC app can tell an old board from a new one without a second round trip;
 // bump it only for changes a client would actually need to branch on.
-static const char* IDENTITY_REPLY = "MIMO 1";
+static const char* IDENTITY_REPLY = "PEEMO 1";
 
 void Protocol::poll(Stream& serial, unsigned long now) {
     while (serial.available() > 0) {
@@ -89,10 +89,10 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         }
     } else if (commandLength == 4 && strncmp(line, "PING", 4) == 0) {
         // The only command Core answers. Exists so a PC app sweeping the
-        // local network for MiMo's (DHCP-assigned, therefore moving) IP can
-        // tell an actual MiMo apart from anything else that merely happens
+        // local network for Peemo's (DHCP-assigned, therefore moving) IP can
+        // tell an actual Peemo apart from anything else that merely happens
         // to be listening on PROTOCOL_TCP_PORT — see Brobot.Connection's
-        // MimoDiscovery. Deliberately not routed through Personality: it
+        // PeemoDiscovery. Deliberately not routed through Personality: it
         // says nothing about Brobot, only about the link.
         serial.println(IDENTITY_REPLY);
     }

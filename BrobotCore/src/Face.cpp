@@ -79,21 +79,21 @@ private:
 
 constexpr uint8_t MATRIX_R = 40, MATRIX_G = 255, MATRIX_B = 90;
 
-// MI2MO2 renders the whole frame as a close-up of R2D2's dome plate rather
+// P2M2 renders the whole frame as a close-up of R2D2's dome plate rather
 // than a face on black: an off-white plate covering the screen, navy inset
 // panels, the big black photoreceptor lens, and — off to its right — the
 // pink logic display and a silver vent, laid out after a reference photo of
 // the real dome. This is why it needs a palette of its own rather than
 // CLASSIC's single EYE_R/G/B: nothing here is "the eye color".
-constexpr uint8_t MI2MO2_PLATE_R = 226, MI2MO2_PLATE_G = 227, MI2MO2_PLATE_B = 231;
-constexpr uint8_t MI2MO2_SEAM_R = 198, MI2MO2_SEAM_G = 200, MI2MO2_SEAM_B = 206;
-constexpr uint8_t MI2MO2_NAVY_R = 26, MI2MO2_NAVY_G = 42, MI2MO2_NAVY_B = 96;
-constexpr uint8_t MI2MO2_LENS_R = 12, MI2MO2_LENS_G = 12, MI2MO2_LENS_B = 16;
-constexpr uint8_t MI2MO2_GLINT_R = 245, MI2MO2_GLINT_G = 245, MI2MO2_GLINT_B = 250;
-constexpr uint8_t MI2MO2_SILVER_R = 150, MI2MO2_SILVER_G = 152, MI2MO2_SILVER_B = 158;
-constexpr uint8_t MI2MO2_SLAT_R = 74, MI2MO2_SLAT_G = 78, MI2MO2_SLAT_B = 86;
+constexpr uint8_t P2M2_PLATE_R = 226, P2M2_PLATE_G = 227, P2M2_PLATE_B = 231;
+constexpr uint8_t P2M2_SEAM_R = 198, P2M2_SEAM_G = 200, P2M2_SEAM_B = 206;
+constexpr uint8_t P2M2_NAVY_R = 26, P2M2_NAVY_G = 42, P2M2_NAVY_B = 96;
+constexpr uint8_t P2M2_LENS_R = 12, P2M2_LENS_G = 12, P2M2_LENS_B = 16;
+constexpr uint8_t P2M2_GLINT_R = 245, P2M2_GLINT_G = 245, P2M2_GLINT_B = 250;
+constexpr uint8_t P2M2_SILVER_R = 150, P2M2_SILVER_G = 152, P2M2_SILVER_B = 158;
+constexpr uint8_t P2M2_SLAT_R = 74, P2M2_SLAT_G = 78, P2M2_SLAT_B = 86;
 
-// The logic display — the small round lamp right of the lens. In MI2MO2
+// The logic display — the small round lamp right of the lens. In P2M2
 // this, not the eye, is what carries every expression: the real R2 emotes
 // by flashing its logic panels, not by moving its (fixed, black) eye, and
 // following that turned out to look far more like the character than a
@@ -101,26 +101,26 @@ constexpr uint8_t MI2MO2_SLAT_R = 74, MI2MO2_SLAT_G = 78, MI2MO2_SLAT_B = 86;
 // lamp switches off and back on, since the lens itself is a fixed black
 // disc with no light to close. FINISHED/FAILED swap the color (see below);
 // THINKING/SLEEPING drive brightness instead.
-constexpr uint8_t MI2MO2_LOGIC_R = 235, MI2MO2_LOGIC_G = 20, MI2MO2_LOGIC_B = 20;
+constexpr uint8_t P2M2_LOGIC_R = 235, P2M2_LOGIC_G = 20, P2M2_LOGIC_B = 20;
 // FINISHED turns the lamp green — the one expression that reads instantly
 // without needing the flash pattern FAILED uses to distinguish itself from
 // the (also red) resting lamp.
-constexpr uint8_t MI2MO2_DONE_R = 40, MI2MO2_DONE_G = 215, MI2MO2_DONE_B = 75;
+constexpr uint8_t P2M2_DONE_R = 40, P2M2_DONE_G = 215, P2M2_DONE_B = 75;
 // Message text while still in its Aurebesh phase (see
-// drawWrappedMessageMi2Mo2): red, turning white as each character resolves
-// into Latin. Lifted a little off the lamp's own MI2MO2_LOGIC red — at 5x7
+// drawWrappedMessageP2M2): red, turning white as each character resolves
+// into Latin. Lifted a little off the lamp's own P2M2_LOGIC red — at 5x7
 // against the dark message box, the lamp's deeper red loses too much of
 // the thin strokes.
-constexpr uint8_t MI2MO2_MSG_ALIEN_R = 240, MI2MO2_MSG_ALIEN_G = 55, MI2MO2_MSG_ALIEN_B = 50;
+constexpr uint8_t P2M2_MSG_ALIEN_R = 240, P2M2_MSG_ALIEN_G = 55, P2M2_MSG_ALIEN_B = 50;
 
 // FAILED flashes a more vivid red than the resting lamp, three times, then
-// holds lit (see mi2Mo2ErrorDim).
-constexpr uint8_t MI2MO2_ERROR_R = 255, MI2MO2_ERROR_G = 40, MI2MO2_ERROR_B = 35;
+// holds lit (see p2m2ErrorDim).
+constexpr uint8_t P2M2_ERROR_R = 255, P2M2_ERROR_G = 40, P2M2_ERROR_B = 35;
 
-// Weather/clock badges: navy, since MI2MO2's plate is light — CLASSIC's
+// Weather/clock badges: navy, since P2M2's plate is light — CLASSIC's
 // teal (and the red an earlier version of this theme used) both wash out
 // against it.
-constexpr uint8_t MI2MO2_BADGE_R = 26, MI2MO2_BADGE_G = 42, MI2MO2_BADGE_B = 96;
+constexpr uint8_t P2M2_BADGE_R = 26, P2M2_BADGE_G = 42, P2M2_BADGE_B = 96;
 
 // Forwards every draw call to another IDisplay, replacing any non-black
 // color with a fixed one — used by MATRIX (see Face::render) to reskin
@@ -187,54 +187,54 @@ constexpr int COFFEE_EYE_GAP = 10;
 constexpr int COFFEE_EYE_Y = 42;
 constexpr int COFFEE_EYES_X = 10;
 
-// MI2MO2's dome-plate layout, laid out after a reference photo of R2D2's
+// P2M2's dome-plate layout, laid out after a reference photo of R2D2's
 // dome (see the palette above for why this theme is a plate rather than a
-// face). Everything lives below MI2MO2_CONTENT_TOP_Y so the weather/clock
+// face). Everything lives below P2M2_CONTENT_TOP_Y so the weather/clock
 // badges keep their usual strip at the very top of the frame, and above
 // the message box's own top edge (y=89), so neither ever overlaps.
-constexpr int MI2MO2_CONTENT_TOP_Y = 14;
+constexpr int P2M2_CONTENT_TOP_Y = 14;
 
 // Left column: a stack of navy inset panels, the plainest part of the
 // reference crop and what stops the frame reading as one big empty plate.
-constexpr int MI2MO2_LEFT_PANEL_X = 4;
-constexpr int MI2MO2_LEFT_PANEL_W = 13;
-constexpr int MI2MO2_LEFT_SMALL_X = 21;
-constexpr int MI2MO2_LEFT_SMALL_W = 10;
+constexpr int P2M2_LEFT_PANEL_X = 4;
+constexpr int P2M2_LEFT_PANEL_W = 13;
+constexpr int P2M2_LEFT_SMALL_X = 21;
+constexpr int P2M2_LEFT_SMALL_W = 10;
 
 // The big navy panel the photoreceptor lens is set into.
-constexpr int MI2MO2_EYE_PANEL_X = 36;
-constexpr int MI2MO2_EYE_PANEL_Y = MI2MO2_CONTENT_TOP_Y;
-constexpr int MI2MO2_EYE_PANEL_W = 64;
-constexpr int MI2MO2_EYE_PANEL_H = 72;
+constexpr int P2M2_EYE_PANEL_X = 36;
+constexpr int P2M2_EYE_PANEL_Y = P2M2_CONTENT_TOP_Y;
+constexpr int P2M2_EYE_PANEL_W = 64;
+constexpr int P2M2_EYE_PANEL_H = 72;
 
-// The lens itself: a black disc centered in that panel. MI2MO2_EYE_SIZE is
+// The lens itself: a black disc centered in that panel. P2M2_EYE_SIZE is
 // its full diameter — blinking squashes this vertically (see Face::render),
 // revealing the navy panel behind, since a black lens has no light of its
 // own to switch off the way the old red eye did.
-constexpr int MI2MO2_EYE_SIZE = 54;
-constexpr int MI2MO2_EYE_CX = MI2MO2_EYE_PANEL_X + MI2MO2_EYE_PANEL_W / 2;
-constexpr int MI2MO2_EYE_CY = MI2MO2_EYE_PANEL_Y + MI2MO2_EYE_PANEL_H / 2;
+constexpr int P2M2_EYE_SIZE = 54;
+constexpr int P2M2_EYE_CX = P2M2_EYE_PANEL_X + P2M2_EYE_PANEL_W / 2;
+constexpr int P2M2_EYE_CY = P2M2_EYE_PANEL_Y + P2M2_EYE_PANEL_H / 2;
 
 // The white glint on the lens. It sits up and left of center at rest and
 // slides with the look-around offset — a reflection travelling across the
 // glass is what sells "the lens just turned", since the lens is otherwise
 // featureless black.
-constexpr int MI2MO2_GLINT_SIZE = 4;
-constexpr int MI2MO2_GLINT_REST_DX = -12;
-constexpr int MI2MO2_GLINT_REST_DY = -16;
-constexpr float MI2MO2_GLINT_SHIFT_SCALE = 0.45f;
+constexpr int P2M2_GLINT_SIZE = 4;
+constexpr int P2M2_GLINT_REST_DX = -12;
+constexpr int P2M2_GLINT_REST_DY = -16;
+constexpr float P2M2_GLINT_SHIFT_SCALE = 0.45f;
 
 // The logic display (expression lamp) and the silver vent, side by side to
 // the right of the lens panel.
-constexpr int MI2MO2_LOGIC_CX = 118;
-constexpr int MI2MO2_LOGIC_CY = 38;
-constexpr int MI2MO2_LOGIC_RADIUS = 10;
-constexpr int MI2MO2_VENT_CX = 140;
-constexpr int MI2MO2_VENT_CY = 40;
-constexpr int MI2MO2_VENT_R = 11;
+constexpr int P2M2_LOGIC_CX = 118;
+constexpr int P2M2_LOGIC_CY = 38;
+constexpr int P2M2_LOGIC_RADIUS = 10;
+constexpr int P2M2_VENT_CX = 140;
+constexpr int P2M2_VENT_CY = 40;
+constexpr int P2M2_VENT_R = 11;
 
 // Navy strips filling the plate below the lamp/vent pair.
-constexpr int MI2MO2_STRIP_X = 106;
+constexpr int P2M2_STRIP_X = 106;
 
 // MATRIX pins the (centered) eyes to the bottom of the frame instead of the
 // usual upper-middle spot, freeing up the top of the screen for the console
@@ -325,7 +325,7 @@ constexpr int MESSAGE_MAX_LINE_CHARS = 32; // cap for the local line buffer
 // so lines break where the text will actually fit.
 constexpr int CHAR_ADVANCE_PX = 6;
 
-// MI2MO2's "translation" effect: how long a character stays drawn in
+// P2M2's "translation" effect: how long a character stays drawn in
 // AUREBESH after being revealed by the normal typewriter (see
 // TYPING_CHAR_INTERVAL_MS in Face.h) before flipping to LATIN. ~16 char
 // intervals, so a handful of trailing characters are always mid-"decode"
@@ -348,15 +348,15 @@ constexpr int MESSAGE_MARGIN_X = MESSAGE_BOX_MARGIN_X + 4; // text inset from th
 //
 // The two themes get different heights for a physical reason, not a stylistic
 // one. CLASSIC is free to take the space because its eyes move out of the way
-// (see GAME_EYE_* below). MI2MO2 can't: its lens is a fixed disc ending at
-// y=77 (MI2MO2_EYE_CY + MI2MO2_EYE_SIZE/2), and a five-line box would start
+// (see GAME_EYE_* below). P2M2 can't: its lens is a fixed disc ending at
+// y=77 (P2M2_EYE_CY + P2M2_EYE_SIZE/2), and a five-line box would start
 // at y=71 and cover the bottom of R2's eye. Four lines start at 80 and clear
 // it — that's the most this theme can grow without redrawing the plate.
 constexpr int STATS_BOX_LINES_CLASSIC = 5;
-constexpr int STATS_BOX_LINES_MI2MO2 = 4;
+constexpr int STATS_BOX_LINES_P2M2 = 4;
 // The stat rows always sit at the bottom of whichever box, so the numbers
 // stay at fixed positions and the name gets whatever is left above.
-// MI2MO2 lists CPU/GPU/RAM one per row (STATS_ROWS) exactly as before — no
+// P2M2 lists CPU/GPU/RAM one per row (STATS_ROWS) exactly as before — no
 // room to add FPS there without redrawing the plate (see above). CLASSIC
 // instead packs all four readings into a 2x2 grid (STATS_GRID_ROWS), which
 // both fits FPS and frees a row for the name versus one-per-row would; see
@@ -374,13 +374,13 @@ constexpr int STATS_GRID_COL2_X = MESSAGE_MARGIN_X + 72;
 // usual EYE_Y, which is what frees the lower two thirds of the frame for the
 // taller box. Below the weather/clock strip (see TOP_BADGE_MARGIN) so they
 // never collide with it — the same reason CORNER_ICON_Y_SHIFT exists.
-// Only CLASSIC does this: MATRIX has its own bottom-pinned layout and MI2MO2
+// Only CLASSIC does this: MATRIX has its own bottom-pinned layout and P2M2
 // deliberately keeps its plate untouched.
 constexpr int GAME_EYE_SIZE = 26;
 constexpr int GAME_EYE_GAP = 12;
 constexpr int GAME_EYE_Y = 18;
 
-// MiMo's hand, which only ever appears for BYE. One hand — the right —
+// Peemo's hand, which only ever appears for BYE. One hand — the right —
 // waving, with his face beside it.
 //
 // Each of the four pieces (palm, thumb, two raised fingers) is a quad given
@@ -493,7 +493,7 @@ void fillQuad(IDisplay& display, const float* xs, const float* ys,
 // BYE is on Personality's hold-still list (its eyes are pinned beside the
 // hand, so an idle look-around offset would walk them into it), which also
 // zeroes the ordinary blink — so this one is drawn here instead, off
-// FaceState::expressionStartedMs. Same anchor MI2MO2's three-flash FAILED
+// FaceState::expressionStartedMs. Same anchor P2M2's three-flash FAILED
 // uses, and for the same reason: it happens once and stops, rather than
 // looping off nowMs forever.
 constexpr unsigned long BYE_BLINK_AT_MS = 1400;
@@ -560,7 +560,7 @@ constexpr int MIN_EYE_HEIGHT = 2;
 // not a filled one, so this composes what's already there instead of adding
 // a new primitive just for this.
 // bgR/G/B is what the corner staircase is cut with. Defaulted to black
-// because that is the ground in every theme but MI2MO2, whose notification
+// because that is the ground in every theme but P2M2, whose notification
 // screen draws on R2's light plate — there the cut has to be the plate, or
 // each eye picks up four dark specks at its corners instead of looking
 // rounded. Same class of bug as the coffee cup's punch-outs, one level
@@ -597,7 +597,7 @@ void drawMessageBox(IDisplay& display, uint8_t r, uint8_t g, uint8_t b, int line
     fillRoundedRect(display, boxX, boxY, boxW, boxHeight, r, g, b);
 }
 
-// Every greedy word-wrap loop below (drawWrappedMessage and its MI2MO2
+// Every greedy word-wrap loop below (drawWrappedMessage and its P2M2
 // twin, drawMatrixLog, drawStatsMessage's own inline wrap, and
 // drawNotificationText) computes its per-line budget in *columns* but
 // cuts/copies the underlying C string by *byte* count. PT-BR accents
@@ -689,7 +689,7 @@ void drawWrappedMessage(IDisplay& display, const char* message, uint8_t r, uint8
     }
 }
 
-// MI2MO2's own message renderer: same greedy word-wrap/bottom-anchored/
+// P2M2's own message renderer: same greedy word-wrap/bottom-anchored/
 // scroll-off-the-top layout as drawWrappedMessage above (duplicated rather
 // than parameterized — the two draw loops diverge enough, one line at a
 // time vs one glyph at a time, that sharing them would need more plumbing
@@ -701,7 +701,7 @@ void drawWrappedMessage(IDisplay& display, const char* message, uint8_t r, uint8
 // from its neighbors too. lineStart[i]+k
 // is that character's index into the *original* message string, which is
 // exactly the index TYPING_CHAR_INTERVAL_MS-based reveal timing needs.
-void drawWrappedMessageMi2Mo2(IDisplay& display, const char* message,
+void drawWrappedMessageP2M2(IDisplay& display, const char* message,
                               uint8_t alienR, uint8_t alienG, uint8_t alienB,
                               uint8_t latinR, uint8_t latinG, uint8_t latinB,
                               unsigned long typingStartedMs, unsigned long nowMs) {
@@ -847,7 +847,7 @@ void drawSweatDrop(IDisplay& display, int x, int startY, int travelPx, unsigned 
     }
 }
 
-// MI2MO2's eye shape: a plain filled ellipse (a circle whenever w == h,
+// P2M2's eye shape: a plain filled ellipse (a circle whenever w == h,
 // i.e. fully open/not blinking) instead of the usual rounded square — drawn
 // as horizontal scanline strips, same "compose it from fillRect" approach
 // every other shape in this file already uses, rather than a new IDisplay
@@ -877,65 +877,65 @@ void drawEyeCircle(IDisplay& display, int x, int y, int w, int h, uint8_t r, uin
     }
 }
 
-// MI2MO2's dome plate: the off-white background, its navy inset panels,
+// P2M2's dome plate: the off-white background, its navy inset panels,
 // and the silver vent — everything that never changes with expression,
 // blink or look. Drawn before the lens and logic display (see Face::render)
 // so those paint on top of it, the same layering drawMessageBox and
 // drawWrappedMessage already use.
-void drawMi2Mo2Plate(IDisplay& display) {
-    display.clear(MI2MO2_PLATE_R, MI2MO2_PLATE_G, MI2MO2_PLATE_B);
+void drawP2M2Plate(IDisplay& display) {
+    display.clear(P2M2_PLATE_R, P2M2_PLATE_G, P2M2_PLATE_B);
 
     // Left column of navy panels.
-    display.fillRect(MI2MO2_LEFT_PANEL_X, 16, MI2MO2_LEFT_PANEL_W, 30, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
-    display.fillRect(MI2MO2_LEFT_PANEL_X, 50, MI2MO2_LEFT_PANEL_W, 30, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
-    display.fillRect(MI2MO2_LEFT_SMALL_X, 16, MI2MO2_LEFT_SMALL_W, 14, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
-    display.fillRect(MI2MO2_LEFT_SMALL_X, 34, MI2MO2_LEFT_SMALL_W, 14, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
-    display.fillRect(MI2MO2_LEFT_SMALL_X, 52, MI2MO2_LEFT_SMALL_W, 28, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
+    display.fillRect(P2M2_LEFT_PANEL_X, 16, P2M2_LEFT_PANEL_W, 30, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
+    display.fillRect(P2M2_LEFT_PANEL_X, 50, P2M2_LEFT_PANEL_W, 30, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
+    display.fillRect(P2M2_LEFT_SMALL_X, 16, P2M2_LEFT_SMALL_W, 14, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
+    display.fillRect(P2M2_LEFT_SMALL_X, 34, P2M2_LEFT_SMALL_W, 14, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
+    display.fillRect(P2M2_LEFT_SMALL_X, 52, P2M2_LEFT_SMALL_W, 28, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
 
     // The lens's own navy panel, plus a seam down its right edge so it
     // reads as an inset plate rather than a floating rectangle.
-    display.fillRect(MI2MO2_EYE_PANEL_X, MI2MO2_EYE_PANEL_Y, MI2MO2_EYE_PANEL_W, MI2MO2_EYE_PANEL_H, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
-    display.fillRect(MI2MO2_EYE_PANEL_X + MI2MO2_EYE_PANEL_W, MI2MO2_EYE_PANEL_Y + 6, 4, MI2MO2_EYE_PANEL_H - 12, MI2MO2_SEAM_R, MI2MO2_SEAM_G, MI2MO2_SEAM_B);
+    display.fillRect(P2M2_EYE_PANEL_X, P2M2_EYE_PANEL_Y, P2M2_EYE_PANEL_W, P2M2_EYE_PANEL_H, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
+    display.fillRect(P2M2_EYE_PANEL_X + P2M2_EYE_PANEL_W, P2M2_EYE_PANEL_Y + 6, 4, P2M2_EYE_PANEL_H - 12, P2M2_SEAM_R, P2M2_SEAM_G, P2M2_SEAM_B);
 
     // Silver vent: a disc with vertical slats cut across it.
-    drawEyeCircle(display, MI2MO2_VENT_CX - MI2MO2_VENT_R, MI2MO2_VENT_CY - MI2MO2_VENT_R,
-                  MI2MO2_VENT_R * 2, MI2MO2_VENT_R * 2, MI2MO2_SILVER_R, MI2MO2_SILVER_G, MI2MO2_SILVER_B);
+    drawEyeCircle(display, P2M2_VENT_CX - P2M2_VENT_R, P2M2_VENT_CY - P2M2_VENT_R,
+                  P2M2_VENT_R * 2, P2M2_VENT_R * 2, P2M2_SILVER_R, P2M2_SILVER_G, P2M2_SILVER_B);
     for (int k = -8; k <= 8; k += 3) {
-        display.fillRect(MI2MO2_VENT_CX + k, MI2MO2_VENT_CY - 9, 1, 18, MI2MO2_SLAT_R, MI2MO2_SLAT_G, MI2MO2_SLAT_B);
+        display.fillRect(P2M2_VENT_CX + k, P2M2_VENT_CY - 9, 1, 18, P2M2_SLAT_R, P2M2_SLAT_G, P2M2_SLAT_B);
     }
 
     // Navy strips filling the plate below the lamp/vent pair.
-    display.fillRect(MI2MO2_STRIP_X, 58, 48, 9, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
-    display.fillRect(MI2MO2_STRIP_X, 71, 30, 9, MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B);
+    display.fillRect(P2M2_STRIP_X, 58, 48, 9, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
+    display.fillRect(P2M2_STRIP_X, 71, 30, 9, P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B);
 }
 
 // The photoreceptor lens: a fixed black disc, plus the white glint
 // travelling across it. The disc never changes size, shape or color — it
 // doesn't blink and it doesn't squint. Blinking lives in the logic display
-// instead (see drawMi2Mo2LogicDisplay), which matches the real R2: its eye
+// instead (see drawP2M2LogicDisplay), which matches the real R2: its eye
 // is a static piece of glass, and everything expressive happens in the
 // panels. So glintDx/Dy — a reflection sliding across otherwise
 // featureless black glass — is the only thing that animates here, and the
 // only cue that the lens has turned.
-void drawMi2Mo2Lens(IDisplay& display, int glintDx, int glintDy) {
-    drawEyeCircle(display, MI2MO2_EYE_CX - MI2MO2_EYE_SIZE / 2, MI2MO2_EYE_CY - MI2MO2_EYE_SIZE / 2,
-                  MI2MO2_EYE_SIZE, MI2MO2_EYE_SIZE, MI2MO2_LENS_R, MI2MO2_LENS_G, MI2MO2_LENS_B);
+void drawP2M2Lens(IDisplay& display, int glintDx, int glintDy) {
+    drawEyeCircle(display, P2M2_EYE_CX - P2M2_EYE_SIZE / 2, P2M2_EYE_CY - P2M2_EYE_SIZE / 2,
+                  P2M2_EYE_SIZE, P2M2_EYE_SIZE, P2M2_LENS_R, P2M2_LENS_G, P2M2_LENS_B);
 
-    display.fillRect(MI2MO2_EYE_CX + MI2MO2_GLINT_REST_DX + glintDx,
-                     MI2MO2_EYE_CY + MI2MO2_GLINT_REST_DY + glintDy,
-                     MI2MO2_GLINT_SIZE, MI2MO2_GLINT_SIZE,
-                     MI2MO2_GLINT_R, MI2MO2_GLINT_G, MI2MO2_GLINT_B);
+    display.fillRect(P2M2_EYE_CX + P2M2_GLINT_REST_DX + glintDx,
+                     P2M2_EYE_CY + P2M2_GLINT_REST_DY + glintDy,
+                     P2M2_GLINT_SIZE, P2M2_GLINT_SIZE,
+                     P2M2_GLINT_R, P2M2_GLINT_G, P2M2_GLINT_B);
 }
 
-// The logic display: MI2MO2's expression lamp (see the palette comment on
-// MI2MO2_LOGIC_R). A silver bezel with the lamp inside it, the lamp's color
+// The logic display: P2M2's expression lamp (see the palette comment on
+// P2M2_LOGIC_R). A silver bezel with the lamp inside it, the lamp's color
 // and brightness both chosen per expression by Face::render.
-void drawMi2Mo2LogicDisplay(IDisplay& display, uint8_t r, uint8_t g, uint8_t b, float dim) {
-    drawEyeCircle(display, MI2MO2_LOGIC_CX - MI2MO2_LOGIC_RADIUS, MI2MO2_LOGIC_CY - MI2MO2_LOGIC_RADIUS,
-                  MI2MO2_LOGIC_RADIUS * 2, MI2MO2_LOGIC_RADIUS * 2, MI2MO2_SEAM_R, MI2MO2_SEAM_G, MI2MO2_SEAM_B);
+void drawP2M2LogicDisplay(IDisplay& display, uint8_t r, uint8_t g, uint8_t b, float dim) {
+    drawEyeCircle(display, P2M2_LOGIC_CX - P2M2_LOGIC_RADIUS, P2M2_LOGIC_CY - P2M2_LOGIC_RADIUS,
+                  P2M2_LOGIC_RADIUS * 2, P2M2_LOGIC_RADIUS * 2, P2M2_SEAM_R, P2M2_SEAM_G, P2M2_SEAM_B);
 
-    int inner = MI2MO2_LOGIC_RADIUS - 2;
-    drawEyeCircle(display, MI2MO2_LOGIC_CX - inner, MI2MO2_LOGIC_CY - inner, inner * 2, inner * 2,
+    int inner = P2M2_LOGIC_RADIUS - 2;
+    drawEyeCircle(display, P2M2_LOGIC_CX - inner, P2M2_LOGIC_CY - inner, inner * 2, inner * 2,
                   (uint8_t)(r * dim), (uint8_t)(g * dim), (uint8_t)(b * dim));
 }
 
@@ -1018,11 +1018,11 @@ void drawEyeGlitch(IDisplay& display, int x, int y, int w, int h, unsigned long 
     }
 }
 
-// THINKING in MI2MO2 replaces the glitch-band eyes above (which lean on
+// THINKING in P2M2 replaces the glitch-band eyes above (which lean on
 // having two eyes to desync against each other anyway) with an irregular
 // stutter of the single eye's own light — R2D2 chattering to itself while
 // it works something out. Returns the same 0..1 brightness multiplier
-// drawMi2Mo2LogicDisplay's dim takes, so THINKING just feeds the lamp a
+// drawP2M2LogicDisplay's dim takes, so THINKING just feeds the lamp a
 // flicker where the normal eased blink would go.
 //
 // Two nested time scales keep it from settling into one mechanical rhythm:
@@ -1031,10 +1031,10 @@ void drawEyeGlitch(IDisplay& display, int x, int y, int w, int h, unsigned long 
 // purely from nowMs via a small hash" approach drawEyeGlitch just above and
 // drawMatrixRain already use — there's no animation clock to start or stop
 // as THINKING comes and goes.
-constexpr unsigned long MI2MO2_THINK_BURST_MS = 700;
+constexpr unsigned long P2M2_THINK_BURST_MS = 700;
 
-float mi2Mo2ThinkingDim(unsigned long nowMs) {
-    unsigned long burst = nowMs / MI2MO2_THINK_BURST_MS;
+float p2m2ThinkingDim(unsigned long nowMs) {
+    unsigned long burst = nowMs / P2M2_THINK_BURST_MS;
     unsigned long slotMs = 60 + (glitchHash(burst, 0, 7) % 90); // 60..149ms
     unsigned long pick = glitchHash(nowMs / slotMs, 1, 7) % 100;
 
@@ -1047,25 +1047,25 @@ float mi2Mo2ThinkingDim(unsigned long nowMs) {
     return 0.5f;      // half-lit, so the stutter isn't a pure on/off square wave
 }
 
-// FAILED in MI2MO2: three hard on/off flashes, then hold lit. Unlike every
+// FAILED in P2M2: three hard on/off flashes, then hold lit. Unlike every
 // other effect in this file — which loop off nowMs forever and so need no
 // start time — this one has to run a fixed number of times and stop, hence
 // FaceState::expressionStartedMs (see its comment). Holding lit afterward
 // rather than going dark matters because FAILED outlives the flashes:
 // Personality keeps it on screen for FACE_OVERRIDE_DURATION_MS (4s), and a
 // dark eye for the remainder would read as "asleep", not "error".
-constexpr int MI2MO2_ERROR_FLASH_COUNT = 3;
-constexpr unsigned long MI2MO2_ERROR_FLASH_PERIOD_MS = 260; // one off+on cycle
+constexpr int P2M2_ERROR_FLASH_COUNT = 3;
+constexpr unsigned long P2M2_ERROR_FLASH_PERIOD_MS = 260; // one off+on cycle
 
-float mi2Mo2ErrorDim(unsigned long elapsedMs) {
-    if (elapsedMs >= MI2MO2_ERROR_FLASH_COUNT * MI2MO2_ERROR_FLASH_PERIOD_MS) {
+float p2m2ErrorDim(unsigned long elapsedMs) {
+    if (elapsedMs >= P2M2_ERROR_FLASH_COUNT * P2M2_ERROR_FLASH_PERIOD_MS) {
         return 1.0f;
     }
     // Starts dark so the very first frame of FAILED is already a visible
     // change — leading with the lit half would waste the first flash on
     // whatever was already showing.
-    unsigned long phase = elapsedMs % MI2MO2_ERROR_FLASH_PERIOD_MS;
-    return (phase < MI2MO2_ERROR_FLASH_PERIOD_MS / 2) ? 0.0f : 1.0f;
+    unsigned long phase = elapsedMs % P2M2_ERROR_FLASH_PERIOD_MS;
+    return (phase < P2M2_ERROR_FLASH_PERIOD_MS / 2) ? 0.0f : 1.0f;
 }
 
 // Pushed down out of the fixed top strip the weather/clock badges live in
@@ -1093,7 +1093,7 @@ constexpr float HAPPY_BOUNCE_PERIOD_MS = 70.0f;
 constexpr int HAPPY_BOUNCE_Y_PX = 4;
 
 // The expression icons take an explicit origin rather than hardcoding one,
-// because two themes place them very differently: CLASSIC/MI2MO2 put them
+// because two themes place them very differently: CLASSIC/P2M2 put them
 // in the top-left corner with a gentle bob, MATRIX parks them beside the
 // eyes, static (see MATRIX_ICON_X/Y). Their own relative offsets are kept
 // at the call sites via CORNER_ICON_*_DY so the icons stay aligned with
@@ -1121,7 +1121,7 @@ constexpr int CORNER_MEETING_CAM_LENS_W = 5;
 constexpr int CORNER_ICON_HAMMER_X = 10;
 constexpr int CORNER_ICON_HAMMER_DY = 20;
 
-// The gentle up-down bob CLASSIC/MI2MO2 give their corner icons. MATRIX
+// The gentle up-down bob CLASSIC/P2M2 give their corner icons. MATRIX
 // deliberately doesn't use it — there the icons are steady status lamps
 // that pulse in brightness instead (see matrixIconPulse).
 int cornerIconBob(unsigned long nowMs, float periodMs, float amplitude) {
@@ -1303,7 +1303,7 @@ constexpr int COFFEE_STEAM_RISE_PX = 18;
 // inset, the handle, the wisp spacing — scale off the passed width/height
 // instead of being fixed pixel counts.
 // bgR/G/B is the color the hollow punch-outs are filled with. It's a
-// parameter rather than BG_R/G/B because MI2MO2 doesn't draw on black: its
+// parameter rather than BG_R/G/B because P2M2 doesn't draw on black: its
 // ground is R2's off-white plate, and punching the mug's interior and the
 // handle's gap in black there left two black holes in the cup instead of an
 // open mug. A real bug, fixed once. Every other theme passes the black it
@@ -1450,6 +1450,50 @@ void drawClockBadge(IDisplay& display, const char* timeText, uint8_t r, uint8_t 
     int textWidth = (int)strlen(timeText) * CHAR_ADVANCE_PX;
     int x = display.width() - TOP_BADGE_MARGIN - textWidth;
     display.drawText(timeText, x, TOP_BADGE_MARGIN + 2, r, g, b);
+}
+
+// Mood badge (see Mood in Face.h): a little robot battery centred in the
+// strip between the weather and clock badges — full (4 cells) while
+// ANIMADO, half (2) at FIM_DE_DIA, one cell blinking slowly when CANSADO,
+// like a battery asking for a charger. The outline is four rects rather
+// than a fill hollowed out in background colour, so it works on P2M2's
+// light plate too.
+constexpr int MOOD_BATTERY_W = 20;
+constexpr int MOOD_BATTERY_H = 9;
+constexpr int MOOD_BATTERY_NUB_W = 2;
+constexpr int MOOD_BATTERY_CELLS = 4;
+constexpr unsigned long MOOD_LOW_BLINK_CYCLE_MS = 1600;
+constexpr unsigned long MOOD_LOW_BLINK_ON_MS = 900;
+
+constexpr int MOOD_BATTERY_TOTAL_W = MOOD_BATTERY_W + MOOD_BATTERY_NUB_W;
+
+void drawMoodBattery(IDisplay& display, int x, int y, Mood mood, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    if (mood == Mood::NONE) {
+        return;
+    }
+
+    display.fillRect(x, y, MOOD_BATTERY_W, 1, r, g, b);
+    display.fillRect(x, y + MOOD_BATTERY_H - 1, MOOD_BATTERY_W, 1, r, g, b);
+    display.fillRect(x, y, 1, MOOD_BATTERY_H, r, g, b);
+    display.fillRect(x + MOOD_BATTERY_W - 1, y, 1, MOOD_BATTERY_H, r, g, b);
+    display.fillRect(x + MOOD_BATTERY_W, y + 2, MOOD_BATTERY_NUB_W, MOOD_BATTERY_H - 4, r, g, b);
+
+    int cells = MOOD_BATTERY_CELLS;
+    if (mood == Mood::FIM_DE_DIA) {
+        cells = 2;
+    } else if (mood == Mood::CANSADO) {
+        cells = (nowMs % MOOD_LOW_BLINK_CYCLE_MS) < MOOD_LOW_BLINK_ON_MS ? 1 : 0;
+    }
+    // 1px gap between the outline and the cells, 1px between cells.
+    int cellW = (MOOD_BATTERY_W - 4 - (MOOD_BATTERY_CELLS - 1)) / MOOD_BATTERY_CELLS;
+    for (int i = 0; i < cells; i++) {
+        display.fillRect(x + 2 + i * (cellW + 1), y + 2, cellW, MOOD_BATTERY_H - 4, r, g, b);
+    }
+}
+
+void drawMoodBadge(IDisplay& display, Mood mood, unsigned long nowMs, uint8_t r, uint8_t g, uint8_t b) {
+    drawMoodBattery(display, (display.width() - MOOD_BATTERY_TOTAL_W) / 2, TOP_BADGE_MARGIN + 1,
+                    mood, nowMs, r, g, b);
 }
 
 // READING: eyes sweep left-to-right slowly (tracking across a line of
@@ -1668,7 +1712,7 @@ void formatStatsLine(char* line, size_t size, const char* label, int loadValue, 
 }
 
 // Game Mode's stats for the themes that have no console log to put them in
-// (CLASSIC and MI2MO2): the normal message box, but holding the game's name
+// (CLASSIC and P2M2): the normal message box, but holding the game's name
 // and the machine's load instead of a typed message.
 //
 // Drawn directly rather than routed through the message system on purpose.
@@ -1679,7 +1723,7 @@ void formatStatsLine(char* line, size_t size, const char* label, int loadValue, 
 // is also what keeps it permanently open with no expiry to fight.
 //
 // gridLayout picks which of the two stat layouts below this call draws —
-// true for CLASSIC's 2x2 FPS/RAM-over-CPU/GPU grid, false for MI2MO2's
+// true for CLASSIC's 2x2 FPS/RAM-over-CPU/GPU grid, false for P2M2's
 // original one-per-row CPU/GPU/RAM list (see the STATS_GRID_ROWS comment
 // above for why only CLASSIC gets the grid).
 void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines, bool gridLayout) {
@@ -1744,7 +1788,7 @@ void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines, b
     if (gridLayout) {
         // CLASSIC's 2x2 grid — FPS/RAM over CPU/GPU. FPS and RAM share a row
         // (neither has a temperature to show), same as CPU and GPU do on the
-        // row below. MI2MO2 never reaches this branch, so its own lack of
+        // row below. P2M2 never reaches this branch, so its own lack of
         // room for FPS is untouched.
         char right[STATS_LINE_CAPACITY];
 
@@ -1760,9 +1804,9 @@ void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines, b
         return;
     }
 
-    // MI2MO2: one reading per row, matching how MATRIX's monitor tab lists
-    // them. No FPS row here — MI2MO2's box height can't grow without
-    // covering the bottom of R2's lens (see STATS_BOX_LINES_MI2MO2 above),
+    // P2M2: one reading per row, matching how MATRIX's monitor tab lists
+    // them. No FPS row here — P2M2's box height can't grow without
+    // covering the bottom of R2's lens (see STATS_BOX_LINES_P2M2 above),
     // so it keeps the original three-row CPU/GPU/RAM list instead of the
     // grid CLASSIC uses.
     for (int i = 0; i < STATS_ROWS; i++) {
@@ -1782,7 +1826,7 @@ void drawStatsMessage(IDisplay& display, const FaceState& state, int boxLines, b
 // game's name wraps to a height nobody knows in advance.
 //
 // Geometry and color are parameters rather than baked-in MATRIX_* constants
-// because MI84 renders the very same log (same FaceState::logLines, same
+// because PEEMO84 renders the very same log (same FaceState::logLines, same
 // "> " prompt, same wrap-and-scroll rules) at its own position in its own
 // amber. Every MATRIX caller passes exactly the constants this used to read
 // directly, so that theme's output is unchanged.
@@ -1917,7 +1961,7 @@ void drawMatrixMonitor(IDisplay& display, const FaceState& state, int maxBottomY
 // -1 prints as "--", same convention and same reasoning as the machine stats
 // above: a session that has made no API call yet genuinely has no percentage,
 // and rate limits are absent altogether on some plans. Shared by MATRIX and
-// MI84 rather than written twice, which is why it takes its position and
+// PEEMO84 rather than written twice, which is why it takes its position and
 // color as parameters — the same treatment drawMatrixLog already got.
 constexpr int AI_STATS_ROWS = 2;
 constexpr int AI_STATS_LINE_CAPACITY = 32;
@@ -1967,9 +2011,9 @@ void drawAiStatsRows(IDisplay& display, const FaceState& state, int x, int y,
 }
 
 // ===========================================================================
-// MI84 — a 1984 amber-CRT terminal.
+// PEEMO84 — a 1984 amber-CRT terminal.
 //
-// Where MATRIX reskins a face, MI84 reskins the *frame*: a fixed text
+// Where MATRIX reskins a face, PEEMO84 reskins the *frame*: a fixed text
 // chrome (header, status line, tab bar, rules) fills the top two thirds and
 // MATRIX's own bottom-pinned eyes sit below it. It deliberately reuses
 // MATRIX's entire log/tab machinery rather than growing a parallel one —
@@ -1980,19 +2024,19 @@ void drawAiStatsRows(IDisplay& display, const FaceState& state, int x, int y,
 // Unlike MATRIX it does *not* use RecoloringDisplay. That decorator
 // flattens every non-black color to one value, and this theme needs two
 // levels — bright ink for live content, dim for chrome (rules, labels,
-// unlit bar cells) — so colors are passed explicitly, MI2MO2-style. The
+// unlit bar cells) — so colors are passed explicitly, P2M2-style. The
 // physical display's CRT post-FX (see ST7735PhysicalDisplay::present) does
 // the rest; its warm phosphor tint happens to push amber exactly the right
 // way, and its scanline dimming is deliberately light, which matters more
 // here than anywhere else since this theme is almost entirely 7px text.
-constexpr uint8_t MI84_INK_R = 255, MI84_INK_G = 191, MI84_INK_B = 0;
-constexpr uint8_t MI84_DIM_R = 132, MI84_DIM_G = 90, MI84_DIM_B = 0;
+constexpr uint8_t PEEMO84_INK_R = 255, PEEMO84_INK_G = 191, PEEMO84_INK_B = 0;
+constexpr uint8_t PEEMO84_DIM_R = 132, PEEMO84_DIM_G = 90, PEEMO84_DIM_B = 0;
 
 // CLASSIC's own selectable primary color (see ClassicColor in Face.h and
 // CLASSICCOLOR in PROTOCOL.md). RED/PINK/WHITE are new — no other theme has
 // a red, pink, or white ink to borrow — but GREEN and AMBER deliberately
-// reuse MATRIX_R/G/B and MI84_INK_R/G/B rather than getting their own
-// values, so picking "green" here reads as the same green MiMo already
+// reuse MATRIX_R/G/B and PEEMO84_INK_R/G/B rather than getting their own
+// values, so picking "green" here reads as the same green Peemo already
 // shows elsewhere rather than a third shade of it.
 constexpr uint8_t CLASSIC_RED_R = 220, CLASSIC_RED_G = 45, CLASSIC_RED_B = 45;
 constexpr uint8_t CLASSIC_PINK_R = 255, CLASSIC_PINK_G = 105, CLASSIC_PINK_B = 180;
@@ -2001,7 +2045,7 @@ constexpr uint8_t CLASSIC_WHITE_R = 255, CLASSIC_WHITE_G = 255, CLASSIC_WHITE_B 
 void classicColorRGB(ClassicColor color, uint8_t& r, uint8_t& g, uint8_t& b) {
     switch (color) {
         case ClassicColor::GREEN: r = MATRIX_R; g = MATRIX_G; b = MATRIX_B; return;
-        case ClassicColor::AMBER: r = MI84_INK_R; g = MI84_INK_G; b = MI84_INK_B; return;
+        case ClassicColor::AMBER: r = PEEMO84_INK_R; g = PEEMO84_INK_G; b = PEEMO84_INK_B; return;
         case ClassicColor::RED:   r = CLASSIC_RED_R; g = CLASSIC_RED_G; b = CLASSIC_RED_B; return;
         case ClassicColor::PINK:  r = CLASSIC_PINK_R; g = CLASSIC_PINK_G; b = CLASSIC_PINK_B; return;
         case ClassicColor::WHITE: r = CLASSIC_WHITE_R; g = CLASSIC_WHITE_G; b = CLASSIC_WHITE_B; return;
@@ -2016,18 +2060,18 @@ void classicColorRGB(ClassicColor color, uint8_t& r, uint8_t& g, uint8_t& b) {
 // no rule drawn under the content: a full upward look-around lifts the eyes
 // by LOOK_OFFSET_Y_PX (16px), which would carry them across a line drawn
 // there — the eyes themselves close the region well enough.
-constexpr int MI84_X = 4;
-constexpr int MI84_HEADER_Y = 1;
-constexpr int MI84_STATUS_Y = 11;
-constexpr int MI84_RULE_TOP_Y = 21;
-constexpr int MI84_TAB_Y = 25;
-constexpr int MI84_RULE_MID_Y = 35;
-constexpr int MI84_CONTENT_TOP_Y = 39;
-constexpr int MI84_CONTENT_BOTTOM_Y = 84; // 5 content rows: 39,48,57,66,75
-constexpr const char* MI84_HEADER_TEXT = "MIMO SYSTEM v2.6";
+constexpr int PEEMO84_X = 4;
+constexpr int PEEMO84_HEADER_Y = 1;
+constexpr int PEEMO84_STATUS_Y = 11;
+constexpr int PEEMO84_RULE_TOP_Y = 21;
+constexpr int PEEMO84_TAB_Y = 25;
+constexpr int PEEMO84_RULE_MID_Y = 35;
+constexpr int PEEMO84_CONTENT_TOP_Y = 39;
+constexpr int PEEMO84_CONTENT_BOTTOM_Y = 84; // 5 content rows: 39,48,57,66,75
+constexpr const char* PEEMO84_HEADER_TEXT = "PEEMO SYSTEM v2.6";
 
-void drawMi84Rule(IDisplay& display, int y) {
-    display.fillRect(MI84_X, y, display.width() - 2 * MI84_X, 1, MI84_DIM_R, MI84_DIM_G, MI84_DIM_B);
+void drawPeemo84Rule(IDisplay& display, int y) {
+    display.fillRect(PEEMO84_X, y, display.width() - 2 * PEEMO84_X, 1, PEEMO84_DIM_R, PEEMO84_DIM_G, PEEMO84_DIM_B);
 }
 
 // Deliberately the same words as the wire protocol's own WEATHER tokens
@@ -2035,7 +2079,7 @@ void drawMi84Rule(IDisplay& display, int y) {
 // other theme draws a pictogram straight from the enum — so rather than
 // invent a second vocabulary that could drift from the commands being sent,
 // the terminal prints the token.
-const char* mi84WeatherName(WeatherCondition condition) {
+const char* peemo84WeatherName(WeatherCondition condition) {
     switch (condition) {
         case WeatherCondition::CLOUDY: return "CLOUDY";
         case WeatherCondition::RAIN:   return "RAIN";
@@ -2053,7 +2097,7 @@ const char* mi84WeatherName(WeatherCondition condition) {
 // simply omitted when its own card is switched off, exactly as the badges
 // they replace already do. No degree symbol: Font5x7 has none, and
 // drawWeatherBadge already prints a bare "18C" for the same reason.
-void drawMi84StatusLine(IDisplay& display, const FaceState& state) {
+void drawPeemo84StatusLine(IDisplay& display, const FaceState& state) {
     char line[40];
     int len = 0;
     line[0] = '\0';
@@ -2067,28 +2111,28 @@ void drawMi84StatusLine(IDisplay& display, const FaceState& state) {
     if (state.hasWeather) {
         int written = snprintf(line + len, sizeof(line) - (size_t)len, "%s%s %dC",
                                len > 0 ? "  " : "",
-                               mi84WeatherName(state.weatherCondition), state.weatherTempC);
+                               peemo84WeatherName(state.weatherCondition), state.weatherTempC);
         if (written > 0) {
             len += written;
         }
     }
 
     if (line[0] != '\0') {
-        display.drawText(line, MI84_X, MI84_STATUS_Y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+        display.drawText(line, PEEMO84_X, PEEMO84_STATUS_Y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
     }
 }
 
 // Reuses MATRIX's own tab strings (18 chars, 108px) rather than the SDD's
 // original "[ IA ] [ MIDIA ] [ MONITOR ]", which is 28 chars — 168px, wider
 // than the whole 160px frame.
-void drawMi84TabHeader(IDisplay& display, LogTab tab) {
+void drawPeemo84TabHeader(IDisplay& display, LogTab tab) {
     const char* header = MATRIX_TAB_AI_ACTIVE;
     if (tab == LogTab::MEDIA) {
         header = MATRIX_TAB_MEDIA_ACTIVE;
     } else if (tab == LogTab::MONITOR) {
         header = MATRIX_TAB_MONITOR_ACTIVE;
     }
-    display.drawText(header, MI84_X, MI84_TAB_Y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    display.drawText(header, PEEMO84_X, PEEMO84_TAB_Y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
 }
 
 // A terminal prompt row that types its text out one character at a time,
@@ -2106,15 +2150,15 @@ void drawMi84TabHeader(IDisplay& display, LogTab tab) {
 // they do in MATRIX, while the prompt line underneath shows the machine is
 // still working. Letting the animation claim the whole region would have
 // hidden them.
-constexpr unsigned long MI84_CURSOR_HALF_PERIOD_MS = 450;
+constexpr unsigned long PEEMO84_CURSOR_HALF_PERIOD_MS = 450;
 // Bounds the local buffer: '>' + text + '_' + NUL.
-constexpr int MI84_PROMPT_TEXT_MAX = 24;
+constexpr int PEEMO84_PROMPT_TEXT_MAX = 24;
 
-void drawMi84TypedPrompt(IDisplay& display, unsigned long nowMs, int y, const char* text,
+void drawPeemo84TypedPrompt(IDisplay& display, unsigned long nowMs, int y, const char* text,
                          unsigned long charMs, unsigned long holdMs, unsigned long blankMs) {
     int textLen = (int)strlen(text);
-    if (textLen > MI84_PROMPT_TEXT_MAX) {
-        textLen = MI84_PROMPT_TEXT_MAX;
+    if (textLen > PEEMO84_PROMPT_TEXT_MAX) {
+        textLen = PEEMO84_PROMPT_TEXT_MAX;
     }
     // One extra char-slot so the run actually reaches the full text before
     // the hold begins — without it the last character would never be shown.
@@ -2134,23 +2178,23 @@ void drawMi84TypedPrompt(IDisplay& display, unsigned long nowMs, int y, const ch
         revealed = 0; // erased, just before the next pass starts
     }
 
-    char buffer[MI84_PROMPT_TEXT_MAX + 3];
+    char buffer[PEEMO84_PROMPT_TEXT_MAX + 3];
     int len = 0;
     buffer[len++] = '>';
     memcpy(buffer + len, text, (size_t)revealed);
     len += revealed;
-    if (((nowMs / MI84_CURSOR_HALF_PERIOD_MS) % 2) == 0) {
+    if (((nowMs / PEEMO84_CURSOR_HALF_PERIOD_MS) % 2) == 0) {
         buffer[len++] = '_';
     }
     buffer[len] = '\0';
 
-    display.drawText(buffer, MI84_X, y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    display.drawText(buffer, PEEMO84_X, y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
 }
 
-constexpr const char* MI84_THINKING_TEXT = "THINKING";
-constexpr unsigned long MI84_THINK_CHAR_MS = 110;
-constexpr unsigned long MI84_THINK_HOLD_MS = 700;
-constexpr unsigned long MI84_THINK_BLANK_MS = 300;
+constexpr const char* PEEMO84_THINKING_TEXT = "THINKING";
+constexpr unsigned long PEEMO84_THINK_CHAR_MS = 110;
+constexpr unsigned long PEEMO84_THINK_HOLD_MS = 700;
+constexpr unsigned long PEEMO84_THINK_BLANK_MS = 300;
 
 // The sleep counterpart. Deliberately much slower than THINKING's — the
 // whole point of the effect is that the machine has gone drowsy, and typing
@@ -2158,60 +2202,60 @@ constexpr unsigned long MI84_THINK_BLANK_MS = 300;
 // The uneven run of dots is the text itself rather than variable timing:
 // pauses of different lengths fall out of it for free, and a single string
 // keeps this on exactly the same code path as THINKING.
-constexpr const char* MI84_SLEEP_TEXT = "Z..Z..Z...Z..";
-constexpr unsigned long MI84_SLEEP_CHAR_MS = 210;
-constexpr unsigned long MI84_SLEEP_HOLD_MS = 1200;
-constexpr unsigned long MI84_SLEEP_BLANK_MS = 600;
+constexpr const char* PEEMO84_SLEEP_TEXT = "Z..Z..Z...Z..";
+constexpr unsigned long PEEMO84_SLEEP_CHAR_MS = 210;
+constexpr unsigned long PEEMO84_SLEEP_HOLD_MS = 1200;
+constexpr unsigned long PEEMO84_SLEEP_BLANK_MS = 600;
 
-void drawMi84ThinkingPrompt(IDisplay& display, unsigned long nowMs, int y) {
-    drawMi84TypedPrompt(display, nowMs, y, MI84_THINKING_TEXT,
-                        MI84_THINK_CHAR_MS, MI84_THINK_HOLD_MS, MI84_THINK_BLANK_MS);
+void drawPeemo84ThinkingPrompt(IDisplay& display, unsigned long nowMs, int y) {
+    drawPeemo84TypedPrompt(display, nowMs, y, PEEMO84_THINKING_TEXT,
+                        PEEMO84_THINK_CHAR_MS, PEEMO84_THINK_HOLD_MS, PEEMO84_THINK_BLANK_MS);
 }
 
-void drawMi84SleepPrompt(IDisplay& display, unsigned long nowMs, int y) {
-    drawMi84TypedPrompt(display, nowMs, y, MI84_SLEEP_TEXT,
-                        MI84_SLEEP_CHAR_MS, MI84_SLEEP_HOLD_MS, MI84_SLEEP_BLANK_MS);
+void drawPeemo84SleepPrompt(IDisplay& display, unsigned long nowMs, int y) {
+    drawPeemo84TypedPrompt(display, nowMs, y, PEEMO84_SLEEP_TEXT,
+                        PEEMO84_SLEEP_CHAR_MS, PEEMO84_SLEEP_HOLD_MS, PEEMO84_SLEEP_BLANK_MS);
 }
 
 // The MEDIA tab. With playback status and track position deliberately out
 // of scope (neither is on the wire — WindowsMediaMonitor sends one
 // "artist - title" MSG and nothing else), this is the label plus whatever
 // the media log holds, drawn by the shared log renderer.
-void drawMi84Media(IDisplay& display, const FaceState& state) {
-    display.drawText("NOW PLAYING", MI84_X, MI84_CONTENT_TOP_Y, MI84_DIM_R, MI84_DIM_G, MI84_DIM_B);
-    drawMatrixLog(display, state, MI84_CONTENT_TOP_Y + MESSAGE_LINE_HEIGHT * 2,
-                  MI84_CONTENT_BOTTOM_Y, MI84_X, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+void drawPeemo84Media(IDisplay& display, const FaceState& state) {
+    display.drawText("NOW PLAYING", PEEMO84_X, PEEMO84_CONTENT_TOP_Y, PEEMO84_DIM_R, PEEMO84_DIM_G, PEEMO84_DIM_B);
+    drawMatrixLog(display, state, PEEMO84_CONTENT_TOP_Y + MESSAGE_LINE_HEIGHT * 2,
+                  PEEMO84_CONTENT_BOTTOM_Y, PEEMO84_X, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
 }
 
 // Bar cells are fillRects rather than block characters: Font5x7 has no
 // block glyph, and at this size a drawn rectangle is both sharper and
 // cheaper than a glyph lookup would be. Ten cells of 5px on a 1px gap span
 // exactly 60px, ending well clear of the value column.
-constexpr int MI84_BAR_X = 28;
-constexpr int MI84_BAR_H = 5;
-constexpr int MI84_BAR_CELLS = 10;
-constexpr int MI84_BAR_CELL_W = 5;
-constexpr int MI84_VALUE_X = 94;
-constexpr int MI84_TEMP_X = 124;
+constexpr int PEEMO84_BAR_X = 28;
+constexpr int PEEMO84_BAR_H = 5;
+constexpr int PEEMO84_BAR_CELLS = 10;
+constexpr int PEEMO84_BAR_CELL_W = 5;
+constexpr int PEEMO84_VALUE_X = 94;
+constexpr int PEEMO84_TEMP_X = 124;
 // CPU, GPU, RAM, FPS.
-constexpr int MI84_MONITOR_ROWS = 4;
+constexpr int PEEMO84_MONITOR_ROWS = 4;
 
-void drawMi84Bar(IDisplay& display, int y, int percent) {
+void drawPeemo84Bar(IDisplay& display, int y, int percent) {
     // A field with no source arrives as -1 (see FaceState::hasStats) and
     // simply lights no cells — the "--" printed beside it is what says why.
-    int filled = (percent > 0) ? ((percent * MI84_BAR_CELLS + 50) / 100) : 0;
-    if (filled > MI84_BAR_CELLS) {
-        filled = MI84_BAR_CELLS;
+    int filled = (percent > 0) ? ((percent * PEEMO84_BAR_CELLS + 50) / 100) : 0;
+    if (filled > PEEMO84_BAR_CELLS) {
+        filled = PEEMO84_BAR_CELLS;
     }
 
-    for (int i = 0; i < MI84_BAR_CELLS; i++) {
-        int x = MI84_BAR_X + i * (MI84_BAR_CELL_W + 1);
+    for (int i = 0; i < PEEMO84_BAR_CELLS; i++) {
+        int x = PEEMO84_BAR_X + i * (PEEMO84_BAR_CELL_W + 1);
         if (i < filled) {
-            display.fillRect(x, y, MI84_BAR_CELL_W, MI84_BAR_H, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+            display.fillRect(x, y, PEEMO84_BAR_CELL_W, PEEMO84_BAR_H, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
         } else {
             // An unlit cell is a dim baseline, not a hollow outline: at 5px
             // square an outlined box and a filled one read almost alike.
-            display.fillRect(x, y + MI84_BAR_H - 1, MI84_BAR_CELL_W, 1, MI84_DIM_R, MI84_DIM_G, MI84_DIM_B);
+            display.fillRect(x, y + PEEMO84_BAR_H - 1, PEEMO84_BAR_CELL_W, 1, PEEMO84_DIM_R, PEEMO84_DIM_G, PEEMO84_DIM_B);
         }
     }
 }
@@ -2232,12 +2276,12 @@ void drawMi84Bar(IDisplay& display, int y, int percent) {
 // routinely clears that), so a filled-bar gauge would misrepresent it —
 // it gets the value column only, with formatStatValue's suffix-less form
 // (see Face.cpp's own note there) instead of the usual '%'.
-void drawMi84Monitor(IDisplay& display, const FaceState& state) {
-    int rowY = MI84_CONTENT_TOP_Y + MESSAGE_LINE_HEIGHT;
-    drawMatrixLog(display, state, MI84_CONTENT_TOP_Y, rowY, MI84_X,
-                  MI84_INK_R, MI84_INK_G, MI84_INK_B);
+void drawPeemo84Monitor(IDisplay& display, const FaceState& state) {
+    int rowY = PEEMO84_CONTENT_TOP_Y + MESSAGE_LINE_HEIGHT;
+    drawMatrixLog(display, state, PEEMO84_CONTENT_TOP_Y, rowY, PEEMO84_X,
+                  PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
 
-    for (int i = 0; i < MI84_MONITOR_ROWS; i++) {
+    for (int i = 0; i < PEEMO84_MONITOR_ROWS; i++) {
         const char* label = "RAM";
         int load = state.statsRamLoad;
         int tempC = -1;
@@ -2253,19 +2297,19 @@ void drawMi84Monitor(IDisplay& display, const FaceState& state) {
             label = "FPS"; load = state.statsFps; withBar = false; loadSuffix = '\0';
         }
 
-        display.drawText(label, MI84_X, rowY, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+        display.drawText(label, PEEMO84_X, rowY, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
         if (withBar) {
-            drawMi84Bar(display, rowY + 1, load);
+            drawPeemo84Bar(display, rowY + 1, load);
         }
 
         char value[8];
         formatStatValue(value, sizeof(value), load, loadSuffix);
-        display.drawText(value, MI84_VALUE_X, rowY, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+        display.drawText(value, PEEMO84_VALUE_X, rowY, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
 
         if (withTemp) {
             char temp[8];
             formatStatValue(temp, sizeof(temp), tempC, 'C');
-            display.drawText(temp, MI84_TEMP_X, rowY, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+            display.drawText(temp, PEEMO84_TEMP_X, rowY, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
         }
 
         rowY += MESSAGE_LINE_HEIGHT;
@@ -2279,11 +2323,11 @@ void drawMi84Monitor(IDisplay& display, const FaceState& state) {
 // same shared log renderer as everything else rather than plumbed
 // separately. English chrome, Portuguese content, the same split the rest
 // of this theme uses.
-void drawMi84SleepNotice(IDisplay& display, const FaceState& state) {
-    int y = MI84_CONTENT_TOP_Y;
-    display.drawText("SYSTEM NOTICE", MI84_X, y, MI84_DIM_R, MI84_DIM_G, MI84_DIM_B);
+void drawPeemo84SleepNotice(IDisplay& display, const FaceState& state) {
+    int y = PEEMO84_CONTENT_TOP_Y;
+    display.drawText("SYSTEM NOTICE", PEEMO84_X, y, PEEMO84_DIM_R, PEEMO84_DIM_G, PEEMO84_DIM_B);
     y += MESSAGE_LINE_HEIGHT;
-    display.drawText("HUMAN ACTIVITY: LOW", MI84_X, y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    display.drawText("HUMAN ACTIVITY: LOW", PEEMO84_X, y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
     y += MESSAGE_LINE_HEIGHT;
 
     // The bedtime phrase gets the rows between the header and the prompt.
@@ -2291,35 +2335,41 @@ void drawMi84SleepNotice(IDisplay& display, const FaceState& state) {
     // dropped to buy the room: the phrase underneath already reads as the
     // recommendation, so the label was spending a scarce row restating the
     // line below it.
-    int promptY = MI84_CONTENT_BOTTOM_Y - MESSAGE_LINE_HEIGHT;
-    drawMatrixLog(display, state, y, promptY, MI84_X,
-                  MI84_INK_R, MI84_INK_G, MI84_INK_B);
-    drawMi84SleepPrompt(display, state.nowMs, promptY);
+    int promptY = PEEMO84_CONTENT_BOTTOM_Y - MESSAGE_LINE_HEIGHT;
+    drawMatrixLog(display, state, y, promptY, PEEMO84_X,
+                  PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
+    drawPeemo84SleepPrompt(display, state.nowMs, promptY);
 }
 
-void drawMi84Chrome(IDisplay& display, const FaceState& state) {
-    display.drawText(MI84_HEADER_TEXT, MI84_X, MI84_HEADER_Y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
-    drawMi84StatusLine(display, state);
-    drawMi84Rule(display, MI84_RULE_TOP_Y);
-    drawMi84TabHeader(display, state.logTab);
-    drawMi84Rule(display, MI84_RULE_MID_Y);
+void drawPeemo84Chrome(IDisplay& display, const FaceState& state) {
+    display.drawText(PEEMO84_HEADER_TEXT, PEEMO84_X, PEEMO84_HEADER_Y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
+    // PEEMO84 has no pictogram badges (see drawPeemo84StatusLine), and its status
+    // row is already near full width with a long weather name — but the
+    // header row ends at x=100, so the mood battery sits right-aligned there,
+    // like a system tray on a terminal's title bar.
+    drawMoodBattery(display, display.width() - PEEMO84_X - MOOD_BATTERY_TOTAL_W, PEEMO84_HEADER_Y - 1,
+                    state.mood, state.nowMs, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
+    drawPeemo84StatusLine(display, state);
+    drawPeemo84Rule(display, PEEMO84_RULE_TOP_Y);
+    drawPeemo84TabHeader(display, state.logTab);
+    drawPeemo84Rule(display, PEEMO84_RULE_MID_Y);
 }
 
 // Which of the three tabs is live is decided in Personality::currentState
 // and arrives as state.logTab — identical to MATRIX, and the reason "AI
 // activity always wins the tab" needed no new logic in either theme:
 // foreground beating background in resolveExpression already produces it.
-void drawMi84Content(IDisplay& display, const FaceState& state) {
+void drawPeemo84Content(IDisplay& display, const FaceState& state) {
     if (state.expression == Expression::SLEEPY) {
-        drawMi84SleepNotice(display, state);
+        drawPeemo84SleepNotice(display, state);
         return;
     }
     if (state.logTab == LogTab::MONITOR && state.hasStats) {
-        drawMi84Monitor(display, state);
+        drawPeemo84Monitor(display, state);
         return;
     }
     if (state.logTab == LogTab::MEDIA) {
-        drawMi84Media(display, state);
+        drawPeemo84Media(display, state);
         return;
     }
 
@@ -2333,24 +2383,24 @@ void drawMi84Content(IDisplay& display, const FaceState& state) {
     bool thinking = state.expression == Expression::THINKING;
     bool sleeping = state.expression == Expression::SLEEPING;
     bool hasPrompt = thinking || sleeping;
-    int promptY = MI84_CONTENT_BOTTOM_Y - MESSAGE_LINE_HEIGHT;
+    int promptY = PEEMO84_CONTENT_BOTTOM_Y - MESSAGE_LINE_HEIGHT;
     // The session readout claims the two rows directly above whatever the
     // bottom of the content area currently is — under the prompt row when
     // one is up, at the very bottom otherwise — leaving the log the rest.
     // Same bottom-anchoring, and the same shared renderer, as MATRIX.
-    int contentBottom = hasPrompt ? promptY : MI84_CONTENT_BOTTOM_Y;
+    int contentBottom = hasPrompt ? promptY : PEEMO84_CONTENT_BOTTOM_Y;
     int statsY = contentBottom - AI_STATS_ROWS * MESSAGE_LINE_HEIGHT;
-    drawMatrixLog(display, state, MI84_CONTENT_TOP_Y,
-                  state.hasAiStats ? statsY : contentBottom, MI84_X,
-                  MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    drawMatrixLog(display, state, PEEMO84_CONTENT_TOP_Y,
+                  state.hasAiStats ? statsY : contentBottom, PEEMO84_X,
+                  PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
     if (state.hasAiStats) {
-        drawAiStatsRows(display, state, MI84_X, statsY,
-                        MI84_INK_R, MI84_INK_G, MI84_INK_B);
+        drawAiStatsRows(display, state, PEEMO84_X, statsY,
+                        PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
     }
     if (thinking) {
-        drawMi84ThinkingPrompt(display, state.nowMs, promptY);
+        drawPeemo84ThinkingPrompt(display, state.nowMs, promptY);
     } else if (sleeping) {
-        drawMi84SleepPrompt(display, state.nowMs, promptY);
+        drawPeemo84SleepPrompt(display, state.nowMs, promptY);
     }
 }
 
@@ -2361,51 +2411,51 @@ void drawMi84Content(IDisplay& display, const FaceState& state) {
 // but Brobot.Sender announces the theme as the first thing it sends over a
 // fresh link and re-announces it on every reconnect (see
 // Personality::onThemeCommand for the full reasoning). So the sequence runs
-// exactly when MiMo comes back into contact with the PC.
+// exactly when Peemo comes back into contact with the PC.
 //
 // Bounded, unlike almost every other animation in this file — it runs once
 // and stops instead of looping off nowMs — which is why it measures from
-// FaceState::themeStartedMs. Same class of animation as MI2MO2's
+// FaceState::themeStartedMs. Same class of animation as P2M2's
 // three-flash FAILED, and the second one to need such an anchor.
-constexpr const char* MI84_BOOT_CHECKS[] = {
+constexpr const char* PEEMO84_BOOT_CHECKS[] = {
     "MEMORY ........ OK",
     "DISPLAY ....... OK",
     "AI CORE ....... OK",
     "AUDIO ......... OK",
 };
-constexpr int MI84_BOOT_CHECK_COUNT = (int)(sizeof(MI84_BOOT_CHECKS) / sizeof(MI84_BOOT_CHECKS[0]));
-constexpr int MI84_BOOT_TOP_Y = 6;
-constexpr unsigned long MI84_BOOT_FIRST_CHECK_MS = 320;
-constexpr unsigned long MI84_BOOT_CHECK_INTERVAL_MS = 430; // slow enough to read as a machine testing itself
-constexpr unsigned long MI84_BOOT_READY_MS =
-    MI84_BOOT_FIRST_CHECK_MS + MI84_BOOT_CHECK_INTERVAL_MS * MI84_BOOT_CHECK_COUNT + 260;
-constexpr unsigned long MI84_BOOT_BANNER_MS = MI84_BOOT_READY_MS + 900; // POST log gives way to the banner
-constexpr unsigned long MI84_BOOT_END_MS = MI84_BOOT_BANNER_MS + 950;   // banner gives way to the interface
+constexpr int PEEMO84_BOOT_CHECK_COUNT = (int)(sizeof(PEEMO84_BOOT_CHECKS) / sizeof(PEEMO84_BOOT_CHECKS[0]));
+constexpr int PEEMO84_BOOT_TOP_Y = 6;
+constexpr unsigned long PEEMO84_BOOT_FIRST_CHECK_MS = 320;
+constexpr unsigned long PEEMO84_BOOT_CHECK_INTERVAL_MS = 430; // slow enough to read as a machine testing itself
+constexpr unsigned long PEEMO84_BOOT_READY_MS =
+    PEEMO84_BOOT_FIRST_CHECK_MS + PEEMO84_BOOT_CHECK_INTERVAL_MS * PEEMO84_BOOT_CHECK_COUNT + 260;
+constexpr unsigned long PEEMO84_BOOT_BANNER_MS = PEEMO84_BOOT_READY_MS + 900; // POST log gives way to the banner
+constexpr unsigned long PEEMO84_BOOT_END_MS = PEEMO84_BOOT_BANNER_MS + 950;   // banner gives way to the interface
 
-void drawMi84Boot(IDisplay& display, unsigned long elapsed) {
-    if (elapsed >= MI84_BOOT_BANNER_MS) {
-        int textWidth = (int)strlen(MI84_HEADER_TEXT) * CHAR_ADVANCE_PX;
-        display.drawText(MI84_HEADER_TEXT, (display.width() - textWidth) / 2,
+void drawPeemo84Boot(IDisplay& display, unsigned long elapsed) {
+    if (elapsed >= PEEMO84_BOOT_BANNER_MS) {
+        int textWidth = (int)strlen(PEEMO84_HEADER_TEXT) * CHAR_ADVANCE_PX;
+        display.drawText(PEEMO84_HEADER_TEXT, (display.width() - textWidth) / 2,
                          (display.height() - MESSAGE_LINE_HEIGHT) / 2,
-                         MI84_INK_R, MI84_INK_G, MI84_INK_B);
+                         PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
         return;
     }
 
-    int y = MI84_BOOT_TOP_Y;
-    display.drawText("MIMO-84 BIOS", MI84_X, y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    int y = PEEMO84_BOOT_TOP_Y;
+    display.drawText("PEEMO-84 BIOS", PEEMO84_X, y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
     y += MESSAGE_LINE_HEIGHT * 2;
 
-    for (int i = 0; i < MI84_BOOT_CHECK_COUNT; i++) {
-        if (elapsed < MI84_BOOT_FIRST_CHECK_MS + MI84_BOOT_CHECK_INTERVAL_MS * (unsigned long)i) {
+    for (int i = 0; i < PEEMO84_BOOT_CHECK_COUNT; i++) {
+        if (elapsed < PEEMO84_BOOT_FIRST_CHECK_MS + PEEMO84_BOOT_CHECK_INTERVAL_MS * (unsigned long)i) {
             break;
         }
-        display.drawText(MI84_BOOT_CHECKS[i], MI84_X, y, MI84_INK_R, MI84_INK_G, MI84_INK_B);
+        display.drawText(PEEMO84_BOOT_CHECKS[i], PEEMO84_X, y, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
         y += MESSAGE_LINE_HEIGHT;
     }
 
-    if (elapsed >= MI84_BOOT_READY_MS) {
-        display.drawText("SYSTEM READY", MI84_X, y + MESSAGE_LINE_HEIGHT,
-                         MI84_INK_R, MI84_INK_G, MI84_INK_B);
+    if (elapsed >= PEEMO84_BOOT_READY_MS) {
+        display.drawText("SYSTEM READY", PEEMO84_X, y + MESSAGE_LINE_HEIGHT,
+                         PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B);
     }
 }
 
@@ -2415,11 +2465,11 @@ void drawMi84Boot(IDisplay& display, unsigned long elapsed) {
 // the effect, and no easing function expresses "it nearly caught, then
 // dropped". Same declarative-table shape BEDTIME_MESSAGES and Buzzer's own
 // SoundSegment arrays already use.
-struct Mi84LampStep {
+struct Peemo84LampStep {
     unsigned long atMs;
     float level;
 };
-constexpr Mi84LampStep MI84_LAMP_STEPS[] = {
+constexpr Peemo84LampStep PEEMO84_LAMP_STEPS[] = {
     {0,    0.00f}, {90,   0.85f}, {170,  0.04f},
     {340,  0.00f}, {410,  0.70f}, {480,  0.10f},
     {570,  0.38f}, {640,  0.08f},
@@ -2428,19 +2478,19 @@ constexpr Mi84LampStep MI84_LAMP_STEPS[] = {
     {1160, 0.92f}, {1240, 0.72f},
     {1350, 1.00f},
 };
-constexpr int MI84_LAMP_STEP_COUNT = (int)(sizeof(MI84_LAMP_STEPS) / sizeof(MI84_LAMP_STEPS[0]));
-constexpr unsigned long MI84_LAMP_WARMUP_MS = 1350;
+constexpr int PEEMO84_LAMP_STEP_COUNT = (int)(sizeof(PEEMO84_LAMP_STEPS) / sizeof(PEEMO84_LAMP_STEPS[0]));
+constexpr unsigned long PEEMO84_LAMP_WARMUP_MS = 1350;
 
-float mi84LampLevel(unsigned long sinceMs) {
-    if (sinceMs >= MI84_LAMP_WARMUP_MS) {
+float peemo84LampLevel(unsigned long sinceMs) {
+    if (sinceMs >= PEEMO84_LAMP_WARMUP_MS) {
         return 1.0f;
     }
     float level = 0.0f;
-    for (int i = 0; i < MI84_LAMP_STEP_COUNT; i++) {
-        if (sinceMs < MI84_LAMP_STEPS[i].atMs) {
+    for (int i = 0; i < PEEMO84_LAMP_STEP_COUNT; i++) {
+        if (sinceMs < PEEMO84_LAMP_STEPS[i].atMs) {
             break;
         }
-        level = MI84_LAMP_STEPS[i].level;
+        level = PEEMO84_LAMP_STEPS[i].level;
     }
     return level;
 }
@@ -2457,8 +2507,8 @@ float mi84LampLevel(unsigned long sinceMs) {
 // Drawn straight onto the raw display rather than through the theme
 // decorators. MATRIX's RecoloringDisplay flattens every non-black color to
 // one value, and these screens want a distinct ink and text color, so each
-// theme's palette is resolved explicitly instead — the same reason MI84 and
-// MI2MO2 already thread their colors through by hand.
+// theme's palette is resolved explicitly instead — the same reason PEEMO84 and
+// P2M2 already thread their colors through by hand.
 struct NotificationPalette {
     uint8_t bgR, bgG, bgB;
     uint8_t inkR, inkG, inkB;    // the artwork
@@ -2469,17 +2519,17 @@ NotificationPalette notificationPalette(const FaceState& state) {
     switch (state.theme) {
         case Theme::MATRIX:
             return {BG_R, BG_G, BG_B, MATRIX_R, MATRIX_G, MATRIX_B, MATRIX_R, MATRIX_G, MATRIX_B};
-        case Theme::MI84:
-            return {BG_R, BG_G, BG_B, MI84_INK_R, MI84_INK_G, MI84_INK_B,
-                    MI84_INK_R, MI84_INK_G, MI84_INK_B};
-        case Theme::MI2MO2:
+        case Theme::PEEMO84:
+            return {BG_R, BG_G, BG_B, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B,
+                    PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B};
+        case Theme::P2M2:
             // The one theme whose ground isn't black: R2's plate fills the
             // frame everywhere else, so a notification dropping to black
             // would read as the screen having switched off rather than as
-            // MiMo saying something.
-            return {MI2MO2_PLATE_R, MI2MO2_PLATE_G, MI2MO2_PLATE_B,
-                    MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B,
-                    MI2MO2_NAVY_R, MI2MO2_NAVY_G, MI2MO2_NAVY_B};
+            // Peemo saying something.
+            return {P2M2_PLATE_R, P2M2_PLATE_G, P2M2_PLATE_B,
+                    P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B,
+                    P2M2_NAVY_R, P2M2_NAVY_G, P2M2_NAVY_B};
         case Theme::CLASSIC:
         default: {
             // The ink follows the user's chosen CLASSICCOLOR (see Face.h);
@@ -2578,7 +2628,7 @@ void drawNotificationText(IDisplay& display, const char* text, int topY, int lin
     }
 }
 
-// MiMo's face stays on screen for *every* notification. An earlier version
+// Peemo's face stays on screen for *every* notification. An earlier version
 // gave the whole frame to the artwork, which meant a notification with no
 // dedicated illustration of its own fell back to an empty framed card —
 // unreadable, because it wasn't meant to depict anything. Making the eyes
@@ -2705,7 +2755,7 @@ constexpr int NOTIF_REPORT_TEXT_LINES = 3;
 constexpr int NOTIF_REPORT_ITEM_COUNT = 9;
 constexpr int NOTIF_REPORT_PAGE_ITEMS = 6;
 
-// MiMo taking a sip: the cup rises and drifts toward the face, is held
+// Peemo taking a sip: the cup rises and drifts toward the face, is held
 // there for a beat, and comes back down to the saucer line. Purely
 // positional -- there is no rotation available at this resolution, and a
 // tilted mug composed of fillRects reads as a broken mug rather than a
@@ -2810,7 +2860,7 @@ void drawEnvelopeIcon(IDisplay& display, int x, int y, int w, int h,
 // for a small attention dot, so an otherwise-static icon reads as "something
 // is live/waiting" rather than a badge that looks painted on. 1s period,
 // mostly on: deliberately closer to a heartbeat than a strobe, since this
-// sits next to MiMo's own face for the whole 10s notification. Shared by
+// sits next to Peemo's own face for the whole 10s notification. Shared by
 // EMAIL's unread dot and MEETING's own call-is-live dot below rather than
 // each keeping a copy -- same clock, same reasoning, two different spots.
 bool notifBlinkDotOn(unsigned long nowMs) {
@@ -2932,7 +2982,7 @@ void formatReportMinutes(char* out, size_t size, int totalMinutes) {
 }
 
 // No accents — same convention every other Core-hardcoded PT-BR string
-// follows (BEDTIME_MESSAGES in Personality.cpp, the MATRIX/MI84 log tabs),
+// follows (BEDTIME_MESSAGES in Personality.cpp, the MATRIX/PEEMO84 log tabs),
 // unlike the free-form text a PC app sends over the wire.
 const char* dailyRatingLabel(DailyRating rating) {
     switch (rating) {
@@ -3040,7 +3090,7 @@ void drawReportNotification(IDisplay& display, const FaceState& state, const Not
     }
 }
 
-// The Sender-triggered "MiMo says hi/bye" notification (see PROTOCOL.md's
+// The Sender-triggered "Peemo says hi/bye" notification (see PROTOCOL.md's
 // NOTIFY and GreetingMessages.cs on the PC side, which picks the text by
 // time of day) reuses BYE's own established layout wholesale — the plain
 // foreground BYE_EYES_CENTER_X/EYE_Y/EYE_SIZE/EYE_GAP and drawByeHand's
@@ -3068,7 +3118,7 @@ void drawByeNotification(IDisplay& display, const FaceState& state, const Notifi
 // incapable of disagreeing, and means a new condition is a `case` here
 // rather than a new command.
 //
-// MiMo stands to the left of an umbrella with rain falling behind both. The
+// Peemo stands to the left of an umbrella with rain falling behind both. The
 // rain is drawn first so the canopy and the eyes paint over it: drops that
 // would fall through the umbrella simply never show, which reads as the
 // umbrella sheltering him without any per-drop collision test.
@@ -3249,7 +3299,7 @@ void drawLightningBolt(IDisplay& display, uint8_t r, uint8_t g, uint8_t b) {
 // display has two colours, so it has to be suggested rather than shaded.
 //
 // The trick is drawing bands in both colours: half of them in ink, behind
-// MiMo, so something is visibly rolling past; and half in the background
+// Peemo, so something is visibly rolling past; and half in the background
 // colour, in front of him, so he is eaten into and comes back. Neither half
 // works alone — ink-only reads as stripes on the screen, background-only as
 // a rendering fault. Together they read as air thick enough to lose him in.
@@ -3282,7 +3332,7 @@ void drawFogBand(IDisplay& display, int y, int h, int len, int offset,
 
 // frontPass picks which half gets drawn: the caller runs this once before
 // the eyes with the ink colour, and once after them with the background,
-// which is what puts some bands behind MiMo and some in front.
+// which is what puts some bands behind Peemo and some in front.
 void drawFogBands(IDisplay& display, unsigned long nowMs, bool frontPass,
                   uint8_t r, uint8_t g, uint8_t b) {
     int span = FOG_BOTTOM_Y - FOG_TOP_Y;
@@ -3302,7 +3352,7 @@ void drawFogBands(IDisplay& display, unsigned long nowMs, bool frontPass,
         int y = FOG_TOP_Y + i * step + (int)(h % 3);
         // The front bands are deliberately thinner than the back ones. They
         // are the ones that erase, and at equal thickness four of them took
-        // roughly three quarters of MiMo with them — which reads as him
+        // roughly three quarters of Peemo with them — which reads as him
         // being deleted rather than as fog drifting past. Thick banks
         // behind, thin wisps in front.
         int thickness = frontPass ? (2 + (int)((h >> 8) % 2))   // 2..3px
@@ -3318,7 +3368,7 @@ void drawFogBands(IDisplay& display, unsigned long nowMs, bool frontPass,
     }
 }
 
-// CLOUDY: a few clouds drifting across the sky above MiMo.
+// CLOUDY: a few clouds drifting across the sky above Peemo.
 //
 // Deliberately *not* a cloud sliding over the sun, which was the obvious
 // idea. Both would be drawn in the theme's ink, so the cloud would not cover
@@ -3330,7 +3380,7 @@ void drawFogBands(IDisplay& display, unsigned long nowMs, bool frontPass,
 // A cloud is a flat-bottomed slab with two humps on top. The flat bottom is
 // what does most of the work: without it the shape reads as a blob, and with
 // it as a cloud. It also keeps clouds clearly distinct from FOG's bands,
-// which matters when both are the same colour — bands cross *through* MiMo,
+// which matters when both are the same colour — bands cross *through* Peemo,
 // clouds are objects sitting above him.
 struct CloudRect {
     int dx, dy, w, h;
@@ -3412,7 +3462,7 @@ constexpr int NOTIF_WEATHER_SUNNY_EYES_CENTER_X = 70;
 void drawWeatherNotification(IDisplay& display, const FaceState& state,
                              const NotificationPalette& p, float openFactor) {
     // Each condition brings its own scenery; the ones with none yet fall
-    // back to MiMo on his own with the message below, which is the honest
+    // back to Peemo on his own with the message below, which is the honest
     // thing to show — an umbrella standing next to a "clear skies" alert
     // would actively contradict it.
     bool wet = state.weatherCondition == WeatherCondition::RAIN
@@ -3503,7 +3553,7 @@ int achvSwayPx(unsigned long nowMs, unsigned long periodMs, int amplitude) {
 }
 
 // The trophy badge's entrance: a breakpoint table rather than a curve (same
-// idiom mi84LampLevel already uses for its own lamp-strike animation) — a
+// idiom peemo84LampLevel already uses for its own lamp-strike animation) — a
 // sharp rise, an overshoot past the resting spot, a small undershoot
 // settling back, then still. Bounded (see FaceState::notificationStartedMs),
 // unlike the idle bob below which loops for as long as the notification
@@ -3640,7 +3690,7 @@ void drawAchvNightOwl(IDisplay& display, unsigned long nowMs, int cx,
 // ONE_MORE_GAME: the same body/grip/d-pad/button composition PLAYING's own
 // corner gamepad uses, just twice the scale for this notification's own art
 // area — bgR/G/B is a parameter (unlike the corner icon's own hardcoded
-// black cuts) since MI2MO2's notification ground is navy on a light plate,
+// black cuts) since P2M2's notification ground is navy on a light plate,
 // not black.
 void drawAchvGamepad(IDisplay& display, int cx, int cy, uint8_t r, uint8_t g, uint8_t b,
                      uint8_t bgR, uint8_t bgG, uint8_t bgB) {
@@ -3751,7 +3801,7 @@ void drawAchvEyesGlitch(IDisplay& display, int centerX, int topY, int size, int 
 }
 
 // IDENTITY_CRISIS's main visual is the notification's own eye color cycling
-// through a stand-in for each theme's own palette — "which MiMo are we
+// through a stand-in for each theme's own palette — "which Peemo are we
 // today" applied to the one thing that's supposed to look the same every
 // time. Deliberately independent of the *actual* active theme (state.theme):
 // this is celebrating having tried all of them, not showing whichever one
@@ -3760,10 +3810,10 @@ void achvIdentityCrisisColor(unsigned long nowMs, uint8_t& r, uint8_t& g, uint8_
     constexpr unsigned long cycleMs = 450;
     int index = (int)((nowMs / cycleMs) % 4);
     switch (index) {
-        case 0: r = 0;   g = 200; b = 190; break; // MiMo Classic's teal
+        case 0: r = 0;   g = 200; b = 190; break; // Peemo Classic's teal
         case 1: r = MATRIX_R; g = MATRIX_G; b = MATRIX_B; break;
-        case 2: r = MI84_INK_R; g = MI84_INK_G; b = MI84_INK_B; break;
-        default: r = 220; g = 40; b = 60; break;  // stands in for MI2MO2's red lamp
+        case 2: r = PEEMO84_INK_R; g = PEEMO84_INK_G; b = PEEMO84_INK_B; break;
+        default: r = 220; g = 40; b = 60; break;  // stands in for P2M2's red lamp
     }
 }
 
@@ -3899,6 +3949,143 @@ void drawSweatingNotification(IDisplay& display, const FaceState& state, const N
                   p.textR, p.textG, p.textB);
 }
 
+// SATELLITE (a famous satellite crossing the user's sky) and SPACE (the
+// same scene minus the satellite, for any other space remark): Peemo's eyes, ~20%
+// smaller than the usual notification eyes so the sky around them reads as
+// sky, under a starry backdrop, with a satellite — tilted ~30deg, right
+// wing up, so it reads as something flying rather than a flat icon —
+// gliding across the top left to right along a shallow arc (higher in the
+// middle, like a real pass rising and setting) and the eyes sliding
+// sideways to follow it. Drawn from primitives like every other icon here
+// rather than a bitmap: IDisplay has no blit, and on the virtual display
+// every pixel would be its own wire command.
+constexpr unsigned long SPACE_PASS_CYCLE_MS = 5000; // ~2 passes inside the 10s notification
+constexpr unsigned long SPACE_PASS_TRAVEL_MS = 4200; // the rest is the gap before it comes round again
+constexpr int SPACE_SAT_RADIUS = 21;  // bounding half-size of the tilted satellite (wing tip to centre)
+constexpr int SPACE_SAT_TOP_Y = 10;   // arc apex (centre line), mid-pass
+constexpr int SPACE_SAT_EDGE_Y = 19;  // centre line at the frame edges
+// 30deg, as plain constants: the native build's Arduino.h shim doesn't wire
+// up <math.h>, so cos isn't safe to call (see the CLEAR sun's note).
+constexpr float SPACE_SAT_COS = 0.8660254f;
+constexpr float SPACE_SAT_SIN = 0.5f;
+constexpr int SPACE_EYE_SIZE = 32; // NOTIF_EYE_SIZE * 0.8
+constexpr int SPACE_EYE_GAP = 13;
+constexpr int SPACE_EYE_Y = NOTIF_EYE_Y + (NOTIF_EYE_SIZE - SPACE_EYE_SIZE) / 2; // same centre line as the usual eyes
+constexpr int SPACE_EYE_FOLLOW_PX = 8;
+
+// Kept out of the eyes' box (x ~27-133 once they slide, y 34-66) and above
+// the message.
+constexpr int SPACE_STAR_COUNT = 12;
+constexpr int SPACE_STARS[SPACE_STAR_COUNT][2] = {
+    {6, 6}, {24, 22}, {52, 3}, {96, 14}, {124, 4}, {150, 24},
+    {10, 44}, {148, 48}, {16, 74}, {140, 82}, {60, 84}, {104, 80},
+};
+
+// What the untilted satellite has at local point (lx, ly), centre at 0,0:
+// a body, two solar-panel wings on short arms with background cell
+// dividers (a plain bar would read as a stick, not as panels), and an
+// antenna whose tip is the beacon.
+enum class SatPixel : uint8_t { NONE, INK, GAP, BEACON };
+
+SatPixel satellitePixelAt(float lx, float ly) {
+    float ax = lx < 0 ? -lx : lx;
+    float ay = ly < 0 ? -ly : ly;
+    if (ax < 4.0f && ay < 4.0f) return SatPixel::INK;                    // body
+    if (ax < 7.0f && ay < 1.0f) return SatPixel::INK;                    // arms
+    if (ax >= 7.0f && ax < 18.0f && ay < 3.0f) {                         // wings
+        float cell = ax - 7.0f;
+        if ((cell >= 3.0f && cell < 4.0f) || (cell >= 7.0f && cell < 8.0f)) return SatPixel::GAP;
+        return SatPixel::INK;
+    }
+    if (lx >= 0.0f && lx < 1.0f && ly >= -8.0f && ly < -4.0f) return SatPixel::INK; // antenna
+    if (lx >= -1.0f && lx < 2.0f && ly >= -10.0f && ly < -8.0f) return SatPixel::BEACON;
+    return SatPixel::NONE;
+}
+
+// Rasterized by inverse mapping: every screen pixel in the bounding box is
+// rotated back into the satellite's own frame and looked up there, which
+// can't leave holes the way rotating each shape pixel forward would. Each
+// row is emitted as horizontal runs of one colour, so a frame costs a few
+// dozen fillRects rather than one per pixel.
+void drawSatellite(IDisplay& display, int cx, int cy, unsigned long nowMs, const NotificationPalette& p) {
+    bool beaconOn = notifBlinkDotOn(nowMs);
+    for (int y = cy - SPACE_SAT_RADIUS; y <= cy + SPACE_SAT_RADIUS; y++) {
+        int runStart = 0;
+        SatPixel runKind = SatPixel::NONE;
+        for (int x = cx - SPACE_SAT_RADIUS; x <= cx + SPACE_SAT_RADIUS + 1; x++) {
+            SatPixel kind = SatPixel::NONE;
+            if (x <= cx + SPACE_SAT_RADIUS) {
+                float dx = (float)x + 0.5f - (float)cx;
+                float dy = (float)y + 0.5f - (float)cy;
+                // Inverse of a counter-clockwise (right wing up) screen tilt.
+                float lx = dx * SPACE_SAT_COS - dy * SPACE_SAT_SIN;
+                float ly = dx * SPACE_SAT_SIN + dy * SPACE_SAT_COS;
+                kind = satellitePixelAt(lx, ly);
+                if (kind == SatPixel::BEACON && !beaconOn) kind = SatPixel::NONE;
+            }
+            if (kind != runKind) {
+                if (runKind == SatPixel::INK) {
+                    display.fillRect(runStart, y, x - runStart, 1, p.inkR, p.inkG, p.inkB);
+                } else if (runKind == SatPixel::GAP) {
+                    display.fillRect(runStart, y, x - runStart, 1, p.bgR, p.bgG, p.bgB);
+                } else if (runKind == SatPixel::BEACON) {
+                    display.fillRect(runStart, y, x - runStart, 1, p.textR, p.textG, p.textB);
+                }
+                runStart = x;
+                runKind = kind;
+            }
+        }
+    }
+}
+
+void drawSpaceNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
+                           float openFactor, bool withSatellite) {
+    // Each star blinks off briefly on its own period, so the sky twinkles
+    // unevenly instead of pulsing as one; every third one is a small cross.
+    for (int i = 0; i < SPACE_STAR_COUNT; i++) {
+        unsigned long period = 1300 + (unsigned long)i * 170;
+        if ((state.nowMs + (unsigned long)i * 577) % period < 160) {
+            continue;
+        }
+        int sx = SPACE_STARS[i][0];
+        int sy = SPACE_STARS[i][1];
+        display.fillRect(sx, sy, 1, 1, p.textR, p.textG, p.textB);
+        if (i % 3 == 0) {
+            display.fillRect(sx - 1, sy, 3, 1, p.textR, p.textG, p.textB);
+            display.fillRect(sx, sy - 1, 1, 3, p.textR, p.textG, p.textB);
+        }
+    }
+
+    // From the notification's own start, so the first pass always enters
+    // from the left edge instead of popping up mid-sky.
+    unsigned long t = (state.nowMs - state.notificationStartedMs) % SPACE_PASS_CYCLE_MS;
+    int eyeDx;
+    if (!withSatellite) {
+        eyeDx = 0; // SPACE: just the starry sky, nothing to follow
+    } else if (t < SPACE_PASS_TRAVEL_MS) {
+        float u = (float)t / (float)SPACE_PASS_TRAVEL_MS;
+        int startX = -SPACE_SAT_RADIUS;
+        int endX = display.width() + SPACE_SAT_RADIUS;
+        int satX = startX + (int)(u * (float)(endX - startX));
+        float edge = 2.0f * u - 1.0f;
+        int satY = SPACE_SAT_TOP_Y + (int)((float)(SPACE_SAT_EDGE_Y - SPACE_SAT_TOP_Y) * edge * edge);
+        drawSatellite(display, satX, satY, state.nowMs, p);
+
+        eyeDx = (satX - display.width() / 2) / 8;
+    } else {
+        // Satellite gone: the eyes drift back to the left edge, where the
+        // next pass will come in, rather than snapping there.
+        float u = (float)(t - SPACE_PASS_TRAVEL_MS) / (float)(SPACE_PASS_CYCLE_MS - SPACE_PASS_TRAVEL_MS);
+        eyeDx = SPACE_EYE_FOLLOW_PX - (int)(u * 2.0f * SPACE_EYE_FOLLOW_PX);
+    }
+    if (eyeDx > SPACE_EYE_FOLLOW_PX) eyeDx = SPACE_EYE_FOLLOW_PX;
+    if (eyeDx < -SPACE_EYE_FOLLOW_PX) eyeDx = -SPACE_EYE_FOLLOW_PX;
+
+    drawNotificationEyes(display, display.width() / 2 + eyeDx, SPACE_EYE_Y,
+                         SPACE_EYE_SIZE, SPACE_EYE_GAP, openFactor,
+                         p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
+}
+
 void drawNotificationScreen(IDisplay& display, const FaceState& state) {
     NotificationPalette p = notificationPalette(state);
 
@@ -3943,8 +4130,12 @@ void drawNotificationScreen(IDisplay& display, const FaceState& state) {
         drawReportNotification(display, state, p, 1.0f - state.blinkAmount);
     } else if (state.expression == Expression::SWEATING) {
         drawSweatingNotification(display, state, p, 1.0f - state.blinkAmount);
+    } else if (state.expression == Expression::SATELLITE) {
+        drawSpaceNotification(display, state, p, 1.0f - state.blinkAmount, true);
+    } else if (state.expression == Expression::SPACE) {
+        drawSpaceNotification(display, state, p, 1.0f - state.blinkAmount, false);
     } else {
-        // Any notification without artwork of its own: just MiMo, blinking,
+        // Any notification without artwork of its own: just Peemo, blinking,
         // with the message below. There is deliberately no placeholder
         // graphic — an empty frame said nothing and only raised the
         // question of what it was supposed to be.
@@ -3977,10 +4168,10 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // simultaneous SLEEPING dims the theme's own green rather than dimming
     // straight past it back to the normal teal.
     bool isMatrix = state.theme == Theme::MATRIX;
-    bool isMi2Mo2 = state.theme == Theme::MI2MO2;
-    bool isMi84 = state.theme == Theme::MI84;
+    bool isP2M2 = state.theme == Theme::P2M2;
+    bool isPeemo84 = state.theme == Theme::PEEMO84;
 
-    // A notification owns the entire frame and outranks everything, MI84's
+    // A notification owns the entire frame and outranks everything, PEEMO84's
     // boot sequence included — it is the top tier by definition (see
     // Personality::Tier), so it short-circuits before any of the normal
     // face/theme composition below. Nothing needs restoring afterwards:
@@ -3991,54 +4182,54 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         return;
     }
 
-    // MI84's boot sequence owns the whole frame while it runs, so it
+    // PEEMO84's boot sequence owns the whole frame while it runs, so it
     // short-circuits everything below rather than being layered over it.
     // Drawn on rawDisplay: none of the decorators apply to a POST screen.
-    unsigned long mi84Elapsed = state.nowMs - state.themeStartedMs;
-    if (isMi84 && mi84Elapsed < MI84_BOOT_END_MS) {
-        drawMi84Boot(rawDisplay, mi84Elapsed);
+    unsigned long peemo84Elapsed = state.nowMs - state.themeStartedMs;
+    if (isPeemo84 && peemo84Elapsed < PEEMO84_BOOT_END_MS) {
+        drawPeemo84Boot(rawDisplay, peemo84Elapsed);
         return;
     }
 
     RecoloringDisplay recolored(rawDisplay, MATRIX_R, MATRIX_G, MATRIX_B);
     IDisplay& themed = isMatrix ? static_cast<IDisplay&>(recolored) : rawDisplay;
-    // MI2MO2 opts out of the whole-frame sleep dimming: there, SLEEPING is
-    // specifically "the eye's light goes out" (see mi2mo2BlinkDim below)
+    // P2M2 opts out of the whole-frame sleep dimming: there, SLEEPING is
+    // specifically "the eye's light goes out" (see p2m2BlinkDim below)
     // with the blue plate, badges and message staying at full strength —
     // dimming everything would blur that into a generic faded frame.
     DimmingDisplay dimmed(themed, SLEEP_DIM_FACTOR);
-    IDisplay& display = (state.expression == Expression::SLEEPING && !isMi2Mo2) ? static_cast<IDisplay&>(dimmed) : themed;
+    IDisplay& display = (state.expression == Expression::SLEEPING && !isP2M2) ? static_cast<IDisplay&>(dimmed) : themed;
 
     // CLASSIC's own primary color (see ClassicColor in Face.h) — resolved
     // once here and threaded into the same places EYE_R/G/B used to be
-    // hardcoded, exactly like MI2MO2/MI84's own inks just below. Harmless
-    // to resolve even outside CLASSIC: isMi2Mo2/isMi84 always win the
+    // hardcoded, exactly like P2M2/PEEMO84's own inks just below. Harmless
+    // to resolve even outside CLASSIC: isP2M2/isPeemo84 always win the
     // ternaries there, so this is simply unused on every other theme.
     uint8_t classicR, classicG, classicB;
     classicColorRGB(state.classicColor, classicR, classicG, classicB);
 
-    // MI2MO2 doesn't get a global RecoloringDisplay like MATRIX — only the
+    // P2M2 doesn't get a global RecoloringDisplay like MATRIX — only the
     // eyes and the message text change color, everything else (badges,
     // corner icons, message box) stays exactly CLASSIC — so the eye color
     // is just a plain variable threaded into the eye-drawing calls below.
-    uint8_t eyeR = isMi2Mo2 ? MI2MO2_BADGE_R : (isMi84 ? MI84_INK_R : classicR);
-    uint8_t eyeG = isMi2Mo2 ? MI2MO2_BADGE_G : (isMi84 ? MI84_INK_G : classicG);
-    uint8_t eyeB = isMi2Mo2 ? MI2MO2_BADGE_B : (isMi84 ? MI84_INK_B : classicB);
+    uint8_t eyeR = isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR);
+    uint8_t eyeG = isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG);
+    uint8_t eyeB = isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB);
 
-    // MI84 keeps MATRIX's eye geometry and shapes but carries two things in
+    // PEEMO84 keeps MATRIX's eye geometry and shapes but carries two things in
     // *brightness* that the other themes express some other way: the lamp
     // striking to life in the moments after the boot sequence, and - in
     // place of MATRIX's glitch bands - an irregular THINKING flicker
-    // borrowed wholesale from MI2MO2's logic-display lamp. Reusing
-    // mi2Mo2ThinkingDim rather than writing a second stutter is deliberate:
-    // it isn't really MI2MO2-specific, just the one place that needed it
+    // borrowed wholesale from P2M2's logic-display lamp. Reusing
+    // p2m2ThinkingDim rather than writing a second stutter is deliberate:
+    // it isn't really P2M2-specific, just the one place that needed it
     // first, and both themes want exactly the same restless rhythm.
-    if (isMi84) {
+    if (isPeemo84) {
         // Safe unsigned arithmetic: the boot early-return above guarantees
-        // mi84Elapsed >= MI84_BOOT_END_MS by the time execution gets here.
+        // peemo84Elapsed >= PEEMO84_BOOT_END_MS by the time execution gets here.
         float lamp = (state.expression == Expression::THINKING)
-            ? mi2Mo2ThinkingDim(state.nowMs)
-            : mi84LampLevel(mi84Elapsed - MI84_BOOT_END_MS);
+            ? p2m2ThinkingDim(state.nowMs)
+            : peemo84LampLevel(peemo84Elapsed - PEEMO84_BOOT_END_MS);
         eyeR = (uint8_t)(eyeR * lamp);
         eyeG = (uint8_t)(eyeG * lamp);
         eyeB = (uint8_t)(eyeB * lamp);
@@ -4046,20 +4237,20 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
 
     // The expression corner icons (music note, play triangle, book,
     // gamepad, coffee cup, sleeping "Z Z Z") get their own color rather
-    // than sharing the badges' — in MI2MO2 the weather/clock badges are
+    // than sharing the badges' — in P2M2 the weather/clock badges are
     // navy so they read as printed onto the plate, while these icons are
     // transient status lights and stay the theme's red, matching the logic
     // display. Every other theme uses one color for both, as before.
-    // MI84 suppresses every one of these except COFFEE's cup (see the icon
+    // PEEMO84 suppresses every one of these except COFFEE's cup (see the icon
     // block further down), so in practice this only colors that cup - but
     // it has to be the theme's amber all the same: left on CLASSIC's teal,
     // the one icon this theme does draw came out as the single non-amber
     // thing on an otherwise monochrome terminal.
-    uint8_t iconR = isMi2Mo2 ? MI2MO2_LOGIC_R : (isMi84 ? MI84_INK_R : classicR);
-    uint8_t iconG = isMi2Mo2 ? MI2MO2_LOGIC_G : (isMi84 ? MI84_INK_G : classicG);
-    uint8_t iconB = isMi2Mo2 ? MI2MO2_LOGIC_B : (isMi84 ? MI84_INK_B : classicB);
+    uint8_t iconR = isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR);
+    uint8_t iconG = isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG);
+    uint8_t iconB = isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB);
 
-    bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix && !isMi84;
+    bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix && !isPeemo84;
 
     bool isCoffee = state.expression == Expression::COFFEE;
 
@@ -4068,20 +4259,20 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // MONITOR tab already shows the same figures (see drawMatrixMonitor).
     // Resolved before the geometry below because CLASSIC's eyes have to move
     // out of the way of the taller box, so both need the same answer.
-    // MI84 is excluded for the same reason MATRIX is: its MONITOR tab
-    // already shows these figures, as bars (see drawMi84Monitor).
-    bool showStatsBox = state.hasStats && state.expression == Expression::PLAYING && !isMatrix && !isMi84;
-    // Only CLASSIC rearranges: MI2MO2 keeps its plate exactly as it is and
+    // PEEMO84 is excluded for the same reason MATRIX is: its MONITOR tab
+    // already shows these figures, as bars (see drawPeemo84Monitor).
+    bool showStatsBox = state.hasStats && state.expression == Expression::PLAYING && !isMatrix && !isPeemo84;
+    // Only CLASSIC rearranges: P2M2 keeps its plate exactly as it is and
     // simply gets a shorter box that clears the lens (see STATS_BOX_LINES_*).
-    bool gameEyes = showStatsBox && !isMi2Mo2;
+    bool gameEyes = showStatsBox && !isP2M2;
 
-    // MI84 shares MATRIX's small bottom-pinned eyes exactly - same
+    // PEEMO84 shares MATRIX's small bottom-pinned eyes exactly - same
     // constants, not a copy - which is also why Personality filters its
     // look-around pool with the same LOOK_DIRECTIONS_NO_DOWN.
-    bool bottomPinnedEyes = isMatrix || isMi84;
+    bool bottomPinnedEyes = isMatrix || isPeemo84;
     // BYE needs the lower half of the frame for the hands, so it lifts and
     // shrinks the eyes — but only where the theme has not already claimed
-    // that decision (MATRIX/MI84 pin them to the bottom; COFFEE pins them
+    // that decision (MATRIX/PEEMO84 pin them to the bottom; COFFEE pins them
     // left), same precedence order the geometry below already follows.
     bool byeEyes = state.expression == Expression::BYE && !isCoffee && !bottomPinnedEyes;
     int eyeSize = isCoffee ? COFFEE_EYE_SIZE
@@ -4114,7 +4305,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     }
     int eyeTop = eyeY + (eyeSize - eyeHeight) / 2;
 
-    // MI2MO2's lens and logic display. Unlike every other theme, the eye
+    // P2M2's lens and logic display. Unlike every other theme, the eye
     // here is a fixed black lens that carries no expression at all: it only
     // blinks (squashing vertically, revealing the navy panel behind) and
     // shows a travelling glint for look-around. Everything expressive —
@@ -4126,31 +4317,31 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // normal throw (see Personality.cpp's LOOK_OFFSET_X/Y_PX) — the full
     // throw is tuned for sliding whole eyes across a 160x128 frame and
     // would carry the reflection clean off the lens.
-    int mi2mo2GlintDx = (int)(state.lookOffsetX * MI2MO2_GLINT_SHIFT_SCALE);
-    int mi2mo2GlintDy = (int)(state.lookOffsetY * MI2MO2_GLINT_SHIFT_SCALE);
+    int p2m2GlintDx = (int)(state.lookOffsetX * P2M2_GLINT_SHIFT_SCALE);
+    int p2m2GlintDy = (int)(state.lookOffsetY * P2M2_GLINT_SHIFT_SCALE);
 
-    //   THINKING  lamp stutters irregularly (mi2Mo2ThinkingDim)
-    //   FAILED    three vivid-red flashes, then holds lit (mi2Mo2ErrorDim)
+    //   THINKING  lamp stutters irregularly (p2m2ThinkingDim)
+    //   FAILED    three vivid-red flashes, then holds lit (p2m2ErrorDim)
     //   FINISHED  lamp turns green
     //   SLEEPING  lamp off
     //   everything else: resting red, blinking off and back on
     // The ordinary blink is the lamp's baseline brightness, since the lens
-    // is a fixed black disc that can't close (see drawMi2Mo2Lens). THINKING,
+    // is a fixed black disc that can't close (see drawP2M2Lens). THINKING,
     // FAILED and SLEEPING each replace that baseline outright rather than
     // multiplying into it — their own timing is the whole point, and a
     // blink cutting across it would just read as a dropped frame.
-    float mi2mo2LampDim = 1.0f - state.blinkAmount;
-    uint8_t mi2mo2LampR = MI2MO2_LOGIC_R, mi2mo2LampG = MI2MO2_LOGIC_G, mi2mo2LampB = MI2MO2_LOGIC_B;
+    float p2m2LampDim = 1.0f - state.blinkAmount;
+    uint8_t p2m2LampR = P2M2_LOGIC_R, p2m2LampG = P2M2_LOGIC_G, p2m2LampB = P2M2_LOGIC_B;
 
     if (state.expression == Expression::THINKING) {
-        mi2mo2LampDim = mi2Mo2ThinkingDim(state.nowMs);
+        p2m2LampDim = p2m2ThinkingDim(state.nowMs);
     } else if (state.expression == Expression::FAILED) {
-        mi2mo2LampDim = mi2Mo2ErrorDim(state.nowMs - state.expressionStartedMs);
-        mi2mo2LampR = MI2MO2_ERROR_R; mi2mo2LampG = MI2MO2_ERROR_G; mi2mo2LampB = MI2MO2_ERROR_B;
+        p2m2LampDim = p2m2ErrorDim(state.nowMs - state.expressionStartedMs);
+        p2m2LampR = P2M2_ERROR_R; p2m2LampG = P2M2_ERROR_G; p2m2LampB = P2M2_ERROR_B;
     } else if (state.expression == Expression::FINISHED) {
-        mi2mo2LampR = MI2MO2_DONE_R; mi2mo2LampG = MI2MO2_DONE_G; mi2mo2LampB = MI2MO2_DONE_B;
+        p2m2LampR = P2M2_DONE_R; p2m2LampG = P2M2_DONE_G; p2m2LampB = P2M2_DONE_B;
     } else if (state.expression == Expression::SLEEPING) {
-        mi2mo2LampDim = 0.0f;
+        p2m2LampDim = 0.0f;
     }
 
     // Dancing to the music: both eyes sway together through a left-up-right
@@ -4168,17 +4359,17 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         rightX += (int)(READING_SWEEP_X_PX * s);
     }
 
-    if (isMi2Mo2) {
-        // MI2MO2 draws the same three things for every expression — plate,
+    if (isP2M2) {
+        // P2M2 draws the same three things for every expression — plate,
         // lens, logic display — in that back-to-front order. There's
         // deliberately no per-expression eye *shape* here (no X, no caret,
         // no glitch bands): those all assume a pair of eyes, and this theme
         // has one fixed black lens. What varies per expression is only the
         // logic display's color and brightness, resolved above. None of the
         // twin-eye leftX/rightX/eyeTop geometry is touched by this branch.
-        drawMi2Mo2Plate(display);
-        drawMi2Mo2Lens(display, mi2mo2GlintDx, mi2mo2GlintDy);
-        drawMi2Mo2LogicDisplay(display, mi2mo2LampR, mi2mo2LampG, mi2mo2LampB, mi2mo2LampDim);
+        drawP2M2Plate(display);
+        drawP2M2Lens(display, p2m2GlintDx, p2m2GlintDy);
+        drawP2M2LogicDisplay(display, p2m2LampR, p2m2LampG, p2m2LampB, p2m2LampDim);
     } else if (state.expression == Expression::FAILED) {
         drawEyeX(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
         drawEyeX(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
@@ -4188,8 +4379,8 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         // still.
         drawEyeCaret(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
         drawEyeCaret(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
-    } else if (state.expression == Expression::THINKING && !isMi84) {
-        // MI84 deliberately falls through to the plain drawEye below: there,
+    } else if (state.expression == Expression::THINKING && !isPeemo84) {
+        // PEEMO84 deliberately falls through to the plain drawEye below: there,
         // THINKING is carried by the eyes' flicker (see the lamp block
         // above) and the ">THINKING_" prompt line, so glitch bands on top
         // would be a third simultaneous signal for one state.
@@ -4201,11 +4392,11 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         // White in CLASSIC so it stands apart from the eyes whatever
         // CLASSICCOLOR is (blue eyes + a blue drop would merge); the
         // theme's own single ink everywhere else (MATRIX's recolor would
-        // flatten it to green regardless). Not in MI2MO2 — that branch
+        // flatten it to green regardless). Not in P2M2 — that branch
         // above owns the whole face and has no twin eyes to sweat beside.
-        uint8_t dropR = isMi84 ? eyeR : MSG_R;
-        uint8_t dropG = isMi84 ? eyeG : MSG_G;
-        uint8_t dropB = isMi84 ? eyeB : MSG_B;
+        uint8_t dropR = isPeemo84 ? eyeR : MSG_R;
+        uint8_t dropG = isPeemo84 ? eyeG : MSG_G;
+        uint8_t dropB = isPeemo84 ? eyeB : MSG_B;
         drawSweatDrop(display, rightX + eyeSize + 3, eyeTop + worriedSlantPx(eyeHeight),
                       (int)(eyeSize * 0.7f), state.nowMs, dropR, dropG, dropB);
     } else {
@@ -4225,20 +4416,20 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // shrunk into the top-left corner for no visible reason, a real bug,
     // fixed once. The weather/clock badges are a separate fixed strip above
     // this range and stay on below, same as CLASSIC.
-    // MI2MO2 drops two of these icons: SLEEPING's "Z Z Z" (there, sleeping
+    // P2M2 drops two of these icons: SLEEPING's "Z Z Z" (there, sleeping
     // is just the eye's light going out — a snoring cartoon on top of that
     // fights the "powered down" read) and COFFEE's cup (a break reminder
     // there is message-only, no animation). Both per an explicit design
     // call, not a layout constraint. Its remaining icons — music note, play
     // triangle, book, gamepad — still draw, in the theme's red.
-    bool mi2mo2SuppressesIcon = isMi2Mo2
+    bool p2m2SuppressesIcon = isP2M2
         && (state.expression == Expression::SLEEPING || state.expression == Expression::COFFEE);
 
-    // MI84 suppresses these on the same grounds MATRIX does - the
+    // PEEMO84 suppresses these on the same grounds MATRIX does - the
     // information is already in its log, and the icons' Y range collides
     // with the content area - with the same COFFEE exception, for the same
     // reason: COFFEE repositions the eyes for its cup regardless of theme.
-    if (((!isMatrix && !isMi84) || state.expression == Expression::COFFEE) && !mi2mo2SuppressesIcon) {
+    if (((!isMatrix && !isPeemo84) || state.expression == Expression::COFFEE) && !p2m2SuppressesIcon) {
         if (state.expression == Expression::SLEEPING) {
             drawSleepZzz(display, rightX, eyeSize, eyeTop, state.nowMs, iconR, iconG, iconB);
         } else if (state.expression == Expression::MUSIC) {
@@ -4272,7 +4463,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     }
 
     // The hand, in whatever colour the active theme gives the eyes — teal in
-    // CLASSIC, green in MATRIX, navy in MI2MO2, amber in MI84. Drawn after
+    // CLASSIC, green in MATRIX, navy in P2M2, amber in PEEMO84. Drawn after
     // the eyes so a wave that swings wide passes in front of them rather
     // than being clipped by them.
     if (state.expression == Expression::BYE) {
@@ -4280,16 +4471,16 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     }
 
     if (showStatsBox) {
-        drawStatsMessage(display, state, isMi2Mo2 ? STATS_BOX_LINES_MI2MO2 : STATS_BOX_LINES_CLASSIC, !isMi2Mo2);
+        drawStatsMessage(display, state, isP2M2 ? STATS_BOX_LINES_P2M2 : STATS_BOX_LINES_CLASSIC, !isP2M2);
     } else if (hasMessage) {
-        if (isMi2Mo2) {
-            // Same dark box / light text as CLASSIC: MI2MO2's plate is
+        if (isP2M2) {
+            // Same dark box / light text as CLASSIC: P2M2's plate is
             // already light, so the earlier near-white bubble blended
             // straight into it. Only the Aurebesh typing effect is
-            // MI2MO2's own here (see drawWrappedMessageMi2Mo2).
+            // P2M2's own here (see drawWrappedMessageP2M2).
             drawMessageBox(display, MSG_BOX_R, MSG_BOX_G, MSG_BOX_B);
-            drawWrappedMessageMi2Mo2(display, state.message,
-                                     MI2MO2_MSG_ALIEN_R, MI2MO2_MSG_ALIEN_G, MI2MO2_MSG_ALIEN_B,
+            drawWrappedMessageP2M2(display, state.message,
+                                     P2M2_MSG_ALIEN_R, P2M2_MSG_ALIEN_G, P2M2_MSG_ALIEN_B,
                                      MSG_R, MSG_G, MSG_B,
                                      state.messageTypingStartedMs, state.nowMs);
         } else {
@@ -4360,17 +4551,18 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // functions' comment above for why they don't share the expression
     // icons' spot. Unlike those icons, MATRIX doesn't suppress these: Hora/
     // Clima stay fixed at the top exactly as in CLASSIC.
-    // MI84 is the one theme that suppresses both: it prints the same two
-    // readings as a text status row instead (see drawMi84StatusLine), which
+    // PEEMO84 is the one theme that suppresses both: it prints the same two
+    // readings as a text status row instead (see drawPeemo84StatusLine), which
     // is what a terminal would do, and drawing the pictogram badges as well
     // would double them up in a strip its own header already occupies.
-    if (!isMi84) {
+    if (!isPeemo84) {
         if (state.hasWeather) {
             drawWeatherBadge(display, state.weatherTempC, state.weatherCondition, state.timeText, eyeR, eyeG, eyeB);
         }
         if (state.timeText != nullptr && state.timeText[0] != '\0') {
             drawClockBadge(display, state.timeText, eyeR, eyeG, eyeB);
         }
+        drawMoodBadge(display, state.mood, state.nowMs, eyeR, eyeG, eyeB);
     }
 
     // COFFEE's own eyes+cup layout (see isCoffee above) sits well inside the
@@ -4416,7 +4608,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         }
     }
 
-    // MI84's terminal chrome and its tab content, drawn last (on top) for
+    // PEEMO84's terminal chrome and its tab content, drawn last (on top) for
     // the same reason MATRIX's log is. COFFEE and BYE both skip the content
     // area — BYE's raised hands occupy y=58..90, which runs straight through
     // it, and since this block draws last the log would otherwise print over
@@ -4426,10 +4618,10 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // log - the content is left out for as long as the cup is up and comes
     // back on its own the instant COFFEE clears, with no state to track.
     // The header/status/tab rows sit above the cup and stay on throughout.
-    if (isMi84) {
-        drawMi84Chrome(display, state);
+    if (isPeemo84) {
+        drawPeemo84Chrome(display, state);
         if (state.expression != Expression::COFFEE && state.expression != Expression::BYE) {
-            drawMi84Content(display, state);
+            drawPeemo84Content(display, state);
         }
     }
 }

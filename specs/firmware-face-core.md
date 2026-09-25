@@ -7,8 +7,8 @@
   RGB once per frame and feeds the same variable into the eyes, the corner
   icons, the weather/clock badge, and a `DEFAULT` notification's ink — the
   places `EYE_R/G/B` used to be hardcoded directly. GREEN/AMBER deliberately
-  resolve to `MATRIX_R/G/B`/`MI84_INK_R/G/B` rather than getting new values
-  of their own, so picking "green" here reads as the same green MiMo already
+  resolve to `MATRIX_R/G/B`/`PEEMO84_INK_R/G/B` rather than getting new values
+  of their own, so picking "green" here reads as the same green Peemo already
   shows elsewhere), corners faked
   with a 2-row "staircase" background cut (not a true circle — keeps serial
   bandwidth down). Eye size/position stay constant whether or not a message is
@@ -21,7 +21,7 @@
   apex sits at the top with the strokes falling away, which is what a smiling
   eye does when the cheek pushes the lower lid up. The two share the shape and
   are told apart by motion: HAPPY bounces gently, FINISHED holds still.
-  **BYE** is the one expression where MiMo has a hand, waving by real
+  **BYE** is the one expression where Peemo has a hand, waving by real
   rotation about the wrist (see PROTOCOL.md). **FAILED** draws an X (`drawEyeX` — step half the block
   size, or the two diagonal strokes leave a gap exactly where they cross in the
   middle), **FINISHED** draws a "^" caret per eye (`drawEyeCaret`, self-centered in
@@ -33,7 +33,7 @@
   the right eye's outer corner that slides down with a `k²` gravity ease
   over 1.5s, hides for 0.4s, and loops off free-running `nowMs`. White in
   CLASSIC (so it never merges with a blue/teal CLASSICCOLOR), the theme ink
-  elsewhere, skipped in MI2MO2. It also has its own notification screen
+  elsewhere, skipped in P2M2. It also has its own notification screen
   (`drawSweatingNotification`) — unlike ANGRY/SAD, whose shape tweaks the
   generic notification fallback ignores. Added for Brobot.Sender's Alertas
   de desempenho (`NOTIFY SWEATING`). **READING** keeps normal eyes but sweeps them with a deliberately asymmetric
@@ -109,7 +109,7 @@
   omitted when Sender sent -1 for them — its Ferramentas de Dev card is
   off — see `reportHasDevTools`/`reportItemCount`; the remaining 6 items
   fit one page, which then simply stays up for the whole 10s): build success/fail counts, git
-  commit count (from `hooks/mimo-git-hook.ps1`'s `post-commit` hook, not a
+  commit count (from `hooks/peemo-git-hook.ps1`'s `post-commit` hook, not a
   Windows monitor), meeting/media/video/social/game time
   (`formatReportMinutes`, `"Xh20"`/`"Nmin"` — video (labeled "Youtube" on
   screen) and "Rede Social" are both subsets of media, specifically a

@@ -1,7 +1,7 @@
 # Sistema de notificações — o que falta
 
 Estado em 30/08/2026. O tier de notificação funciona ponta a ponta e o rosto
-do MiMo aparece em todas as notificações. As três fontes (Pausa, aviso de
+do Peemo aparece em todas as notificações. As três fontes (Pausa, aviso de
 dormir e Clima) já estão migradas. Itens 1 a 4 e 10 já foram resolvidos e
 ficam registrados por causa do que ensinaram; o que resta de verdade começa
 no item 5, mais a arte das condições de clima que ainda não têm (item 2).
@@ -19,7 +19,7 @@ de `Personality::Tier` em `BrobotCore/include/Personality.h`.
 - Expira sozinha em 10s (`NOTIFICATION_DURATION_MS`) e o que estava embaixo
   reaparece sem nenhum reenvio, porque nenhum tier inferior é tocado.
 - Tela dedicada: frame inteiro, sem selos, sem log, sem balão — mas **com o
-  rosto do MiMo sempre visível**. Segue a paleta do tema ativo
+  rosto do Peemo sempre visível**. Segue a paleta do tema ativo
   (`notificationPalette`).
 - `SLEEPY` tem animação própria (cochila, acorda de susto, pisca).
 - `GAME` separado de `MEDIA`, com `FACE IDLE_GAME` / `FACE IDLE_MEDIA`
@@ -37,14 +37,14 @@ Verificado com 11/11 checagens no protocolo cru contra o Core nativo, e
 ## 1. ~~Vazados pretos em fundo claro~~ (resolvido)
 
 Era mais fundo do que parecia. `drawCoffeeCupAt` pintava os recortes com
-`BG_R/G/B` (preto), o que quebrava no Mi2-Mo2, cujo fundo é a chapa clara do
+`BG_R/G/B` (preto), o que quebrava no P2-M2, cujo fundo é a chapa clara do
 R2 — a caneca saía com dois buracos pretos. Corrigido passando a cor de
 fundo como parâmetro.
 
 Ao colocar o rosto em todas as notificações, **a mesma classe de bug
 apareceu um nível abaixo**: `fillRoundedRect` recortava os cantos dos olhos
 também em preto, deixando quatro pontinhos escuros por olho sobre a chapa.
-Só surgiu agora porque o Mi2-Mo2 nunca tinha desenhado olhos gêmeos — ele
+Só surgiu agora porque o P2-M2 nunca tinha desenhado olhos gêmeos — ele
 desenha uma lente. Corrigido do mesmo jeito, com `BG_*` como valor padrão
 para todos os chamadores existentes não mudarem.
 
@@ -76,7 +76,7 @@ de nuvem cobrindo o sol, e com a mão espelhada do `BYE`. Sempre que uma cena
 nova tiver duas peças que precisam ler como separadas, ou elas não se tocam,
 ou uma delas precisa de um recorte de fundo em volta.
 
-Detalhe de composição que vale reaproveitar: o quanto o MiMo desloca para a
+Detalhe de composição que vale reaproveitar: o quanto o Peemo desloca para a
 esquerda depende do que a cena ocupa. O guarda-chuva pede uma coluna inteira
 (centro em x=44); o sol só o canto (x=70); sem cena, ele fica centralizado
 (x=80). Com ele centralizado o olho direito terminava em 113 e o primeiro
@@ -86,15 +86,15 @@ raio começava em 114 — não sobrepunha, mas 1px lê como espremido.
 
 O fallback era uma moldura arredondada vazia, que não representava nada e
 por isso não se entendia o que era. Foi removido inteiro. Agora **o rosto do
-MiMo aparece em toda notificação** e a arte extra é o opcional, não o
-contrário — então uma notificação sem ilustração própria mostra o MiMo
+Peemo aparece em toda notificação** e a arte extra é o opcional, não o
+contrário — então uma notificação sem ilustração própria mostra o Peemo
 piscando com a mensagem embaixo, que já se explica sozinho.
 
 Estado por expressão:
 
 - **`COFFEE`** — olhos à esquerda e acima da linha de repouso da xícara,
   que fica à direita com vapor, mensagem embaixo. A cada ~2,8s a xícara sobe
-  em direção ao rosto, segura e volta ao pires (o MiMo tomando um gole).
+  em direção ao rosto, segura e volta ao pires (o Peemo tomando um gole).
   A alça também foi corrigida: o recorte interno apagava a parede direita
   inteira, então ela era duas hastes sem nada fechando o laço.
 - **`SLEEPY`** — os olhos *são* a animação (ver item 4).
@@ -119,10 +119,10 @@ meio da queda, o que lê como falha e não como sono.
 Medido no protocolo: altura do olho 39 → 4 px na queda, salto para 44 px no
 susto (repouso é 39), e as três piscadas fechando em 14, 4 e 13 px.
 
-**Continua em aberto:** o painel `SYSTEM NOTICE` do MiMo-84
-(`drawMi84SleepNotice`) segue existindo para quando `SLEEPY` é a expressão
+**Continua em aberto:** o painel `SYSTEM NOTICE` do Peemo-84
+(`drawPeemo84SleepNotice`) segue existindo para quando `SLEEPY` é a expressão
 *fora* de uma notificação. Durante os 10s do nudge quem manda é a animação.
-Decidir se o painel do tema deveria ser a arte do MiMo-84 nessa notificação,
+Decidir se o painel do tema deveria ser a arte do Peemo-84 nessa notificação,
 em vez dos olhos genéricos.
 
 ## 5. Notificação não faz som
@@ -155,7 +155,7 @@ precisa de fila — pode ser aceitável.
 ## 8. Toda notificação vai para o log da aba IA
 
 `raiseNotification` chama `pushLogLine(text, LogTab::AI)`. Nos temas Matrix e
-MiMo-84 isso mistura Pausa, clima e bedtime com a atividade da IA na mesma
+Peemo-84 isso mistura Pausa, clima e bedtime com a atividade da IA na mesma
 aba. Funciona, mas polui. Alternativas: aba própria, ou não logar
 notificações.
 

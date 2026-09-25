@@ -1,5 +1,5 @@
 <!--
-    "MiMo Classic" — the original warm cream/tan look MiMo shipped with.
+    "Peemo Classic" — the original warm cream/tan look Peemo shipped with.
     Every color MainWindow/SettingsWindow render with lives here as a brush
     resource, referenced elsewhere via DynamicResource (never a literal hex
     or a StaticResource) so ThemeManager can swap the whole palette at

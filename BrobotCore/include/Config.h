@@ -78,11 +78,11 @@ constexpr unsigned long PONG_GAME_OVER_HOLD_MS = 4000;
 constexpr int RPG_MIN_ENEMIES = 2;
 constexpr int RPG_MAX_ENEMIES = 2;
 constexpr int RPG_ENEMY_MAX_HP = 50;
-constexpr int RPG_MIMO_MAX_HP = 100;
+constexpr int RPG_PEEMO_MAX_HP = 100;
 // Cura's heal roll, and every enemy's own attack roll.
 constexpr int RPG_DAMAGE_MIN = 1;
 constexpr int RPG_DAMAGE_MAX = 10; // inclusive
-// MiMo's own offensive actions (Atacar/Bola de Fogo) roll from this wider,
+// Peemo's own offensive actions (Atacar/Bola de Fogo) roll from this wider,
 // higher range instead — with 2 enemies at 50 HP each hitting back for
 // 1-10 every single round, matching that same range made a full battle drag
 // on far longer than a quick "anti-stress" break should. Cura still uses

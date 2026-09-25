@@ -155,100 +155,267 @@ public sealed class WeatherMonitor : IDisposable
 /// forget the umbrella" rather than a bare "the weather changed" — shown
 /// once by MainWindow.OnWeatherUpdated when a fresh reading's condition
 /// actually differs from the previous one, not on every 30-min poll.
-/// Deliberately accent-free, same convention as every other Core-bound
-/// message in this codebase (see mimo-claude-hook.ps1, Personality.cpp's
-/// BEDTIME_MESSAGES) — Font5x7 renders lowercase accents fine, but nothing
-/// else here uses them, so this doesn't either.
+/// Toned by Peemo's mood (see PeemoMood and specs/voice-guide.md): Clima is a
+/// reminder card, so every level still carries the actual heads-up — the
+/// mood only changes how it's said.
 /// </summary>
 public static class WeatherAlerts
 {
-    private static readonly Random Rng = new();
-
-    private static readonly Dictionary<WeatherCondition, string[]> Messages = new()
+    private static readonly Dictionary<WeatherCondition, MoodPhrases> Messages = new()
     {
-        [WeatherCondition.Rain] = new[]
+        [WeatherCondition.Rain] = new MoodPhrases
         {
-            "Vai sair? Nao esquece o guarda-chuva!",
-            "Ei, vai chover... leva uma capa ai",
-            "Psiu, hora de guarda-chuva, hein",
-            "Cuidado la fora, o chao deve ficar escorregadio",
-            "Vai molhar sim, se prepara!",
-            "Bora com o guarda-chuva na mochila, vai chover",
-            "Aviso de amigo: leva algo pra chuva",
-            "Ta vindo chuva, nao esquece de se agasalhar tambem",
-            "Se for sair, nao esquece o guarda-chuva, viu?",
-            "Chuva chegando, fica esperto pra nao se molhar",
+            Leve = new[]
+            {
+                "Vai chover! Guarda-chuva na mochila e tá tudo certo.",
+                "Vai sair? Não esquece o guarda-chuva!",
+                "Ei, vai chover... leva uma capa aí.",
+                "Psiu, hora de guarda-chuva, hein.",
+                "Chuva chegando! Cuidado que o chão fica escorregadio.",
+                "Aviso de amigo: leva algo pra chuva.",
+                "Vem chuva por aí, se for sair vai preparado.",
+                "Chuvinha a caminho, fica esperto pra não se molhar.",
+                "Vai molhar sim, se prepara!",
+                "Chuva chegando! Eu fico aqui sequinho, e você?",
+            },
+            Medio = new[]
+            {
+                "Chuva chegando bem na hora de ir embora, que timing.",
+                "Vai chover. Guarda-chuva ou coragem, escolhe um.",
+                "Chuva vindo aí. O trânsito já tá comemorando.",
+                "Vai chover, leva o guarda-chuva. Ou torce muito.",
+                "Chuva a caminho. Perfeito pra quem ainda vai sair.",
+                "Vem chuva. Se for sair, leva uma capa, sério.",
+                "Vai chover no fim do dia, clássico.",
+                "Chuva chegando. Hoje o dia resolveu terminar molhado.",
+                "Vai molhar lá fora. Aqui dentro eu garanto o seco.",
+                "Chuva por aí. Guarda-chuva na mão antes de sair.",
+            },
+            Acido = new[]
+            {
+                "Vai chover. Motivo perfeito pra não sair de perto de mim.",
+                "Chuva lá fora. Mais um motivo pra ir dormir.",
+                "Vai chover. Se for sair a essa hora, leva guarda-chuva.",
+                "Chuva chegando. Barulhinho bom pra dormir, só dizendo.",
+                "Vem chuva. Sair agora? Só se for muito necessário.",
+                "Chuva a caminho. Até a janela tá pedindo cama.",
+                "Vai chover. Cobertor, travesseiro, chuva. Pensa.",
+                "Chuva vindo. Quem sai a essa hora leva capa, no mínimo.",
+                "Vai molhar lá fora. E aqui dentro, só sono.",
+                "Chuva chegando. Nem o guarda-chuva quer sair agora.",
+            },
         },
-        [WeatherCondition.Storm] = new[]
+        [WeatherCondition.Storm] = new MoodPhrases
         {
-            "Opa, vem tempestade! Melhor ficar em casa se der",
-            "Cuidado, temporal a caminho, evita sair se possivel",
-            "Vem chuva forte, desliga os aparelhos por seguranca",
-            "Fica de olho, tempestade rondando por ai",
-            "Se puder, adia a saida... vem temporal",
-            "Trovoada a vista, se cuida ai fora",
-            "Melhor carregar tudo antes que a luz falte, vem tempestade",
-            "Segura essa: vem tempestade forte, fica atento",
-            "Vai ser feio la fora, tempestade chegando",
-            "Se for sair, cuidado com o vento, vem temporal",
+            Leve = new[]
+            {
+                "Opa, vem tempestade! Melhor ficar em casa se der.",
+                "Cuidado, temporal a caminho, evita sair se possível.",
+                "Vem chuva forte, desliga os aparelhos por segurança.",
+                "Fica de olho, tempestade rondando por aí.",
+                "Se puder, adia a saída... vem temporal.",
+                "Trovoada à vista, se cuida aí fora.",
+                "Carrega tudo antes que a luz falte, vem tempestade.",
+                "Vem tempestade forte, fica atento!",
+                "Vai ser feio lá fora, tempestade chegando.",
+                "Se for sair, cuidado com o vento, vem temporal.",
+            },
+            Medio = new[]
+            {
+                "Tempestade chegando. Se der, sai depois dela.",
+                "Vem temporal. Salva tudo antes que a luz resolva ir.",
+                "Tempestade a caminho. Boa hora pra não ir a lugar nenhum.",
+                "Vem temporal. Meus circuitos já tão tensos.",
+                "Trovoada vindo. Carrega o celular e fica na sua.",
+                "Tempestade chegando. Se puder, adia a volta pra casa.",
+                "Vem chuva forte. Salva o trabalho, só por garantia.",
+                "Tempestade por aí. Hoje o céu tá de mau humor.",
+                "Temporal vindo. Guarda-chuva nem adianta, fica abrigado.",
+                "Vem tempestade. Salva tudo, eu não gosto de apagão.",
+            },
+            Acido = new[]
+            {
+                "Tempestade chegando. Salva tudo antes do apagão.",
+                "Vem temporal. Hora perfeita pra desligar e dormir.",
+                "Tempestade a caminho. Eu não saio daqui, e você?",
+                "Trovoada vindo. Se a luz cair, eu não tenho culpa.",
+                "Vem tempestade. Salva o trabalho, eu não salvo nada.",
+                "Temporal chegando. Sair agora? Nem pensar.",
+                "Tempestade vindo. Carrega o celular e vai pra cama.",
+                "Vem chuva forte. Até eu queria um cobertor.",
+                "Tempestade por aí. Desliga tudo, inclusive você.",
+                "Temporal a caminho. Se piscar tudo, não fui eu.",
+            },
         },
-        [WeatherCondition.Snow] = new[]
+        [WeatherCondition.Snow] = new MoodPhrases
         {
-            "Vai nevar! Agasalha bem antes de sair",
-            "Frio de neve chegando, nao esquece o casaco",
-            "Fica quentinho ai, vai nevar",
-            "Vai sair? Bota luva e cachecol, ta nevando",
-            "Neve a caminho, cuidado com o gelo no chao",
-            "Se abriga direitinho, vai nevar",
-            "Ta friozinho de neve, se agasalha bem",
-            "Vem neve, esquenta esse coracao (e o corpo tambem)",
-            "Nao esquece as botas, vai nevar la fora",
-            "Fica em casa se puder, ta nevando bonito",
+            Leve = new[]
+            {
+                "Vai nevar! Agasalha bem antes de sair.",
+                "Frio de neve chegando, não esquece o casaco.",
+                "Fica quentinho aí, vai nevar.",
+                "Vai sair? Bota luva e cachecol, tá nevando.",
+                "Neve a caminho, cuidado com o gelo no chão.",
+                "Se abriga direitinho, vai nevar.",
+                "Tá friozinho de neve, se agasalha bem.",
+                "Vem neve! Casaco, gorro e chocolate quente.",
+                "Não esquece as botas, vai nevar lá fora.",
+                "Neve chegando! Eu nunca vi, me conta depois.",
+            },
+            Medio = new[]
+            {
+                "Vai nevar. Sim, eu também achei estranho.",
+                "Neve chegando. Casaco reforçado pra voltar pra casa.",
+                "Vem neve. Meus sensores tão confusos, mas tá aí.",
+                "Vai nevar. Agasalha que o fim do dia vai ser gelado.",
+                "Neve a caminho. Cuidado com o gelo na volta.",
+                "Vem neve. Luva, cachecol e paciência.",
+                "Vai nevar. Chocolate quente agora é obrigatório.",
+                "Neve chegando. O dia resolveu terminar em filme.",
+                "Frio de neve vindo. Casaco antes de sair, viu?",
+                "Vai nevar. Anota aí, isso não acontece todo dia.",
+            },
+            Acido = new[]
+            {
+                "Vai nevar. Motivo perfeito pra ficar debaixo da coberta.",
+                "Neve chegando. Sair agora é coisa de pinguim.",
+                "Vem neve. Se for sair, vai de casaco, e rápido.",
+                "Vai nevar. Até meus circuitos tão pedindo cobertor.",
+                "Neve a caminho. Cama quentinha ganhou fácil.",
+                "Vem frio de neve. Agasalha, e de preferência dorme.",
+                "Vai nevar. Eu não tenho casaco, só inveja.",
+                "Neve lá fora. Cuidado com o gelo se for sair mesmo.",
+                "Vem neve. Nem o boneco de neve quer sair agora.",
+                "Vai nevar. Noite perfeita pra não fazer mais nada.",
+            },
         },
-        [WeatherCondition.Cloudy] = new[]
+        [WeatherCondition.Cloudy] = new MoodPhrases
         {
-            "Vai ficar nublado, mas nada que te impeca de sair",
-            "Ceu meio cinza hoje, leva uma jaqueta leve",
-            "Nublou! Talvez de uma tregua no sol, aproveita",
-            "Vai ficar nublado, bom dia pra passear sem calor",
-            "Dia nublado chegando, clima bom pra ficar tranquilo",
-            "Sem sol forte hoje, mas fica de olho no tempo",
-            "Ceu fechou um pouco, nada grave por enquanto",
-            "Nublado por ai, leva um casaquinho por garantia",
-            "Tempo mudou pra nublado, dia mais ameno chegando",
-            "Ficou cinza o ceu, mas nada de chuva por enquanto",
+            Leve = new[]
+            {
+                "Vai ficar nublado, mas nada que te impeça de sair.",
+                "Céu meio cinza hoje, leva uma jaqueta leve.",
+                "Nublou! Uma trégua do sol, aproveita.",
+                "Vai ficar nublado, bom pra passear sem calor.",
+                "Dia nublado chegando, clima bom pra ficar tranquilo.",
+                "Sem sol forte agora, mas fica de olho no tempo.",
+                "Céu fechou um pouco, nada grave por enquanto.",
+                "Nublado por aí, leva um casaquinho por garantia.",
+                "Tempo virou pra nublado, tarde mais amena chegando.",
+                "Ficou cinza o céu, mas nada de chuva por enquanto.",
+            },
+            Medio = new[]
+            {
+                "Nublou. O céu também tá com cara de fim de dia.",
+                "Céu cinza chegando. Combina com o cansaço.",
+                "Vai ficar nublado. Leva um casaco pra volta.",
+                "Nublado lá fora. Pelo menos o sol não tá te cozinhando.",
+                "Céu fechou. Nada de chuva, só um clima de sofá.",
+                "Nublou. Meus sensores de luz agradecem.",
+                "Tempo nublado. Casaquinho na volta pra casa, viu?",
+                "Ficou cinza. O dia resolveu terminar discreto.",
+                "Vai ficar nublado. Nem sol, nem chuva, só preguiça.",
+                "Céu nublado chegando. Bom pra um café quente.",
+            },
+            Acido = new[]
+            {
+                "Nublou. Como se desse pra ver o céu a essa hora.",
+                "Vai ficar nublado. Nada de estrela pra olhar, cama então.",
+                "Céu fechou. Mais uma desculpa pra ir dormir.",
+                "Nublado lá fora. Aqui dentro, nublado de sono.",
+                "Vai nublar. Leva um casaco se for sair agora.",
+                "Céu cinza. Nem a lua quis ficar acordada.",
+                "Nublou. Até o tempo já foi dormir.",
+                "Ficou nublado. Esfriou, o cobertor tá chamando.",
+                "Vai ficar nublado. Nada pra ver lá fora mesmo.",
+                "Céu fechado. Hora de fechar os olhos também.",
+            },
         },
-        [WeatherCondition.Clear] = new[]
+        [WeatherCondition.Clear] = new MoodPhrases
         {
-            "Vai fazer sol! Nao esquece o protetor solar",
-            "Sol chegando, leva agua pra se hidratar",
-            "Dia de sol! Bota o oculos escuro ai",
-            "Ta abrindo o tempo, aproveita pra tomar um solzinho",
-            "Vai fazer sol, boa desculpa pra sair um pouco",
-            "Sol a vista, nao esquece o bone",
-            "Ceu limpou! Otimo dia pra dar uma volta",
-            "Fazendo sol la fora, se hidrata bem",
-            "Abriu o sol, aproveita o dia bonito",
-            "Vai fazer sol, mas nao esquece de se cuidar do calor",
+            Leve = new[]
+            {
+                "Vai fazer sol! Não esquece o protetor solar.",
+                "Sol chegando, leva água pra se hidratar.",
+                "Dia de sol! Bota o óculos escuro aí.",
+                "Tá abrindo o tempo, aproveita um solzinho.",
+                "Vai fazer sol, boa desculpa pra sair um pouco.",
+                "Sol à vista, não esquece o boné.",
+                "Céu limpou! Dia bom pra dar uma volta.",
+                "Fazendo sol lá fora, se hidrata bem.",
+                "Abriu o sol, aproveita o dia bonito.",
+                "Sol chegando! Eu fico aqui na sombra, relaxa.",
+            },
+            Medio = new[]
+            {
+                "Abriu o sol. Justo agora que o dia tá acabando.",
+                "Céu limpo. O pôr do sol deve ficar bonito, hein.",
+                "Sol apareceu. Antes tarde do que nunca.",
+                "Tempo abriu. Vale uma volta antes de escurecer.",
+                "Céu limpou. Um copo d'água e bora pra reta final.",
+                "Sol lá fora, você aqui dentro. Clássico.",
+                "Abriu o tempo. Hoje o céu decidiu colaborar.",
+                "Céu limpo chegando. A volta pra casa vai ser boa.",
+                "Sol por aí. Se for sair, óculos escuros.",
+                "Tempo firme. Pelo menos a volta pra casa é seca.",
+            },
+            Acido = new[]
+            {
+                "Céu limpo. Dá pra ver as estrelas, e a cama também.",
+                "Tempo abriu. Noite estrelada, tipo convite pra dormir.",
+                "Céu limpou. Lua bonita lá fora, você preso aqui.",
+                "Tempo firme. Amanhã deve ter sol, se você acordar.",
+                "Céu aberto. Até as estrelas já tão de plantão.",
+                "Abriu o céu. Noite boa pra olhar pra cima e ir deitar.",
+                "Céu limpinho. Esfria mais, leva um casaco se sair.",
+                "Tempo abriu. As estrelas tão aí, eu tô sem bateria.",
+                "Céu limpo lá fora. Aqui dentro, só olheira.",
+                "Noite de céu aberto. Pena que você tá olhando pra tela.",
+            },
         },
-        [WeatherCondition.Fog] = new[]
+        [WeatherCondition.Fog] = new MoodPhrases
         {
-            "Vai ficar com neblina, dirige com cuidado",
-            "Nevoa chegando, atencao redobrada se for sair de carro",
-            "Visibilidade baixa vindo ai, se cuida no transito",
-            "Ta enevoado, vai com calma se for sair",
-            "Neblina na area, liga o farol se for dirigir",
-            "Vixe, baixou a neblina, cuidado pra sair de casa",
-            "Tempo fechado de neblina, se cuida ai fora",
-            "Vem nevoa, reduz a velocidade se for de carro",
-            "Neblina chegando, fica esperto no caminho",
-            "Ta com pouca visibilidade la fora, atencao redobrada",
+            Leve = new[]
+            {
+                "Vai ficar com neblina, dirige com cuidado.",
+                "Névoa chegando, atenção se for sair de carro.",
+                "Visibilidade baixa vindo aí, se cuida no trânsito.",
+                "Tá enevoado, vai com calma se for sair.",
+                "Neblina na área, liga o farol se for dirigir.",
+                "Vixe, baixou a neblina, cuidado se for sair.",
+                "Tempo fechado de neblina, se cuida aí fora.",
+                "Vem névoa, reduz a velocidade se for de carro.",
+                "Neblina chegando, fica esperto no caminho.",
+                "Tá com pouca visibilidade lá fora, atenção!",
+            },
+            Medio = new[]
+            {
+                "Neblina chegando bem na hora de voltar pra casa.",
+                "Baixou a névoa. Farol ligado e sem pressa na volta.",
+                "Neblina lá fora. Hoje a volta vai ser devagar.",
+                "Névoa chegando. Parece filme de suspense, vai com calma.",
+                "Visibilidade baixa. Calma no caminho de volta.",
+                "Neblina na área. Nem meus sensores enxergam.",
+                "Baixou a névoa. De carro? Farol baixo e paciência.",
+                "Neblina vindo. O fim do dia ficou misterioso.",
+                "Névoa lá fora. Calma no trânsito, ninguém tá vendo nada.",
+                "Neblina chegando. Sai com cuidado, viu?",
+            },
+            Acido = new[]
+            {
+                "Neblina lá fora. Sair agora é pedir pra se perder.",
+                "Baixou a névoa. Se for sair a essa hora, vai devagar.",
+                "Neblina chegando. Nada pra ver lá fora, pode ir deitar.",
+                "Névoa densa. Até o poste tá com dificuldade.",
+                "Neblina na área. Hora de ficar em casa, sério.",
+                "Baixou a neblina. Filme de terror, versão real.",
+                "Névoa lá fora. Se dirigir, farol baixo e calma.",
+                "Neblina chegando. Nem eu ia querer sair agora.",
+                "Névoa por aí. O mundo lá fora sumiu, a cama não.",
+                "Neblina forte. Visibilidade zero, igual a minha bateria.",
+            },
         },
     };
 
-    public static string RandomFor(WeatherCondition condition)
-    {
-        string[] pool = Messages[condition];
-        return pool[Rng.Next(pool.Length)];
-    }
+    public static string RandomFor(WeatherCondition condition) => Messages[condition].PickNow();
 }

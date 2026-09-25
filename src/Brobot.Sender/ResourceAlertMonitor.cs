@@ -19,7 +19,7 @@ public enum ResourceKind { Cpu, Ram }
 /// <see cref="Threshold"/> for <see cref="SustainedSamples"/> consecutive
 /// samples — CPU in particular spikes to 100% for a second or two all the
 /// time (opening an app, a build starting), and nagging about every spike
-/// would train people to ignore MiMo. After firing, the same resource stays
+/// would train people to ignore Peemo. After firing, the same resource stays
 /// disarmed until it drops back under <see cref="RearmBelow"/> (hysteresis,
 /// so hovering around 90% doesn't re-alert every 15s) *and*
 /// <see cref="Cooldown"/> has passed since its last alert.

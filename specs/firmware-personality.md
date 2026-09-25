@@ -3,16 +3,16 @@
 - **`Personality.cpp`**: blink and look-around use eased (smoothstep) transitions
   spread over enough frames to look smooth at ~20fps, not instant jumps. Look-around
   picks randomly from 8 directions (incl. diagonals) and swings close to the
-  screen edges — except while `THEME MATRIX` or `THEME MI84` is active
+  screen edges — except while `THEME MATRIX` or `THEME PEEMO84` is active
   (both pin the eyes to the bottom), where the 3 downward
   ones (down, down-left, down-right; `LOOK_DIRECTIONS_NO_DOWN`, indices into
   the same `LOOK_DIRECTIONS` table so both pools stay in sync with
   `LOOK_OFFSET_X_PX`/`Y_PX`) are excluded from the pool — both pin the
   eyes near the bottom edge (see `MATRIX_EYE_BOTTOM_MARGIN` in `Face.cpp`,
-  which MI84 reuses rather than defining its own), leaving too little
-  clearance to look further down without crowding or crossing that edge. `THEME MI2MO2` filters the same pool for a different
+  which PEEMO84 reuses rather than defining its own), leaving too little
+  clearance to look further down without crowding or crossing that edge. `THEME P2M2` filters the same pool for a different
   reason (`LOOK_DIRECTIONS_NO_UP_LEFT`): it doesn't move an eye at all, it
-  slides a reflection across a fixed lens (see `Theme::MI2MO2` above), and
+  slides a reflection across a fixed lens (see `Theme::P2M2` above), and
   up-left is the single direction whose offset carries that glint off the
   edge of the glass — up alone and left alone both stay inside it, so only
   the one diagonal is dropped rather than a whole side. Falls asleep after `SLEEP_TIMEOUT_MS` (10 min) idle; blink/look
@@ -73,16 +73,16 @@
   chars, per tier. `TypedMessage::set` trims anything longer to fit and
   appends `"..."` inside that same capacity rather than just dropping the
   tail — a message that's cut mid-word/mid-sentence with no signal it was
-  cut reads as MiMo saying something nonsensical, which is exactly what a
+  cut reads as Peemo saying something nonsensical, which is exactly what a
   verbose `last_assistant_message` from Stop used to produce. This was a
   real bug, fixed once.
   `onThemeCommand` stamps `_themeChangedAt` on **every** `THEME` command, not
-  only on an actual change of value, and that's what MI84's boot sequence
+  only on an actual change of value, and that's what PEEMO84's boot sequence
   hangs off (`FaceState::themeStartedMs`). Core has no "a PC app just
   connected" signal of its own, but `Brobot.Sender` sends `THEME` as the
   first thing over a fresh link and re-sends it on every reconnect (see
   `UpdateConnectionStatus`), so the command *is* that signal — which is the
-  only reason "play the boot sequence when MiMo reaches the PC" is
+  only reason "play the boot sequence when Peemo reaches the PC" is
   expressible down here at all. The other themes never read the field.
   `onWeatherCommand`/`onTimeCommand` deliberately never touch `_lastInteractionAt` —
   they're passive background telemetry from whichever PC app is connected, not user

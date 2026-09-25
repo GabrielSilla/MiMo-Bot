@@ -3,15 +3,15 @@
 - **`WifiSetup.cpp`** (ESP32 only, see `WifiSetup.h`): `connectOrStartPortal()`
   remembers up to `kMaxSavedNetworks` (5) networks in `Preferences`/NVS —
   SSID+password pairs under `ssid0`/`pass0` through `ssid4`/`pass4` plus a
-  `count` key — most-recent-first, rather than just one, since MiMo moves between a
+  `count` key — most-recent-first, rather than just one, since Peemo moves between a
   small set of known places (home, a friend's place, ...) rather than
   staying on a single network. On boot it tries each saved network in that
   order, one `kConnectTimeoutMs` (5s) attempt each; a hit anywhere but the
   front (`tryConnectSavedNetworks`) promotes that network back to
   most-recent via `rememberNetwork` (move-to-front, evicting the oldest past
-  5) and persists the reordered list — so a place MiMo visits often floats
+  5) and persists the reordered list — so a place Peemo visits often floats
   to the top and survives longest once the list fills up. Only once every
-  saved network fails does it fall back to the "MiMo-Setup" config-portal AP
+  saved network fails does it fall back to the "Peemo-Setup" config-portal AP
   — see [build-and-run.md](build-and-run.md) for the user-facing flow.
   Submitting the portal's form calls the same `rememberNetwork` to add (or
   promote) that network, so a network entered by hand gets the identical
@@ -91,10 +91,10 @@
   (300ms) passes mid-line, the partial buffer is discarded before continuing —
   otherwise a stray disconnect/noise byte can silently corrupt the next real command.
   `dispatch` takes the `Stream` (rather than `poll` keeping it to itself) for
-  exactly one reason: `PING` answers `MIMO 1` back down it. That's the only
+  exactly one reason: `PING` answers `PEEMO 1` back down it. That's the only
   command Core replies to and the only one routed to neither `Personality` nor
   `DeviceSettings` — it says nothing about Brobot, only that this is a Brobot,
-  which is precisely what `MimoDiscovery`'s network sweep needs to hear (see
+  which is precisely what `PeemoDiscovery`'s network sweep needs to hear (see
   [connection.md](connection.md)). The reply's trailing number is a protocol
   revision, there so a future PC app can tell an old board from a new one
   without a second round trip; bump it only for changes a client would
@@ -105,7 +105,7 @@
   either of them already are — a `PONG START` arriving mid-battle (or vice
   versa) is simply dropped rather than one minigame clobbering the other's
   exclusive screen.
-- **`PongGame.cpp`/`RpgBattle.cpp`** (MiMo's two minigames, launched from
+- **`PongGame.cpp`/`RpgBattle.cpp`** (Peemo's two minigames, launched from
   Brobot.Sender's Anti-Stress card): both follow the same shape —
   `onCommand`/`update`/`render`/`isActive`/`justEnded` — and the same
   bypass `main.cpp` already used for the WiFi setup portal: while

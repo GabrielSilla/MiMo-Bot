@@ -25,7 +25,7 @@
   would double the PowerShell processes spawned per tool call to say nothing
   new. `MessageDisplay`, `FileChanged`, `InstructionsLoaded`, `ConfigChange`,
   `DirectoryAdded` and `TeammateIdle` are out for the opposite reason: they
-  fire often enough that MiMo would strobe rather than report.
+  fire often enough that Peemo would strobe rather than report.
   `PostToolUseFailure` is the one taken from that family, because a tool
   *failing* is genuinely new information and is the only thing in the whole
   bridge that can legitimately show `ERROR`.
@@ -34,7 +34,7 @@
   the bridge applies to every project, not just whichever one happens to be
   open. Edits are surgical via `System.Text.Json.Nodes`, never a wholesale
   rewrite: every hook entry this class adds or removes is identified by its
-  `"command"` containing `mimo-claude-hook.ps1` plus the specific event name,
+  `"command"` containing `peemo-claude-hook.ps1` plus the specific event name,
   so any other hooks the user already has (their own, or another tool's) are
   left alone, and a matcher-group/event key is only pruned once it's been
   emptied entirely by removing *our* entries. `IsInstalled()`/`Install()` are
@@ -42,16 +42,16 @@
   instead of duplicating them, which also means a partial/broken install
   (e.g. the user hand-deleted one event) self-repairs on the next click
   rather than needing a manual uninstall first. The same click also wires up
-  `settings.json`'s top-level `"statusLine"` (see `mimo-claude-statusline.ps1`
+  `settings.json`'s top-level `"statusLine"` (see `peemo-claude-statusline.ps1`
   below) — a single object, not an array of installable entries like
   `hooks`, so `Install()` only claims it when it's absent or already ours
   (`IsOurStatusLine`, matched the same way as hook entries — by the
-  command containing `mimo-claude-statusline.ps1`), never overwriting a
+  command containing `peemo-claude-statusline.ps1`), never overwriting a
   statusLine the user configured themselves. This is deliberately
   best-effort: `IsInstalled()` still only checks `hooks`, so a pre-existing
   foreign statusLine can't leave the "Instalar" button permanently unable
   to report success.
-- **`hooks/mimo-claude-hook.ps1`** (repo root, copied to Brobot.Sender's
+- **`hooks/peemo-claude-hook.ps1`** (repo root, copied to Brobot.Sender's
   output directory — see the csproj — so `ClaudeCodeHookInstaller` can point
   a hook command at a real file next to whichever `Brobot.Sender.exe` is
   actually running, not a hardcoded source-repo path): reads the hook's JSON
@@ -72,7 +72,7 @@
   the call came from a subagent, the one field that distinguishes "Claude is
   doing this" from "something Claude delegated is doing this".
   `Stop` and `SubagentStop` read **`last_assistant_message`** — the actual
-  text just produced — which is why MiMo can now report what he did instead
+  text just produced — which is why Peemo can now report what he did instead
   of a fixed "Terminei!". `PostToolUseFailure` digs an error string out of
   `tool_response`, whose shape is per-tool (a bare string for some, an object
   with `error`/`stderr`/`message` for others), so all of those are tried
@@ -108,7 +108,7 @@
   two garbage lines on the listener's side. `Get-FirstSentence` then takes
   the first *sentence* rather than the first 100 characters, because a hard
   cut lands mid-word and reads as truncation while one whole sentence reads
-  as MiMo actually saying something. `Limit-Length` is still the backstop
+  as Peemo actually saying something. `Limit-Length` is still the backstop
   right before sending (a long sentence is still possible) — it caps at 100
   chars and appends **three literal periods**, not a single `"…"` character:
   Core reads the wire byte-at-a-time and both fonts (`Font5x7`/the physical
@@ -120,12 +120,12 @@
   any message reaching Core's own 255-char-per-tier capacity from a source
   other than this script (weather alerts, media titles, a raw `MSG` sent by
   hand).
-- **`hooks/mimo-claude-statusline.ps1`** (same repo root / copy-to-output /
+- **`hooks/peemo-claude-statusline.ps1`** (same repo root / copy-to-output /
   path-resolution setup as the hook script above): registered as Claude
   Code's `statusLine` command, not a `hooks` entry — a genuinely different
   contract, not just another event. It receives a much richer JSON payload
   (`model`, `cost`, `context_window`, ...) than any hook gets, and — unlike
-  `mimo-claude-hook.ps1`, where writing to stdout is actively forbidden —
+  `peemo-claude-hook.ps1`, where writing to stdout is actively forbidden —
   this script's own stdout *is* what Claude Code renders as the terminal's
   status line, so it always prints a one-line summary no matter what else
   happens, alongside forwarding the same text to `AiThoughtsListener` as a
@@ -144,16 +144,16 @@
   since-session-start running sum. `current_usage` is `null` before the
   first API call and again right after a `/compact`, so every field read
   is guarded and falls back to `0` — the terminal's status line must never
-  go blank because of a null here, and neither must the MiMo side.
+  go blank because of a null here, and neither must the Peemo side.
   It sends **two** lines per invocation, not one, because they answer
   different questions and Core treats them differently: `ContextUsage <text>`
   (the same sentence printed in the terminal, shown as an ordinary `MSG` —
-  unchanged, and what `DEFAULT`/`MI2MO2` get since they have no panel to draw)
+  unchanged, and what `DEFAULT`/`P2M2` get since they have no panel to draw)
   and `AiStats <ctx%> <costCents> <rate5h%> <rate7d%> <model>`, which
   `MainWindow` forwards verbatim as PROTOCOL.md's `AISTATS`. The numbers come
   from `context_window` (the percentage deliberately recomputed here rather
   than read from the pre-calculated `context_window.used_percentage`, so the
-  figure in the terminal and the figure on MiMo's screen are literally the
+  figure in the terminal and the figure on Peemo's screen are literally the
   same variable and can't disagree), `cost.total_cost_usd` (converted to
   integer cents, since the wire carries integers only),
   `rate_limits.five_hour`/`seven_day.used_percentage`, and
@@ -170,7 +170,7 @@
   the exact same one-line wire shape: the Claude Code hook script below, the
   `Brobot.VSExtension` VSIX (`VsBuildStarted`/`VsBuildSucceeded`/
   `VsBuildFailed`, see specs/sender-feature-cards.md), and now
-  `hooks/mimo-git-hook.ps1` via the global git hook `GitHookInstaller`
+  `hooks/peemo-git-hook.ps1` via the global git hook `GitHookInstaller`
   installs (`GitCommit`/`GitMerge`/`GitCheckout`/`GitPush` — also
   specs/sender-feature-cards.md). Two independent features start/stop this
   one shared listener now — Atividade da IA's install button and
@@ -200,7 +200,7 @@
   reader. `MainWindow.OnAiThoughtReceived` logs every event it applies, with
   a timestamp, to `%AppData%\Broboti-events.log` (`LogAiEvent`, capped at
   256KB and self-truncating) along with the ones it deliberately drops —
-  MiMo only ever shows the *result* of this race, one message at a time, so
+  Peemo only ever shows the *result* of this race, one message at a time, so
   without that log "the greeting vanished" looks identical whatever caused
   it. And
   `MainWindow.OnAiThoughtReceived` maps event names to Core commands:
@@ -243,9 +243,9 @@
   there's nothing to have switched from — it only starts recording from
   there. The recorded UUID is written immediately, the same "fact about the
   world, not a preference" treatment `PersistDiscoveredAddress` already gives
-  MiMo's IP, rather than waiting on "Salvar configurações".
+  Peemo's IP, rather than waiting on "Salvar configurações".
   `Notification`, `SubagentStop`, `ContextUsage` (from
-  `mimo-claude-statusline.ps1`, not a hook — see above) and the housekeeping
+  `peemo-claude-statusline.ps1`, not a hook — see above) and the housekeeping
   group (`Pre`/`PostModelSwitch`, `TaskCreated`, `TaskCompleted`,
   `CwdChanged`) all send `MSG <text>` only, with no `FACE` change — a
   notification isn't itself an expression, a subagent finishing isn't the
@@ -299,7 +299,7 @@
   (`RestoreSettings`) and right after a successful Install — rather than
   gating it behind any checkbox state.
 - **`SenderSettings.cs`**: a small JSON POCO persisted to
-  `%AppData%\Brobot\mimo-sender-settings.json` — checkbox states, the chosen
+  `%AppData%\Brobot\peemo-sender-settings.json` — checkbox states, the chosen
   AI provider, and Core's TCP host/port (no Serial fields — see [connection.md](connection.md)).
   Checkboxes still take effect **immediately** when toggled regardless of saving (same
   `Checked`/`Unchecked` handlers as before); only *remembering that across a

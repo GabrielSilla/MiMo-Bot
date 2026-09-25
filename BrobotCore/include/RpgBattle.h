@@ -63,14 +63,14 @@ private:
 
     EnemySlot _enemies[RPG_MAX_ENEMIES];
     int _enemyCount = 0;
-    int _mimoHp = 0;
+    int _peemoHp = 0;
 
     int _menuCursor = 0;   // PLAYER_MENU: 0=Atacar, 1=Magias, 2=Fugir
     int _spellCursor = 0;  // SPELL_MENU: 0=Bola de Fogo, 1=Cura
     int _targetIndex = 0;  // TARGET_SELECT: index into _enemies
 
     // What TARGET_SELECT is choosing a target *for* — ATTACK or FIREBALL
-    // (HEAL never reaches TARGET_SELECT, it always targets MiMo).
+    // (HEAL never reaches TARGET_SELECT, it always targets Peemo).
     PlayerActionKind _targetPurpose = PlayerActionKind::ATTACK;
 
     // The action currently resolving in PLAYER_ACTION.
@@ -85,7 +85,7 @@ private:
     unsigned long _enemyTurnStartedMs = 0;
     int _enemyTurnValue = 0;
     bool _enemyTurnApplied = false;
-    bool _enemyTurnDefeatedMimo = false;
+    bool _enemyTurnDefeatedPeemo = false;
 
     unsigned long _endStartedMs = 0; // anchors the Victory/Defeat/Fled hold
 
@@ -117,7 +117,7 @@ private:
     // spirit as Face::render itself.
     static void drawEnemySprite(IDisplay& display, EnemyKind kind, int x, int y, int size,
                                  unsigned long now, uint8_t r, uint8_t g, uint8_t b);
-    static void drawMimoWarrior(IDisplay& display, int x, int y, bool hitFlash);
+    static void drawPeemoWarrior(IDisplay& display, int x, int y, bool hitFlash);
     static int lungeOffsetPx(unsigned long elapsedMs);
     void renderFireball(IDisplay& display, unsigned long now) const;
     void renderHealSparkles(IDisplay& display, unsigned long now) const;

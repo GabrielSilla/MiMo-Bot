@@ -9,7 +9,7 @@
 // an Apple IIc). The keyboard deck is MOLDED INTO the body as one piece —
 // only the back lid is a separate part.
 //
-// Sized close to MiMo's own footprint: 40mm x 62mm for the monitor box
+// Sized close to Peemo's own footprint: 40mm x 62mm for the monitor box
 // itself (the keyboard deck adds a bit more on top of that — see OUTPUT below).
 // The 62mm (not 60mm) is deliberate — see the BOARD CLEARANCE note below.
 //
@@ -71,7 +71,7 @@ usb_cut_z_offset = 5.5;
 // Y is real-horizontal — side decorations (the knobs) go on Y, offset in Y.
 
 // BOARD CLEARANCE — read before shrinking anything here.
-// This case was originally size-locked to MiMo's 40mm x 60mm footprint, and
+// This case was originally size-locked to Peemo's 40mm x 60mm footprint, and
 // that printed as a case the display PCB physically does not fit into. Two
 // separate reasons, both worth recording so neither gets reintroduced:
 //
@@ -200,7 +200,7 @@ key_margin_y = 5.0;
 // CASE GEOMETRY
 // ============================================================================
 
-case_w = window_w + top_bezel + bottom_chin;  // 40 — real-vertical extent, MATCHES MiMo
+case_w = window_w + top_bezel + bottom_chin;  // 40 — real-vertical extent, MATCHES Peemo
 case_l = window_l + 2*side_bezel;             // 62 — real-horizontal extent (58mm board + walls + clearance)
 case_d = 22.0;                                 // depth of the monitor box, front face to lid — + crt_back_h(22) = 44mm total
 

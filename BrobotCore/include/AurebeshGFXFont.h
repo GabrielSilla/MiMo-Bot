@@ -3,8 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Arduino.h>
 
-// Adafruit_GFX custom font for MI2MO2's Aurebesh typing effect (see
-// PROTOCOL.md's THEME MI2MO2 section and ST7735PhysicalDisplay::drawText).
+// Adafruit_GFX custom font for P2M2's Aurebesh typing effect (see
+// PROTOCOL.md's THEME P2M2 section and ST7735PhysicalDisplay::drawText).
 // Firmware-only, same as Buzzer.cpp/ST7735PhysicalDisplay.h — Adafruit_GFX
 // isn't part of the native dev build, so this header is only ever included
 // from ST7735PhysicalDisplay.cpp.

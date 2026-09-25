@@ -11,8 +11,8 @@
   error-prone (this is exactly how `:` and the diacritics got added — and how a
   real bug got caught: the original `g` glyph's descender was a single stray
   pixel, which read as a cut-off tail rather than a hook, fixed by widening it
-  to 2px; the terminal punctuation went in the same way, for MI84). Adding
-  those last ones also fixed a bug that predated MI84 and only ever showed up
+  to 2px; the terminal punctuation went in the same way, for PEEMO84). Adding
+  those last ones also fixed a bug that predated PEEMO84 and only ever showed up
   here: MATRIX's tab header and log prefix already used `>` `[` `]`, and the
   stats rows already used `%`, none of which this font had — `GetGlyph`
   returned `null`, which draws nothing but still advances the cursor, so on

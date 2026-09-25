@@ -18,13 +18,13 @@ constexpr int ENEMY_SLOT_X = 4;
 constexpr int ENEMY_SLOT_HEIGHT = 30;
 constexpr int ENEMY_SPRITE_SIZE = 18;
 
-constexpr int MIMO_X = 112;
-constexpr int MIMO_Y = 20;
-constexpr int MIMO_WIDTH = 26;
-constexpr int MIMO_HEIGHT = 46;
-constexpr int MIMO_LUNGE_PX = 40; // how far MiMo advances toward the enemies on Atacar
-constexpr int MIMO_EYE_SIZE = 10;
-constexpr int MIMO_EYE_GAP = 4;
+constexpr int PEEMO_X = 112;
+constexpr int PEEMO_Y = 20;
+constexpr int PEEMO_WIDTH = 26;
+constexpr int PEEMO_HEIGHT = 46;
+constexpr int PEEMO_LUNGE_PX = 40; // how far Peemo advances toward the enemies on Atacar
+constexpr int PEEMO_EYE_SIZE = 10;
+constexpr int PEEMO_EYE_GAP = 4;
 
 // Same small "staircase" corner cut Face.cpp's own eyes use (2px, then
 // 1px), just scaled down — softens a plain square enough that it still
@@ -71,9 +71,9 @@ void RpgBattle::start(unsigned long now) {
     _justEnded = false;
     _menuCursor = 0;
     _spellCursor = 0;
-    _mimoHp = RPG_MIMO_MAX_HP;
+    _peemoHp = RPG_PEEMO_MAX_HP;
     _enemyTurnIndex = -1;
-    _enemyTurnDefeatedMimo = false;
+    _enemyTurnDefeatedPeemo = false;
 
     _enemyCount = (int)random(RPG_MIN_ENEMIES, RPG_MAX_ENEMIES + 1);
     for (int i = 0; i < RPG_MAX_ENEMIES; i++) {
@@ -171,7 +171,7 @@ void RpgBattle::onConfirm(unsigned long now) {
                     _targetIndex = firstAliveIndex();
                     _subState = SubState::TARGET_SELECT;
                 }
-            } else {  // Cura — always targets MiMo himself, no selection needed
+            } else {  // Cura — always targets Peemo himself, no selection needed
                 beginPlayerAction(PlayerActionKind::HEAL, -1, now);
             }
             break;
@@ -210,9 +210,9 @@ void RpgBattle::applyPendingAction() {
             }
             break;
         case PlayerActionKind::HEAL:
-            _mimoHp += _pendingValue;
-            if (_mimoHp > RPG_MIMO_MAX_HP) {
-                _mimoHp = RPG_MIMO_MAX_HP;
+            _peemoHp += _pendingValue;
+            if (_peemoHp > RPG_PEEMO_MAX_HP) {
+                _peemoHp = RPG_PEEMO_MAX_HP;
             }
             break;
     }
@@ -267,16 +267,16 @@ void RpgBattle::updateEnemyAction(unsigned long now) {
     unsigned long elapsed = now - _enemyTurnStartedMs;
 
     if (!_enemyTurnApplied && elapsed >= RPG_ENEMY_ATTACK_ANIM_MS / 2) {
-        _mimoHp -= _enemyTurnValue;
-        if (_mimoHp <= 0) {
-            _mimoHp = 0;
-            _enemyTurnDefeatedMimo = true;
+        _peemoHp -= _enemyTurnValue;
+        if (_peemoHp <= 0) {
+            _peemoHp = 0;
+            _enemyTurnDefeatedPeemo = true;
         }
         _enemyTurnApplied = true;
     }
 
     if (elapsed >= RPG_ENEMY_ATTACK_ANIM_MS) {
-        if (_enemyTurnDefeatedMimo) {
+        if (_enemyTurnDefeatedPeemo) {
             endBattle(SubState::DEFEAT, "DEFEAT", now);
         } else {
             advanceEnemyTurn(now);
@@ -376,21 +376,24 @@ void RpgBattle::renderField(IDisplay& display, unsigned long now) const {
         }
     }
 
-    int mimoX = MIMO_X;
-    bool mimoFlash = false;
+    int peemoX = PEEMO_X;
+    bool peemoFlash = false;
     if (_subState == SubState::PLAYER_ACTION && _pendingAction == PlayerActionKind::ATTACK) {
-        mimoX -= lungeOffsetPx(now - _actionStartedMs);
+        peemoX -= lungeOffsetPx(now - _actionStartedMs);
     }
     if (_subState == SubState::ENEMY_ACTION && _enemyTurnApplied) {
         unsigned long half = RPG_ENEMY_ATTACK_ANIM_MS / 2;
         unsigned long sinceHit = (now - _enemyTurnStartedMs) - half;
-        mimoFlash = sinceHit < 200 && ((sinceHit / 60) % 2) == 0;
+        peemoFlash = sinceHit < 200 && ((sinceHit / 60) % 2) == 0;
     }
-    drawMimoWarrior(display, mimoX, MIMO_Y, mimoFlash);
+    drawPeemoWarrior(display, peemoX, PEEMO_Y, peemoFlash);
 
     char hpLine[20];
-    snprintf(hpLine, sizeof(hpLine), "MIMO %d/%d", _mimoHp, RPG_MIMO_MAX_HP);
-    display.drawText(hpLine, 96, 2, 255, 255, 255);
+    snprintf(hpLine, sizeof(hpLine), "PEEMO %d/%d", _peemoHp, RPG_PEEMO_MAX_HP);
+    // Right-aligned rather than at a fixed x: at full HP "PEEMO 100/100" is
+    // 78px, which ran off the 160px frame from a fixed x=96.
+    int hpLineX = display.width() - 2 - (int)strlen(hpLine) * CHAR_ADVANCE_PX;
+    display.drawText(hpLine, hpLineX, 2, 255, 255, 255);
 
     if (_subState == SubState::PLAYER_ACTION && _pendingAction == PlayerActionKind::FIREBALL) {
         renderFireball(display, now);
@@ -433,7 +436,7 @@ void RpgBattle::renderMenu(IDisplay& display) const {
             display.drawText("ESCOLHA O ALVO", 10, MENU_TEXT_Y, 255, 255, 255);
             break;
         case SubState::PLAYER_ACTION: {
-            const char* label = _pendingAction == PlayerActionKind::ATTACK ? "MIMO ATACA!"
+            const char* label = _pendingAction == PlayerActionKind::ATTACK ? "PEEMO ATACA!"
                 : _pendingAction == PlayerActionKind::FIREBALL ? "BOLA DE FOGO!"
                 : "CURANDO...";
             display.drawText(label, 10, MENU_TEXT_Y, 255, 255, 255);
@@ -477,17 +480,17 @@ int RpgBattle::lungeOffsetPx(unsigned long elapsedMs) {
         return 0;
     }
     if (elapsedMs <= half) {
-        return (int)(MIMO_LUNGE_PX * elapsedMs / half);
+        return (int)(PEEMO_LUNGE_PX * elapsedMs / half);
     }
     unsigned long back = elapsedMs - half;
     unsigned long backDur = RPG_PLAYER_ACTION_ANIM_MS - half;
     if (backDur == 0) {
         return 0;
     }
-    return (int)(MIMO_LUNGE_PX * (backDur - back) / backDur);
+    return (int)(PEEMO_LUNGE_PX * (backDur - back) / backDur);
 }
 
-void RpgBattle::drawMimoWarrior(IDisplay& display, int x, int y, bool hitFlash) {
+void RpgBattle::drawPeemoWarrior(IDisplay& display, int x, int y, bool hitFlash) {
     uint8_t r = 255, g = 255, b = 255;
     if (hitFlash) {
         r = 255;
@@ -505,15 +508,15 @@ void RpgBattle::drawMimoWarrior(IDisplay& display, int x, int y, bool hitFlash) 
     display.fillRect(swordX - 3, y + 20, 9, 2, r, g, b);   // crossguard
     display.fillRect(swordX, y + 22, 3, 8, r, g, b);       // handle
 
-    // MiMo has no body here, same as everywhere else on screen — just the
+    // Peemo has no body here, same as everywhere else on screen — just the
     // same two small rounded eyes the normal face uses, scaled down. A
     // first version drew a solid body block with the eyes cut into it in
     // background color, which read as a different character next to the
-    // real face instead of a smaller MiMo.
-    int eyesY = y + (MIMO_HEIGHT - MIMO_EYE_SIZE) / 2;
-    int eyesX = x + (MIMO_WIDTH - (MIMO_EYE_SIZE * 2 + MIMO_EYE_GAP)) / 2;
-    drawSmallEye(display, eyesX, eyesY, MIMO_EYE_SIZE, r, g, b);
-    drawSmallEye(display, eyesX + MIMO_EYE_SIZE + MIMO_EYE_GAP, eyesY, MIMO_EYE_SIZE, r, g, b);
+    // real face instead of a smaller Peemo.
+    int eyesY = y + (PEEMO_HEIGHT - PEEMO_EYE_SIZE) / 2;
+    int eyesX = x + (PEEMO_WIDTH - (PEEMO_EYE_SIZE * 2 + PEEMO_EYE_GAP)) / 2;
+    drawSmallEye(display, eyesX, eyesY, PEEMO_EYE_SIZE, r, g, b);
+    drawSmallEye(display, eyesX + PEEMO_EYE_SIZE + PEEMO_EYE_GAP, eyesY, PEEMO_EYE_SIZE, r, g, b);
 }
 
 void RpgBattle::drawEnemySprite(IDisplay& display, EnemyKind kind, int x, int y, int size,
@@ -609,8 +612,8 @@ void RpgBattle::renderFireball(IDisplay& display, unsigned long now) const {
     int targetSlotY = enemySlotY(_pendingTarget);
     int targetX = ENEMY_SLOT_X + ENEMY_SPRITE_SIZE / 2;
     int targetY = targetSlotY + ENEMY_SPRITE_SIZE / 2;
-    int startX = MIMO_X;
-    int startY = MIMO_Y + MIMO_HEIGHT / 2;
+    int startX = PEEMO_X;
+    int startY = PEEMO_Y + PEEMO_HEIGHT / 2;
 
     if (elapsed < half) {
         int px = startX + (targetX - startX) * (int)elapsed / (int)half;
@@ -626,8 +629,8 @@ void RpgBattle::renderHealSparkles(IDisplay& display, unsigned long now) const {
     for (int i = 0; i < 3; i++) {
         unsigned long phase = (elapsed + i * 250) % 700;
         int riseY = (int)(phase * 20 / 700);
-        int px = MIMO_X + 4 + i * 8;
-        int py = MIMO_Y + MIMO_HEIGHT - riseY;
+        int px = PEEMO_X + 4 + i * 8;
+        int py = PEEMO_Y + PEEMO_HEIGHT - riseY;
         display.fillRect(px, py, 2, 2, 120, 255, 140);
     }
 }
@@ -645,8 +648,8 @@ void RpgBattle::renderEnemyBolt(IDisplay& display, unsigned long now) const {
     int slotY = enemySlotY(_enemyTurnIndex);
     int startX = ENEMY_SLOT_X + ENEMY_SPRITE_SIZE / 2;
     int startY = slotY + ENEMY_SPRITE_SIZE / 2;
-    int targetX = MIMO_X + MIMO_WIDTH / 2;
-    int targetY = MIMO_Y + MIMO_HEIGHT / 2;
+    int targetX = PEEMO_X + PEEMO_WIDTH / 2;
+    int targetY = PEEMO_Y + PEEMO_HEIGHT / 2;
 
     int px = startX + (targetX - startX) * (int)elapsed / (int)half;
     int py = startY + (targetY - startY) * (int)elapsed / (int)half;

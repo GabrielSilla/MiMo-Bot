@@ -18,15 +18,15 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `FACE <nome>`  | Define a expressão. Valores: `NEUTRAL`, `HAPPY`, `SAD`, `ANGRY`, `SWEATING`, `SLEEPING`, `SLEEPY`, `COFFEE`, `MUSIC`, `WATCHING`, `MEETING`, `BUILDING`, `ERROR`, `READING`, `FINISHED`, `THINKING`, `PLAYING`, `BYE`, `IDLE` (limpa reunião+jogo+mídia de uma vez), `IDLE_MEETING`, `IDLE_GAME`, `IDLE_MEDIA` (cada um limpa só o próprio tier, ver Notificações abaixo) |
 | `MSG <texto>`  | Define o texto exibido abaixo dos olhos (resto da linha). `MSG` sem texto limpa a mensagem. |
 | `WEATHER <tempC> <condicao>` | Selo persistente de clima (canto superior esquerdo). `tempC` é inteiro (pode ser negativo). Condições: `CLEAR`, `CLOUDY`, `RAIN`, `STORM`, `SNOW`, `FOG`. `WEATHER` sem argumentos limpa o selo. |
-| `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. |
-| `THEME <nome>` | Estilo visual do display inteiro. Valores: `DEFAULT` (olhos + balão de mensagem, o padrão), `MATRIX` (olhos menores no canto inferior + log estilo console em verde no topo, ver abaixo), `MI2MO2` (a tela inteira vira um close da cúpula do R2D2, ver abaixo) ou `MI84` (terminal CRT âmbar de 1984, ver abaixo). Persistente, como `WEATHER`/`TIME` — fica valendo até o próximo `THEME` chegar. |
-| `CLASSICCOLOR <cor>` | Cor primária do tema `DEFAULT` (olhos, ícones de canto e o selo de clima/hora) — **sem efeito nos outros temas**, que têm paleta própria e ignoram este comando por completo. Valores: `BLUE` (o teal original, padrão do Core), `GREEN` (o mesmo verde do `MATRIX`), `AMBER` (o mesmo âmbar do `MI84`), `RED`, `PINK` ou `WHITE`. Persistente como `THEME` — fica guardado até o próximo `CLASSICCOLOR` chegar, mesmo trocando de tema e voltando para `DEFAULT`. |
+| `TIME <HH:MM>` | Relógio persistente (canto superior direito). Core não tem RTC nem rede própria — quem envia isso é o app PC conectado. `TIME` sem texto limpa o relógio. A hora também define o **mood** do Peemo, mostrado como uma bateriazinha no topo, centralizada entre clima e relógio: Animado 07–16h (cheia), Fim de Dia 16–22h (metade), Cansado 22–07h (1 célula piscando). No `PEEMO84`, que não tem selos, a bateria fica à direita do cabeçalho "PEEMO SYSTEM v2.6". Sem `TIME`, sem selo. Ver specs/mood.md. |
+| `THEME <nome>` | Estilo visual do display inteiro. Valores: `DEFAULT` (olhos + balão de mensagem, o padrão), `MATRIX` (olhos menores no canto inferior + log estilo console em verde no topo, ver abaixo), `P2M2` (a tela inteira vira um close da cúpula do R2D2, ver abaixo) ou `PEEMO84` (terminal CRT âmbar de 1984, ver abaixo). Persistente, como `WEATHER`/`TIME` — fica valendo até o próximo `THEME` chegar. |
+| `CLASSICCOLOR <cor>` | Cor primária do tema `DEFAULT` (olhos, ícones de canto e o selo de clima/hora) — **sem efeito nos outros temas**, que têm paleta própria e ignoram este comando por completo. Valores: `BLUE` (o teal original, padrão do Core), `GREEN` (o mesmo verde do `MATRIX`), `AMBER` (o mesmo âmbar do `PEEMO84`), `RED`, `PINK` ou `WHITE`. Persistente como `THEME` — fica guardado até o próximo `CLASSICCOLOR` chegar, mesmo trocando de tema e voltando para `DEFAULT`. |
 | `SOUND <ON\|OFF>` | Liga/desliga os sons do buzzer (bipes R2D2 por expressão, ver Buzzer.cpp). Persistente — fica valendo até o próximo `SOUND` chegar. Padrão do Core: `ON`. Texto não reconhecido é ignorado (mantém o valor atual). |
 | `SCANLINES <ON\|OFF>` | Liga/desliga o filtro CRT completo da tela física (scanline rolante + chromatic fringing + tint quente + vinheta — ver ST7735PhysicalDisplay.cpp). Sem efeito no Brobot Virtual Display/build nativo, que nunca aplicam esse pós-processamento. Persistente — fica valendo até o próximo `SCANLINES` chegar. Padrão do Core: `ON`. |
-| `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%> <fps>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `fps` é o único campo que não é carga/temperatura (vem do sensor "Framerate" do MSI Afterburner) — por isso é desenhado sem sufixo `%`/`C`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o MiMo nunca mais dormiria. |
+| `STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%> <fps>` | Carga da máquina, para o Game Mode (ver abaixo). Todos inteiros; **-1** em qualquer campo significa "o app do PC não conseguiu essa medida" e é desenhado como `--`. `fps` é o único campo que não é carga/temperatura (vem do sensor "Framerate" do MSI Afterburner) — por isso é desenhado sem sufixo `%`/`C`. `STATS` sem argumentos limpa. Persistente como `WEATHER`/`TIME` — e, como eles, **não conta como interação**: chega a cada 2s enquanto um jogo está aberto, e se contasse o Peemo nunca mais dormiria. |
 | `AISTATS <contexto%> <custoCents> <limite5h%> <limite7d%> <modelo>` | Telemetria da sessão de IA (ver abaixo). Os quatro primeiros são inteiros com a mesma convenção do `STATS`: **-1** = "o app do PC não tinha esse dado", desenhado como `--`. O custo vai em **centavos de dólar** porque o protocolo só carrega inteiros; o Core imprime de volta como `$1.24`. `<modelo>` é texto livre até o fim da linha (pode ter espaço, pode ser vazio). `AISTATS` sem argumentos limpa. Persistente e sem contar como interação, exatamente como `STATS`. |
 | `NOTIFY <EXPRESSÃO> <texto>` | Levanta uma **notificação**: a maior prioridade do display, acima até da IA. Toma a tela inteira por 10s com uma animação dedicada e some sozinha (ver abaixo). Uma linha só, atômica, de propósito. |
-| `ACHIEVEMENT <ID> <texto>` | Uma notificação especial pra uma das 10 conquistas do MiMo (ver abaixo) — mesma prioridade/duração/formato atômico do `NOTIFY`, só que `<ID>` escolhe qual acabamento único some ao troféu em vez de uma expressão comum. `<ID>`: `FIRST_CONTACT`, `EARLY_BIRD`, `NIGHT_OWL`, `COFFEE_MACHINE`, `ONE_MORE_GAME`, `VICTORY_ROYALE`, `AI_OVERLOAD`, `AUDIOPHILE`, `BREAK_TAKER`, `IDENTITY_CRISIS`. Um `<ID>` não reconhecido cai no acabamento de `FIRST_CONTACT` em vez de falhar a notificação inteira. |
+| `ACHIEVEMENT <ID> <texto>` | Uma notificação especial pra uma das 10 conquistas do Peemo (ver abaixo) — mesma prioridade/duração/formato atômico do `NOTIFY`, só que `<ID>` escolhe qual acabamento único some ao troféu em vez de uma expressão comum. `<ID>`: `FIRST_CONTACT`, `EARLY_BIRD`, `NIGHT_OWL`, `COFFEE_MACHINE`, `ONE_MORE_GAME`, `VICTORY_ROYALE`, `AI_OVERLOAD`, `AUDIOPHILE`, `BREAK_TAKER`, `IDENTITY_CRISIS`. Um `<ID>` não reconhecido cai no acabamento de `FIRST_CONTACT` em vez de falhar a notificação inteira. |
 | `REPORT <buildOk> <buildFail> <commits> <minReuniao> <minMidia> <minVideo> <minRedeSocial> <minJogo> <RATING> <texto>` | O Relatório do dia do Brobot.Sender (ver abaixo) — mesma prioridade/duração/formato atômico do `NOTIFY`/`ACHIEVEMENT`, com oito inteiros e um `<RATING>` (`PESSIMO`, `RUIM`, `QUESTIONAVEL`, `MEDIO`, `BOM`, `EXCELENTE`) antes do texto livre. `<minVideo>` (YouTube) e `<minRedeSocial>` (TikTok/Instagram/Facebook somados) são ambos subconjuntos de `<minMidia>`, mas contados separados um do outro — ver `YouTubeTabDetector.cs`/`SocialMediaTabDetector.cs`. O Core desenha os nove números como nove linhas separadas, não como frase — é a única notificação com olhos pequenos **no topo** em vez de à esquerda. |
 | `PONG START` | Liga o minijogo Pong (ver abaixo), o "ANTI STRESS BUTTON" do Brobot.Sender — exclusivo, acima até de `NOTIFY`. |
 | `PONG KEY <LEFT\|RIGHT> <DOWN\|UP>` | Estado bruto de uma tecla de seta (pressionada/solta) — quem decide velocidade/física da raquete é o Core, o app do PC só reporta a transição. |
@@ -36,7 +36,7 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `RPG CONFIRM` | Confirma a opção selecionada. |
 | `RPG STOP` | Encerra a batalha na hora e volta ao normal. |
 | `BUZZ <cue>` | **Só para teste manual** — toca uma vinheta do buzzer direto, sem precisar chegar no evento real que a dispara. `<cue>`: `VICTORY` (a fanfarra de vitória de Final Fantasy do fim da Batalha RPG, ver `Buzzer::playRpgVictory`). Respeita `SOUND OFF`. Nome não reconhecido é ignorado. |
-| `PING` | **O único comando que o Core responde** — devolve a linha `MIMO <revisão>` (hoje `MIMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o MiMo na rede (ver abaixo). |
+| `PING` | **O único comando que o Core responde** — devolve a linha `PEEMO <revisão>` (hoje `PEEMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o Peemo na rede (ver abaixo). |
 
 `WEATHER`, `TIME`, `THEME`, `CLASSICCOLOR`, `SOUND` e `SCANLINES` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.
 
@@ -58,7 +58,7 @@ O que aparece depende do tema:
   `AfterburnerSensors.cs`) e só aparece com o Afterburner aberto; sem ele o
   campo chega como `--`, do mesmo jeito que qualquer outra leitura sem
   fonte.
-- **`MI84`**: mesma terceira aba `IA MIDIA [MONITOR]` do `MATRIX` (é o
+- **`PEEMO84`**: mesma terceira aba `IA MIDIA [MONITOR]` do `MATRIX` (é o
   mesmo `LogTab`, não uma cópia), mas os números viram medidores de barra:
   uma linha por leitura, com rótulo, dez células, o percentual e a
   temperatura — `CPU [######····] 43% 61C`. As células são retângulos
@@ -67,7 +67,7 @@ O que aparece depende do tema:
   (não é uma leitura de 0-100% — um monitor de alta taxa passa disso
   tranquilamente) e sem sufixo, só o rótulo e o número. As quatro linhas
   ficam em `y` fixo, então o nome do jogo quebrando em mais ou menos linhas
-  não empurra os números — mesma razão pela qual `DEFAULT`/`MI2MO2` ancoram
+  não empurra os números — mesma razão pela qual `DEFAULT`/`P2M2` ancoram
   os deles na base da caixa.
 - **`DEFAULT`**: a caixa de mensagem cresce e vira um painel fixo com o nome
   do jogo acima e, embaixo, uma grade 2x2 — `FPS`/`RAM` numa linha, `CPU`/
@@ -85,7 +85,7 @@ O que aparece depende do tema:
   atualizado a cada 2s, e redigitar a cada atualização deixaria os números
   ilegíveis. `FPS`/`RAM` dividem uma linha por nenhum dos dois ter
   temperatura para mostrar, mesma razão de `CPU`/`GPU` dividirem a outra.
-- **`MI2MO2`**: mesmo painel de `DEFAULT`, mas sem `FPS` e sem a grade — um
+- **`P2M2`**: mesmo painel de `DEFAULT`, mas sem `FPS` e sem a grade — um
   medidor por linha (`CPU`, `GPU`, `RAM`), como antes. A caixa tem 4 linhas
   e a chapa do R2 fica intocada — a lente termina em y=77 e uma caixa de 5
   linhas começaria em y=71, cobrindo o olho dele; com 4 linhas ela começa em
@@ -143,7 +143,7 @@ batalha contra 2 inimigos de 50 de vida cada, revidando 1-10 por rodada,
 se arrastava bem mais do que uma pausa rápida devia.
 
 `RPG START` sorteia o número de inimigos, a vida de cada um (sempre 50) e a
-do MiMo (sempre 100), e liga o mesmo tipo de desvio exclusivo do Pong:
+do Peemo (sempre 100), e liga o mesmo tipo de desvio exclusivo do Pong:
 enquanto ativo, `Personality`/`Face` param de ser atualizados/desenhados por
 completo. `Protocol::dispatch` é quem garante que o Pong e a Batalha RPG
 nunca ficam ativos ao mesmo tempo — um `PONG START` chegando com a batalha
@@ -152,7 +152,7 @@ em andamento (ou vice-versa) é simplesmente ignorado.
 Como o Pong, perder termina a batalha (`DERROTA...`) e volta ao normal
 sozinho depois de alguns segundos — só que aqui só existe **uma vida**: ao
 contrário de "perder a bola e jogar de novo", a Batalha RPG acaba de vez ao
-zerar a vida do MiMo, com vitória (todos os inimigos derrotados) ou fuga
+zerar a vida do Peemo, com vitória (todos os inimigos derrotados) ou fuga
 (`Fugir`, sempre bem-sucedida, sem chance de falha) como os outros dois
 finais possíveis. Ao terminar por qualquer um desses três — nunca por um
 `RPG STOP` vindo do app do PC, que já sabe o motivo — o Core manda uma linha
@@ -170,12 +170,12 @@ parar de escutar o teclado.
 
 `AISTATS` é para uma sessão de IA o que o `STATS` é para um jogo: os números
 que ficam **embaixo** da aba correspondente do log. Quem envia é o
-`mimo-claude-statusline.ps1` — a *statusLine* do Claude Code, não um hook —,
+`peemo-claude-statusline.ps1` — a *statusLine* do Claude Code, não um hook —,
 que recebe um payload muito mais rico que qualquer hook (modelo, custo,
 janela de contexto, limites de uso) e reenvia a cada nova resposta do
 assistente.
 
-Aparece só nos dois temas que têm log — `MATRIX` e `MI84` — e só na aba
+Aparece só nos dois temas que têm log — `MATRIX` e `PEEMO84` — e só na aba
 `IA`, em duas linhas ancoradas na base da região, com o log rolando acima:
 
 ```
@@ -189,7 +189,7 @@ que os medidores do Game Mode ficam ancorados na base da caixa — são um
 mostrador atualizado o tempo todo, e um número que dança conforme o texto
 acima dele quebra não dá pra ler.
 
-Nos temas sem log (`DEFAULT` e `MI2MO2`) o `AISTATS` é guardado e não
+Nos temas sem log (`DEFAULT` e `P2M2`) o `AISTATS` é guardado e não
 desenhado; lá a mesma informação continua chegando como uma `MSG` comum,
 que é o que esses temas têm para mostrá-la.
 
@@ -198,31 +198,31 @@ Como é persistente, quem manda também precisa limpar: o Brobot.Sender manda
 (`SessionEnd`) ou quando a ponte é desinstalada — senão a última leitura fica
 congelada na tela para sempre, anunciando uma sessão que não existe mais.
 
-### `PING` e a descoberta do MiMo na rede
+### `PING` e a descoberta do Peemo na rede
 
-O IP do MiMo vem do DHCP do roteador, então ele **muda sozinho** — um
-desligar/ligar (do MiMo ou do roteador) pode devolver um endereço diferente,
+O IP do Peemo vem do DHCP do roteador, então ele **muda sozinho** — um
+desligar/ligar (do Peemo ou do roteador) pode devolver um endereço diferente,
 e o endereço salvo no card Conexão do Brobot.Sender passa a apontar pra nada.
-Quando isso acontece, o Sender varre a rede local procurando o MiMo
-(`MimoDiscovery`, ver CLAUDE.md): abre uma conexão em cada host da(s) sub-rede(s)
+Quando isso acontece, o Sender varre a rede local procurando o Peemo
+(`PeemoDiscovery`, ver CLAUDE.md): abre uma conexão em cada host da(s) sub-rede(s)
 do próprio PC, e em cada um que aceitar a conexão manda `PING`.
 
-Só quem responde `MIMO` é adotado. Isso não é preciosismo: a porta 5555 não é
+Só quem responde `PEEMO` é adotado. Isso não é preciosismo: a porta 5555 não é
 reservada pra este projeto (o ADB-over-network do Android, entre outros, usa a
 mesma), e na própria rede onde isso foi desenvolvido havia um aparelho não
 relacionado escutando nela — uma varredura do tipo "primeira porta aberta
-vence" teria adotado esse aparelho como se fosse o MiMo e passado a mandar
+vence" teria adotado esse aparelho como se fosse o Peemo e passado a mandar
 `FACE`/`MSG` pra ele. A única exceção é o endereço que **já estava sendo
 usado**: se ele continua aceitando conexão mas não responde `PING`, é assumido
-como MiMo mesmo assim (placa com firmware anterior ao `PING`).
+como Peemo mesmo assim (placa com firmware anterior ao `PING`).
 
-Consequência prática: **achar um MiMo que mudou de IP exige o firmware com
+Consequência prática: **achar um Peemo que mudou de IP exige o firmware com
 `PING`**. Sem ele, a varredura só consegue reconfirmar um endereço que já
 funcionava.
 
 **`THEME MATRIX`**: recolore tudo em verde e troca o balão de mensagem por um log estilo terminal no topo da tela (linhas prefixadas com `> `, mais antigas saem conforme novas entram — até 6 entradas). Toda mensagem que normalmente apareceria no balão (IA, mídia, jogos, pausa, boa-noite) vira uma linha nova nesse log. Os selos de clima e relógio **não** são trocados — continuam fixos nos cantos superiores exatamente como no `DEFAULT`, e o log começa abaixo deles. Como os dois já ficam visíveis o tempo todo, o log não carrega nenhuma linha periódica de hora/clima (uma versão anterior deste tema carregava, de quando os selos eram suprimidos aqui e o log era a única forma de ver essa informação). Puramente visual — os comandos `FACE`/`MSG`/`WEATHER`/`TIME` continuam funcionando exatamente igual por baixo, só a forma de desenhar muda.
 
-**`THEME MI2MO2`**: a tela inteira deixa de ser um rosto no preto e vira um *close* da chapa da cúpula do R2D2 — fundo claro cobrindo o frame, painéis azul-marinho embutidos, a lente preta grande do fotorreceptor e, à direita dela, o painel lógico (a "bolinha") e um vent prateado. Diferente dos outros temas, **nenhuma expressão muda a forma do olho**: a lente é um disco preto fixo, que não pisca, não espreme e não muda de cor. Quem carrega tudo é a bolinha — que é como o R2 de verdade se expressa, piscando painéis em vez de mexer o olho (que nele é um vidro parado):
+**`THEME P2M2`**: a tela inteira deixa de ser um rosto no preto e vira um *close* da chapa da cúpula do R2D2 — fundo claro cobrindo o frame, painéis azul-marinho embutidos, a lente preta grande do fotorreceptor e, à direita dela, o painel lógico (a "bolinha") e um vent prateado. Diferente dos outros temas, **nenhuma expressão muda a forma do olho**: a lente é um disco preto fixo, que não pisca, não espreme e não muda de cor. Quem carrega tudo é a bolinha — que é como o R2 de verdade se expressa, piscando painéis em vez de mexer o olho (que nele é um vidro parado):
 
 | Estado | Bolinha |
 |---|---|
@@ -237,7 +237,7 @@ O olhar em volta também é diferente: em vez de deslocar o olho, desliza o pont
 
 Referência ao R2D2 no texto: cada caractere da mensagem, assim que revelado pelo efeito de digitação normal, aparece por um instante em **Aurebesh vermelho** antes de virar a **fonte latina branca** — fonte e cor trocam juntas, no relógio individual de cada caractere, então a frase mostra uma "frente de decodificação" atravessando a linha, com o começo já resolvido em branco e o fim ainda alienígena em vermelho. Funciona tanto no Brobot Virtual Display/build nativo (fonte bitmap própria, `AurebeshFont.cs`) quanto no firmware físico (ST7735, `GFXfont` própria, `AurebeshGFXFont.h`) — cobre só `A-Z`/`0-9` nos dois lados; qualquer outro caractere (espaço, pontuação, minúsculas/acentos) sempre desenha na fonte latina, mesmo que `AUREBESH` seja pedido.
 
-**`FACE BYE`**: a despedida, e a única expressão em que o MiMo tem **mão**.
+**`FACE BYE`**: a despedida, e a única expressão em que o Peemo tem **mão**.
 Uma mão só, à esquerda, com o rosto ao lado dela: dois dedos erguidos em V,
 a palma e o polegar apontando para dentro.
 
@@ -264,18 +264,18 @@ Lado e tamanho são aplicados na transformação (`BYE_HAND_FLIP_X`,
 `BYE_HAND_SCALE`), não na tabela de cantos: os quads continuam legíveis como
 a mão que saiu da referência, e ajustar vira dois números em vez de dezesseis
 coordenadas. A mão sai **na cor que o tema dá aos olhos**. No `MATRIX` e no
-`MI84` a expressão cede a área de conteúdo do tema, igual ao `COFFEE`, porque
+`PEEMO84` a expressão cede a área de conteúdo do tema, igual ao `COFFEE`, porque
 o log é desenhado por último e imprimiria por cima da mão.
 
-**`THEME MI84`**: um terminal CRT âmbar de 1984 — preto e uma única cor de
+**`THEME PEEMO84`**: um terminal CRT âmbar de 1984 — preto e uma única cor de
 tinta (âmbar `255,176,0`, mais um âmbar escuro só para o "cromo": réguas,
-rótulos e células apagadas das barras). É o oposto do `MI2MO2`: em vez de
+rótulos e células apagadas das barras). É o oposto do `P2M2`: em vez de
 substituir o rosto, ele substitui a *moldura*. O topo da tela vira um
 cabeçalho fixo de terminal e os olhos do `MATRIX` (pequenos, presos na base
 do frame) continuam embaixo, com as mesmas formas por expressão.
 
 ```
-MIMO SYSTEM v2.6
+PEEMO SYSTEM v2.6
 TIME 17:42  RAIN 18C
 ------------------------
 [IA] MIDIA MONITOR
@@ -307,7 +307,7 @@ Diferenças próprias em relação ao `MATRIX`:
   Font5x7 não tem, e o selo de clima já imprime `18C` seco pelo mesmo motivo.
 - **`THINKING` não usa os olhos glitchados.** Aqui ele é carregado por duas
   coisas: os olhos piscando de forma intermitente e irregular (o mesmo
-  stutter que a bolinha do `MI2MO2` já usava) e uma linha de prompt
+  stutter que a bolinha do `P2M2` já usava) e uma linha de prompt
   `>THINKING_` que se digita letra por letra, apaga e recomeça enquanto a
   IA estiver pensando. Essa linha ocupa **só a última linha** da aba IA — o
   log continua rolando acima dela, de modo que os rótulos de ferramenta que
@@ -333,22 +333,22 @@ Diferenças próprias em relação ao `MATRIX`:
   xícara está na tela e o traz de volta sozinho quando ela sai.
 - **Sons são os mesmos dos outros temas** — as cues estilo R2D2 continuam
   tocando aqui. Foi uma decisão explícita de não mexer no `Buzzer`, que hoje
-  não recebe o tema; dar beeps próprios ao `MI84` seria um parâmetro `Theme`
+  não recebe o tema; dar beeps próprios ao `PEEMO84` seria um parâmetro `Theme`
   em `playForExpression` e uma tabela `SoundSegment` nova, nada estrutural.
 
-**Sequência de boot.** Ao receber `THEME MI84`, o Core roda uma
-inicialização de ~4s antes de mostrar a interface: `MIMO-84 BIOS`, quatro
+**Sequência de boot.** Ao receber `THEME PEEMO84`, o Core roda uma
+inicialização de ~4s antes de mostrar a interface: `PEEMO-84 BIOS`, quatro
 linhas de POST aparecendo uma a uma (`MEMORY ........ OK`, `DISPLAY`,
-`AI CORE`, `AUDIO`), `SYSTEM READY`, e então o letreiro `MIMO SYSTEM v2.6`
+`AI CORE`, `AUDIO`), `SYSTEM READY`, e então o letreiro `PEEMO SYSTEM v2.6`
 centralizado. Terminado isso, os olhos "acendem" como uma lâmpada velha —
 apagados, duas partidas falhas que acendem e morrem, e daí subindo até o
 brilho cheio.
 
-Ela roda a **cada** comando `THEME MI84`, não uma vez por boot da placa, e
+Ela roda a **cada** comando `THEME PEEMO84`, não uma vez por boot da placa, e
 isso é de propósito: o Core não tem nenhum sinal próprio de "um app do PC
 acabou de conectar", mas o Brobot.Sender manda o `THEME` como primeira coisa
 num link novo e o remanda a cada reconexão. Ou seja, o comando *é* esse
-sinal, e a sequência acaba tocando exatamente quando o MiMo volta a ter
+sinal, e a sequência acaba tocando exatamente quando o Peemo volta a ter
 contato com o PC.
 
 **Efeito CRT.** O tema não traz nenhum sistema de CRT próprio — usa o que já
@@ -365,7 +365,7 @@ Notificação é o topo da escala de prioridade do display:
 Notificação  >  IA  >  Reunião  >  Jogos  >  Mídia
 ```
 
-São as coisas pelas quais o MiMo **interrompe** você: os lembretes de pausa
+São as coisas pelas quais o Peemo **interrompe** você: os lembretes de pausa
 (card Pausa), os alertas de mudança do clima (card Clima) e os avisos de
 hora de dormir. Diferente de todo o resto, uma notificação **toma a tela
 inteira** — sem olhos, sem selos, sem log, sem balão — mostra uma animação
@@ -384,11 +384,11 @@ dormir não passa por aqui — o Core o levanta sozinho, sem app nenhum
 envolvido.
 
 A tela **segue a paleta do tema ativo**: teal no `DEFAULT`, verde no
-`MATRIX`, âmbar no `MI84`, e azul-marinho sobre a chapa clara no `MI2MO2` —
+`MATRIX`, âmbar no `PEEMO84`, e azul-marinho sobre a chapa clara no `P2M2` —
 esse é o único tema cujo fundo não é preto, e cair para preto ali leria como
-a tela ter desligado, não como o MiMo falando.
+a tela ter desligado, não como o Peemo falando.
 
-**O rosto do MiMo aparece em todas as notificações.** Uma versão anterior
+**O rosto do Peemo aparece em todas as notificações.** Uma versão anterior
 dava o frame inteiro para a arte, e quem não tinha ilustração própria caía
 num card genérico — uma moldura vazia que ninguém entendia, porque não
 representava nada. Fazer do rosto a constante e da arte o opcional eliminou
@@ -397,7 +397,7 @@ a necessidade de placeholder.
 - **`COFFEE`** (Pausa): olhos à esquerda e **acima** da linha de repouso da
   xícara, que fica à direita, com a mensagem embaixo. A cada ~2,8s a xícara
   **sobe e se aproxima do rosto**, fica um instante lá em cima e desce de
-  volta ao pires — o MiMo tomando um gole. É só deslocamento, sem rotação:
+  volta ao pires — o Peemo tomando um gole. É só deslocamento, sem rotação:
   nesta resolução uma caneca inclinada composta de retângulos lê como caneca
   quebrada, não como caneca tombada, então quem carrega o gesto é o
   trajeto. A xícara é a mesma função de desenho do ícone de canto, com a
@@ -438,7 +438,7 @@ a necessidade de placeholder.
   sobre o corpo da câmera marcando "a chamada está no ar". A mensagem
   embaixo é `Meet: <título> <hora>` (ex.: "Meet: Testes SSO Sanepar
   10h15") — sem "às", removido a pedido depois de soar estranho na tela.
-- **`WEATHER`** (alerta de clima): o MiMo ao lado de um guarda-chuva, com
+- **`WEATHER`** (alerta de clima): o Peemo ao lado de um guarda-chuva, com
   chuva caindo atrás dos dois. A chuva é desenhada **antes** do domo e dos
   olhos, então as gotas que cairiam sobre o guarda-chuva simplesmente não
   aparecem — lê como abrigo sem precisar de nenhum teste de colisão por
@@ -450,7 +450,7 @@ a necessidade de placeholder.
   um `case`, não um comando e uma expressão novos. Um guarda-chuva ao lado de
   um alerta de tempo bom contradiria o próprio aviso, então cada condição traz
   a sua cena:
-  - **`RAIN`**: o MiMo ao lado de um guarda-chuva, com chuva caindo atrás dos
+  - **`RAIN`**: o Peemo ao lado de um guarda-chuva, com chuva caindo atrás dos
     dois. As gotas são desenhadas antes da copa e dos olhos, então as que
     cairiam sobre o guarda-chuva são simplesmente pintadas por cima — lê como
     abrigo, sem nenhum teste de colisão por gota.
@@ -477,16 +477,16 @@ a necessidade de placeholder.
     nuvem passando na frente do sol: as duas seriam da cor da tinta, então a
     nuvem não cobriria o sol, ela se fundiria com ele.
   - **`FOG`**: faixas horizontais à deriva em **duas passadas** — metade em
-    tinta, atrás do MiMo, para algo visivelmente passar; metade na cor do
+    tinta, atrás do Peemo, para algo visivelmente passar; metade na cor do
     fundo, na frente dele, para ele ser comido e voltar. Nenhuma funciona
     sozinha: só tinta lê como listras na tela, só fundo lê como falha de
     renderização. As da frente são mais finas que as de trás (2-3px contra
-    3-6px); iguais, elas levavam três quartos do MiMo junto. Bem lenta de
+    3-6px); iguais, elas levavam três quartos do Peemo junto. Bem lenta de
     propósito — 15 a 25s para atravessar, o efeito mais lento do projeto.
-  - **`SNOW`** não tem arte e fica no fallback do MiMo sozinho e
+  - **`SNOW`** não tem arte e fica no fallback do Peemo sozinho e
     centralizado, por decisão: no Brasil não neva.
 
-  O quanto o MiMo desloca para a esquerda depende do que a cena ocupa: o
+  O quanto o Peemo desloca para a esquerda depende do que a cena ocupa: o
   guarda-chuva pede uma coluna inteira, o sol só o canto, e névoa/nuvens
   nenhum deslocamento. **Ordem importa:** o app do PC precisa mandar o
   `WEATHER` antes do `NOTIFY WEATHER`, senão o alerta é ilustrado com a
@@ -509,19 +509,49 @@ a necessidade de placeholder.
   escorre com aceleração de gravidade, some por um instante e recomeça
   (ciclo de 1,9s). A gota usa a cor do texto — branca no `DEFAULT`, para
   não se misturar com os olhos seja qual for o `CLASSICCOLOR`. Também vale
-  como `FACE SWEATING` fora de notificação (sem gota no `MI2MO2`, que não
+  como `FACE SWEATING` fora de notificação (sem gota no `P2M2`, que não
   tem olhos gêmeos).
+- **`SATELLITE`** (um satélite famoso passando no céu do usuário — ver
+  `SpaceMessages` em specs/sender-thoughts.md): olhos centralizados ~20%
+  menores que os de sempre (32px em vez de 40, mesma linha de centro), num
+  céu de estrelinhas que piscam cada uma no seu ritmo, e um **satélite**
+  (corpo, dois painéis solares com divisórias de célula e uma antena com a
+  ponta piscando) **inclinado ~30°**, asa direita para cima, cruzando o topo
+  da esquerda para a direita num arco raso — mais alto no meio, como uma
+  passagem de verdade. A inclinação é feita por mapeamento inverso: cada
+  pixel da caixa é girado de volta para o sistema do satélite e consultado
+  lá (sem buracos), e cada linha sai como trechos horizontais de uma cor, ou
+  seja, algumas dezenas de `fillRect` por frame em vez de um por pixel. Os
+  olhos deslizam para os lados **seguindo o satélite** e, no intervalo entre
+  uma passagem e outra, voltam devagar para a esquerda, de onde ele vai
+  surgir. Satélite na tinta do tema, estrelas e farol na cor do texto.
+  Ciclo de 5s (~2 passagens nos 10s), medido a partir de
+  `notificationStartedMs` para a primeira sempre entrar pela borda.
+  Desenhado com primitivas como todo o resto, não bitmap: o `IDisplay` não
+  tem blit, e no display virtual cada pixel seria um comando no fio. Como
+  `FACE SATELLITE` comum é só o rosto neutro.
+- **`SPACE`** (qualquer outro comentário espacial): a mesma cena do
+  `SATELLITE` — olhos menores, céu de estrelinhas — **sem o satélite**, e
+  por isso com os olhos parados no centro. `FACE SPACE` comum é só o rosto
+  neutro.
+
+  **`SATELLITE` e `SPACE` abrem com uma linha fixa**: o Core primeiro
+  digita "Transmissão Espacial Recebida!!!", segura 1,5s depois de
+  terminar, e só então troca pelo texto que veio no `NOTIFY` (digitado do
+  zero), reiniciando os 10s para a mensagem de verdade ter o tempo de
+  leitura inteiro. Fica no Core de propósito: é *como* a tela aparece, não
+  *o que* é dito — o app do PC manda só a mensagem, sem repetir a abertura.
 - **Qualquer outra**: o rosto centralizado, piscando no ritmo normal do
   `Personality`, com a mensagem embaixo. **Atenção:** isso inclui `ANGRY`/
   `SAD`, que aqui **não** mudam o formato dos olhos — o fallback desenha
   sempre os olhos neutros.
-- **`ACHIEVEMENT`** (uma das 10 conquistas do MiMo, ver `AchievementMonitor`
+- **`ACHIEVEMENT`** (uma das 10 conquistas do Peemo, ver `AchievementMonitor`
   no Brobot.Sender): olhos pequenos à esquerda (a mesma posição/tamanho do
   `COFFEE`) e um **troféu** saltando para dentro do quadro à direita — a
   mesma silhueta em todas as 10, pra ficar claro de cara que é uma conquista,
   igual a um jogo de verdade sempre mostra *um* troféu não importa qual foi
   ganho. O salto é uma tabela de pontos fixos (mesma ideia do estrondo da
-  lâmpada do boot do `MI84`): sobe rápido, passa um pouco do lugar, volta um
+  lâmpada do boot do `PEEMO84`): sobe rápido, passa um pouco do lugar, volta um
   pouco de menos, e assenta — depois disso balança de leve pelo resto dos
   10s, pra não ficar parado o tempo todo. `<ID>` escolhe o **acabamento**
   que faz cada conquista parecer única:
@@ -546,8 +576,8 @@ a necessidade de placeholder.
   - **`BREAK_TAKER`**: um bonequinho se espreguiçando, com os braços
     erguidos, balançando bem devagar.
   - **`IDENTITY_CRISIS`**: a cor do troféu **fica trocando** entre as cores
-    de cada tema (o teal do Classic, o verde do Matrix, o âmbar do MI84, um
-    vermelho no lugar do MI2MO2) — não ganha ícone à parte, é a própria cor
+    de cada tema (o teal do Classic, o verde do Matrix, o âmbar do PEEMO84, um
+    vermelho no lugar do P2M2) — não ganha ícone à parte, é a própria cor
     do troféu que carrega o efeito, e não tem relação com o tema realmente
     ativo no momento.
   Um `<ID>` que o Core não reconhece cai no acabamento do `FIRST_CONTACT`
@@ -562,7 +592,7 @@ a necessidade de placeholder.
   `REPORT <buildOk> <buildFail> <commits> <minutosReuniao> <minutosMidia>
   <minutosVideo> <minutosRedeSocial> <minutosJogo> <RATING> <texto>`.
   `<commits>` vem do hook de git que roda em `post-commit`
-  (`hooks/mimo-git-hook.ps1`/`hooks/git-hooks/post-commit`), não de um
+  (`hooks/peemo-git-hook.ps1`/`hooks/git-hooks/post-commit`), não de um
   monitor do Windows como os outros números. `<buildOk>`/`<buildFail>`/
   `<commits>` chegam como `-1` quando o card "Ferramentas de Dev" do Sender
   está desligado (sem monitor de build/git, um 0 ali mentiria) — o Core
@@ -608,7 +638,7 @@ a necessidade de placeholder.
 
 Toda arte de notificação recebe a **cor de fundo por parâmetro** em vez de
 assumir preto. Isso não é estilo: o truque de "recortar um buraco" usado no
-projeto inteiro pinta o recorte da cor do fundo, e no `MI2MO2` o fundo é a
+projeto inteiro pinta o recorte da cor do fundo, e no `P2M2` o fundo é a
 chapa clara — assumindo preto, a caneca ganhava dois buracos pretos e cada
 olho, quatro pontinhos escuros nos cantos. Foram dois bugs reais, corrigidos
 uma vez.
@@ -687,7 +717,7 @@ Brobot Virtual Display.
 | `RECT x y w h r g b`                       | `DrawRect(...)`                  |
 | `FILLRECT x y w h r g b`                   | `FillRect(...)`                  |
 | `RRECT x y w h radius r g b`               | `DrawRoundedRect(...)`           |
-| `TEXT x y r g b font texto...`             | `DrawText(texto, x, y, color, font)`. `font` é `LATIN` ou `AUREBESH` (só `THEME MI2MO2` chega a mandar `AUREBESH`, ver acima) — cada display decide por conta própria, caractere a caractere, se de fato tem um glifo Aurebesh pra esse caractere ou se cai de volta pra `LATIN`; resto da linha após o token de fonte é o texto, sem mais parsing |
+| `TEXT x y r g b font texto...`             | `DrawText(texto, x, y, color, font)`. `font` é `LATIN` ou `AUREBESH` (só `THEME P2M2` chega a mandar `AUREBESH`, ver acima) — cada display decide por conta própria, caractere a caractere, se de fato tem um glifo Aurebesh pra esse caractere ou se cai de volta pra `LATIN`; resto da linha após o token de fonte é o texto, sem mais parsing |
 | `PRESENT`                                  | `Present()` — fim do frame, atualiza a tela |
 
 `DrawBitmap` não tem comando de protocolo ainda — não é usado nesta primeira

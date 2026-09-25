@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Brobot.Display.Simulator"
         mc:Ignorable="d"
-        Title="MiMo Virtual Display" Height="716" Width="540"
+        Title="Peemo Virtual Display" Height="716" Width="540"
         ResizeMode="CanMinimize"
         Background="#FF1E1E1E">
     <Grid Margin="12">

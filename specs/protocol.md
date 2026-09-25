@@ -27,14 +27,14 @@ REPORT <buildOk> <buildFail> <commits> <meetingMin> <mediaMin> <videoMin> <socia
                                RATING is one of PESSIMO|RUIM|QUESTIONAVEL|MEDIO|BOM|EXCELENTE;
                                buildOk/buildFail/commits are all -1 when Sender's Ferramentas
                                de Dev card is off — Core then omits those three lines;
-                               commits comes from hooks/mimo-git-hook.ps1's post-commit hook,
+                               commits comes from hooks/peemo-git-hook.ps1's post-commit hook,
                                not a Windows monitor like the other fields; videoMin
                                (labeled "Youtube" on screen, see YouTubeTabDetector.cs) and
                                socialMin (TikTok/Instagram/Facebook combined, see
                                SocialMediaTabDetector.cs) are both subsets of mediaMin, kept
                                as two separate numbers rather than merged — a product
                                decision, not a technical one)
-THEME <DEFAULT|MATRIX|MI2MO2|MI84> (persistent, like WEATHER/TIME — see Face.cpp's theme notes)
+THEME <DEFAULT|MATRIX|P2M2|PEEMO84> (persistent, like WEATHER/TIME — see Face.cpp's theme notes)
 CLASSICCOLOR <BLUE|GREEN|AMBER|RED|PINK|WHITE> (DEFAULT theme's own primary
                                color — eyes, corner icons, weather/clock
                                badge. No effect on any other theme, which
@@ -47,7 +47,7 @@ STATS <cpu%> <cpuTempC> <gpu%> <gpuTempC> <ram%>   (-1 = no source; empty clears
 AISTATS <ctx%> <costCents> <rate5h%> <rate7d%> <model>  (-1 = no source; empty clears)
 PONG START|STOP|<KEY LEFT|RIGHT DOWN|UP>   (see firmware-platform.md's PongGame.cpp entry)
 RPG START|STOP|LEFT|RIGHT|CONFIRM          (see firmware-platform.md's RpgBattle.cpp entry)
-PING                          (Core replies "MIMO 1" — the only command it answers)
+PING                          (Core replies "PEEMO 1" — the only command it answers)
 
 CLR r g b
 PIXEL x y r g b
@@ -59,8 +59,8 @@ PRESENT
 
 `PING` is the one command that flows *back* Core→PC, and the only one that
 touches neither `Personality` nor `DeviceSettings` — it's about the link, not
-about Brobot. It exists so a PC app can find MiMo on the network after DHCP
-moves it; see `MimoDiscovery` under [connection.md](connection.md).
+about Brobot. It exists so a PC app can find Peemo on the network after DHCP
+moves it; see `PeemoDiscovery` under [connection.md](connection.md).
 `PONG OVER <score>` and `RPG OVER <VICTORY|DEFEAT|FLED>` are the only other
 Core→PC lines, and only ever follow a `PONG`/`RPG` command — written
 straight to the `Stream` the same way `PING`'s reply is, right before a
@@ -84,7 +84,7 @@ below. Highest first:
 NOTIFICATION  >  FOREGROUND (AI)  >  GAME  >  MEDIA
 ```
 
-**Notifications** (`NOTIFY`) are the things MiMo interrupts you *for* —
+**Notifications** (`NOTIFY`) are the things Peemo interrupts you *for* —
 Pausa's break reminders, Clima's weather-change alerts, the bedtime nudges.
 They outrank everything including AI activity, take the entire frame (no
 badges, no log, no message box — see `FaceState::isNotification` and
@@ -94,14 +94,14 @@ itself in inside that same window, so a long phrase spent most of a 7s one
 still appearing, and because both dedicated animations want room to play
 more than once).
 
-MiMo's **face stays visible in every notification**. An earlier version gave
+Peemo's **face stays visible in every notification**. An earlier version gave
 the whole frame to the artwork, so a notification with no illustration of
 its own fell back to an empty framed card — unreadable, because it wasn't
 depicting anything. Making the eyes the constant and the artwork the
 optional extra removed the need for a placeholder at all. `COFFEE` puts
 small eyes left and slightly *above* the cup's resting line, with the
 steaming mug to the right; every ~2.8s that mug rises and drifts toward the
-face, holds, and settles back onto the saucer — MiMo taking a sip. The
+face, holds, and settles back onto the saucer — Peemo taking a sip. The
 gesture is pure translation: there is no rotation at this resolution, and a
 tilted mug built from fillRects reads as a broken one rather than a tipped
 one. (Its handle was also wrong until now — the inner cut's right edge
@@ -134,7 +134,7 @@ blinks — anchored on `FaceState::notificationStartedMs` rather than raw
 `nowMs` so it always begins awake; everything else just blinks normally.
 Every notification drawing takes the **background color as a parameter**
 rather than assuming black: the "cut a gap" trick this codebase uses
-everywhere fills the cut with the background, and MI2MO2's ground is R2's
+everywhere fills the cut with the background, and P2M2's ground is R2's
 light plate, so assuming black gave the mug two black holes and each eye
 four dark specks at its corners. Two real bugs, fixed once — `drawEye`/
 `fillRoundedRect` now default those parameters to black so no existing

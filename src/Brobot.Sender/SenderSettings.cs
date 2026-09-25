@@ -27,14 +27,14 @@ public sealed class SenderSettings
     public bool BuildEnabled { get; set; }
     public bool AlertasDesempenhoEnabled { get; set; }
     public string Theme { get; set; } = ThemeManager.DefaultTheme;
-    // Only meaningful while Theme is MiMo Classic (see ThemeManager's
+    // Only meaningful while Theme is Peemo Classic (see ThemeManager's
     // ClassicColorInfo) — kept regardless of which theme is currently
     // selected, same reasoning as Core's own Personality::_classicColor,
     // so switching away and back to Classic doesn't lose the choice.
     public string ClassicColor { get; set; } = ThemeManager.DefaultClassicColor;
 
     // Unlike the checkboxes above (opt-in monitors, off by default), Sons
-    // and Scanlines toggle features MiMo already has on by default (see
+    // and Scanlines toggle features Peemo already has on by default (see
     // DeviceSettings.h's SOUND/SCANLINES) — defaulting these to true keeps
     // a fresh install's checkboxes matching what the device already does,
     // instead of silently muting/flattening it the first time this settings
@@ -48,7 +48,7 @@ public sealed class SenderSettings
     // launch; it stays off for anyone who never performs it.
     public bool TestModeUnlocked { get; set; }
 
-    // MiMo's IP on the local network — this app only ever reaches Core over
+    // Peemo's IP on the local network — this app only ever reaches Core over
     // WiFi (see MainWindow's Conexão card); Brobot.Display.Simulator still
     // supports Serial, but this app doesn't need it.
     public string TcpHost { get; set; } = "";
@@ -58,23 +58,34 @@ public sealed class SenderSettings
     // started (see ClaudeCodeAccount). Like TcpHost above, and unlike every
     // other field here, this isn't a preference anyone chose — it's a fact
     // about the world, recorded so the *next* launch can tell whether the
-    // account changed while MiMo wasn't looking. Written immediately rather
+    // account changed while Peemo wasn't looking. Written immediately rather
     // than waiting for "Salvar configurações", same reasoning as
     // PersistDiscoveredAddress.
     public string LastClaudeAccountUuid { get; set; } = "";
 
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Brobot", "mimo-sender-settings.json");
+        "Brobot", "peemo-sender-settings.json");
 
     public static SenderSettings Load()
     {
         try
         {
+            // An install from before the rename (see LegacyNames) only has the
+            // old file: adopt it once so its settings carry over. The old
+            // file is left in place, untouched.
+            string legacyPath = Path.Combine(Path.GetDirectoryName(FilePath)!, LegacyNames.SettingsFileName);
+            if (!File.Exists(FilePath) && File.Exists(legacyPath))
+            {
+                File.Copy(legacyPath, FilePath);
+            }
+
             if (File.Exists(FilePath))
             {
                 string json = File.ReadAllText(FilePath);
-                return JsonSerializer.Deserialize<SenderSettings>(json) ?? new SenderSettings();
+                SenderSettings settings = JsonSerializer.Deserialize<SenderSettings>(json) ?? new SenderSettings();
+                settings.Theme = LegacyNames.ThemeKey(settings.Theme);
+                return settings;
             }
         }
         catch (Exception)

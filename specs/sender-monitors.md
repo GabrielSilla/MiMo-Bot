@@ -61,7 +61,7 @@
   flipped to `false`) — `TryFindFocused()` returns that as a
   `bool?` (`null` = no YouTube tab found in any watched browser window,
   e.g. VLC or a non-YouTube site). Focused vs background only feeds the
-  daily report's focused-video counter; MiMo's message is a single
+  daily report's focused-video counter; Peemo's message is a single
   `"YouTube: <title>"` either way (a separate "ao fundo" label used to
   exist, but made every tab switch retype the message). Once a YouTube tab
   has matched for the current now-playing item, `_nowPlayingIsYouTube`
@@ -129,7 +129,7 @@
   "don't restart Core's typewriter on unchanged text" reasoning as the
   YouTube path.
 - **`NotificationMonitor.cs`**: shows Windows' own toast notifications (any
-  app, not just this one) on MiMo, via `Windows.UI.Notifications.Management.
+  app, not just this one) on Peemo, via `Windows.UI.Notifications.Management.
   UserNotificationListener` — the same WinRT surface Action Center itself is
   built on. That API's own docs (and this project's own first assumption)
   gate it behind package identity (MSIX/UWP) — a real sparse-package
@@ -153,7 +153,7 @@
   notifications onto the screen. Each new one sends one atomic
   `NOTIFY READING <app>: <text>` — Core's top-priority tier, not a plain
   `FACE`/`MSG` pair: a Windows notification is already an interruption on
-  the PC side, so anything less on MiMo would undersell it. `READING` for
+  the PC side, so anything less on Peemo would undersell it. `READING` for
   the same "look over here" reasoning `Atividade da IA`'s own
   `PermissionRequest` → `NOTIFY` already uses.
   `MainWindow.NotificationsCheckBox_CheckedChanged` has one thing worth
@@ -224,7 +224,7 @@
   `_lastText`/`_lastRaisedAtUtc`/`DedupeWindow` (3s) exist because the same
   banner re-fires `EVENT_OBJECT_SHOW` several times while it animates in and
   out — without this, one real Teams notification would turn into a burst
-  of duplicate `NOTIFY`s on MiMo. The `WinEventDelegate` callback is kept as
+  of duplicate `NOTIFY`s on Peemo. The `WinEventDelegate` callback is kept as
   an instance field, not a local — `SetWinEventHook` does not root
   the delegate itself, so a GC'd delegate crashes the process the next time
   Windows tries to invoke a hook nobody kept alive. Must be `Start()`-ed
@@ -308,7 +308,7 @@
   other four are. It rides the same `STATS` line as everything else (a new
   6th field, `PROTOCOL.md`), and on Core it's drawn with no `%`/`C` suffix
   (`formatStatValue`'s suffix `'\0'` case) since it's a plain count, not a
-  load percentage or a temperature — and with no bar in MI84's MONITOR tab,
+  load percentage or a temperature — and with no bar in PEEMO84's MONITOR tab,
   since a load/temperature bar assumes a 0-100 range and a high-refresh
   monitor routinely clears 100 FPS. `CLASSIC`'s own Game Mode panel
   (`drawStatsMessage`) does show it, but not as a fourth stacked row — its
@@ -321,12 +321,12 @@
   temperature to show, same as neither of CPU/GPU's own column-mates would
   need one), which is what makes two readings fit on one row at all. This
   actually frees a row versus the old one-per-row layout (2 rows instead of
-  3), so the game name gains a line rather than losing one. `MI2MO2` calls
+  3), so the game name gains a line rather than losing one. `P2M2` calls
   the same function with `gridLayout = false` and is completely unchanged —
   still the original one-per-row CPU/GPU/RAM list, still no FPS — because
-  its box height (`STATS_BOX_LINES_MI2MO2`) is already at the most it can
+  its box height (`STATS_BOX_LINES_P2M2`) is already at the most it can
   grow without covering the bottom of R2's lens, so there's no slack to
-  spend on a fourth reading regardless of layout. `MATRIX`/`MI84`'s MONITOR
+  spend on a fourth reading regardless of layout. `MATRIX`/`PEEMO84`'s MONITOR
   tabs (log-based, not box-based) show FPS as their own fourth row, per
   above.
 - **`GameMonitor.cs`**: polls `Process.GetProcesses()` every 5s against Discord's

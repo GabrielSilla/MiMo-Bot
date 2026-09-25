@@ -12,7 +12,7 @@ public sealed record SystemStatsReading(
     int? Fps);
 
 /// <summary>
-/// Samples CPU/GPU/RAM load and temperature for MiMo's Game Mode, from two
+/// Samples CPU/GPU/RAM load and temperature for Peemo's Game Mode, from two
 /// sources with different guarantees:
 ///
 /// - <b>LibreHardwareMonitorLib</b> supplies CPU load, RAM load, GPU load and

@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:Brobot.Sender"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         mc:Ignorable="d"
-        Title="MiMo" Height="760" Width="580"
+        Title="Peemo" Height="760" Width="580"
         ResizeMode="CanResize"
-        Icon="pack://application:,,,/Brobot.Sender;component/src/mimo-b.png"
+        Icon="pack://application:,,,/Brobot.Sender;component/src/peemo-b.png"
         Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
         <!-- Implicit (no x:Key) style: applies to every PackIconMaterial in this
@@ -22,7 +22,7 @@
         </Style>
 
         <!-- Color brushes (InkBrush, CardBrush, ...) come from the active theme
-             in App.Resources (see ThemeManager/Themes/MiMoClassic.xaml), not
+             in App.Resources (see ThemeManager/Themes/PeemoClassic.xaml), not
              from here — everything below looks them up via DynamicResource
              so a theme change repaints this window without a restart. -->
 
@@ -75,8 +75,8 @@
             <Setter Property="Margin" Value="0,4,0,0"/>
         </Style>
 
-        <!-- Rounded black-square checkbox with a white checkmark, matching the MiMo reference -->
-        <Style x:Key="MimoCheckBoxStyle" TargetType="CheckBox">
+        <!-- Rounded black-square checkbox with a white checkmark, matching the Peemo reference -->
+        <Style x:Key="PeemoCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -101,7 +101,7 @@
         </Style>
 
         <!-- Minimal rounded ComboBox, just enough chrome to read as a dropdown -->
-        <Style x:Key="MimoComboBoxStyle" TargetType="ComboBox">
+        <Style x:Key="PeemoComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
             <Setter Property="Padding" Value="10,6"/>
@@ -157,7 +157,7 @@
             </Setter>
         </Style>
 
-        <Style x:Key="MimoComboBoxItemStyle" TargetType="ComboBoxItem">
+        <Style x:Key="PeemoComboBoxItemStyle" TargetType="ComboBoxItem">
             <Setter Property="Padding" Value="10,7"/>
             <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
             <Setter Property="Template">
@@ -209,7 +209,7 @@
         <!-- Rounded TextBox matching the ComboBox/Button chrome above. Only the
              Pausa card's two time fields use it now — the Conexão card's
              address stopped being typeable and became a plain readout. -->
-        <Style x:Key="MimoTextBoxStyle" TargetType="TextBox">
+        <Style x:Key="PeemoTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource InkBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
@@ -258,7 +258,7 @@
              ContentPresenter rather than a direct Setter on Foreground,
              since Foreground on the Border wouldn't inherit into a
              ContentPresenter the way it does into a normal panel. -->
-        <Style x:Key="MimoTabItemStyle" TargetType="TabItem">
+        <Style x:Key="PeemoTabItemStyle" TargetType="TabItem">
             <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -291,7 +291,7 @@
              row's own margin lines its pill tabs up with the cards below,
              which each carry their own left/right margin via the content
              Grid instead. -->
-        <Style x:Key="MimoTabControlStyle" TargetType="TabControl">
+        <Style x:Key="PeemoTabControlStyle" TargetType="TabControl">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
@@ -308,7 +308,7 @@
         </Style>
     </Window.Resources>
 
-    <!-- The MiMo wordmark sits above the tabs, shared by all three, rather
+    <!-- The Peemo wordmark sits above the tabs, shared by all three, rather
          than living inside Configurações Gerais's own content — it's the
          app's own identity, not something specific to one tab, and the tab
          headers read as navigation *within* the app, not above it. Wrapped
@@ -326,26 +326,26 @@
         <Border Grid.Row="0" Background="Transparent" HorizontalAlignment="Center"
                 Margin="0,20,0,0" MouseLeftButtonUp="LogoImage_MouseLeftButtonUp">
             <Image x:Name="LogoImage"
-                   Source="pack://application:,,,/Brobot.Sender;component/src/mimo-trimmed.png"
-                   Height="48" VerticalAlignment="Top"/>
+                   Source="pack://application:,,,/Brobot.Sender;component/src/peemo-trimmed.png"
+                   Height="87" VerticalAlignment="Top"/>
         </Border>
 
         <!-- One shared subtitle above the tabs instead of each tab carrying
              its own — TabSubtitleText's text swaps per selected tab
              (MainTabControl_SelectionChanged) rather than living inside each
              TabItem's own content. -->
-        <TextBlock Grid.Row="1" x:Name="TabSubtitleText" Text="Escolha as informações que o MiMo pode receber"
+        <TextBlock Grid.Row="1" x:Name="TabSubtitleText" Text="Escolha as informações que o Peemo pode receber"
                    HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="13.5" Margin="0,6,0,0"/>
 
         <!-- Configurações Gerais / Mini Games / Conquistas — a real TabControl now
-             (see MimoTabControlStyle/MimoTabItemStyle above) rather than the
+             (see PeemoTabControlStyle/PeemoTabItemStyle above) rather than the
              plain-Visibility page swap this app used to do for its old
              Anti-Stress button/game-picker pair: with a third, permanent
              destination (Conquistas) alongside the checklist, a selector is
              exactly what's needed, not something to avoid. -->
-        <TabControl Grid.Row="2" x:Name="MainTabControl" Style="{StaticResource MimoTabControlStyle}"
+        <TabControl Grid.Row="2" x:Name="MainTabControl" Style="{StaticResource PeemoTabControlStyle}"
                     SelectionChanged="MainTabControl_SelectionChanged">
-    <TabItem Header="Configurações Gerais" Style="{StaticResource MimoTabItemStyle}">
+    <TabItem Header="Configurações Gerais" Style="{StaticResource PeemoTabItemStyle}">
     <ScrollViewer x:Name="RootScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
         <Grid Margin="32,20,24,28">
             <Grid.RowDefinitions>
@@ -364,7 +364,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Conexão: MiMo's IP address on the local network (WiFi — see
+            <!-- Conexão: Peemo's IP address on the local network (WiFi — see
                  CLAUDE.md's connection-freeze note on why this replaced the
                  Serial/USB path entirely for this app) -->
             <Border Grid.Row="0" Style="{StaticResource CardStyle}">
@@ -381,11 +381,11 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Conexão" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="O MiMo é encontrado sozinho na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="O Peemo é encontrado sozinho na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="ConnectionStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <!-- A display, not a field: MiMo's address is discovered (see
-                         MimoDiscovery), never typed. During a sweep this ticks
+                    <!-- A display, not a field: Peemo's address is discovered (see
+                         PeemoDiscovery), never typed. During a sweep this ticks
                          through the addresses being probed, so the search is
                          visibly doing something rather than just spinning. -->
                     <TextBlock x:Name="ConnectionAddressText" Grid.Column="2" Width="150" VerticalAlignment="Center"
@@ -411,9 +411,9 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Hora" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Envia a hora atual para o MiMo" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Envia a hora atual para o Peemo" Style="{StaticResource CardDescriptionStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="HoraCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="HoraCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="HoraCheckBox_CheckedChanged" Unchecked="HoraCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -435,7 +435,7 @@
                         <TextBlock Text="Envia as condições climáticas atuais" Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="ClimaStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="ClimaCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="ClimaCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="ClimaCheckBox_CheckedChanged" Unchecked="ClimaCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -457,7 +457,7 @@
                         <TextBlock Text="Envia informações sobre o que você está ouvindo ou assistindo" Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="MediaStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="MediaCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="MediaCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="MediaCheckBox_CheckedChanged" Unchecked="MediaCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -476,7 +476,7 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Jogos" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Avisa o MiMo quando você está jogando e mostra CPU, GPU e RAM na tela dele"
+                        <TextBlock Text="Avisa o Peemo quando você está jogando e mostra CPU, GPU e RAM na tela dele"
                                    Style="{StaticResource CardDescriptionStyle}"/>
                         <!-- Names only what actually depends on Afterburner. Saying
                              "as estatísticas" would be wrong and would push people
@@ -490,7 +490,7 @@
                                    Style="{StaticResource CardNoteStyle}"/>
                         <TextBlock x:Name="GameStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="GameCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="GameCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="GameCheckBox_CheckedChanged" Unchecked="GameCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -509,13 +509,13 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Alertas de desempenho" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="O MiMo avisa quando a CPU ou a RAM ficam acima de 90% por mais de 15 segundos"
+                        <TextBlock Text="O Peemo avisa quando a CPU ou a RAM ficam acima de 90% por mais de 15 segundos"
                                    Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock Text="Fica pausado enquanto um jogo estiver aberto (com o card Jogos ligado). Depois de um alerta, só avisa de novo quando o uso cair abaixo de 80% e tiverem passado 10 minutos."
                                    Style="{StaticResource CardNoteStyle}"/>
                         <TextBlock x:Name="ResourceAlertStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="ResourceAlertCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="ResourceAlertCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="ResourceAlertCheckBox_CheckedChanged" Unchecked="ResourceAlertCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -534,11 +534,11 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Notificações" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Mostra as notificações do Windows no MiMo assim que chegam"
+                        <TextBlock Text="Mostra as notificações do Windows no Peemo assim que chegam"
                                    Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="NotificationsStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="NotificationsCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="NotificationsCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="NotificationsCheckBox_CheckedChanged" Unchecked="NotificationsCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -558,15 +558,15 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Tema" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Escolhe a aparência do MiMo" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Escolhe a aparência do Peemo" Style="{StaticResource CardDescriptionStyle}"/>
                     </StackPanel>
-                    <!-- Only MiMo Classic honors CLASSICCOLOR (see PROTOCOL.md/Face.cpp) — every
+                    <!-- Only Peemo Classic honors CLASSICCOLOR (see PROTOCOL.md/Face.cpp) — every
                          other theme has its own fixed palette, so this picker would otherwise imply
                          a choice that does nothing. Hidden rather than disabled for exactly that
                          reason; visibility toggled alongside TemaComboBox's own selection (see
                          TemaComboBox_SelectionChanged/RefreshClassicColorVisibility). -->
                     <ComboBox x:Name="ClassicColorComboBox" Grid.Column="2" Width="120" Margin="0,0,10,0" VerticalAlignment="Center"
-                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              Style="{StaticResource PeemoComboBoxStyle}" ItemContainerStyle="{StaticResource PeemoComboBoxItemStyle}"
                               Visibility="Collapsed"
                               SelectionChanged="ClassicColorComboBox_SelectionChanged">
                         <ComboBox.ItemTemplate>
@@ -575,17 +575,17 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-                    <!-- ItemTemplate rather than DisplayMemberPath: MimoComboBoxStyle's closed-box
+                    <!-- ItemTemplate rather than DisplayMemberPath: PeemoComboBoxStyle's closed-box
                          ContentPresenter only picks up ComboBox.ItemTemplate (forwarded as
                          SelectionBoxItemTemplate) — DisplayMemberPath alone only formats the
                          dropdown's own item containers, not the closed-box display, which would
-                         otherwise fall back to ThemeInfo's raw ToString(). MiMo Matrix lives here
+                         otherwise fall back to ThemeInfo's raw ToString(). Peemo Matrix lives here
                          as just another entry (see ThemeManager.Available) rather than its own
-                         "Tela do MiMo" card — selecting it also sends Core's own THEME MATRIX
+                         "Tela do Peemo" card — selecting it also sends Core's own THEME MATRIX
                          (TemaComboBox_SelectionChanged), alongside whatever WPF skin the entry
                          points at. -->
                     <ComboBox x:Name="TemaComboBox" Grid.Column="3" Width="140" VerticalAlignment="Center"
-                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              Style="{StaticResource PeemoComboBoxStyle}" ItemContainerStyle="{StaticResource PeemoComboBoxItemStyle}"
                               SelectionChanged="TemaComboBox_SelectionChanged">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
@@ -610,9 +610,9 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Sons" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="MiMo emite bipes pelo buzzer de acordo com a expressão" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Peemo emite bipes pelo buzzer de acordo com a expressão" Style="{StaticResource CardDescriptionStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="SonsCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="SonsCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="SonsCheckBox_CheckedChanged" Unchecked="SonsCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -631,9 +631,9 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Scanlines" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Aplica o filtro CRT retro na tela física do MiMo" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock Text="Aplica o filtro CRT retro na tela física do Peemo" Style="{StaticResource CardDescriptionStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="ScanlinesCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="ScanlinesCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="ScanlinesCheckBox_CheckedChanged" Unchecked="ScanlinesCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -647,7 +647,7 @@
                     </Border>
                     <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Sobre as informações" Style="{StaticResource CardTitleStyle}" FontSize="14"/>
-                        <TextBlock Text="O MiMo usará essas informações para interagir de forma mais relevante com você."
+                        <TextBlock Text="O Peemo usará essas informações para interagir de forma mais relevante com você."
                                    Style="{StaticResource CardDescriptionStyle}"/>
                     </StackPanel>
                 </StackPanel>
@@ -657,7 +657,7 @@
                  TestModeUnlockClicks times (see LogoImage_MouseLeftButtonUp).
                  Sends raw PROTOCOL.md lines straight to Core, which is only
                  possible from inside this app: the ESP32 accepts one TCP
-                 client at a time, so an external script can't reach MiMo
+                 client at a time, so an external script can't reach Peemo
                  without closing Brobot.Sender first. -->
             <Border Grid.Row="11" x:Name="TesteCard" Style="{StaticResource CardStyle}"
                     Visibility="Collapsed" Margin="0,4,0,20">
@@ -672,7 +672,7 @@
                     </Border>
                     <StackPanel Grid.Column="1" Margin="16,0,0,0">
                         <TextBlock Text="Modo teste" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Envia um comando do protocolo direto para o MiMo"
+                        <TextBlock Text="Envia um comando do protocolo direto para o Peemo"
                                    Style="{StaticResource CardDescriptionStyle}"/>
 
                         <Grid Margin="0,12,0,0">
@@ -681,7 +681,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="TesteComandoTextBox" Grid.Column="0"
-                                     Style="{StaticResource MimoTextBoxStyle}"
+                                     Style="{StaticResource PeemoTextBoxStyle}"
                                      KeyDown="TesteComandoTextBox_KeyDown"/>
                             <Button x:Name="TesteEnviarButton" Grid.Column="1" Content="Enviar"
                                     Style="{StaticResource InstallButtonStyle}" Margin="8,0,0,0"
@@ -698,6 +698,12 @@
                             <Button Content="NOTIFY SLEEPY" Style="{StaticResource InstallButtonStyle}"
                                     Margin="0,0,6,6" Tag="NOTIFY SLEEPY Ja passou da hora de dormir!"
                                     Click="TesteAtalho_Click"/>
+                            <Button Content="NOTIFY SATELLITE" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Tag="NOTIFY SATELLITE Às 19:42 a ISS passa bem visível no céu, olha pra noroeste!"
+                                    Click="TesteAtalho_Click"/>
+                            <Button Content="NOTIFY SPACE" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Tag="NOTIFY SPACE Tem 7 pessoas no espaço agora, e nenhuma delas é você"
+                                    Click="TesteAtalho_Click"/>
                             <Button Content="THINKING" Style="{StaticResource InstallButtonStyle}"
                                     Margin="0,0,6,6" Tag="FACE THINKING" Click="TesteAtalho_Click"/>
                             <Button Content="PING" Style="{StaticResource InstallButtonStyle}"
@@ -709,7 +715,7 @@
 
                         <TextBlock Style="{StaticResource CardDescriptionStyle}" Margin="0,6,0,0"
                                    TextWrapping="Wrap"
-                                   Text="Enter envia; seta para cima/baixo percorre o histórico. Separe vários comandos com | (ex.: WEATHER 18 RAIN | NOTIFY WEATHER Leva guarda-chuva) — por isso o | não pode aparecer dentro de uma mensagem. Comando desconhecido é ignorado pelo MiMo sem aviso. Hora, Clima e Jogos sobrescrevem o que você mandar na mão."/>
+                                   Text="Enter envia; seta para cima/baixo percorre o histórico. Separe vários comandos com | (ex.: WEATHER 18 RAIN | NOTIFY WEATHER Leva guarda-chuva) — por isso o | não pode aparecer dentro de uma mensagem. Comando desconhecido é ignorado pelo Peemo sem aviso. Hora, Clima e Jogos sobrescrevem o que você mandar na mão."/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -722,11 +728,11 @@
 
     <!-- Trabalho — the work-day cards (Pausa, Atividade da IA, Ferramentas
          de Dev, Relatório) pulled out of Configurações Gerais so that tab
-         stays about MiMo itself (conexão, tema, sons...) rather than a long
+         stays about Peemo itself (conexão, tema, sons...) rather than a long
          mixed list. Same controls/names as before, so every handler and
          SaveButton_Click read them exactly as they did; this tab carries its
          own save button since Pausa/Relatório's times only persist on save. -->
-    <TabItem Header="Trabalho" Style="{StaticResource MimoTabItemStyle}">
+    <TabItem Header="Trabalho" Style="{StaticResource PeemoTabItemStyle}">
     <ScrollViewer x:Name="TrabalhoScrollViewer" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
         <StackPanel Margin="32,20,24,28">
             <!-- Pausa -->
@@ -750,13 +756,13 @@
                     </StackPanel>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,6,0">
                         <TextBlock Text="Manhã" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
-                        <TextBox x:Name="PausaManhaTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
+                        <TextBox x:Name="PausaManhaTextBox" Width="110" Style="{StaticResource PeemoTextBoxStyle}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,10,0">
                         <TextBlock Text="Tarde" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
-                        <TextBox x:Name="PausaTardeTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
+                        <TextBox x:Name="PausaTardeTextBox" Width="110" Style="{StaticResource PeemoTextBoxStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="PausaCheckBox" Grid.Column="4" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="PausaCheckBox" Grid.Column="4" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="PausaCheckBox_CheckedChanged" Unchecked="PausaCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -780,7 +786,7 @@
                         <TextBlock x:Name="PensamentosIaStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
                     <ComboBox x:Name="PensamentosIaComboBox" Grid.Column="2" Width="100" VerticalAlignment="Center" Margin="0,0,10,0"
-                              Style="{StaticResource MimoComboBoxStyle}" ItemContainerStyle="{StaticResource MimoComboBoxItemStyle}"
+                              Style="{StaticResource PeemoComboBoxStyle}" ItemContainerStyle="{StaticResource PeemoComboBoxItemStyle}"
                               SelectedIndex="0" SelectionChanged="PensamentosIaComboBox_SelectionChanged">
                         <ComboBoxItem Content="Claude"/>
                         <ComboBoxItem Content="Codex"/>
@@ -807,12 +813,12 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Ferramentas de Dev" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Avisa o MiMo quando uma build começa/termina (Gradle, Visual Studio ou MSBuild/dotnet build) e quando você faz commit, merge, checkout de branch ou push"
+                        <TextBlock Text="Avisa o Peemo quando uma build começa/termina (Gradle, Visual Studio ou MSBuild/dotnet build) e quando você faz commit, merge, checkout de branch ou push"
                                    Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock Text="Gradle: pelo log do daemon (IntelliJ, Android Studio ou terminal). Visual Studio: lendo a própria janela de Saída (precisa estar mostrando o canal &quot;Compilação&quot;). MSBuild/dotnet build: rodado fora de uma IDE. Não pega Maven nem o compilador nativo do IntelliJ (JPS). Git: via hook global (core.hooksPath), vale pra qualquer repositório da máquina; não mexe se você já tiver um hooksPath próprio configurado."
                                    Style="{StaticResource CardNoteStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="BuildCheckBox" Grid.Column="2" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="BuildCheckBox" Grid.Column="2" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="BuildCheckBox_CheckedChanged" Unchecked="BuildCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -837,9 +843,9 @@
                     </StackPanel>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,10,0">
                         <TextBlock Text="Horário" Style="{StaticResource CardStatusStyle}" Margin="2,0,0,2"/>
-                        <TextBox x:Name="RelatorioHoraTextBox" Width="110" Style="{StaticResource MimoTextBoxStyle}"/>
+                        <TextBox x:Name="RelatorioHoraTextBox" Width="110" Style="{StaticResource PeemoTextBoxStyle}"/>
                     </StackPanel>
-                    <CheckBox x:Name="RelatorioCheckBox" Grid.Column="3" Style="{StaticResource MimoCheckBoxStyle}"
+                    <CheckBox x:Name="RelatorioCheckBox" Grid.Column="3" Style="{StaticResource PeemoCheckBoxStyle}"
                               Checked="RelatorioCheckBox_CheckedChanged" Unchecked="RelatorioCheckBox_CheckedChanged"/>
                 </Grid>
             </Border>
@@ -856,7 +862,7 @@
          Visibility toggling; now it's a permanent tab, so there's no
          entering/leaving to track — StopGameButton only ever needs to cancel
          a pending/active round, never navigate anywhere. -->
-    <TabItem Header="Mini Games" Style="{StaticResource MimoTabItemStyle}">
+    <TabItem Header="Mini Games" Style="{StaticResource PeemoTabItemStyle}">
     <Grid Margin="32,20,24,28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -878,7 +884,7 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Pong" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="Um Pong solo na tela do MiMo — esquerda/direita movem a raquete, ESC sai na hora"
+                        <TextBlock Text="Um Pong solo na tela do Peemo — esquerda/direita movem a raquete, ESC sai na hora"
                                    Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="PongPickerStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
@@ -901,7 +907,7 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Batalha RPG" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="MiMo enfrenta inimigos de tecnologia na tela dele — Atacar, Magias ou Fugir pelas setinhas e Enter, ESC sai na hora"
+                        <TextBlock Text="Peemo enfrenta inimigos de tecnologia na tela dele — Atacar, Magias ou Fugir pelas setinhas e Enter, ESC sai na hora"
                                    Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="RpgPickerStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
@@ -925,7 +931,7 @@
          near-identical XAML blocks plus 40 named elements would be pure
          repetition with nothing to actually customize per card. ConquistasPanel
          is the only thing this tab needs to name. -->
-    <TabItem Header="Conquistas" Style="{StaticResource MimoTabItemStyle}">
+    <TabItem Header="Conquistas" Style="{StaticResource PeemoTabItemStyle}">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
         <StackPanel x:Name="ConquistasPanel" Margin="32,20,24,28"/>
     </ScrollViewer>
@@ -937,7 +943,7 @@
          at runtime (AgendaTracker), so there's no fixed XAML to hand-author
          in the first place. AgendaPanel/AgendaEmptyText are the only two
          things this tab needs to name. -->
-    <TabItem Header="Agenda" Style="{StaticResource MimoTabItemStyle}">
+    <TabItem Header="Agenda" Style="{StaticResource PeemoTabItemStyle}">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
         <StackPanel Margin="32,20,24,28">
             <TextBlock x:Name="AgendaEmptyText" Text="Nenhuma reunião detectada ainda — reuniões aparecem aqui quando o Outlook mostra o lembrete de calendário (precisa da caixa &quot;Notificações&quot; marcada, na aba Configurações Gerais)."

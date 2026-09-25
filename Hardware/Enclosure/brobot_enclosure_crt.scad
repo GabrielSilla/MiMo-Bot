@@ -8,7 +8,7 @@
 // a bulging dome on the back (the "tube"), and a round pedestal stand —
 // MOLDED INTO the body as one piece. Only the back lid is separate.
 //
-// Sized close to MiMo's own footprint: 40mm x 63mm for the monitor box
+// Sized close to Peemo's own footprint: 40mm x 63mm for the monitor box
 // itself (the stand adds a bit more on top of that — see OUTPUT below).
 // The 63mm (not 60mm) is deliberate — see the BOARD CLEARANCE note below.
 //
@@ -68,7 +68,7 @@ usb_cut_z_offset = 0;
 // decorations go on X faces. Y is real-horizontal — side decorations go on Y.
 
 // BOARD CLEARANCE — read before shrinking anything here.
-// This case was originally size-locked to MiMo's 40mm x 60mm footprint, and
+// This case was originally size-locked to Peemo's 40mm x 60mm footprint, and
 // at that size the display PCB physically does not fit. Same two causes as
 // brobot_enclosure_crt_desktop.scad (which is where the printed failure
 // actually showed up); see that file's BOARD CLEARANCE note for the full
@@ -112,7 +112,7 @@ stand_thickness = 3.0;  // thin disc, lying flat (horizontal), not a tall blade
 // CASE GEOMETRY
 // ============================================================================
 
-case_w = window_w + top_bezel + bottom_chin;    // 40 — real-vertical extent, MATCHES MiMo
+case_w = window_w + top_bezel + bottom_chin;    // 40 — real-vertical extent, MATCHES Peemo
 case_l = window_l + 2*side_bezel;               // 63 — real-horizontal extent (58mm board + walls + clearance)
 case_d = 45.0;                                   // depth of the main body, before the dome adds more — unchanged, not part of this request
 

@@ -43,11 +43,11 @@ BrobotVirtualDisplay.slnx           .NET solution (open with `dotnet build`)
 src/
   Brobot.Display.Abstractions/      IDisplay + DisplayColor — the shared contract
   Brobot.Display.Simulator/         WPF app: SimulatorDisplay, MainWindow, SerialDisplayBridge, Font5x7,
-                                     AurebeshFont (THEME MI2MO2's alien script, see specs/firmware-face-themes.md)
+                                     AurebeshFont (THEME P2M2's alien script, see specs/firmware-face-themes.md)
   Brobot.Connection/                C#: BrobotConnection — shared COM/TCP client used by both
-                                     Simulator and Sender to reach Core — plus MimoDiscovery, which
-                                     finds MiMo's DHCP-assigned IP on the network (see specs/architecture.md)
-  Brobot.Sender/                    WPF tray app, branded "MiMo" to the user, for whoever assembled a
+                                     Simulator and Sender to reach Core — plus PeemoDiscovery, which
+                                     finds Peemo's DHCP-assigned IP on the network (see specs/architecture.md)
+  Brobot.Sender/                    WPF tray app, branded "Peemo" to the user, for whoever assembled a
                                      Brobot: MainWindow is three tabs (Configurações Gerais/Mini Games/
                                      Conquistas — see specs/sender-overview.md). Configurações Gerais is the original
                                      card-based checklist (Conexão, Hora, Clima, Pausa, Relatório,
@@ -59,9 +59,9 @@ src/
                                      with its own JOGAR/BATALHAR button. Conquistas holds 10 fixed
                                      achievements (AchievementCatalog), tracked by AchievementMonitor
                                      against signals the other monitors below already raise — unlocking
-                                     one also flashes a NOTIFY on MiMo's own screen (see
+                                     one also flashes a NOTIFY on Peemo's own screen (see
                                      specs/sender-minigames-achievements.md). The Conexão card is a readout, not a setup form —
-                                     MiMo's address is discovered, never typed (WiFi/TCP only — no
+                                     Peemo's address is discovered, never typed (WiFi/TCP only — no
                                      SettingsWindow, no Serial/USB, see specs/sender-overview.md). WeatherMonitor +
                                      WindowsMediaMonitor + GameMonitor + NotificationMonitor +
                                      AiThoughtsListener are the live data sources so far (Notificações also
@@ -92,22 +92,22 @@ src/
                                      Brobot.Sender's own process entirely: `BrobotBuildWatcherPackage`
                                      (an `AsyncPackage`) hooks `EnvDTE.BuildEvents.OnBuildProjConfigBegin/
                                      Done` in-process and reports over the same AiThoughtsListener TCP
-                                     wire hooks/mimo-claude-hook.ps1 uses (`VsBuildStarted`/
+                                     wire hooks/peemo-claude-hook.ps1 uses (`VsBuildStarted`/
                                      `VsBuildSucceeded`/`VsBuildFailed`, one line each, port 5591) — see
                                      specs/sender-feature-cards.md for why this exists as a separate
                                      project instead of a fourth monitor next to Gradle/MSBuild's. Kept
                                      out of BrobotVirtualDisplay.slnx (separate build, same treatment as
-                                     BrobotCore/native). Bundled into the MiMo Sender installer (see
+                                     BrobotCore/native). Bundled into the Peemo Sender installer (see
                                      specs/installer.md) and installed automatically when Visual Studio is
                                      detected on the machine — there's no in-app Instalar/Desinstalar
                                      button for it the way Atividade da IA's Claude Code hook has, since
                                      there's no equivalent "is VS even here" question to ask from inside
                                      the app before the installer already answered it.
-hooks/                               mimo-claude-hook.ps1 (the Claude Code hook command) and
-                                     mimo-claude-statusline.ps1 (its statusLine command — a different
+hooks/                               peemo-claude-hook.ps1 (the Claude Code hook command) and
+                                     peemo-claude-statusline.ps1 (its statusLine command — a different
                                      contract, see specs/sender-ai-bridge.md); both wired up by ClaudeCodeHookInstaller and
                                      copied to Brobot.Sender's build output (see its csproj) rather
-                                     than run from here. mimo-git-hook.ps1 and git-hooks/
+                                     than run from here. peemo-git-hook.ps1 and git-hooks/
                                      (post-commit/post-merge/post-checkout/pre-push, static shims
                                      pinned to LF via .gitattributes) are the git-side equivalent,
                                      wired up by GitHookInstaller — see specs/sender-feature-cards.md.
@@ -117,10 +117,10 @@ BrobotCore/                         PlatformIO project (Arduino/C++)
                                      Buzzer (R2D2-style beeps, see specs/firmware-platform.md — firmware-only, not part
                                      of the native build's shared source list), DeviceSettings
                                      (the SOUND/SCANLINES toggles, header-only),
-                                     AurebeshGFXFont.h (THEME MI2MO2's alien script as an Adafruit
+                                     AurebeshGFXFont.h (THEME P2M2's alien script as an Adafruit
                                      GFXfont — the firmware-side twin of AurebeshFont.cs),
                                      Face, Personality, Protocol, main.cpp, PongGame, RpgBattle
-                                     (MiMo's two exclusive minigames, launched from Brobot.Sender's
+                                     (Peemo's two exclusive minigames, launched from Brobot.Sender's
                                      Mini Games tab — see PROTOCOL.md's Pong/Batalha RPG sections
                                      and specs/firmware-platform.md)
   platformio.ini                    envs: uno, uno_physical, esp32dev, esp32dev_physical

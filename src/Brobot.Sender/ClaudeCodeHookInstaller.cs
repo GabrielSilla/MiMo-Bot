@@ -6,7 +6,7 @@ namespace Brobot.Sender;
 
 /// <summary>
 /// Installs/removes the Claude Code hooks that feed <see cref="AiThoughtsListener"/>
-/// (see hooks/mimo-claude-hook.ps1), by editing the user's global Claude Code
+/// (see hooks/peemo-claude-hook.ps1), by editing the user's global Claude Code
 /// settings — %USERPROFILE%\.claude\settings.json — so the bridge applies to
 /// every project, not just whichever one happens to be open.
 ///
@@ -17,12 +17,12 @@ namespace Brobot.Sender;
 /// left completely alone. Detection (<see cref="IsInstalled"/>) reads the
 /// file fresh each time rather than trusting cached app state, so it stays
 /// correct even if the user hand-edits settings.json or reinstalls Claude
-/// Code between launches of MiMo.
+/// Code between launches of Peemo.
 /// </summary>
 public static class ClaudeCodeHookInstaller
 {
-    private const string HookScriptMarker = "mimo-claude-hook.ps1";
-    private const string StatusLineScriptMarker = "mimo-claude-statusline.ps1";
+    private const string HookScriptMarker = "peemo-claude-hook.ps1";
+    private const string StatusLineScriptMarker = "peemo-claude-statusline.ps1";
 
     // Every event the bridge wires up, and the matcher each needs. Claude
     // Code requires "matcher" on some events and ignores it on others (see
@@ -33,8 +33,8 @@ public static class ClaudeCodeHookInstaller
     // Tool-scoped events (PreToolUse and the permission/failure ones) match
     // "any tool"; everything else needs no matcher. Adding an event here is
     // half of wiring one up — the other half is an arm in
-    // hooks/mimo-claude-hook.ps1 (to extract its text) and one in
-    // MainWindow.OnAiThoughtReceived (to decide what MiMo does about it).
+    // hooks/peemo-claude-hook.ps1 (to extract its text) and one in
+    // MainWindow.OnAiThoughtReceived (to decide what Peemo does about it).
     //
     // What's deliberately absent is as considered as what's here.
     // PostToolUse (success) is left out because PreToolUse already announced
@@ -42,7 +42,7 @@ public static class ClaudeCodeHookInstaller
     // the face on its own afterwards — installing it would double the
     // PowerShell processes spawned per tool call to say nothing new. So are
     // MessageDisplay, FileChanged, InstructionsLoaded, ConfigChange,
-    // DirectoryAdded and TeammateIdle, which fire often enough that MiMo
+    // DirectoryAdded and TeammateIdle, which fire often enough that Peemo
     // would strobe rather than report. Only PostToolUseFailure is taken from
     // that family, because a tool *failing* is genuinely new information and
     // is the only thing in the whole bridge that can legitimately show ERROR.
@@ -95,6 +95,30 @@ public static class ClaudeCodeHookInstaller
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// An install from before the rename (see LegacyNames) points Claude Code
+    /// at the old script names, which the new installer no longer ships.
+    /// Re-registers it under the new names so the bridge keeps working after
+    /// an upgrade without the user having to click Instalar again. No-op when
+    /// nothing old is registered.
+    /// </summary>
+    public static void MigrateLegacyInstall()
+    {
+        if (!File.Exists(SettingsPath))
+        {
+            return;
+        }
+
+        string text = File.ReadAllText(SettingsPath);
+        if (!text.Contains(LegacyNames.ClaudeHookScript) && !text.Contains(LegacyNames.ClaudeStatusLineScript))
+        {
+            return;
+        }
+
+        Uninstall();
+        Install();
     }
 
     public static void Install()
@@ -223,10 +247,12 @@ public static class ClaudeCodeHookInstaller
     private static string StatusLineCommand =>
         $"powershell -NoProfile -ExecutionPolicy Bypass -File \"{StatusLineScriptPath}\"";
 
+    // Legacy markers (see LegacyNames) count as ours too, so Uninstall
+    // removes an entry written before the rename rather than orphaning it.
     private static bool IsOurStatusLine(JsonObject? root) =>
         root?["statusLine"] is JsonObject statusLine
         && statusLine["command"]?.GetValue<string>() is string cmd
-        && cmd.Contains(StatusLineScriptMarker);
+        && (cmd.Contains(StatusLineScriptMarker) || cmd.Contains(LegacyNames.ClaudeStatusLineScript));
 
     private static bool ContainsOurHook(JsonObject hooks, string eventName)
     {
@@ -260,7 +286,7 @@ public static class ClaudeCodeHookInstaller
     private static bool IsOurHookEntry(JsonNode? hookNode, string eventName) =>
         hookNode is JsonObject hookObj
         && hookObj["command"]?.GetValue<string>() is string cmd
-        && cmd.Contains(HookScriptMarker)
+        && (cmd.Contains(HookScriptMarker) || cmd.Contains(LegacyNames.ClaudeHookScript))
         && cmd.Contains($"-EventName {eventName}");
 
     private static JsonObject? TryLoad()

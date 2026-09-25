@@ -1,9 +1,9 @@
-# Firmware Internals — Face.cpp Themes (MATRIX / MI2MO2 / MI84)
+# Firmware Internals — Face.cpp Themes (MATRIX / P2M2 / PEEMO84)
 
 Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
 `Face::render`, just the whole-frame theme reskins broken out on their own.
 
-- **`Theme::MATRIX`** (Sender's Tema card, "MiMo Matrix" entry, `THEME MATRIX`/`THEME
+- **`Theme::MATRIX`** (Sender's Tema card, "Peemo Matrix" entry, `THEME MATRIX`/`THEME
   DEFAULT` — named `CLASSIC` in the `Theme` enum, not `DEFAULT`, since
   `<Arduino.h>` `#define`s `DEFAULT` as a macro, same class of problem as
   `Expression::FAILED` not being named `ERROR`) is a whole-frame reskin
@@ -81,7 +81,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   no special-casing, the instant THINKING clears and rendering falls back to
   `drawMatrixLog` again next frame.
   A **third tab, MONITOR**, holds the game being played and — uniquely among
-  the tabs — draws MiMo's machine stats under it (`drawMatrixMonitor`, see
+  the tabs — draws Peemo's machine stats under it (`drawMatrixMonitor`, see
   `FaceState::hasStats` and PROTOCOL.md's `STATS`). A game's "Jogando X" used
   to land in the media tab beside music and video; it moved here because it's
   the one entry with numbers to show beneath it. `drawMatrixLog` now returns
@@ -107,17 +107,17 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   coffee reminders — with a single call site, since the log doesn't care
   which tier a message is headed for) and once for each freshly-picked
   bedtime message.
-  **`Theme::MI2MO2`** (Sender's Tema card, "MiMo Mi2-Mo2" entry, `THEME
-  MI2MO2`) is a bigger departure than MATRIX: instead of reskinning a face,
+  **`Theme::P2M2`** (Sender's Tema card, "Peemo P2-M2" entry, `THEME
+  P2M2`) is a bigger departure than MATRIX: instead of reskinning a face,
   it replaces the whole frame with a close-up of R2D2's dome plate —
-  `drawMi2Mo2Plate` (off-white plate via `clear`, navy inset panels, silver
-  vent) then `drawMi2Mo2Lens` then `drawMi2Mo2LogicDisplay`, back to front,
+  `drawP2M2Plate` (off-white plate via `clear`, navy inset panels, silver
+  vent) then `drawP2M2Lens` then `drawP2M2LogicDisplay`, back to front,
   the same layering `drawMessageBox`/`drawWrappedMessage` already use.
-  Every theme-specific color lives in its own `MI2MO2_*` palette rather
+  Every theme-specific color lives in its own `P2M2_*` palette rather
   than reusing `EYE_R/G/B`, because in this theme nothing is "the eye
   color".
   **This design is the second attempt, and the first one's failure is worth
-  recording so it isn't retried**: the original Mi2-Mo2 was a face — a big
+  recording so it isn't retried**: the original P2-M2 was a face — a big
   red radial-gradient eye on the usual black background, on a blue band.
   It was fully built and working (single eye, pupil-shift look-around,
   dim-to-blink) and still read as HAL 9000 / a Cylon rather than R2D2,
@@ -126,7 +126,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   silhouette no matter how well the details are executed. What fixed it was
   inverting the ground — light plate filling the frame, navy panels, black
   lens — not tuning the red. The whole `drawEyeRadialGradient` /
-  `MI2MO2_PANEL_*` / pupil-offset machinery from that version was deleted;
+  `P2M2_PANEL_*` / pupil-offset machinery from that version was deleted;
   don't reintroduce a glowing eye here.
   The consequence for animation is that **the lens carries no expression at
   all**: it's a fixed black disc that never blinks, squints, moves or
@@ -134,7 +134,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   droid works — its eye is a static piece of glass and all its emoting
   happens in the logic panels:
   (a) **look-around slides a white glint across the lens**
-  (`MI2MO2_GLINT_*`) instead of moving the eye — on featureless black
+  (`P2M2_GLINT_*`) instead of moving the eye — on featureless black
   glass a travelling reflection is the only available cue that the lens
   turned. The glint rests up-and-left of center, which is why
   `Personality.cpp` excludes exactly one look direction in this theme (see
@@ -143,10 +143,10 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   every expression**, including the ordinary blink (it switches off and
   back on, since a black lens has no light to close). `Face::render`
   resolves its color and brightness in one small block before the dispatch:
-  THINKING → `mi2Mo2ThinkingDim` (an irregular stutter, two nested time
+  THINKING → `p2m2ThinkingDim` (an irregular stutter, two nested time
   scales — a coarse "burst" hashes the flicker rate, each slot within it
   hashes to lit/nearly-out/half-lit — so it never settles into a mechanical
-  rhythm), FAILED → `mi2Mo2ErrorDim` (three flashes, then holds *lit*, not
+  rhythm), FAILED → `p2m2ErrorDim` (three flashes, then holds *lit*, not
   dark: FAILED outlives the flashes by `FACE_OVERRIDE_DURATION_MS` and a
   dark lamp for the remainder would read as "asleep"), FINISHED → green,
   SLEEPING → off. FAILED is the one bounded animation in this whole
@@ -154,7 +154,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   `nowMs` forever and needs no start time — which is why `FaceState` grew
   `expressionStartedMs` (set by `Personality::update` when
   `_renderExpression` changes) purely for it.
-  MI2MO2 also opts out of the whole-frame `DimmingDisplay` on SLEEPING
+  P2M2 also opts out of the whole-frame `DimmingDisplay` on SLEEPING
   (there, sleeping is specifically the lamp going out with the plate,
   badges and message all at full strength), suppresses SLEEPING's "Z Z Z"
   and COFFEE's cup (COFFEE there is message-only), and splits what every
@@ -165,7 +165,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   `eyeR/G/B` vs `iconR/G/B`. The message box stays CLASSIC's dark grey with
   white text: an earlier near-white bubble blended straight into the light
   plate.
-  **Aurebesh translation effect** (`drawWrappedMessageMi2Mo2`): each
+  **Aurebesh translation effect** (`drawWrappedMessageP2M2`): each
   character is drawn individually rather than a line at a time, because
   each sits at a different point in its own reveal age — derived from
   `FaceState::messageTypingStartedMs` plus its index times
@@ -191,22 +191,22 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   *baseline* while the built-in font draws from the top-left corner —
   getting that wrong misaligns Aurebesh against the Latin characters beside
   it.
-  **`Theme::MI84`** (Sender's Tema card, "MiMo-84" entry, `THEME MI84`) is a
-  1984 amber-CRT terminal, and it is the mirror image of MI2MO2's move:
+  **`Theme::PEEMO84`** (Sender's Tema card, "Peemo-84" entry, `THEME PEEMO84`) is a
+  1984 amber-CRT terminal, and it is the mirror image of P2M2's move:
   where that theme replaces the *face*, this one replaces the *frame*. The
-  top two thirds become fixed terminal chrome — a `MIMO SYSTEM v2.6` header,
+  top two thirds become fixed terminal chrome — a `PEEMO SYSTEM v2.6` header,
   a status row, two rules and a tab bar — and MATRIX's own small
   bottom-pinned eyes sit underneath, still expression-shaped. Everything is
-  drawn in one amber (`MI84_INK_*`, 255/176/0) on black, with a darker amber
-  (`MI84_DIM_*`) for chrome only: rules, labels, unlit bar cells.
+  drawn in one amber (`PEEMO84_INK_*`, 255/176/0) on black, with a darker amber
+  (`PEEMO84_DIM_*`) for chrome only: rules, labels, unlit bar cells.
   It deliberately **does not** use `RecoloringDisplay` the way MATRIX does.
   That decorator flattens every non-black color to a single value, and this
   theme needs those two levels, so colors are threaded through explicitly,
-  the way MI2MO2 already does. The one thing that trips over this: the
-  corner icons take `iconR/G/B`, which defaulted to CLASSIC's teal — MI84
+  the way P2M2 already does. The one thing that trips over this: the
+  corner icons take `iconR/G/B`, which defaulted to CLASSIC's teal — PEEMO84
   suppresses every icon except COFFEE's cup, so the cup came out as the
   single non-amber object on an otherwise monochrome screen. A real bug,
-  fixed once, and the reason `iconR/G/B` now has an MI84 arm of its own
+  fixed once, and the reason `iconR/G/B` now has an PEEMO84 arm of its own
   rather than sharing `eyeR/G/B`.
   The log and the tabs are **MATRIX's, reused whole** — same
   `FaceState::logLines`, same `LogTab`, same `Personality::pushLogLine`,
@@ -229,8 +229,8 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   degree symbol — `Font5x7` has none, and `drawWeatherBadge` already prints
   a bare `18C` for the same reason.
   **THINKING doesn't use the glitch eyes.** Here it's carried by the eyes
-  flickering (`mi2Mo2ThinkingDim`, reused as-is — it was never really
-  MI2MO2-specific, just the first place that needed an irregular stutter)
+  flickering (`p2m2ThinkingDim`, reused as-is — it was never really
+  P2M2-specific, just the first place that needed an irregular stutter)
   plus a `>THINKING_` prompt line that types itself out, erases and repeats,
   driven purely off `nowMs` like every other looping effect here. That
   prompt takes **only the last content row**, with the log still scrolling
@@ -238,9 +238,9 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   ("Executando comando...") stay visible instead of being hidden behind the
   animation, as they would have been had it claimed the whole region.
   **Both sleep states type a prompt of their own**, `>Z..Z..Z...Z.._`, off
-  the very same `drawMi84TypedPrompt` the THINKING row uses — it takes the
+  the very same `drawPeemo84TypedPrompt` the THINKING row uses — it takes the
   text and the pacing as parameters, so the two differ only in those. The
-  sleep pacing is deliberately about twice as slow (`MI84_SLEEP_CHAR_MS`
+  sleep pacing is deliberately about twice as slow (`PEEMO84_SLEEP_CHAR_MS`
   210 vs 110, longer hold and blank): at the AI's brisk rate the same
   characters read as busy rather than drowsy. The uneven run of dots lives
   in the string itself rather than in variable timing, so pauses of
@@ -260,29 +260,29 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   to the cup — the same "skip that region while this expression is up, no
   state to track" move MATRIX already makes with its log.
   Chrome is English, content is Portuguese, deliberately: `NOW PLAYING` and
-  `SYSTEM MONITOR` are the machine's own labels, while everything MiMo
+  `SYSTEM MONITOR` are the machine's own labels, while everything Peemo
   actually *says* stays in the language it already speaks.
-  **The boot sequence** (`drawMi84Boot`) is the theme's other bounded
-  animation — `MIMO-84 BIOS`, four POST lines appearing one at a time,
+  **The boot sequence** (`drawPeemo84Boot`) is the theme's other bounded
+  animation — `PEEMO-84 BIOS`, four POST lines appearing one at a time,
   `SYSTEM READY`, then a centered banner, ~4s in total, after which the eyes
-  strike like an old lamp (`mi84LampLevel`: dark, two failed strikes that
+  strike like an old lamp (`peemo84LampLevel`: dark, two failed strikes that
   flare and die, then a climb to full — a breakpoint table rather than a
   curve, because the misfires *are* the effect and no easing function
   expresses "it nearly caught, then dropped"). Being bounded, it needs a
-  time anchor the way MI2MO2's three-flash FAILED does, hence
-  `FaceState::themeStartedMs`. It plays on **every** `THEME MI84` command
+  time anchor the way P2M2's three-flash FAILED does, hence
+  `FaceState::themeStartedMs`. It plays on **every** `THEME PEEMO84` command
   rather than once per power-on, and that is the mechanism, not a
   side effect: Core has no "a PC app just connected" signal, but
   `Brobot.Sender` sends `THEME` first on a fresh link and re-sends it on
   every reconnect, so the command *is* that signal — the only way "boot when
-  MiMo reaches the PC" was expressible at this layer.
-  **Sounds are unchanged** — MI84 plays the same R2D2-flavored cues as every
+  Peemo reaches the PC" was expressible at this layer.
+  **Sounds are unchanged** — PEEMO84 plays the same R2D2-flavored cues as every
   other theme. That's an explicit decision to leave `Buzzer` alone (it takes
-  no `Theme` today), not an oversight; giving MI84 its own square-wave beeps
+  no `Theme` today), not an oversight; giving PEEMO84 its own square-wave beeps
   would be a `Theme` parameter on `playForExpression` plus one more
   `SoundSegment` table, nothing structural.
   **Game Mode in the themes with no log** (`drawStatsMessage`): CLASSIC and
-  MI2MO2 have no console log to put stats in (MATRIX and MI84 both do, and
+  P2M2 have no console log to put stats in (MATRIX and PEEMO84 both do, and
   each renders them in its own MONITOR tab — as text rows and as bar meters
   respectively), so while PLAYING is on screen
   the message box grows (`drawMessageBox` takes a line count for this) and
@@ -293,7 +293,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   `GAME_EYE_SIZE`/`GAME_EYE_Y` shrink them to 26px and pin them at y=18, just
   under the weather/clock strip — the same "this expression reorganizes the
   frame" move COFFEE already makes for its cup, and only while PLAYING is
-  rendering. MI2MO2 gets 4 rows and keeps its plate untouched, because its
+  rendering. P2M2 gets 4 rows and keeps its plate untouched, because its
   lens is a fixed disc ending at y=77 and a 5-row box would start at y=71 and
   cover the bottom of R2's eye; 4 rows start at 80 and clear it. That's the
   most this theme can grow without redrawing the plate, which is why a long
@@ -313,7 +313,7 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   **AI session telemetry in the log themes** (`drawAiStatsRows`, `AISTATS`):
   what the MONITOR tab's stat rows are to a game, these two rows are to a
   Claude Code session — `Opus CTX 42%` over `$1.24 5H 31% 7D 12%`, drawn in
-  the **AI** tab of `MATRIX` and `MI84` only. Two rows and not five because
+  the **AI** tab of `MATRIX` and `PEEMO84` only. Two rows and not five because
   the AI tab has no slack: every row spent here is a log line lost, so the
   five figures are packed rather than given a row each (worst case is 22
   chars = 132px at `CHAR_ADVANCE_PX`, which is what holds
@@ -329,6 +329,6 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   rate limits are absent altogether on some plans. A missing *model name* is
   the one field that just drops its column instead of showing a placeholder —
   unlike a percentage, it isn't a reading anyone is waiting on.
-  `CLASSIC`/`MI2MO2` have no log to put this in and deliberately get nothing:
+  `CLASSIC`/`P2M2` have no log to put this in and deliberately get nothing:
   there the same information keeps arriving as the ordinary `ContextUsage`
   `MSG` those themes already showed.

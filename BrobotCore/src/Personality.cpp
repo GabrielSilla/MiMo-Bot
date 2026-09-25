@@ -38,8 +38,8 @@ constexpr uint8_t LOOK_DIRECTION_COUNT = 8;
 constexpr uint8_t LOOK_DIRECTIONS_NO_DOWN[5] = {0, 1, 2, 4, 5};
 constexpr uint8_t LOOK_DIRECTIONS_NO_DOWN_COUNT = 5;
 
-// MI2MO2 doesn't move an eye at all — it slides a reflection across a fixed
-// lens (see Face.cpp's drawMi2Mo2Lens). That glint rests up and left of the
+// P2M2 doesn't move an eye at all — it slides a reflection across a fixed
+// lens (see Face.cpp's drawP2M2Lens). That glint rests up and left of the
 // lens center, so up-left is the one direction whose offset carries it off
 // the edge of the glass; every other direction stays within the disc. Same
 // index-into-LOOK_DIRECTIONS trick as the MATRIX pool above — index 4 is
@@ -48,7 +48,7 @@ constexpr uint8_t LOOK_DIRECTIONS_NO_UP_LEFT[7] = {0, 1, 2, 3, 5, 6, 7};
 constexpr uint8_t LOOK_DIRECTIONS_NO_UP_LEFT_COUNT = 7;
 
 constexpr unsigned long MESSAGE_DURATION_MS = 10000; // how long a MSG stays on screen before clearing itself
-// TYPING_CHAR_INTERVAL_MS lives in Face.h now — Face.cpp's MI2MO2 rendering
+// TYPING_CHAR_INTERVAL_MS lives in Face.h now — Face.cpp's P2M2 rendering
 // needs the same reveal-speed value to work out each character's own age.
 constexpr unsigned long FACE_OVERRIDE_DURATION_MS = 4000;
 // How long a notification owns the whole screen (see Personality::Tier).
@@ -60,11 +60,15 @@ constexpr unsigned long FACE_OVERRIDE_DURATION_MS = 4000;
 // readable -- and because both dedicated animations (COFFEE's sip,
 // SLEEPY's doze-and-startle) want room to play more than once.
 constexpr unsigned long NOTIFICATION_DURATION_MS = 10000;
+// NOTIFY SATELLITE/SPACE's opening line, and how long it stays up once
+// fully typed before the real message replaces it.
+constexpr const char* SPACE_TRANSMISSION_INTRO = "Transmissão Espacial Recebida!!!";
+constexpr unsigned long SPACE_TRANSMISSION_INTRO_HOLD_MS = 1500;
 constexpr unsigned long SLEEP_TIMEOUT_MS = 10UL * 60UL * 1000UL; // 10 minutes idle before sleeping
 
 // SLEEPY (drowsy, not yet the deep SLEEPING) kicks in purely off the clock,
 // independent of _lastInteractionAt — someone actively chatting with the AI
-// at 23h should still see MiMo get sleepy. Window spans midnight the same
+// at 23h should still see Peemo get sleepy. Window spans midnight the same
 // way Face.cpp's own isNightHour does, since no separate "wake up" time was
 // specified — just reused that existing day/night boundary.
 constexpr int BEDTIME_START_HOUR = 22;
@@ -72,27 +76,35 @@ constexpr int BEDTIME_END_HOUR = 6;
 
 // A slower, heavier-lidded blink while SLEEPY — see updateBlink — so it's
 // obviously not the same quick blink NEUTRAL uses. Raised from an earlier
-// 900: in MI2MO2 a blink is the logic display switching off and back on
-// (see Face.cpp's drawMi2Mo2LogicDisplay) rather than an eyelid closing, and
+// 900: in P2M2 a blink is the logic display switching off and back on
+// (see Face.cpp's drawP2M2LogicDisplay) rather than an eyelid closing, and
 // at 900ms that read as merely a dip in brightness, not a drowsy blink.
 constexpr unsigned long BLINK_DURATION_SLEEPY_MS = 1500;
 
 // One random pick every 30 minutes for as long as it stays bedtime, nudging
 // whoever's still up to go to sleep. Kept short (fits the 3-line message
-// window without its start scrolling off before typing finishes) and in the
-// same casual PT-BR voice as the rest of the AI-activity messages.
+// window without its start scrolling off before typing finishes). Bedtime
+// hours always fall inside the CANSADO mood (see moodForTime), so these are
+// written at its ácido level (specs/voice-guide.md) — still a sleep
+// reminder at heart, just a grumpy-funny one. No clock times in the text:
+// the same pool repeats every 30 minutes all night.
 constexpr unsigned long BEDTIME_MESSAGE_INTERVAL_MS = 30UL * 60UL * 1000UL;
 constexpr const char* BEDTIME_MESSAGES[] = {
-    "Eai? Terminou? Vamos dormir...",
-    "Ja passou da hora, hein! Bora descansar?",
-    "Psiu... seus olhos ja tao pesados. Hora de dormir!",
-    "To com sono so de te ver acordado ainda kkkk vai dormir",
-    "Amanha voce agradece. Bora pra cama!",
-    "22h ja foi! Desliga tudo e vem dormir comigo (eletronicamente)",
-    "Serio, ja e tarde. Seu travesseiro ta com saudade",
-    "Aviso final: vai dormir ou vai virar a noite de novo?",
-    "Zzz... eu ja to com sono so de pensar. E voce?",
-    "Bora, chefe. Amanha tem o dia inteiro pra terminar isso",
+    "Tá tarde. Seu travesseiro tá se sentindo ignorado.",
+    "Eu já tô em modo economia, você devia pensar nisso.",
+    "Hora de dormir. Até meus pixels tão bocejando.",
+    "Tá tarde. O que falta dá pra terminar amanhã, confia.",
+    "Psiu. Seus olhos tão mais pesados que esse código.",
+    "Bateria no fim aqui. A sua também, aposto.",
+    "Essa hora só coruja e servidor. Você não é nenhum dos dois.",
+    "Dormir também é produtividade. Pesquisa minha, confia.",
+    "A cama tá ali. Parada. Esperando. Meio triste.",
+    "Tá tarde. Amanhã você agradece, e eu nem vou lembrar.",
+    "Zzz... tô com sono só de te ver acordado.",
+    "Amanhã tem o dia inteiro pra isso. Bora descansar?",
+    "Hora de desligar. Eu desligo junto, prometo.",
+    "Seu travesseiro mandou avisar que tá com saudade.",
+    "Essa hora até o café desistiu de funcionar.",
 };
 constexpr int BEDTIME_MESSAGE_COUNT = sizeof(BEDTIME_MESSAGES) / sizeof(BEDTIME_MESSAGES[0]);
 
@@ -106,6 +118,24 @@ bool isBedtimeHour(const char* timeText) {
     }
     int hour = (int)strtol(timeText, nullptr, 10);
     return hour >= BEDTIME_START_HOUR || hour < BEDTIME_END_HOUR;
+}
+
+// Peemo's mood by the hour of the last TIME (see specs/mood.md): ANIMADO
+// 07-16h, FIM_DE_DIA 16-22h, CANSADO 22-07h. Must match Brobot.Sender's
+// PeemoMood.cs, which uses the same hours to pick phrase sarcasm — they
+// can't drift in practice since TIME comes from Sender's own clock.
+constexpr int MOOD_ANIMADO_START_HOUR = 7;
+constexpr int MOOD_FIM_DE_DIA_START_HOUR = 16;
+constexpr int MOOD_CANSADO_START_HOUR = 22;
+
+Mood moodForTime(const char* timeText) {
+    if (timeText == nullptr || timeText[0] == '\0') {
+        return Mood::NONE;
+    }
+    int hour = (int)strtol(timeText, nullptr, 10);
+    if (hour >= MOOD_CANSADO_START_HOUR || hour < MOOD_ANIMADO_START_HOUR) return Mood::CANSADO;
+    if (hour >= MOOD_FIM_DE_DIA_START_HOUR) return Mood::FIM_DE_DIA;
+    return Mood::ANIMADO;
 }
 
 // Boot animation: eyes drop in from just above the frame and land with a
@@ -165,6 +195,8 @@ Expression parseExpression(const char* name) {
     if (strcmp(name, "MEETING") == 0) return Expression::MEETING;
     if (strcmp(name, "BUILDING") == 0) return Expression::BUILDING;
     if (strcmp(name, "SWEATING") == 0) return Expression::SWEATING;
+    if (strcmp(name, "SATELLITE") == 0) return Expression::SATELLITE;
+    if (strcmp(name, "SPACE") == 0) return Expression::SPACE;
     return Expression::NEUTRAL;
 }
 
@@ -223,7 +255,7 @@ void Personality::TypedMessage::set(const char* text, unsigned long now) {
         // Too long to fit at all — trim it and mark the cut with "..." rather
         // than silently dropping the tail: an AI message (the usual source of
         // anything this long, e.g. Stop's last_assistant_message) ending
-        // mid-word with no signal it was cut reads as MiMo saying something
+        // mid-word with no signal it was cut reads as Peemo saying something
         // nonsensical, not merely brief.
         constexpr size_t ELLIPSIS_LEN = 3; // "..."
         size_t keep = MESSAGE_CAPACITY - 1 - ELLIPSIS_LEN;
@@ -319,12 +351,24 @@ bool Personality::notificationActive(unsigned long now) const {
 // window is twice as long as everything else's NOTIFICATION_DURATION_MS.
 void Personality::raiseNotification(Expression e, const char* text, unsigned long now) {
     _notificationExpression = e;
-    _notificationMessage.set(text, now);
     _notificationStartedAt = now;
     unsigned long duration = (e == Expression::REPORT) ? NOTIF_REPORT_TOTAL_DURATION_MS : NOTIFICATION_DURATION_MS;
     _notificationUntil = now + duration;
+    // SATELLITE/SPACE first type a fixed "incoming transmission" line and
+    // only then the real text (swapped in by update(), which also restarts
+    // the duration so the real message still gets its full reading time).
+    // Core-side on purpose: it's how the screen is shown, not what's said,
+    // so every PC-side sender gets it without repeating the line itself.
+    if ((e == Expression::SATELLITE || e == Expression::SPACE) && text[0] != '\0') {
+        strncpy(_notificationPendingMessage, text, MESSAGE_CAPACITY - 1);
+        _notificationPendingMessage[MESSAGE_CAPACITY - 1] = '\0';
+        _notificationMessage.set(SPACE_TRANSMISSION_INTRO, now);
+    } else {
+        _notificationPendingMessage[0] = '\0';
+        _notificationMessage.set(text, now);
+    }
     // Deliberately does NOT touch _lastInteractionAt: a notification is
-    // MiMo interrupting you, not you interacting with MiMo, and counting it
+    // Peemo interrupting you, not you interacting with Peemo, and counting it
     // would mean a machine left alone overnight could never fall asleep —
     // the bedtime nudge fires every 30 minutes and would keep resetting the
     // idle timer forever. Same reasoning WEATHER/TIME/STATS already follow.
@@ -494,22 +538,22 @@ void Personality::onTimeCommand(const char* args, unsigned long now) {
 void Personality::onThemeCommand(const char* name, unsigned long now) {
     if (strcmp(name, "MATRIX") == 0) {
         _theme = Theme::MATRIX;
-    } else if (strcmp(name, "MI2MO2") == 0) {
-        _theme = Theme::MI2MO2;
-    } else if (strcmp(name, "MI84") == 0) {
-        _theme = Theme::MI84;
+    } else if (strcmp(name, "P2M2") == 0) {
+        _theme = Theme::P2M2;
+    } else if (strcmp(name, "PEEMO84") == 0) {
+        _theme = Theme::PEEMO84;
     } else {
         _theme = Theme::CLASSIC;
     }
 
     // Stamped on every THEME command, not only on an actual change of
-    // value, and this is deliberate: MI84's boot sequence is meant to play
+    // value, and this is deliberate: PEEMO84's boot sequence is meant to play
     // whenever a PC app announces the theme, and Brobot.Sender re-announces
     // it on each reconnect (see MainWindow's UpdateConnectionStatus). Core
     // has no "a client just connected" signal of its own down here — the
     // THEME command arriving *is* that signal, since it's the first thing
     // sent once the link is up — so anchoring on the command rather than on
-    // a change is what makes "boot when MiMo connects to the PC" work at
+    // a change is what makes "boot when Peemo connects to the PC" work at
     // all. It costs nothing in the other themes, which don't read it.
     _themeChangedAt = now;
 }
@@ -685,7 +729,7 @@ void Personality::onReportCommand(const char* args, unsigned long now) {
 // Like onWeatherCommand/onTimeCommand — and unlike every FACE/MSG path — this
 // deliberately never touches _lastInteractionAt. It's passive telemetry
 // arriving every couple of seconds for as long as a game is open; counting it
-// as interaction would mean MiMo could never fall asleep during a long
+// as interaction would mean Peemo could never fall asleep during a long
 // session, which is exactly when it should.
 void Personality::onStatsCommand(const char* args, unsigned long now) {
     (void)now;
@@ -843,6 +887,13 @@ void Personality::update(unsigned long now) {
     // two running independently would let the words vanish a moment before
     // the screen holding them did.
     _notificationMessage.updateTyping(now, 0);
+    if (_notificationPendingMessage[0] != '\0' && notificationActive(now)
+        && _notificationMessage.fullyRevealed
+        && now - _notificationMessage.expiresAt >= SPACE_TRANSMISSION_INTRO_HOLD_MS) {
+        _notificationMessage.set(_notificationPendingMessage, now);
+        _notificationPendingMessage[0] = '\0';
+        _notificationUntil = now + NOTIFICATION_DURATION_MS;
+    }
 
     // Bedtime reminder: fires the moment bedtime starts, then every
     // BEDTIME_MESSAGE_INTERVAL_MS after that for as long as it stays
@@ -945,6 +996,7 @@ FaceState Personality::currentState() const {
     state.weatherTempC = _weatherTempC;
     state.weatherCondition = _weatherCondition;
     state.timeText = _timeText;
+    state.mood = moodForTime(_timeText);
 
     state.hasStats = _hasStats;
     state.statsCpuLoad = _statsCpuLoad;
@@ -1087,13 +1139,13 @@ void Personality::updateLook(unsigned long now) {
         _looking = true;
         _lookStartedAt = now;
         int dir;
-        // MI84 pins its eyes to the bottom exactly like MATRIX does (same
+        // PEEMO84 pins its eyes to the bottom exactly like MATRIX does (same
         // MATRIX_EYE_* geometry — see Face.cpp), so it needs the same
         // downward directions excluded for the same reason: there isn't
         // enough clearance below them to look further down.
-        if (_theme == Theme::MATRIX || _theme == Theme::MI84) {
+        if (_theme == Theme::MATRIX || _theme == Theme::PEEMO84) {
             dir = LOOK_DIRECTIONS_NO_DOWN[random(0, LOOK_DIRECTIONS_NO_DOWN_COUNT)];
-        } else if (_theme == Theme::MI2MO2) {
+        } else if (_theme == Theme::P2M2) {
             dir = LOOK_DIRECTIONS_NO_UP_LEFT[random(0, LOOK_DIRECTIONS_NO_UP_LEFT_COUNT)];
         } else {
             dir = random(0, LOOK_DIRECTION_COUNT);

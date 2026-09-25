@@ -1,7 +1,7 @@
 namespace Brobot.Sender;
 
 /// <summary>
-/// One of MiMo's 10 achievements. Id doubles as the wire token this app
+/// One of Peemo's 10 achievements. Id doubles as the wire token this app
 /// sends as ACHIEVEMENT's own `&lt;ID&gt;` field (see PROTOCOL.md and
 /// BrobotCore/include/Face.h's AchievementIcon) — Core picks its trophy
 /// accent off the very same string, so the two never need a separate lookup
@@ -16,7 +16,7 @@ namespace Brobot.Sender;
 public sealed record Achievement(string Id, string Emoji, string Name, string Description, string Quote);
 
 /// <summary>
-/// The fixed list of achievements MiMo tracks. All 10 are built from signals
+/// The fixed list of achievements Peemo tracks. All 10 are built from signals
 /// this app already observes elsewhere (Conexão, Jogos, Mídia, Atividade da
 /// IA, Pausa, Tema) plus the OS's own boot time — no new sensor needed. Two
 /// ideas from the original brainstorm (window-focus duration, PC uptime as
@@ -32,8 +32,8 @@ public static class AchievementCatalog
     [
         new Achievement(
             "FIRST_CONTACT", "👋", "FIRST CONTACT",
-            "MiMo se conectou pela primeira vez.",
-            "Prazer, eu sou o MiMo."),
+            "Peemo se conectou pela primeira vez.",
+            "Prazer, eu sou o Peemo."),
 
         new Achievement(
             "EARLY_BIRD", "🌅", "EARLY BIRD",
@@ -77,7 +77,7 @@ public static class AchievementCatalog
 
         new Achievement(
             "IDENTITY_CRISIS", "🎨", "IDENTITY CRISIS",
-            "Já experimentou todos os temas do MiMo.",
-            "Qual MiMo estamos hoje?"),
+            "Já experimentou todos os temas do Peemo.",
+            "Qual Peemo estamos hoje?"),
     ];
 }

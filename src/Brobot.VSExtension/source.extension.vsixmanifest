@@ -2,8 +2,8 @@
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
     <Identity Id="872793e5-5485-4c40-b6ab-d655b897827c" Version="1.0.0" Language="en-US" Publisher="Brobot" />
-    <DisplayName>MiMo Build Watcher</DisplayName>
-    <Description xml:space="preserve">Tells MiMo (the Brobot desktop buddy) when a Visual Studio build starts and finishes -- reports real success/failure straight from BuildEvents, from inside VS's own process. No UI of its own.</Description>
+    <DisplayName>Peemo Build Watcher</DisplayName>
+    <Description xml:space="preserve">Tells Peemo (the Brobot desktop buddy) when a Visual Studio build starts and finishes -- reports real success/failure straight from BuildEvents, from inside VS's own process. No UI of its own.</Description>
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">

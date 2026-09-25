@@ -82,7 +82,7 @@ public sealed class TeamsNotificationWatcher : IDisposable
 
     // The same banner re-fires SHOW a few times while it animates in/out
     // (observed directly while building this) -- without this, one Teams
-    // notification would turn into several duplicate NOTIFYs on MiMo.
+    // notification would turn into several duplicate NOTIFYs on Peemo.
     private string? _lastText;
     private DateTime _lastRaisedAtUtc = DateTime.MinValue;
     private static readonly TimeSpan DedupeWindow = TimeSpan.FromSeconds(3);

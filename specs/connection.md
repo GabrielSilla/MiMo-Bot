@@ -23,23 +23,23 @@
   is noticed promptly instead of blocking on the OS's much longer default TCP
   connect timeout) — this is what lets Core and the app start in either order, and
   lets the app recover on its own if Core restarts mid-session.
-- **`MimoDiscovery.cs`**: finds MiMo's current IP by sweeping the local
+- **`PeemoDiscovery.cs`**: finds Peemo's current IP by sweeping the local
   network, because that IP is not stable — it comes from the router's DHCP
-  server, so power-cycling MiMo (or the router) can move it, and the address
+  server, so power-cycling Peemo (or the router) can move it, and the address
   saved in Sender's Conexão card then points at nothing. It reads the PC's own
   adapters (`NetworkInterface`) for their address+netmask rather than assuming
   a `192.168.x.0/24`, probes every host on those subnets, and asks each host
   that accepts a connection to identify itself with `PING` (see PROTOCOL.md).
-  Only a host that answers `MIMO` is adopted.
+  Only a host that answers `PEEMO` is adopted.
   **That confirmation step is the whole point, not belt-and-braces**: port 5555
   isn't reserved for this project (Android's ADB-over-network uses it, among
   others), and the network this was built on turned out to have an unrelated
   device answering on it — a "first open port wins" sweep would have adopted
-  that device as MiMo and quietly sent it `FACE`/`MSG` from then on. The single
+  that device as Peemo and quietly sent it `FACE`/`MSG` from then on. The single
   exception is the address that was *already in use*: if it still accepts
   connections but won't answer `PING`, it's taken as a board running firmware
   from before `PING` existed. An unidentified host at any *other* address is
-  rejected outright, which does mean **relocating a moved MiMo requires the
+  rejected outright, which does mean **relocating a moved Peemo requires the
   `PING` firmware** — without it a sweep can only reconfirm an address that
   already worked.
   Probes run 64-at-a-time behind a `SemaphoreSlim`: a full subnet is ~254
@@ -55,7 +55,7 @@
   It costs ~700ms on a full sweep (the last probe still serves out its own
   timeout) and nothing on the common case, since probe 0 is unstaggered. A
   confirmed hit returns
-  immediately and cancels the rest, so the common case — MiMo still where it
+  immediately and cancels the rest, so the common case — Peemo still where it
   was, probed first because the previous address is always candidate 0 — comes
   back in well under 100ms. Adapters without a default gateway are skipped
   (that's what separates the real WiFi adapter from the Hyper-V/WSL/VirtualBox/

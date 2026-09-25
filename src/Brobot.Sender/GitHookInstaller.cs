@@ -6,7 +6,7 @@ namespace Brobot.Sender;
 
 /// <summary>
 /// Installs/removes the global git hook that feeds <see cref="AiThoughtsListener"/>
-/// (see hooks/mimo-git-hook.ps1 and the shim scripts under hooks/git-hooks),
+/// (see hooks/peemo-git-hook.ps1 and the shim scripts under hooks/git-hooks),
 /// by pointing git's own <c>core.hooksPath</c> — a single global config
 /// value, not per-repo — at the folder those shims get copied to next to
 /// whichever Brobot.Sender.exe is actually running. Machine-wide by design,
@@ -22,7 +22,7 @@ namespace Brobot.Sender;
 /// </summary>
 public static class GitHookInstaller
 {
-    // Copied to output alongside mimo-git-hook.ps1 (see hooks/git-hooks and
+    // Copied to output alongside peemo-git-hook.ps1 (see hooks/git-hooks and
     // the csproj) — the shim scripts (post-commit/post-merge/post-checkout/
     // pre-push) are static and never rewritten by this class; all it ever
     // touches is core.hooksPath itself, pointed at this one folder.

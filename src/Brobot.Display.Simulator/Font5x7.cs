@@ -111,7 +111,7 @@ internal static class Font5x7
                                                     // 'c' bitmap (rows 2-6, no spare row) previously stood in for it and
                                                     // was indistinguishable from a real 'c' — a real bug, fixed once.
 
-        // Terminal punctuation, added for the MI84 theme (see Face.cpp) but
+        // Terminal punctuation, added for the PEEMO84 theme (see Face.cpp) but
         // shared by everything: MATRIX's own tab header and log prefix
         // already used '>' and '[' ']', and the stats rows already used
         // '%', so on this display those characters were silently rendering

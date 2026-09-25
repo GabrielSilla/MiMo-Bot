@@ -245,8 +245,8 @@
   pinned to LF line endings via `.gitattributes` since a CRLF-mangled
   `#!/bin/sh` shebang fails to execute at all under Git for Windows' bundled
   `sh.exe`, which is what `core.autocrlf=true` would otherwise silently
-  produce on checkout). Each shim just calls `hooks/mimo-git-hook.ps1`
-  (mirrors `mimo-claude-hook.ps1`'s own socket-write-to-`AiThoughtsListener`
+  produce on checkout). Each shim just calls `hooks/peemo-git-hook.ps1`
+  (mirrors `peemo-claude-hook.ps1`'s own socket-write-to-`AiThoughtsListener`
   core almost verbatim) with a fixed `-EventName`, resolved via
   `$(dirname "$0")` so the shim keeps working wherever this folder actually
   lands rather than baking in an absolute path. `post-checkout` filters its

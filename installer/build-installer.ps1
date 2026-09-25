@@ -1,9 +1,9 @@
-# Builds the MiMo Sender installer end-to-end:
+# Builds the Peemo Sender installer end-to-end:
 #   1. dotnet publish Brobot.Sender as a self-contained win-x64 app (so the
 #      person who assembled a Brobot doesn't need the .NET 8 runtime
 #      installed separately — it ships inside the installer).
 #   2. Compiles installer\BrobotSenderSetup.iss with Inno Setup's ISCC.exe
-#      into installer\output\MiMoSenderSetup-<version>.exe.
+#      into installer\output\PeemoSenderSetup-<version>.exe.
 #
 # Requires Inno Setup 6 (https://jrsoftware.org/isdl.php) — not part of this
 # repo/solution, install it once on the machine that builds the installer.
@@ -42,7 +42,7 @@ Write-Host "== Compilando a extensao do Visual Studio (Brobot.VSExtension) ==" -
 # to VSIXInstaller.exe only on a machine where Visual Studio is actually
 # detected (see BrobotSenderSetup.iss's [Code] section) -- most people
 # running this installer won't have VS at all, so this must never be a hard
-# requirement to build or run MiMo Sender itself.
+# requirement to build or run Peemo Sender itself.
 $vsExtensionCsproj = Join-Path $repoRoot "src\Brobot.VSExtension\Brobot.VSExtension.csproj"
 $vsixStagingDir = Join-Path $installerDir "vsix"
 if (Test-Path $vsixStagingDir) {

@@ -10,11 +10,11 @@
 namespace {
 
 constexpr const char* kPrefsNamespace = "wifi";
-constexpr const char* kApSsid = "MiMo-Setup";
+constexpr const char* kApSsid = "Peemo-Setup";
 // Per-network attempt — kept short since a boot can walk through up to
 // kMaxSavedNetworks of these before falling back to the portal.
 constexpr unsigned long kConnectTimeoutMs = 5000;
-// Remembers the last few networks MiMo has actually connected to (most
+// Remembers the last few networks Peemo has actually connected to (most
 // recent first) rather than just one, since it moves between a small set of
 // known places (home, work, ...) rather than staying on a single network.
 constexpr uint8_t kMaxSavedNetworks = 5;
@@ -74,7 +74,7 @@ void rememberNetwork(std::vector<SavedNetwork>& networks, const String& ssid, co
 
 // Tries each saved network in most-recent-first order, one kConnectTimeoutMs
 // attempt each. A hit anywhere but the front promotes that network back to
-// most-recent, so a place MiMo visits often naturally floats to the top of
+// most-recent, so a place Peemo visits often naturally floats to the top of
 // the list (and survives longest once the list fills up).
 bool tryConnectSavedNetworks() {
     std::vector<SavedNetwork> networks = loadSavedNetworks();
@@ -154,7 +154,7 @@ String buildSetupPage() {
 
     return String(
         "<html><body style='font-family:sans-serif'>"
-        "<h2>Configurar WiFi do MiMo</h2>"
+        "<h2>Configurar WiFi do Peemo</h2>"
         "<form method='POST' action='/save'>"
         "Rede:<br>"
         "<select name='ssid_select'>") + options + String("</select><br><br>"

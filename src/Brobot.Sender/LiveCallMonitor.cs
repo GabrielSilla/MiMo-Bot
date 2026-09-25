@@ -32,7 +32,7 @@ public enum MicRegistryKind
 /// </summary>
 public sealed record LiveCallAppDefinition(
     string Name,
-    // What MiMo actually says the call is happening "in" -- e.g. "Teams" or
+    // What Peemo actually says the call is happening "in" -- e.g. "Teams" or
     // "Navegador". Kept separate from Name because Name doubles as the
     // per-app tracking key (Edge and Chrome must stay independent entries so
     // one ending doesn't clear the other), while Edge and Chrome both read

@@ -155,7 +155,7 @@ void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, 
     // *wire bytes* a character consumed — AurebeshGFXGlyph/LatinAccentGFXGlyph
     // both set xAdvance 6, and the built-in font already advances 6px/char
     // at textSize 1 (5px glyph + 1px gap), matching CHAR_ADVANCE_PX (see
-    // Face.cpp) so MI2MO2's per-character word-wrap math stays correct on
+    // Face.cpp) so P2M2's per-character word-wrap math stays correct on
     // this display too — an accented letter is still exactly one column
     // wide on screen even though it took two bytes on the wire.
     int penX = x;

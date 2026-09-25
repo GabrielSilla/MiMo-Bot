@@ -6,14 +6,14 @@ using System.Text;
 namespace Brobot.Connection;
 
 /// <summary>
-/// Finds MiMo's current IP by sweeping the local network, because MiMo's
+/// Finds Peemo's current IP by sweeping the local network, because Peemo's
 /// address isn't stable: it's handed out by the router's DHCP server, so a
-/// power cycle (MiMo's or the router's) can move it, and the address saved
+/// power cycle (Peemo's or the router's) can move it, and the address saved
 /// in Brobot.Sender's Conexão card silently stops working.
 ///
 /// The sweep asks every host on the PC's own subnet(s) whether something is
 /// listening on Core's protocol port, then asks each one that is to identify
-/// itself with PING (see PROTOCOL.md) — a real MiMo answers "MIMO &lt;rev&gt;".
+/// itself with PING (see PROTOCOL.md) — a real Peemo answers "PEEMO &lt;rev&gt;".
 /// That second step is what keeps this from being a guess: port 5555 isn't
 /// reserved for this project (Android's ADB-over-network, among others, uses
 /// it too), and connecting to the wrong device would mean quietly sending it
@@ -27,13 +27,13 @@ namespace Brobot.Connection;
 /// at a *new* address is exactly the coincidence this class exists to avoid,
 /// and gets rejected. That distinction isn't theoretical: the network this
 /// was developed on turned out to have an unrelated device answering on 5555,
-/// which a "first open port wins" sweep would have adopted as MiMo.
+/// which a "first open port wins" sweep would have adopted as Peemo.
 ///
-/// The practical consequence is that relocating a MiMo whose IP changed
+/// The practical consequence is that relocating a Peemo whose IP changed
 /// requires the PING firmware; without it, a sweep can only re-confirm an
 /// address that already worked.
 /// </summary>
-public static class MimoDiscovery
+public static class PeemoDiscovery
 {
     /// <summary>Core's own PROTOCOL_TCP_PORT (see BrobotCore/include/Config.h).</summary>
     public const int DefaultPort = 5555;
@@ -65,14 +65,14 @@ public static class MimoDiscovery
     private const int MaxHostsPerSubnet = 512;
 
     // Generous next to a LAN round trip (sub-millisecond), because the cost
-    // of being too impatient is asymmetric: a timeout that clips MiMo's reply
+    // of being too impatient is asymmetric: a timeout that clips Peemo's reply
     // means not finding it at all, while a slow probe only holds one of
     // MaxConcurrentProbes slots.
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromMilliseconds(600);
     private static readonly TimeSpan IdentityTimeout = TimeSpan.FromMilliseconds(800);
 
     private static readonly byte[] PingBytes = Encoding.ASCII.GetBytes("PING\n");
-    private const string IdentityReply = "MIMO";
+    private const string IdentityReply = "PEEMO";
 
     /// <summary>
     /// One probed address, reported as the sweep goes. Exists so the UI can
@@ -90,20 +90,20 @@ public static class MimoDiscovery
         /// <summary>Nothing answered at that address, or it refused the connection.</summary>
         Unreachable,
 
-        /// <summary>Something is listening on the port, but never identified itself as MiMo.</summary>
+        /// <summary>Something is listening on the port, but never identified itself as Peemo.</summary>
         Listening,
 
-        /// <summary>Answered PING with MIMO — this is definitely a Brobot Core.</summary>
-        ConfirmedMimo,
+        /// <summary>Answered PING with PEEMO — this is definitely a Brobot Core.</summary>
+        ConfirmedPeemo,
     }
 
     /// <summary>
-    /// Returns the IP of the first MiMo found, or null if the sweep turned up
-    /// nothing (MiMo switched off, on another network, or this PC has no
+    /// Returns the IP of the first Peemo found, or null if the sweep turned up
+    /// nothing (Peemo switched off, on another network, or this PC has no
     /// usable LAN adapter). Never throws for ordinary network failures.
     /// </summary>
     /// <param name="port">Core's protocol port — the one from the Conexão card, so a non-default port still gets swept.</param>
-    /// <param name="preferredHost">The address that was being used until now, probed first: after a MiMo reboot that kept its lease, this hits on the very first probe and the rest of the sweep never runs.</param>
+    /// <param name="preferredHost">The address that was being used until now, probed first: after a Peemo reboot that kept its lease, this hits on the very first probe and the rest of the sweep never runs.</param>
     /// <param name="progress">Reported once per finished probe. A <see cref="Progress{T}"/> created on the UI thread marshals these back to it on its own, so callers need no dispatching of their own.</param>
     /// <param name="cancellationToken">Cancelled when the user disconnects mid-sweep.</param>
     public static async Task<string?> FindAsync(
@@ -138,7 +138,7 @@ public static class MimoDiscovery
             // listening without identifying itself — an old board, most
             // likely. Only ever index 0, and only when index 0 is that
             // address: a host anywhere else that won't identify itself is
-            // some other device, not a MiMo (see the class comment).
+            // some other device, not a Peemo (see the class comment).
             bool previousAddressStillListening = false;
             int completed = 0;
 
@@ -155,9 +155,9 @@ public static class MimoDiscovery
                 completed++;
                 progress?.Report(new SweepProgress(candidates[index], completed, candidates.Count));
 
-                if (result == ProbeResult.ConfirmedMimo)
+                if (result == ProbeResult.ConfirmedPeemo)
                 {
-                    // A confirmed MiMo beats anything still in flight, so
+                    // A confirmed Peemo beats anything still in flight, so
                     // there's no reason to finish sweeping the rest of the
                     // subnet — the finally block below tears the rest down.
                     return candidates[index].ToString();
@@ -201,7 +201,7 @@ public static class MimoDiscovery
             if (index > 0)
             {
                 // Staggered by position, so probe 0 — the address most likely
-                // to be MiMo — still fires instantly and can end the sweep
+                // to be Peemo — still fires instantly and can end the sweep
                 // before anything else has even started.
                 await Task.Delay(index * ProbeLaunchStagger, cancellationToken).ConfigureAwait(false);
             }
@@ -266,7 +266,7 @@ public static class MimoDiscovery
                 reply.Append(Encoding.ASCII.GetString(buffer, 0, read));
                 if (reply.ToString().Contains(IdentityReply, StringComparison.Ordinal))
                 {
-                    return ProbeResult.ConfirmedMimo;
+                    return ProbeResult.ConfirmedPeemo;
                 }
             }
         }
@@ -407,7 +407,7 @@ public static class MimoDiscovery
 
     /// <param name="Network">The subnet's base address (host bits cleared).</param>
     /// <param name="Mask">Its netmask, read off the adapter rather than assumed to be /24 — a router handing out a /23 is unusual but not this code's business to rule out.</param>
-    /// <param name="Own">This PC's own address on it, skipped when enumerating since MiMo can't be at it.</param>
+    /// <param name="Own">This PC's own address on it, skipped when enumerating since Peemo can't be at it.</param>
     private readonly record struct LocalSubnet(uint Network, uint Mask, uint Own)
     {
         public bool Contains(uint address) => (address & Mask) == Network;

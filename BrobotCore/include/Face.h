@@ -36,9 +36,15 @@
 // SWEATING is an ordinary mood (worried eyes + a sliding sweat drop, see
 // drawEyeWorried/drawSweatDrop in Face.cpp) — Brobot.Sender's Alertas de
 // desempenho sends it as NOTIFY SWEATING when CPU/RAM stay above 90%.
-enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING, REPORT, SWEATING };
+// SATELLITE and SPACE only have artwork as notifications (NOTIFY SATELLITE:
+// a tilted satellite crossing a starry sky, eyes following it; NOTIFY
+// SPACE: the same sky and eyes without the satellite — see
+// drawSpaceNotification). Both open with a "Transmissão Espacial
+// Recebida!!!" line before the real message (see
+// Personality::raiseNotification). As a plain FACE they're neutral eyes.
+enum class Expression : uint8_t { NEUTRAL, HAPPY, SAD, ANGRY, SLEEPING, MUSIC, WATCHING, FAILED, READING, FINISHED, THINKING, PLAYING, SLEEPY, COFFEE, WEATHER, BYE, ACHIEVEMENT, EMAIL, MEETING, BUILDING, REPORT, SWEATING, SATELLITE, SPACE };
 
-// Which of MiMo's 10 achievements a notification is celebrating (see
+// Which of Peemo's 10 achievements a notification is celebrating (see
 // ACHIEVEMENT in PROTOCOL.md) — every one shows the same trophy
 // (drawAchievementNotification's shared drawTrophy), and this is what picks
 // the small accent — or, for AI_OVERLOAD/IDENTITY_CRISIS, the treatment
@@ -55,6 +61,13 @@ enum class AchievementIcon : uint8_t {
 // PROTOCOL.md). Deliberately small — just enough categories to read clearly
 // as a ~10px icon, not a full meteorological classification.
 enum class WeatherCondition : uint8_t { CLEAR, CLOUDY, RAIN, STORM, SNOW, FOG };
+
+// Peemo's mood through the day (see specs/mood.md) — personality, so Core
+// owns it: Personality derives it from the last TIME it got (moodForTime)
+// and Face shows it as the battery badge between the weather and clock
+// badges. Brobot.Sender's PeemoMood uses the same hours to pick how
+// sarcastic its phrases are. NONE = no TIME received yet, no badge.
+enum class Mood : uint8_t { NONE, ANIMADO, FIM_DE_DIA, CANSADO };
 
 // Brobot.Sender's own verdict on the day (see DailyReportScoring.cs) —
 // REPORT's <RATING> token picks one of these, and drawReportNotification
@@ -73,33 +86,33 @@ enum class DailyRating : uint8_t { PESSIMO, RUIM, QUESTIONAVEL, MEDIO, BOM, EXCE
 // ERROR; Personality::onThemeCommand is what maps the two names together).
 // MATRIX pins the eyes to the bottom of the frame, recolors everything
 // green, and replaces the badges/message box with a scrolling console log
-// (see FaceState::logLines below). MI2MO2 is much smaller a change: same
+// (see FaceState::logLines below). P2M2 is much smaller a change: same
 // layout as CLASSIC (badges, corner icons, message bubble all untouched),
 // just a solid red circle in place of the usual rounded-square eye, red
 // message text instead of white, and — its own R2D2-flavored touch — each
 // message character renders in AUREBESH (see IDisplay.h's TextFont) right
 // after being revealed, then flips to the normal LATIN font a moment later
-// (see Face.cpp's drawWrappedMessageMi2Mo2), reading as the message
+// (see Face.cpp's drawWrappedMessageP2M2), reading as the message
 // "translating" from alien script into Portuguese in real time. Works on
 // both the Brobot Virtual Display/native build and the physical ST7735
 // build — see IDisplay.h's TextFont comment for how each one covers only
 // A-Z/0-9 and falls back to LATIN for anything else.
-// MI84 is a 1984 amber-CRT terminal: black frame, everything drawn in one
+// PEEMO84 is a 1984 amber-CRT terminal: black frame, everything drawn in one
 // amber, a fixed text header/status/tab chrome at the top and MATRIX's own
 // bottom-pinned eyes below it. It reuses MATRIX's log/tab machinery
 // wholesale (same FaceState::logLines/logTab, same Personality side) and
 // differs only in how that gets drawn — plus a boot sequence played once
 // each time the theme is selected (see FaceState::themeStartedMs).
-enum class Theme : uint8_t { CLASSIC, MATRIX, MI2MO2, MI84 };
+enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84 };
 
 // CLASSIC's own primary color, set via CLASSICCOLOR (see PROTOCOL.md) —
 // every other theme has a fixed palette of its own and ignores this
 // entirely (Personality still tracks and forwards it regardless of which
 // theme is active, same "just holds whatever was last sent" treatment as
 // Theme itself, so switching back to CLASSIC doesn't lose the choice).
-// GREEN and AMBER deliberately resolve to MATRIX's and MI84's own ink
+// GREEN and AMBER deliberately resolve to MATRIX's and PEEMO84's own ink
 // colors rather than picking new values (see Face.cpp's classicColorRGB) —
-// "MiMo Classic in green" reads as the same green MiMo already has
+// "Peemo Classic in green" reads as the same green Peemo already has
 // elsewhere, not a third, slightly-different green. BLUE is the original
 // default eye color from before this setting existed.
 enum class ClassicColor : uint8_t { BLUE, GREEN, AMBER, RED, PINK, WHITE };
@@ -107,7 +120,7 @@ enum class ClassicColor : uint8_t { BLUE, GREEN, AMBER, RED, PINK, WHITE };
 // Typewriter reveal speed — shared between Personality (which paces
 // TypedMessage::updateTyping off it) and Face (which needs the same value
 // to work out, purely from nowMs and a message's typingStartedAt, how long
-// ago each individual character was revealed — see MI2MO2's translation
+// ago each individual character was revealed — see P2M2's translation
 // effect above). Living here rather than duplicated in both .cpp files
 // keeps the two from silently drifting apart.
 constexpr unsigned long TYPING_CHAR_INTERVAL_MS = 40;
@@ -162,7 +175,7 @@ struct FaceState {
     // meaningful alongside `message` (see Personality::currentState, which
     // copies whichever TypedMessage's typingStartedAt matches `message`).
     // Combined with TYPING_CHAR_INTERVAL_MS above, this is what lets
-    // MI2MO2's drawWrappedMessageMi2Mo2 work out each character's own
+    // P2M2's drawWrappedMessageP2M2 work out each character's own
     // reveal age without Personality needing to track per-character state.
     unsigned long messageTypingStartedMs = 0;
     // When the currently-rendered expression became the rendered one (see
@@ -170,11 +183,11 @@ struct FaceState {
     // animation — one that has to run a fixed number of times and then
     // stop, rather than loop off nowMs forever like the glitch/rain/steam
     // effects — needs this anchor to measure its own elapsed time from.
-    // MI2MO2's three-flash ERROR is the first such animation.
+    // P2M2's three-flash ERROR is the first such animation.
     unsigned long expressionStartedMs = 0;
     // When the current theme was last selected (see
     // Personality::onThemeCommand). Same reason expressionStartedMs exists:
-    // MI84's boot sequence is a *bounded* animation — it runs once and
+    // PEEMO84's boot sequence is a *bounded* animation — it runs once and
     // stops, rather than looping off nowMs forever like the glitch/rain/
     // steam effects — so a stateless Face::render needs an anchor to
     // measure its own elapsed time from.
@@ -228,6 +241,7 @@ struct FaceState {
     int weatherTempC = 0;
     WeatherCondition weatherCondition = WeatherCondition::CLEAR;
     const char* timeText = nullptr; // "HH:MM", nullptr/empty = no clock shown
+    Mood mood = Mood::NONE;         // derived from timeText by Personality
 
     // Machine load, set via STATS by whichever PC app is connected (Core has
     // no way to know any of this itself). Persistent and independent of
@@ -252,7 +266,7 @@ struct FaceState {
     // connected — same persistent, expression-independent shape as hasStats
     // above, and the same -1 convention for "no source could supply this",
     // drawn as "--" rather than a zero nobody should believe. Only drawn in
-    // the themes that have a console log to put it in (MATRIX, MI84), where
+    // the themes that have a console log to put it in (MATRIX, PEEMO84), where
     // it sits under the AI tab exactly as the machine stats sit under the
     // MONITOR tab's game name.
     bool hasAiStats = false;
@@ -268,7 +282,7 @@ struct FaceState {
     // color chosen while on CLASSIC is still remembered after switching
     // away and back.
     ClassicColor classicColor = ClassicColor::BLUE;
-    // Only meaningful (and only drawn) while theme == MATRIX or MI84 —
+    // Only meaningful (and only drawn) while theme == MATRIX or PEEMO84 —
     // the two log-based themes; see Theme above. Oldest entry
     // at index 0, newest at logLineCount-1. Pointers into Personality's own
     // ring buffer, same non-owning convention as message/timeText above.

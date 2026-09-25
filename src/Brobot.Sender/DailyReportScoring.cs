@@ -9,7 +9,7 @@ namespace Brobot.Sender;
 /// Rules, straight from the product decision behind this feature: successful
 /// AND failed builds both count positive (either one means work happened —
 /// success just means more of it), a git commit counts positive the same
-/// way (see hooks/mimo-git-hook.ps1's GitCommit event), meeting time counts
+/// way (see hooks/peemo-git-hook.ps1's GitCommit event), meeting time counts
 /// positive (it's work too), game time is free for the first half hour of
 /// the day and then
 /// penalizes *increasingly* per extra half hour (not a flat per-minute

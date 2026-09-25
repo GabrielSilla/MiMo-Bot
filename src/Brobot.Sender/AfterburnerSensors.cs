@@ -8,7 +8,7 @@ namespace Brobot.Sender;
 /// Reads MSI Afterburner's published sensor values out of its
 /// "MAHMSharedMemory" shared-memory block. Opportunistic by design: if
 /// Afterburner isn't running the block doesn't exist, every read returns null,
-/// and nothing else about MiMo changes.
+/// and nothing else about Peemo changes.
 ///
 /// This exists for exactly one metric that has no other source here: **CPU
 /// temperature**. Intel keeps the die temperature in an MSR, which is readable
@@ -22,7 +22,7 @@ namespace Brobot.Sender;
 /// time, so borrowing its numbers costs nothing and installs nothing — the
 /// only catch being that it has to be running.
 ///
-/// Everything else MiMo shows (CPU load, RAM, GPU load, GPU temperature) comes
+/// Everything else Peemo shows (CPU load, RAM, GPU load, GPU temperature) comes
 /// from sources that always work, so a closed Afterburner costs one field, not
 /// the feature.
 /// </summary>
