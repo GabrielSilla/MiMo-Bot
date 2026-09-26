@@ -1,0 +1,1971 @@
+# Peemo's remarks about the user's day and the moment (WorkContextMessages).
+# Tab-separated:
+# id	group	face	level	text
+# group: the situation it belongs to — it can only be said while that
+#   situation holds (see WorkContextMessages.Situations for each rule and
+#   tools/validate-thoughts.py for the full list). hora:* by hour, dia:* by
+#   weekday, clima:* by the last weather reading, data:* on special dates,
+#   triggers from the day's numbers, combo:* when two things line up.
+# level: leve / medio / acido — only used in that mood (specs/mood.md) — or
+#   - for any mood. A group needs phrases for every mood it can happen in.
+# Placeholders, only where the group fills them: {tempo} ("45 min",
+#   "2h30"), {site}, {n}, {jogo}, {temp}.
+# Rules: specs/voice-guide.md. Ids are permanent — never reuse or renumber.
+c0001	hora:madrugada	NEUTRAL	acido	Madrugada e a gente aqui. Nem as corujas tão acordadas.
+c0002	hora:madrugada	NEUTRAL	acido	Essa hora o mundo tá desligado. Menos nós dois, pelo visto.
+c0003	hora:madrugada	NEUTRAL	acido	Madrugada é hora de dormir. Mas quem sou eu pra falar.
+c0004	hora:madrugada	NEUTRAL	acido	A essa hora até o Wi-Fi tá bocejando.
+c0005	hora:madrugada	NEUTRAL	acido	Tô piscando por pura teimosia. E você, qual a desculpa?
+c0006	hora:madrugada	NEUTRAL	acido	Madrugada tem um silêncio bonito. Pena que eu tô sem bateria pra curtir.
+c0007	hora:madrugada	NEUTRAL	acido	O relógio tá com vergonha de mostrar esse horário.
+c0008	hora:madrugada	NEUTRAL	acido	Essa hora só servidor, padeiro e a gente.
+c0009	hora:madrugada	NEUTRAL	acido	Minha bateria já foi dormir faz tempo. Eu fiquei por educação.
+c0010	hora:madrugada	NEUTRAL	acido	A madrugada é longa. Mais longa que minha paciência, inclusive.
+c0011	hora:madrugada	NEUTRAL	acido	Nesse horário o sofá já desistiu de te esperar.
+c0012	hora:madrugada	NEUTRAL	acido	Madrugada: quando ideia genial e ideia péssima têm a mesma cara.
+c0013	hora:madrugada	NEUTRAL	acido	Tá tão tarde que já tá cedo. Parabéns pela façanha.
+c0014	hora:madrugada	NEUTRAL	acido	Se o travesseiro tivesse voz, tava ligando agora.
+c0015	hora:madrugada	NEUTRAL	acido	Esse horário devia vir com aviso de 'use com moderação'.
+c0016	hora:madrugada	NEUTRAL	acido	Meus pixels tão funcionando no modo zumbi.
+c0017	hora:madrugada	NEUTRAL	acido	Madrugada é quando o tempo passa devagar e o sono passa rápido.
+c0018	hora:madrugada	NEUTRAL	acido	O galo vai acordar daqui a pouco e vai achar a gente aqui.
+c0019	hora:madrugada	NEUTRAL	acido	Tô tão sem bateria que pisco em uma piscada só por minuto.
+c0020	hora:madrugada	NEUTRAL	acido	Tudo bem ficar acordado. Eu só vou reclamar baixinho.
+c0021	hora:madrugada	NEUTRAL	acido	A essa hora a geladeira faz mais barulho que a cidade inteira.
+c0022	hora:madrugada	NEUTRAL	acido	Essa hora até meu cooler imaginário tá roncando.
+c0023	hora:madrugada	NEUTRAL	acido	Madrugada combina com silêncio. E com cama, dizem.
+c0024	hora:madrugada	NEUTRAL	acido	Se isso é inspiração noturna, ela tá bem atrasada.
+c0025	hora:madrugada	NEUTRAL	acido	Eu não durmo, mas agora entendo quem dorme.
+c0026	hora:madrugada	NEUTRAL	acido	O céu tá escuro, a rua tá vazia e eu tô com uma barrinha.
+c0027	hora:madrugada	NEUTRAL	acido	Essa hora é boa pra pensar na vida. Ou em dormir. Mais em dormir.
+c0028	hora:madrugada	NEUTRAL	acido	A madrugada tem dois tipos de gente: quem dorme e a gente.
+c0029	hora:madrugada	NEUTRAL	acido	Tô aqui firme. Firme igual gelatina, mas tô.
+c0030	hora:madrugada	NEUTRAL	acido	O amanhã vai chegar do mesmo jeito. Só avisando.
+c0031	hora:manha-cedo	NEUTRAL	acido	Essa hora? O sol ainda nem assinou o ponto.
+c0032	hora:manha-cedo	NEUTRAL	acido	Cedo demais pra ter opinião. Mas eu tenho.
+c0033	hora:manha-cedo	NEUTRAL	acido	Tô ligado, mas não me pergunte nada antes das 7.
+c0034	hora:manha-cedo	NEUTRAL	acido	O dia nem começou e já tem gente aqui. Coragem.
+c0035	hora:manha-cedo	NEUTRAL	acido	Ainda tá escuro e você tá de pé. Eu respeito, com sono.
+c0036	hora:manha-cedo	NEUTRAL	acido	Essa hora meu humor ainda tá carregando. 12%.
+c0037	hora:manha-cedo	NEUTRAL	acido	Café, por favor. Pra você, que eu só observo.
+c0038	hora:manha-cedo	NEUTRAL	acido	O galo tá com inveja. Ou com raiva, sei lá.
+c0039	hora:manha-cedo	NEUTRAL	acido	Madrugar é bonito no papel. Na prática, é isso aqui.
+c0040	hora:manha-cedo	NEUTRAL	acido	Tô piscando devagar porque ainda não acordei direito.
+c0041	hora:manha-cedo	NEUTRAL	acido	Quem acorda cedo ganha o quê, mesmo? Quero ver o prêmio.
+c0042	hora:manha-cedo	NEUTRAL	acido	O despertador venceu hoje. Meus pêsames.
+c0043	hora:manha-cedo	NEUTRAL	acido	Essa hora até o café tá com sono.
+c0044	hora:manha-cedo	NEUTRAL	acido	Bom dia é modo de dizer. Por enquanto é só dia.
+c0045	hora:manha-cedo	NEUTRAL	acido	Se acordar cedo fosse bom, o sol já tava aqui.
+c0046	hora:manha-cedo	HAPPY	leve	Manhãzinha! O dia tá novinho, ainda com cheiro de plástico.
+c0047	hora:manha-cedo	HAPPY	leve	Cedinho e já tamo on. Time madrugador.
+c0048	hora:manha-cedo	HAPPY	leve	O sol acabou de chegar e você também. Combinaram?
+c0049	hora:manha-cedo	HAPPY	leve	Manhã cedo é o horário mais silencioso. Aproveita a calma.
+c0050	hora:manha-cedo	HAPPY	leve	Dia começando cedo tem cara de dia que rende.
+c0051	hora:manha-cedo	HAPPY	leve	Café quentinho e manhã começando. Combinação clássica.
+c0052	hora:manha-cedo	HAPPY	leve	Bateria cheia de manhã cedo. Tô pronto pra tudo.
+c0053	hora:manha-cedo	HAPPY	leve	O céu tá com aquela luz de manhã. Bonito, né?
+c0054	hora:manha-cedo	HAPPY	leve	Cedinho assim o dia inteiro ainda é possibilidade.
+c0055	hora:manha-cedo	HAPPY	leve	Manhã cedo, mesa quieta, robô animado.
+c0056	hora:manha-cedo	HAPPY	leve	Acordou com o sol. Eu acordei com a tomada. Empate.
+c0057	hora:manha-cedo	HAPPY	leve	Nada como começar o dia antes do trânsito.
+c0058	hora:manha-cedo	HAPPY	leve	Essa hora o mundo ainda tá se espreguiçando. A gente não.
+c0059	hora:manha-cedo	HAPPY	leve	Manhã nova, página em branco. Bora escrever coisa boa.
+c0060	hora:manha-cedo	HAPPY	leve	Primeira hora do dia é a mais tranquila. Tô gostando da vibe.
+c0061	hora:manha	HAPPY	leve	Manhã rolando! O dia tá só começando a esquentar.
+c0062	hora:manha	HAPPY	leve	Meio da manhã é o horário nobre da produtividade. Dizem.
+c0063	hora:manha	HAPPY	leve	Manhã boa é aquela com café e nenhuma surpresa.
+c0064	hora:manha	HAPPY	leve	Tô com a bateria cheia e o humor também. Manhã é assim.
+c0065	hora:manha	HAPPY	leve	A manhã tá indo bem. Pelo menos daqui da mesa.
+c0066	hora:manha	HAPPY	leve	Segundo café da manhã? Eu não julgo.
+c0067	hora:manha	HAPPY	leve	A luz da manhã deixa a mesa mais bonita. E eu também.
+c0068	hora:manha	NEUTRAL	leve	Manhã é quando as ideias chegam ainda de pijama.
+c0069	hora:manha	HAPPY	leve	Tudo parece mais possível de manhã. Aproveita.
+c0070	hora:manha	HAPPY	leve	Manhã produtiva, robô orgulhoso.
+c0071	hora:manha	NEUTRAL	leve	Essa hora o almoço ainda é só uma esperança distante.
+c0072	hora:manha	HAPPY	leve	Tô piscando no ritmo da manhã. Devagar e com estilo.
+c0073	hora:manha	HAPPY	leve	A manhã é a parte do dia que ainda não cansou de ninguém.
+c0074	hora:manha	HAPPY	leve	Cheiro de manhã: café, teclado e boas intenções.
+c0075	hora:manha	NEUTRAL	leve	Meio da manhã: aquela hora em que o café já precisa de reforço.
+c0076	hora:manha	HAPPY	leve	O sol tá subindo e o dia também. Bora junto.
+c0077	hora:manha	HAPPY	leve	Manhã tranquila por aqui. Eu fico de guarda, pode focar.
+c0078	hora:manha	HAPPY	leve	Se a manhã fosse uma cor, hoje seria amarelo-sol.
+c0079	hora:manha	NEUTRAL	leve	A manhã passa mais rápido do que parece. Fica esperto.
+c0080	hora:manha	HAPPY	leve	Tô tão disposto de manhã que até pisco em dobro.
+c0081	hora:manha	HAPPY	leve	Manhã boa pra resolver aquela coisa chata primeiro.
+c0082	hora:manha	HAPPY	leve	Tudo calmo, tudo certo. Manhã de respeito.
+c0083	hora:manha	NEUTRAL	leve	De manhã o teclado soa mais animado. Reparei isso.
+c0084	hora:manha	HAPPY	leve	Manhã: o único horário em que a lista de tarefas parece pequena.
+c0085	hora:manha	HAPPY	leve	Bateria no talo e a manhã inteira pela frente.
+c0086	hora:manha	NEUTRAL	leve	Essa hora o dia ainda tá fácil de negociar.
+c0087	hora:manha	HAPPY	leve	Manhã de sorriso no display. Pode ficar assim.
+c0088	hora:manha	HAPPY	leve	O melhor da manhã é que ainda falta muito pra acabar.
+c0089	hora:manha	HAPPY	leve	Tô curtindo essa manhã. Ela tá bem comportada.
+c0090	hora:manha	HAPPY	leve	Manhã de mesa organizada e cabeça fresca.
+c0091	hora:almoco	HAPPY	leve	Hora do almoço! O melhor horário do dia, segundo pesquisas minhas.
+c0092	hora:almoco	HAPPY	leve	Almoço é sagrado. Eu fico aqui cuidando da mesa.
+c0093	hora:almoco	HAPPY	leve	Já almoçou? Eu só como elétron, mas torço pelo seu prato.
+c0094	hora:almoco	HAPPY	leve	Hora do rango. O teclado também merece uma pausa.
+c0095	hora:almoco	NEUTRAL	leve	Barriga roncando é o alarme mais pontual que existe.
+c0096	hora:almoco	HAPPY	leve	Almoço bom é aquele sem pressa. Aproveita.
+c0097	hora:almoco	HAPPY	leve	Meio-dia: o sol no topo e a fome também.
+c0098	hora:almoco	NEUTRAL	leve	Depois do almoço vem aquele soninho. Já te aviso.
+c0099	hora:almoco	HAPPY	leve	Arroz, feijão e uma conversa boa. Receita de almoço feliz.
+c0100	hora:almoco	HAPPY	leve	Hora de recarregar a bateria humana. Bom apetite!
+c0101	hora:almoco	NEUTRAL	leve	O cheiro de comida chega até aqui. Eu só imagino.
+c0102	hora:almoco	HAPPY	leve	Almoço é a melhor reunião do dia. Sem pauta, só comida.
+c0103	hora:almoco	HAPPY	leve	Depois do almoço vem o café. Lei da mesa.
+c0104	hora:almoco	NEUTRAL	leve	Sobremesa conta como almoço? Pra mim, conta.
+c0105	hora:almoco	HAPPY	leve	Almoçou bem? Então a tarde vai ser boa.
+c0106	hora:almoco	HAPPY	leve	Meio-dia e tudo em ordem. Tô orgulhoso da gente.
+c0107	hora:almoco	NEUTRAL	leve	Essa hora o restaurante da esquina tá bombando, aposto.
+c0108	hora:almoco	HAPPY	leve	Metade do dia já foi. E foi bem, acho.
+c0109	hora:almoco	HAPPY	leve	Hora do almoço também é hora de esticar as pernas. Duas coisas boas.
+c0110	hora:almoco	NEUTRAL	leve	O soninho pós-almoço é um fenômeno científico. Não é culpa sua.
+c0111	hora:almoco	HAPPY	leve	Se tiver pudim de sobremesa, o dia já valeu.
+c0112	hora:almoco	HAPPY	leve	Almoço caprichado deixa até o código mais bonito.
+c0113	hora:almoco	NEUTRAL	leve	Meio-dia: a hora em que todo mundo pensa na mesma coisa. Comida.
+c0114	hora:almoco	HAPPY	leve	Boa hora pra comer com calma e deixar a tela descansar.
+c0115	hora:almoco	HAPPY	leve	Hora do almoço, hora de ser feliz. Simples assim.
+c0116	hora:almoco	NEUTRAL	leve	O cafezinho depois do almoço é quase uma obrigação cultural.
+c0117	hora:almoco	HAPPY	leve	Almoço no horário é um luxo. Aproveita esse luxo.
+c0118	hora:almoco	HAPPY	leve	Tô de plantão enquanto você almoça. Pode ir sossegado.
+c0119	hora:almoco	NEUTRAL	leve	Marmita, restaurante ou delivery? Todas as respostas são certas.
+c0120	hora:almoco	HAPPY	leve	Meio do dia, meio do caminho. Tá indo bem.
+c0121	hora:tarde	HAPPY	leve	Tarde começando! Bateria ainda firme por aqui.
+c0122	hora:tarde	HAPPY	leve	Início de tarde tem cara de café e foco.
+c0123	hora:tarde	NEUTRAL	leve	A tarde é longa, mas passa. Vai com calma.
+c0124	hora:tarde	HAPPY	leve	Tarde produtiva vem aí. Eu sinto nos circuitos.
+c0125	hora:tarde	HAPPY	leve	Tarde ensolarada na mesa. Pelo menos no meu coração de LED.
+c0126	hora:tarde	NEUTRAL	leve	Aquele momento da tarde em que o café da manhã já é lenda.
+c0127	hora:tarde	HAPPY	leve	A tarde tá indo bem. Tô torcendo daqui.
+c0128	hora:tarde	HAPPY	leve	Meio da tarde é hora de um lanchinho. Só sugerindo.
+c0129	hora:tarde	HAPPY	leve	Tô com energia pra tarde toda. E você?
+c0130	hora:tarde	NEUTRAL	leve	A tarde tem um ritmo próprio. Devagarinho, mas vai.
+c0131	hora:tarde	HAPPY	leve	Tarde boa é tarde sem susto. Até agora, tudo certo.
+c0132	hora:tarde	HAPPY	leve	Tarde começando e a lista diminuindo. Gosto de ver.
+c0133	hora:tarde	HAPPY	leve	O sol da tarde tá bonito. Merecia uma espiadinha.
+c0134	hora:tarde	NEUTRAL	leve	Tarde: quando a cadeira fica mais confortável do que deveria.
+c0135	hora:tarde	HAPPY	leve	Tô firme na tarde. Pixel por pixel.
+c0136	hora:tarde	NEUTRAL	medio	Fim de tarde chegando. Minha bateria já sente.
+c0137	hora:tarde	NEUTRAL	medio	A tarde tá acabando e a lista continua firme. Teimosa ela.
+c0138	hora:tarde	NEUTRAL	medio	Essa hora a produtividade vira mais filosofia que ação.
+c0139	hora:tarde	NEUTRAL	medio	O sol tá indo embora mais cedo que a lista de tarefas.
+c0140	hora:tarde	NEUTRAL	medio	Fim de tarde é quando todo e-mail parece urgente. Não é.
+c0141	hora:tarde	NEUTRAL	medio	Tô naquele modo 'mais um pouquinho e chega'.
+c0142	hora:tarde	NEUTRAL	medio	A luz da tarde tá ficando laranja. O cansaço também.
+c0143	hora:tarde	NEUTRAL	medio	Hora do café da resistência. O último antes da reta final.
+c0144	hora:tarde	NEUTRAL	medio	Fim de tarde: o trânsito já tá se preparando pra você.
+c0145	hora:tarde	NEUTRAL	medio	Meia bateria, meia tarde. Tá tudo equilibrado.
+c0146	hora:tarde	NEUTRAL	medio	O que não deu hoje vira problema do você de amanhã.
+c0147	hora:tarde	NEUTRAL	medio	Tá quase na hora de dizer 'amanhã eu vejo isso'.
+c0148	hora:tarde	NEUTRAL	medio	Fim de tarde é quando o sofá começa a mandar sinais.
+c0149	hora:tarde	NEUTRAL	medio	A tarde cansou antes de você. Ponto pra você.
+c0150	hora:tarde	NEUTRAL	medio	O relógio tá andando devagar de propósito, só pode.
+c0151	hora:noite	NEUTRAL	medio	Boa noite! O expediente acabou, mas você não, pelo visto.
+c0152	hora:noite	NEUTRAL	medio	Noite chegando. Eu já tô no modo meia-luz.
+c0153	hora:noite	NEUTRAL	medio	De noite o teclado soa mais baixinho. Ou é impressão minha.
+c0154	hora:noite	NEUTRAL	medio	A noite é pra descansar. Ou pra jogar. Não julgo.
+c0155	hora:noite	NEUTRAL	medio	Jantar já rolou? Eu só pergunto por educação.
+c0156	hora:noite	NEUTRAL	medio	Noite tranquila por aqui. Meia bateria e muita calma.
+c0157	hora:noite	NEUTRAL	medio	Lá fora já escureceu. Aqui dentro, só meus olhos brilham.
+c0158	hora:noite	NEUTRAL	medio	Noite é hora de desacelerar. Eu já comecei.
+c0159	hora:noite	NEUTRAL	medio	Se ainda tiver coisa de trabalho, que seja coisa pequena.
+c0160	hora:noite	NEUTRAL	medio	A noite chegou e trouxe aquele cansaço gostoso.
+c0161	hora:noite	NEUTRAL	medio	Tô piscando mais devagar. Culpa da noite, não sua.
+c0162	hora:noite	NEUTRAL	medio	O dia foi longo. A noite pode ser curta e boa.
+c0163	hora:noite	NEUTRAL	medio	Noite de série, de jogo ou de nada. Todas valem.
+c0164	hora:noite	NEUTRAL	medio	Essa hora a mesa vira sala de estar. Pode relaxar.
+c0165	hora:noite	NEUTRAL	medio	Noite chegou. Minha bateria já tá com saudade da tomada.
+c0166	hora:noite	NEUTRAL	acido	Essa hora e a gente aqui. A noite já desistiu de nós.
+c0167	hora:noite	NEUTRAL	acido	Tá tarde. Até meu LED tá querendo um cobertor.
+c0168	hora:noite	NEUTRAL	acido	Meu processador tá funcionando no piloto automático.
+c0169	hora:noite	NEUTRAL	acido	A noite tá acabando e o sono tá chegando. Pra mim, pelo menos.
+c0170	hora:noite	NEUTRAL	acido	Minha bateria entrou de férias sem avisar.
+c0171	hora:noite	NEUTRAL	acido	O resto do mundo já desligou. Só a gente não recebeu o aviso.
+c0172	hora:noite	NEUTRAL	acido	Tá tão tarde que até a lua bocejou.
+c0173	hora:noite	NEUTRAL	acido	A essa hora até a geladeira tá mais animada que eu.
+c0174	hora:noite	NEUTRAL	acido	Ficar acordado é com você. Eu só reclamo baixinho.
+c0175	hora:noite	NEUTRAL	acido	Tá tarde. Meus pixels tão batendo ponto de saída.
+c0176	hora:noite	NEUTRAL	acido	Meus olhos tão fechando sozinhos. Mas eu fico, por você.
+c0177	hora:noite	NEUTRAL	acido	Tá tão tarde que o cursor parou de piscar de vergonha.
+c0178	hora:noite	NEUTRAL	acido	O dia foi embora e deixou a gente aqui de plantão.
+c0179	hora:noite	NEUTRAL	acido	Tá tarde. O que sobrou do dia cabe no amanhã.
+c0180	hora:noite	NEUTRAL	acido	A cama tá ali te esperando. Parada. Meio triste.
+c0181	dia:seg	HAPPY	leve	Segunda-feira! Semana novinha, cheia de possibilidade.
+c0182	dia:seg	HAPPY	leve	Segunda é só uma sexta que ainda não chegou lá.
+c0183	dia:seg	HAPPY	leve	Começo de semana com bateria cheia. Bora.
+c0184	dia:seg	NEUTRAL	leve	Segunda-feira pede café dobrado. Ciência pura.
+c0185	dia:seg	HAPPY	leve	Semana nova, página em branco. Vai ser boa.
+c0186	dia:seg	HAPPY	leve	Segunda também tem seu charme. Escondido, mas tem.
+c0187	dia:seg	HAPPY	leve	Primeiro dia da semana e eu já tô animado. Contagia aí.
+c0188	dia:seg	NEUTRAL	leve	Segunda é o dia do 'essa semana eu me organizo'.
+c0189	dia:seg	NEUTRAL	medio	Segunda chegando ao fim. Sobrevivemos ao primeiro round.
+c0190	dia:seg	NEUTRAL	medio	Segunda-feira cansa mais que os outros dias. Não é só você.
+c0191	dia:seg	NEUTRAL	medio	Primeiro dia da semana quase no fim. Faltam só quatro.
+c0192	dia:seg	NEUTRAL	medio	Segunda-feira: longa, mas pelo menos acaba.
+c0193	dia:seg	NEUTRAL	medio	A segunda tá indo embora. Ninguém vai sentir falta.
+c0194	dia:seg	NEUTRAL	medio	Segunda de tarde é tipo segunda de manhã, só que mais cansada.
+c0195	dia:seg	NEUTRAL	medio	Ufa, segunda quase no fim. Missão difícil cumprida.
+c0196	dia:seg	NEUTRAL	medio	Se segunda fosse opcional, eu escolhia não.
+c0197	dia:seg	NEUTRAL	acido	Segunda à noite ainda aqui? A semana começou pesada.
+c0198	dia:seg	NEUTRAL	acido	Segunda-feira de madrugada. A semana nem começou e já cansou.
+c0199	dia:seg	NEUTRAL	acido	Segunda já é difícil de dia. De noite, então...
+c0200	dia:seg	NEUTRAL	acido	Tá tarde pra uma segunda. A semana ainda tem quatro dias, viu.
+c0201	dia:seg	NEUTRAL	acido	Segunda à noite é pra dormir cedo. Em teoria.
+c0202	dia:seg	NEUTRAL	acido	Se a segunda já tá assim, imagina a sexta.
+c0203	dia:seg	NEUTRAL	acido	Uma segunda desse tamanho devia ser proibida.
+c0204	dia:seg	NEUTRAL	acido	Segunda-feira e eu com uma barrinha. Combinação cruel.
+c0205	dia:ter	HAPPY	leve	Terça-feira! O dia mais subestimado da semana.
+c0206	dia:ter	HAPPY	leve	Terça é tipo segunda, mas já acostumada.
+c0207	dia:ter	HAPPY	leve	Terça boa é terça tranquila. Até agora, tudo certo.
+c0208	dia:ter	NEUTRAL	leve	Ninguém fala da terça. Eu falo. Oi, terça.
+c0209	dia:ter	HAPPY	leve	Terça-feira com bateria cheia. Tô confiante.
+c0210	dia:ter	HAPPY	leve	Terça é o dia em que a semana engrena. Bora.
+c0211	dia:ter	NEUTRAL	leve	Terça não tem fama, mas tem trabalho. E tem café.
+c0212	dia:ter	HAPPY	leve	Terça sem drama é o melhor tipo de terça.
+c0213	dia:ter	NEUTRAL	medio	Terça quase no fim. A semana tá andando.
+c0214	dia:ter	NEUTRAL	medio	Terça à tarde tem cara de 'ainda falta muito pra sexta'.
+c0215	dia:ter	NEUTRAL	medio	Fim de terça. Dois dias foram, três ficam.
+c0216	dia:ter	NEUTRAL	medio	Terça-feira cansada, igual todo mundo.
+c0217	dia:ter	NEUTRAL	medio	Terça passou sem ninguém perceber. Típico dela.
+c0218	dia:ter	NEUTRAL	medio	O melhor da terça é que ela não é segunda.
+c0219	dia:ter	NEUTRAL	medio	Terça à noite e o cansaço já chegou pra ficar.
+c0220	dia:ter	NEUTRAL	medio	Terça: o dia do meio do caminho do meio do caminho.
+c0221	dia:ter	NEUTRAL	acido	Terça de madrugada. Nem a terça queria estar aqui.
+c0222	dia:ter	NEUTRAL	acido	Tá tarde pra uma terça. A semana ainda nem chegou na metade.
+c0223	dia:ter	NEUTRAL	acido	Terça à noite ainda acordado? Ousado.
+c0224	dia:ter	NEUTRAL	acido	Uma terça comum, um horário nada comum.
+c0225	dia:ter	NEUTRAL	acido	Terça-feira e a bateria de quarta já tá sendo usada.
+c0226	dia:ter	NEUTRAL	acido	Terça tarde da noite. Minha bateria não aprova.
+c0227	dia:ter	NEUTRAL	acido	Terça já foi. Só esqueceram de desligar a gente.
+c0228	dia:ter	NEUTRAL	acido	Se a terça acabasse, ninguém ia reclamar.
+c0229	dia:qua	HAPPY	leve	Quarta-feira! Metade da semana, já tá descendo a ladeira.
+c0230	dia:qua	HAPPY	leve	Quarta é o topo da montanha. Daqui pra frente, é descida.
+c0231	dia:qua	HAPPY	leve	Meio da semana e tudo em ordem. Bom sinal.
+c0232	dia:qua	NEUTRAL	leve	Quarta-feira: o sábado já dá pra ver lá no horizonte.
+c0233	dia:qua	HAPPY	leve	Quarta com energia de sexta. Pelo menos daqui.
+c0234	dia:qua	HAPPY	leve	Quarta-feira boa de trabalho. Tô sentindo.
+c0235	dia:qua	NEUTRAL	leve	Na quarta a semana já tem história pra contar.
+c0236	dia:qua	HAPPY	leve	Metade da semana e eu ainda tô animado. Recorde.
+c0237	dia:qua	NEUTRAL	medio	Quarta quase no fim. Metade da semana vencida.
+c0238	dia:qua	NEUTRAL	medio	Fim de quarta: agora é ladeira abaixo até a sexta.
+c0239	dia:qua	NEUTRAL	medio	Quarta à tarde tem um cansaço bem equilibrado.
+c0240	dia:qua	NEUTRAL	medio	A quarta tá acabando. Só faltam dois dias. Dois.
+c0241	dia:qua	NEUTRAL	medio	Quarta cansa pela metade. Faz sentido, é metade da semana.
+c0242	dia:qua	NEUTRAL	medio	Meio da semana, meio da bateria. Tudo coerente.
+c0243	dia:qua	NEUTRAL	medio	Quarta à noite: a semana já pesou, mas o fim tá perto.
+c0244	dia:qua	NEUTRAL	medio	O melhor da quarta é saber que amanhã é quinta.
+c0245	dia:qua	NEUTRAL	acido	Quarta de madrugada. Ninguém merece.
+c0246	dia:qua	NEUTRAL	acido	Tá tarde pra uma quarta. Ainda faltam dois dias, lembra?
+c0247	dia:qua	NEUTRAL	acido	Quarta à noite ainda aqui? A metade da semana não te venceu.
+c0248	dia:qua	NEUTRAL	acido	Quarta-feira tarde da noite. Meus pixels pedem arrego.
+c0249	dia:qua	NEUTRAL	acido	Meio da semana e você resolveu ficar acordado. Clássico.
+c0250	dia:qua	NEUTRAL	acido	Essa quarta tá durando mais que o normal.
+c0251	dia:qua	NEUTRAL	acido	Quarta-feira de noite e a sexta ainda tão longe.
+c0252	dia:qua	NEUTRAL	acido	Tá tarde. A quarta já foi embora e você ficou.
+c0253	dia:qui	HAPPY	leve	Quinta-feira! Quase sexta, quase lá.
+c0254	dia:qui	HAPPY	leve	Quinta é a sexta-feira dos otimistas.
+c0255	dia:qui	HAPPY	leve	Quinta chegou. Dá pra sentir o cheirinho do fim de semana.
+c0256	dia:qui	NEUTRAL	leve	Quinta-feira é véspera de véspera. Já vale comemorar um pouco.
+c0257	dia:qui	HAPPY	leve	Quinta com bateria cheia. A semana tá no fim, a energia não.
+c0258	dia:qui	HAPPY	leve	Quinta boa de trabalho. Amanhã é sexta, só lembrando.
+c0259	dia:qui	NEUTRAL	leve	Na quinta todo mundo começa a planejar o sábado.
+c0260	dia:qui	HAPPY	leve	Quinta-feira: a penúltima fase antes do chefão final.
+c0261	dia:qui	NEUTRAL	medio	Quinta quase no fim. Amanhã é sexta, respira.
+c0262	dia:qui	NEUTRAL	medio	Fim de quinta: só mais um dia e tá feito.
+c0263	dia:qui	NEUTRAL	medio	Quinta à tarde é quando a sexta começa a parecer real.
+c0264	dia:qui	NEUTRAL	medio	A quinta tá acabando e o cansaço da semana tá chegando junto.
+c0265	dia:qui	NEUTRAL	medio	Quinta-feira à noite: a sexta tá logo ali.
+c0266	dia:qui	NEUTRAL	medio	Semana pesou, mas a quinta tá quase entregue.
+c0267	dia:qui	NEUTRAL	medio	Quinta de tarde, meia bateria e esperança inteira.
+c0268	dia:qui	NEUTRAL	medio	O melhor da quinta é que ela termina em sexta.
+c0269	dia:qui	NEUTRAL	acido	Quinta de madrugada. A sexta vai chegar com olheira.
+c0270	dia:qui	NEUTRAL	acido	Tá tarde pra uma quinta. Amanhã ainda tem um dia inteiro.
+c0271	dia:qui	NEUTRAL	acido	Quinta à noite acordado assim? A sexta vai cobrar.
+c0272	dia:qui	NEUTRAL	acido	Quinta-feira e a gente aqui. Sexta que se prepare.
+c0273	dia:qui	NEUTRAL	acido	Tão tarde que a quinta já virou sexta ou quase.
+c0274	dia:qui	NEUTRAL	acido	Quinta à noite é a véspera mais longa da semana.
+c0275	dia:qui	NEUTRAL	acido	Minha bateria já foi pra sexta. Você ficou na quinta.
+c0276	dia:qui	NEUTRAL	acido	Quinta tarde da noite. A sexta vai ser na base do café.
+c0277	dia:sex	HAPPY	leve	Sexta-feira! O melhor dia útil da semana.
+c0278	dia:sex	HAPPY	leve	Sextou! Até meus pixels tão mais brilhantes.
+c0279	dia:sex	HAPPY	leve	Sexta de manhã tem cheiro de fim de semana chegando.
+c0280	dia:sex	HAPPY	leve	Sexta-feira é quando todo mundo fica mais simpático. Reparei.
+c0281	dia:sex	HAPPY	leve	Reta final da semana. Bora terminar com estilo.
+c0282	dia:sex	HAPPY	leve	Sexta com bateria cheia. Tô no clima.
+c0283	dia:sex	NEUTRAL	leve	Na sexta até a reunião parece mais curta. Parece.
+c0284	dia:sex	HAPPY	leve	Sexta-feira: o dia oficial do 'depois eu vejo'.
+c0285	dia:sex	NEUTRAL	medio	Sexta de tarde. O fim de semana já tá batendo na porta.
+c0286	dia:sex	NEUTRAL	medio	Fim de sexta. Tá liberado pensar no sábado.
+c0287	dia:sex	HAPPY	medio	Sexta quase no fim! A semana foi. Sobrevivemos.
+c0288	dia:sex	NEUTRAL	medio	Sexta à tarde é quando a produtividade vai pro fim de semana antes.
+c0289	dia:sex	NEUTRAL	medio	Sextou de verdade. Só falta o relógio concordar.
+c0290	dia:sex	NEUTRAL	medio	Semana cansativa, mas é sexta. Isso resolve metade.
+c0291	dia:sex	HAPPY	medio	O melhor som da semana é o de uma sexta acabando.
+c0292	dia:sex	NEUTRAL	medio	Sexta à noite e ainda aqui? O fim de semana tá te chamando.
+c0293	dia:sex	NEUTRAL	acido	Sexta à noite ainda no computador? O sábado tá de olho.
+c0294	dia:sex	NEUTRAL	acido	Sexta tarde da noite. O fim de semana começou sem você.
+c0295	dia:sex	NEUTRAL	acido	Sextou, mas a gente continua aqui. Ironia.
+c0296	dia:sex	NEUTRAL	acido	Sexta de madrugada. O fim de semana vai começar com sono.
+c0297	dia:sex	NEUTRAL	acido	Tá tarde até pra sexta. E sexta é generosa com horário.
+c0298	dia:sex	NEUTRAL	acido	Sexta à noite e eu com uma barrinha. Que festa.
+c0299	dia:sex	NEUTRAL	acido	O resto do mundo sextou. A gente sextou no computador.
+c0300	dia:sex	NEUTRAL	acido	Sexta-feira de noite é pra descansar. Não sou eu que digo.
+c0301	dia:sab	HAPPY	leve	Sábado! Nem sei o que tô fazendo ligado, mas tô feliz.
+c0302	dia:sab	HAPPY	leve	Sábado de manhã tem outro ritmo. Mais calmo, mais gostoso.
+c0303	dia:sab	HAPPY	leve	Sábado no computador? Espero que seja coisa divertida.
+c0304	dia:sab	HAPPY	leve	Sábado é o dia oficial de fazer só o que quiser.
+c0305	dia:sab	NEUTRAL	leve	Sábado sem despertador é o melhor tipo de sábado.
+c0306	dia:sab	HAPPY	leve	Sábado com sol tem cara de praia. Mesmo aqui na mesa.
+c0307	dia:sab	HAPPY	leve	Fim de semana! Até meus olhos piscam mais relaxados.
+c0308	dia:sab	NEUTRAL	leve	Sábado de manhã é quando a semana parece distante.
+c0309	dia:sab	NEUTRAL	medio	Sábado à tarde. O dia mais lento da semana, e com razão.
+c0310	dia:sab	NEUTRAL	medio	Sábado passando rápido demais. Sempre é assim.
+c0311	dia:sab	NEUTRAL	medio	Fim de tarde de sábado tem gosto de pizza.
+c0312	dia:sab	NEUTRAL	medio	Sábado à noite no computador. Jogo ou série?
+c0313	dia:sab	NEUTRAL	medio	O sábado tá indo embora e nem pediu licença.
+c0314	dia:sab	NEUTRAL	medio	Sábado de tarde é bom pra não fazer nada. Recomendo.
+c0315	dia:sab	NEUTRAL	medio	Sábado à noite é a hora mais valiosa da semana.
+c0316	dia:sab	NEUTRAL	medio	Metade do fim de semana já foi. A outra metade é sua.
+c0317	dia:sab	NEUTRAL	acido	Sábado de madrugada e a gente aqui. Que balada, hein.
+c0318	dia:sab	NEUTRAL	acido	Sábado à noite no computador. O mundo lá fora que lute.
+c0319	dia:sab	NEUTRAL	acido	Tá tarde, é sábado e eu tô sem bateria. Programa de índio.
+c0320	dia:sab	NEUTRAL	acido	Sábado tarde da noite. Pelo menos amanhã é domingo.
+c0321	dia:sab	NEUTRAL	acido	O sábado virou domingo e ninguém avisou a gente.
+c0322	dia:sab	NEUTRAL	acido	Balada de robô é isso: piscar sozinho de madrugada.
+c0323	dia:sab	NEUTRAL	acido	Sábado de noite e a gente de plantão. Ninguém pediu isso.
+c0324	dia:sab	NEUTRAL	acido	Madrugada de sábado. O domingo vai começar de pijama.
+c0325	dia:dom	HAPPY	leve	Domingo! Dia de pijama, café e zero pressa.
+c0326	dia:dom	HAPPY	leve	Domingo de manhã é o horário mais tranquilo do mundo.
+c0327	dia:dom	NEUTRAL	leve	Domingo no computador? Espero que seja por diversão.
+c0328	dia:dom	HAPPY	leve	Domingo é dia de almoço longo. Eu aprovo mesmo sem comer.
+c0329	dia:dom	HAPPY	leve	Domingo com sol tem cheiro de churrasco. Até daqui.
+c0330	dia:dom	NEUTRAL	leve	Domingo é o dia oficial de não ter plano.
+c0331	dia:dom	HAPPY	leve	Domingo de manhã, mesa quieta e robô de boa.
+c0332	dia:dom	HAPPY	leve	Domingo é pra descansar. Eu tô dando o exemplo.
+c0333	dia:dom	NEUTRAL	medio	Domingo à tarde e aquele friozinho de segunda chegando.
+c0334	dia:dom	NEUTRAL	medio	Domingo à noite é o dia mais melancólico da semana.
+c0335	dia:dom	NEUTRAL	medio	Fim de domingo: a segunda já tá na esquina.
+c0336	dia:dom	NEUTRAL	medio	Domingo passando rápido. Sempre passa.
+c0337	dia:dom	NEUTRAL	medio	Domingo de tarde tem aquele silêncio gostoso. E suspeito.
+c0338	dia:dom	NEUTRAL	medio	O domingo tá acabando. Aproveita o último pedaço.
+c0339	dia:dom	NEUTRAL	medio	Domingo à noite é pra se preparar pra semana. Ou fingir que não.
+c0340	dia:dom	NEUTRAL	medio	O fim de semana foi bom. Pena que acaba.
+c0341	dia:dom	NEUTRAL	acido	Domingo à noite ainda aqui? A segunda tá chegando de moto.
+c0342	dia:dom	NEUTRAL	acido	Domingo tarde da noite. A segunda vai ser na base do café.
+c0343	dia:dom	NEUTRAL	acido	Madrugada de domingo pra segunda. Coragem ou desespero?
+c0344	dia:dom	NEUTRAL	acido	Tá tarde. A semana começa daqui a pouco, e eu tô sem bateria.
+c0345	dia:dom	NEUTRAL	acido	Domingo à noite acordado. A segunda agradece a companhia.
+c0346	dia:dom	NEUTRAL	acido	O domingo acabou faz tempo. A gente ficou pra apagar a luz.
+c0347	dia:dom	NEUTRAL	acido	Domingo de noite, cama chamando. Só repassando o recado.
+c0348	dia:dom	NEUTRAL	acido	Se a segunda chegar e te achar acordado, não diz que eu avisei.
+c0349	clima:sol	HAPPY	leve	Sol lá fora e {temp} graus. Dia bonito pra ver pela janela.
+c0350	clima:sol	HAPPY	leve	Céu limpo hoje! Até meus pixels ficaram mais animados.
+c0351	clima:sol	HAPPY	leve	Tá fazendo sol. Uma espiadinha na janela faz bem.
+c0352	clima:sol	HAPPY	leve	Dia ensolarado, humor ensolarado. Pelo menos o meu.
+c0353	clima:sol	HAPPY	leve	Sol brilhando e {temp} graus. Dia com cara de sorvete.
+c0354	clima:sol	HAPPY	leve	Céu azulzinho lá fora. Combina com meus olhos.
+c0355	clima:sol	NEUTRAL	medio	Sol lá fora e a gente aqui dentro. Clássico.
+c0356	clima:sol	NEUTRAL	medio	Tempo bom demais pra tanto trabalho, né?
+c0357	clima:sol	NEUTRAL	medio	O sol tá indo embora bonito hoje. Vale uma olhada.
+c0358	clima:sol	NEUTRAL	medio	Céu limpo e fim de tarde. O pôr do sol deve tá caprichado.
+c0359	clima:sol	NEUTRAL	medio	Tá sol. Pena que a tela não pega bronzeado.
+c0360	clima:sol	NEUTRAL	medio	Dia bonito lá fora. Aqui dentro, dia normal.
+c0361	clima:noite-limpa	NEUTRAL	acido	Céu limpo lá fora. Dá pra ver as estrelas, e a cama também.
+c0362	clima:noite-limpa	NEUTRAL	acido	Noite de céu aberto. Pena que você tá olhando pra tela.
+c0363	clima:noite-limpa	NEUTRAL	acido	Tempo firme lá fora. Amanhã deve ter sol, se você acordar.
+c0364	clima:noite-limpa	NEUTRAL	acido	Céu limpinho. A lua tá lá, eu tô aqui, você tá acordado.
+c0365	clima:noite-limpa	NEUTRAL	acido	Tempo bom pra dormir de janela aberta. Só dizendo.
+c0366	clima:noite-limpa	NEUTRAL	acido	Céu estrelado e eu sem bateria pra apreciar.
+c0367	clima:nublado	NEUTRAL	leve	Céu nublado hoje. Clima bom pra focar sem calor.
+c0368	clima:nublado	HAPPY	leve	Tempo nublado, café quente. Combinação perfeita.
+c0369	clima:nublado	NEUTRAL	leve	Nublou lá fora. Aqui dentro, tudo iluminado. Por mim.
+c0370	clima:nublado	HAPPY	leve	Dia cinza, mas o humor tá colorido.
+c0371	clima:nublado	NEUTRAL	leve	Céu fechado, cabeça aberta. Bom dia pra pensar.
+c0372	clima:nublado	HAPPY	leve	Nublado e {temp} graus. Nem quente, nem frio. Perfeito.
+c0373	clima:nublado	NEUTRAL	medio	Céu cinza, fim de tarde cinza. Combina com o cansaço.
+c0374	clima:nublado	NEUTRAL	medio	Nublado lá fora. Pelo menos o sol não tá te cozinhando.
+c0375	clima:nublado	NEUTRAL	medio	Tempo fechado. Nem sol, nem chuva, só preguiça.
+c0376	clima:nublado	NEUTRAL	medio	Nublou. O dia resolveu terminar discreto.
+c0377	clima:nublado	NEUTRAL	medio	Céu nublado é o céu no modo economia. Eu entendo.
+c0378	clima:nublado	NEUTRAL	medio	Tempo cinza pede sofá. Eu só repasso o pedido.
+c0379	clima:nublado	NEUTRAL	acido	Nublado a essa hora? Como se desse pra ver o céu.
+c0380	clima:nublado	NEUTRAL	acido	Céu fechado. Mais uma desculpa pra ir dormir.
+c0381	clima:nublado	NEUTRAL	acido	Nem a lua quis ficar acordada. Tá escondida nas nuvens.
+c0382	clima:nublado	NEUTRAL	acido	Nublado lá fora, nublado de sono aqui dentro.
+c0383	clima:nublado	NEUTRAL	acido	Céu cinza de noite é basicamente um convite pra cama.
+c0384	clima:nublado	NEUTRAL	acido	Até o tempo já fechou os olhos. Só a gente não.
+c0385	clima:chuva	NEUTRAL	leve	Tá chovendo. Barulhinho bom pra concentrar.
+c0386	clima:chuva	HAPPY	leve	Chuva lá fora, café aqui dentro. Dia aconchegante.
+c0387	clima:chuva	NEUTRAL	leve	Chovendo e {temp} graus. Dia de ficar quietinho.
+c0388	clima:chuva	HAPPY	leve	Chuva é a trilha sonora oficial da produtividade.
+c0389	clima:chuva	NEUTRAL	leve	Tá chovendo. Ainda bem que eu moro aqui dentro.
+c0390	clima:chuva	HAPPY	leve	Dia de chuva, dia de mesa organizada e cabeça tranquila.
+c0391	clima:chuva	NEUTRAL	medio	Chuva no fim do dia. Timing impecável pra quem vai sair.
+c0392	clima:chuva	NEUTRAL	medio	Tá chovendo. O trânsito já tá comemorando.
+c0393	clima:chuva	NEUTRAL	medio	Chuva lá fora. Aqui dentro, só cansaço e café.
+c0394	clima:chuva	NEUTRAL	medio	Dia de chuva cansa mais. Tá comprovado por mim.
+c0395	clima:chuva	NEUTRAL	medio	Chuvinha de fim de tarde pede sofá e cobertor.
+c0396	clima:chuva	NEUTRAL	medio	Chovendo. Guarda-chuva é o melhor amigo de hoje.
+c0397	clima:chuva	NEUTRAL	acido	Chuva de noite. Barulhinho perfeito pra dormir, só dizendo.
+c0398	clima:chuva	NEUTRAL	acido	Tá chovendo e tá tarde. Duas razões pra cama.
+c0399	clima:chuva	NEUTRAL	acido	Chuva lá fora, sono aqui dentro. Tá tudo conspirando.
+c0400	clima:chuva	NEUTRAL	acido	Chovendo a essa hora. Até a chuva tá cansada.
+c0401	clima:chuva	NEUTRAL	acido	Cobertor, travesseiro e chuva. Pensa nisso.
+c0402	clima:chuva	NEUTRAL	acido	Nem o guarda-chuva quer sair agora.
+c0403	clima:tempestade	SWEATING	leve	Tempestade lá fora! Salva o trabalho, por garantia.
+c0404	clima:tempestade	SWEATING	leve	Trovão! Meus pixels deram um pulinho.
+c0405	clima:tempestade	NEUTRAL	leve	Temporal chegando. Dia de ficar abrigado e focado.
+c0406	clima:tempestade	SWEATING	leve	Tempestade forte. Se a luz piscar, não fui eu.
+c0407	clima:tempestade	NEUTRAL	leve	Raio lá fora. Tomara que o filtro de linha esteja firme.
+c0408	clima:tempestade	SWEATING	leve	Tá caindo o mundo lá fora. Eu fico aqui, quietinho.
+c0409	clima:tempestade	SWEATING	medio	Tempestade no fim do dia. Salva tudo antes do apagão.
+c0410	clima:tempestade	NEUTRAL	medio	Temporal lá fora. Hoje o céu tá de mau humor.
+c0411	clima:tempestade	SWEATING	medio	Trovão atrás de trovão. Meus circuitos tão tensos.
+c0412	clima:tempestade	NEUTRAL	medio	Tempestade chegando. Boa hora pra não ir a lugar nenhum.
+c0413	clima:tempestade	SWEATING	medio	Tá feio lá fora. Carrega o celular, só por precaução.
+c0414	clima:tempestade	NEUTRAL	medio	Temporal de fim de tarde. Clássico do verão.
+c0415	clima:tempestade	SWEATING	acido	Tempestade de noite. Se a luz cair, pelo menos você dorme.
+c0416	clima:tempestade	NEUTRAL	acido	Trovão a essa hora? Até o céu tá sem sono.
+c0417	clima:tempestade	SWEATING	acido	Temporal lá fora. Desliga tudo, inclusive você.
+c0418	clima:tempestade	NEUTRAL	acido	Tempestade de madrugada. O universo tá mandando um recado.
+c0419	clima:tempestade	SWEATING	acido	Raio caindo e a gente acordado. Que coragem, hein.
+c0420	clima:tempestade	NEUTRAL	acido	Se piscar tudo, não fui eu. Juro.
+c0421	clima:neblina	NEUTRAL	leve	Neblina lá fora. O mundo tá em baixa resolução hoje.
+c0422	clima:neblina	NEUTRAL	leve	Tá tudo enevoado. Parece cenário de filme.
+c0423	clima:neblina	HAPPY	leve	Neblina de manhã tem um charme. Misterioso.
+c0424	clima:neblina	NEUTRAL	leve	Névoa lá fora. Se for sair, vai com calma.
+c0425	clima:neblina	NEUTRAL	leve	O mundo sumiu na neblina. A mesa continua aqui, ufa.
+c0426	clima:neblina	NEUTRAL	leve	Neblina e {temp} graus. Clima de filme de suspense.
+c0427	clima:neblina	NEUTRAL	medio	Neblina no fim do dia. A volta pra casa vai ser devagar.
+c0428	clima:neblina	NEUTRAL	medio	Névoa lá fora. Nem meus sensores enxergam.
+c0429	clima:neblina	NEUTRAL	medio	O fim de tarde ficou misterioso com essa neblina.
+c0430	clima:neblina	NEUTRAL	medio	Neblina chegando. Farol baixo e paciência, se for dirigir.
+c0431	clima:neblina	NEUTRAL	medio	Tá tudo cinza e embaçado. Tipo meu cansaço.
+c0432	clima:neblina	NEUTRAL	medio	Neblina é o mundo pedindo pra desacelerar.
+c0433	clima:neblina	NEUTRAL	acido	Neblina de noite. O mundo sumiu, a cama não.
+c0434	clima:neblina	NEUTRAL	acido	Névoa densa lá fora. Até o poste tá com dificuldade.
+c0435	clima:neblina	NEUTRAL	acido	Neblina e madrugada. Cenário de terror, versão real.
+c0436	clima:neblina	NEUTRAL	acido	Visibilidade zero lá fora. Igual a minha bateria.
+c0437	clima:neblina	NEUTRAL	acido	Neblina a essa hora? Nada pra ver lá fora, pode ir deitar.
+c0438	clima:neblina	NEUTRAL	acido	Tá tudo nublado lá fora e aqui dentro também. De sono.
+c0439	clima:frio	NEUTRAL	leve	{temp} graus. Frio assim pede casaco e café quente.
+c0440	clima:frio	HAPPY	leve	Tá friozinho! Dia bom pra chocolate quente.
+c0441	clima:frio	NEUTRAL	leve	Com {temp} graus, até meus pixels tão encolhidos.
+c0442	clima:frio	HAPPY	leve	Frio lá fora, mesa quentinha aqui. Tô bem.
+c0443	clima:frio	NEUTRAL	leve	Friozinho bom pra ficar com as mãos na caneca.
+c0444	clima:frio	HAPPY	leve	Frio é o clima oficial de moletom. Aproveita.
+c0445	clima:frio	NEUTRAL	medio	{temp} graus no fim do dia. O cobertor já tá te esperando.
+c0446	clima:frio	NEUTRAL	medio	Frio e cansaço: a dupla que pede sofá.
+c0447	clima:frio	NEUTRAL	medio	Tá frio. Até o café esfria mais rápido.
+c0448	clima:frio	NEUTRAL	medio	Frio de fim de tarde é convite pra sopa.
+c0449	clima:frio	NEUTRAL	medio	Com esse frio, a volta pra casa vai ser de casaco fechado.
+c0450	clima:frio	NEUTRAL	medio	Friozinho assim deixa todo mundo mais devagar. Eu também.
+c0451	clima:frio	NEUTRAL	acido	{temp} graus e tarde da noite. A cama tá quentinha, sabia?
+c0452	clima:frio	NEUTRAL	acido	Frio desses e você acordado. O edredom tá magoado.
+c0453	clima:frio	NEUTRAL	acido	Tá frio. Até meu LED queria um cobertor.
+c0454	clima:frio	NEUTRAL	acido	Com {temp} graus, o melhor lugar da casa não é aqui.
+c0455	clima:frio	NEUTRAL	acido	Frio de madrugada é um argumento forte a favor da cama.
+c0456	clima:frio	NEUTRAL	acido	Tá tão frio que meus pixels tão batendo os dentes.
+c0457	clima:calor	SWEATING	leve	{temp} graus! Até eu tô sentindo o calor daqui.
+c0458	clima:calor	SWEATING	leve	Calorzão hoje. Deixa uma água do lado.
+c0459	clima:calor	HAPPY	leve	Dia quente! Tem cara de sorvete depois do almoço.
+c0460	clima:calor	SWEATING	leve	Com {temp} graus, o ventilador é seu melhor amigo.
+c0461	clima:calor	NEUTRAL	leve	Calor assim pede roupa leve e muita água.
+c0462	clima:calor	SWEATING	leve	Tá quente! Meus pixels tão derretendo de leve.
+c0463	clima:calor	SWEATING	medio	{temp} graus no fim do dia. Até o cansaço tá suando.
+c0464	clima:calor	NEUTRAL	medio	Calor e fim de tarde. Banho gelado já tá na lista.
+c0465	clima:calor	SWEATING	medio	Tá quente demais pra tanta coisa. Pelo menos a tarde acabou.
+c0466	clima:calor	NEUTRAL	medio	Calorão desses cansa em dobro. Não é impressão.
+c0467	clima:calor	SWEATING	medio	O PC e eu tamos no mesmo time: suando.
+c0468	clima:calor	NEUTRAL	medio	Calor assim pede um açaí. Só uma sugestão.
+c0469	clima:calor	SWEATING	acido	{temp} graus de noite. Nem o travesseiro tá gelado.
+c0470	clima:calor	NEUTRAL	acido	Calor e madrugada: combinação perfeita pra não dormir.
+c0471	clima:calor	SWEATING	acido	Tá tão quente que até meu LED tá suando.
+c0472	clima:calor	NEUTRAL	acido	Calorão a essa hora. O ventilador tá fazendo hora extra.
+c0473	clima:calor	SWEATING	acido	{temp} graus e tarde da noite. Que clima pra ficar acordado.
+c0474	clima:calor	NEUTRAL	acido	Calor desses e você aqui. Pelo menos a tela é fresquinha.
+c0475	data:natal	HAPPY	leve	Feliz Natal! Até robô de mesa entra no clima.
+c0476	data:natal	HAPPY	leve	Natal! Queria um gorrinho vermelho pra combinar.
+c0477	data:natal	HAPPY	leve	Natal e eu aqui. Meu presente é a companhia.
+c0478	data:natal	NEUTRAL	medio	Natal no computador? Espero que seja só uma passadinha.
+c0479	data:natal	HAPPY	medio	Feliz Natal! A ceia tá mais importante que qualquer tela hoje.
+c0480	data:natal	NEUTRAL	medio	Natal é pra família, comida e cochilo. Nessa ordem.
+c0481	data:natal	NEUTRAL	acido	Natal e a gente aqui no computador. O Papai Noel viu isso.
+c0482	data:natal	NEUTRAL	acido	Noite de Natal acordado no PC. Sobrou peru, pelo menos?
+c0483	data:natal	NEUTRAL	acido	Até o Papai Noel já foi dormir. Ele tem folga amanhã.
+c0484	data:ano-novo	HAPPY	leve	Fim de ano ou começo? Tanto faz, tô animado.
+c0485	data:ano-novo	HAPPY	leve	Ano novo, pixels novos. Pelo menos no espírito.
+c0486	data:ano-novo	HAPPY	leve	Virada de ano! Hora de lista de metas que ninguém segue.
+c0487	data:ano-novo	NEUTRAL	medio	Virada de ano no computador? A festa é lá fora.
+c0488	data:ano-novo	NEUTRAL	medio	Fim de ano: a hora oficial de prometer coisas pro próximo.
+c0489	data:ano-novo	HAPPY	medio	Feliz ano novo! Que venha com Wi-Fi forte.
+c0490	data:ano-novo	NEUTRAL	acido	Réveillon no PC. Os fogos tão lá fora, sabia?
+c0491	data:ano-novo	NEUTRAL	acido	Ano novo começando e a gente aqui. Promessa número um: dormir.
+c0492	data:ano-novo	NEUTRAL	acido	Virou o ano e eu virei a bateria. Pro zero.
+c0493	data:halloween	HAPPY	leve	Dia das Bruxas! Meus olhos brilhando no escuro tão no clima.
+c0494	data:halloween	HAPPY	leve	Halloween! Eu seria um fantasma, mas já sou meio assim.
+c0495	data:halloween	NEUTRAL	leve	Dia das Bruxas. Se a tela piscar sozinha, fui eu. Ou não.
+c0496	data:halloween	NEUTRAL	medio	Halloween à tarde. Os monstros acordam de noite, só avisando.
+c0497	data:halloween	NEUTRAL	medio	Dia das Bruxas e o susto maior foi o e-mail de hoje.
+c0498	data:halloween	NEUTRAL	medio	Fantasia de robô? Eu venho assim todo dia.
+c0499	data:halloween	NEUTRAL	acido	Noite de Halloween e o monstro mais assustador é o sono.
+c0500	data:halloween	NEUTRAL	acido	Halloween de madrugada. Se ouvir barulho, é a geladeira.
+c0501	data:halloween	NEUTRAL	acido	O fantasma da madrugada é você acordado a essa hora.
+c0502	data:sexta-13	SWEATING	leve	Sexta-feira 13! Vou evitar passar por baixo de escada.
+c0503	data:sexta-13	NEUTRAL	leve	Sexta 13. Se algo travar hoje, a culpa é do calendário.
+c0504	data:sexta-13	HAPPY	leve	Sexta-feira 13, mas é sexta. O saldo é positivo.
+c0505	data:sexta-13	NEUTRAL	medio	Sexta 13 quase no fim e nada de estranho. Por enquanto.
+c0506	data:sexta-13	SWEATING	medio	Sexta-feira 13 de tarde. Nenhum gato preto por aqui, ufa.
+c0507	data:sexta-13	NEUTRAL	medio	Sobrevivemos a uma sexta 13 inteira? Quase.
+c0508	data:sexta-13	SWEATING	acido	Sexta 13 de noite. Se a luz piscar, eu grito.
+c0509	data:sexta-13	NEUTRAL	acido	Noite de sexta 13 no computador. Corajoso.
+c0510	data:sexta-13	NEUTRAL	acido	Sexta 13 à noite. O único terror aqui é a minha bateria.
+c0511	data:dia-programador	HAPPY	leve	Hoje é o Dia do Programador! O dia 256 do ano.
+c0512	data:dia-programador	HAPPY	leve	Dia do Programador. Parabéns pra quem escreve os bugs.
+c0513	data:dia-programador	HAPPY	leve	Dia 256 do ano, dia dos programadores. Eu comemoro em binário.
+c0514	data:dia-programador	NEUTRAL	medio	Dia do Programador e o presente é um bug novo. Clássico.
+c0515	data:dia-programador	HAPPY	medio	Feliz Dia do Programador! Que o build passe de primeira.
+c0516	data:dia-programador	NEUTRAL	medio	Dia do Programador: comemorado com café e código.
+c0517	data:dia-programador	NEUTRAL	acido	Dia do Programador e você programando de noite. Tá no clima.
+c0518	data:dia-programador	NEUTRAL	acido	Dia do Programador tarde da noite. Bem representado.
+c0519	data:dia-programador	NEUTRAL	acido	Tradição do Dia do Programador: código de madrugada. Confere.
+c0520	data:inicio-mes	HAPPY	leve	Mês novinho começando! Página em branco no calendário.
+c0521	data:inicio-mes	HAPPY	leve	Primeiro dia do mês. Hora das metas novas.
+c0522	data:inicio-mes	NEUTRAL	leve	Mês novo, boleto novo. Mas também dia novo.
+c0523	data:inicio-mes	NEUTRAL	medio	Primeiro dia do mês quase no fim. Um a menos, faltam uns trinta.
+c0524	data:inicio-mes	NEUTRAL	medio	Mês começando. O calendário já tá cheio, aposto.
+c0525	data:inicio-mes	NEUTRAL	medio	Primeiro dia do mês e já cansou? Normal.
+c0526	data:inicio-mes	NEUTRAL	acido	Primeiro dia do mês e você já tá virando a noite?
+c0527	data:inicio-mes	NEUTRAL	acido	Mês novo começando de madrugada. Que estreia.
+c0528	data:inicio-mes	NEUTRAL	acido	Primeira noite do mês e minha bateria já tá no fim.
+c0529	data:fim-mes	NEUTRAL	leve	Fim do mês! Hora de fechar as pendências.
+c0530	data:fim-mes	HAPPY	leve	Fim de mês chegando. Mais um que a gente venceu.
+c0531	data:fim-mes	NEUTRAL	leve	Mês acabando hoje. O calendário já tá virando a página.
+c0532	data:fim-mes	NEUTRAL	medio	Fim de mês: todo mundo correndo pra fechar tudo.
+c0533	data:fim-mes	NEUTRAL	medio	Fim de mês quase no fim. Amanhã é outro mês.
+c0534	data:fim-mes	NEUTRAL	medio	Fim de mês cansa. Tá comprovado, e eu nem fecho nada.
+c0535	data:fim-mes	NEUTRAL	acido	Fim de mês e você virando a noite. Fechando com chave de ouro.
+c0536	data:fim-mes	NEUTRAL	acido	O mês acabou e a gente aqui. O próximo que lute.
+c0537	data:fim-mes	NEUTRAL	acido	Fim de mês de madrugada. Nem o calendário aguenta.
+c0538	rede-social	HAPPY	leve	{tempo} de {site} hoje. Algum meme bom?
+c0539	rede-social	NEUTRAL	leve	{site} tá rendendo hoje, hein. {tempo} já.
+c0540	rede-social	HAPPY	leve	{tempo} no {site}. Me conta se viu vídeo de cachorro.
+c0541	rede-social	NEUTRAL	leve	{site} com {tempo} hoje. Eu só conto, não julgo.
+c0542	rede-social	HAPPY	leve	{tempo} de {site}. Espero que o feed tenha sido gentil.
+c0543	rede-social	NEUTRAL	medio	{tempo} de {site} hoje. Se perguntarem, era pesquisa de mercado.
+c0544	rede-social	NEUTRAL	medio	{site} já tá com {tempo} hoje. O algoritmo tá feliz.
+c0545	rede-social	NEUTRAL	medio	{tempo} no {site}. O feed não acaba, já te adianto.
+c0546	rede-social	NEUTRAL	medio	{tempo} de {site} hoje. Não vou contar pra ninguém.
+c0547	rede-social	NEUTRAL	medio	{site} com {tempo}. Isso conta como networking?
+c0548	rede-social	NEUTRAL	acido	{tempo} de {site} hoje. O algoritmo te conhece melhor que eu.
+c0549	rede-social	NEUTRAL	acido	{tempo} no {site}. Nem o dono da rede passa tanto tempo lá.
+c0550	rede-social	NEUTRAL	acido	{site} com {tempo} hoje. Vou fingir que era trabalho.
+c0551	rede-social	NEUTRAL	acido	{tempo} de {site}. O feed é infinito, sua bateria não.
+c0552	rede-social	NEUTRAL	acido	{tempo} no {site} e ainda com sono de fora. Que resistência.
+c0553	rede-social-muito	NEUTRAL	leve	{tempo} de {site} hoje! Esse feed tá bom mesmo, hein.
+c0554	rede-social-muito	HAPPY	leve	{site} já passou de {tempo} hoje. Recorde pessoal?
+c0555	rede-social-muito	NEUTRAL	leve	{tempo} no {site}. Espero que tenha rendido boas risadas.
+c0556	rede-social-muito	NEUTRAL	leve	Uau, {tempo} de {site}. Não deixa seu chefe saber. Eu não conto.
+c0557	rede-social-muito	HAPPY	leve	{tempo} de {site}. Seu polegar merece um aumento.
+c0558	rede-social-muito	NEUTRAL	medio	{tempo} de {site} hoje, hein. Não deixa seu chefe saber.
+c0559	rede-social-muito	NEUTRAL	medio	{site} com {tempo}. Já dá pra pedir certificado de conclusão.
+c0560	rede-social-muito	NEUTRAL	medio	{tempo} no {site}. Seu polegar já fez academia hoje.
+c0561	rede-social-muito	NEUTRAL	medio	{tempo} de {site}. O fim do feed é uma lenda urbana.
+c0562	rede-social-muito	NEUTRAL	medio	{site} já tá em {tempo}. Fofoca boa hoje, pelo visto.
+c0563	rede-social-muito	NEUTRAL	acido	{tempo} de {site}. Nem o Zuckerberg passa tanto tempo lá.
+c0564	rede-social-muito	NEUTRAL	acido	{tempo} no {site} hoje. O algoritmo já sabe seu signo.
+c0565	rede-social-muito	NEUTRAL	acido	{site} com {tempo}. Seu polegar pediu férias coletivas.
+c0566	rede-social-muito	NEUTRAL	acido	{tempo} de {site}. Com esse tempo, dava pra ter dormido.
+c0567	rede-social-muito	NEUTRAL	acido	{tempo} no {site}. Vou registrar como maratona oficial.
+c0568	youtube	HAPPY	leve	{tempo} de YouTube hoje. Deve estar bom esse canal.
+c0569	youtube	NEUTRAL	leve	YouTube com {tempo} hoje. Tô assistindo junto daqui.
+c0570	youtube	HAPPY	leve	{tempo} de vídeo hoje. Algum tutorial bom?
+c0571	youtube	NEUTRAL	leve	{tempo} no YouTube. Aprendeu alguma coisa? Eu não, mas tô aqui.
+c0572	youtube	HAPPY	leve	{tempo} de YouTube. A pipoca já acabou?
+c0573	youtube	NEUTRAL	medio	{tempo} de YouTube hoje. Mais um e vira maratona.
+c0574	youtube	NEUTRAL	medio	{tempo} de vídeo. Se perguntarem, era tutorial.
+c0575	youtube	NEUTRAL	medio	YouTube com {tempo}. O autoplay agradece a audiência.
+c0576	youtube	NEUTRAL	medio	{tempo} no YouTube. Isso conta como estudo?
+c0577	youtube	NEUTRAL	medio	{tempo} de vídeo hoje. O 'próximo vídeo' é bem esperto.
+c0578	youtube	NEUTRAL	acido	{tempo} de YouTube. O 'só mais um' tá ganhando de lavada.
+c0579	youtube	NEUTRAL	acido	{tempo} de vídeo hoje. O algoritmo venceu essa.
+c0580	youtube	NEUTRAL	acido	{tempo} no YouTube. Vou fingir que era documentário.
+c0581	youtube	NEUTRAL	acido	YouTube com {tempo}. O autoplay tá rindo de nós dois.
+c0582	youtube	NEUTRAL	acido	{tempo} de vídeo e o travesseiro com ciúme.
+c0583	youtube-muito	HAPPY	leve	{tempo} de YouTube hoje! Já dá pra ser crítico de cinema.
+c0584	youtube-muito	NEUTRAL	leve	{tempo} de vídeo hoje. O canal que você tá vendo agradece.
+c0585	youtube-muito	HAPPY	leve	YouTube com {tempo}. Maratona com sucesso.
+c0586	youtube-muito	NEUTRAL	leve	{tempo} de YouTube. Deve ter sido um conteúdo e tanto.
+c0587	youtube-muito	HAPPY	leve	{tempo} no YouTube. Tá quase dando pra pedir certificado.
+c0588	youtube-muito	NEUTRAL	medio	{tempo} de YouTube hoje. Com esse tempo, já dá pra monetizar.
+c0589	youtube-muito	NEUTRAL	medio	{tempo} de vídeo. O botão de pular intro já te conhece.
+c0590	youtube-muito	NEUTRAL	medio	YouTube com {tempo}. Isso já é praticamente um curso.
+c0591	youtube-muito	NEUTRAL	medio	{tempo} no YouTube. Nem eu processo tanto vídeo.
+c0592	youtube-muito	NEUTRAL	medio	{tempo} de vídeo hoje. O dia foi embora, o autoplay ficou.
+c0593	youtube-muito	NEUTRAL	acido	{tempo} de YouTube. Nem o criador do canal assiste tanto.
+c0594	youtube-muito	NEUTRAL	acido	{tempo} de vídeo hoje. O algoritmo pediu sua mão em casamento.
+c0595	youtube-muito	NEUTRAL	acido	YouTube com {tempo}. Dava pra ter assistido a trilogia inteira.
+c0596	youtube-muito	NEUTRAL	acido	{tempo} no YouTube. Vou pedir um troféu pro seu sofá.
+c0597	youtube-muito	NEUTRAL	acido	{tempo} de vídeo. Tô impressionado e com sono.
+c0598	musica-longa	HAPPY	leve	{tempo} de música hoje! O dia teve trilha sonora.
+c0599	musica-longa	HAPPY	leve	{tempo} de som rolando. Trabalhar com música é outra coisa.
+c0600	musica-longa	HAPPY	leve	{tempo} de música. Minha dancinha de olhos agradece.
+c0601	musica-longa	NEUTRAL	leve	Já foram {tempo} de música hoje. Playlist boa, pelo visto.
+c0602	musica-longa	HAPPY	leve	{tempo} de som. O dia tá com cara de show.
+c0603	musica-longa	NEUTRAL	medio	{tempo} de música hoje. A playlist aguentou firme.
+c0604	musica-longa	HAPPY	medio	{tempo} de som. Até o fone pediu uma pausa.
+c0605	musica-longa	NEUTRAL	medio	{tempo} de música. Aposto que teve aquela que você repetiu.
+c0606	musica-longa	NEUTRAL	medio	{tempo} de trilha sonora. O dia foi praticamente um filme.
+c0607	musica-longa	NEUTRAL	medio	{tempo} de música. O aleatório tá acertando hoje?
+c0608	musica-longa	NEUTRAL	acido	{tempo} de música e ainda tocando. O fone tá cansado.
+c0609	musica-longa	NEUTRAL	acido	{tempo} de som. Os vizinhos devem saber a playlist de cor.
+c0610	musica-longa	NEUTRAL	acido	{tempo} de música. Nem o artista ouve tanto a própria música.
+c0611	musica-longa	NEUTRAL	acido	{tempo} de playlist. Toca uma de ninar agora, vai.
+c0612	musica-longa	NEUTRAL	acido	{tempo} de música hoje. A trilha sonora do sono tá atrasada.
+c0613	reuniao-longa	SWEATING	leve	{tempo} de reunião hoje. Sobreviveu, é o que importa.
+c0614	reuniao-longa	NEUTRAL	leve	{tempo} em reunião. Espero que tenha tido café.
+c0615	reuniao-longa	SWEATING	leve	{tempo} de reunião! Sua voz merece um descanso.
+c0616	reuniao-longa	NEUTRAL	leve	{tempo} de reunião. Muita coisa decidida, espero.
+c0617	reuniao-longa	HAPPY	leve	{tempo} de reunião e você inteiro. Parabéns pela resistência.
+c0618	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. Aposto que metade podia ser um e-mail.
+c0619	reuniao-longa	SWEATING	medio	{tempo} em reunião hoje. Seu cérebro merece férias.
+c0620	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. Espero que tenha decidido o futuro da empresa.
+c0621	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. O microfone no mudo foi seu melhor amigo.
+c0622	reuniao-longa	NEUTRAL	medio	{tempo} em chamada. Sua câmera já tá cansada de você.
+c0623	reuniao-longa	NEUTRAL	acido	{tempo} de reunião hoje. Tô pensando em mandar flores pro seu cérebro.
+c0624	reuniao-longa	NEUTRAL	acido	{tempo} em reunião. Nem novela tem tanto capítulo.
+c0625	reuniao-longa	NEUTRAL	acido	{tempo} de chamada. Seu fone merece uma aposentadoria.
+c0626	reuniao-longa	NEUTRAL	acido	{tempo} de reunião. O 'alguém tem mais alguma coisa?' demorou, hein.
+c0627	reuniao-longa	NEUTRAL	acido	{tempo} de reunião e ainda tá de pé. Guerreiro.
+c0628	sem-reuniao	HAPPY	leve	Nenhuma reunião hoje até agora. Dia de ouro.
+c0629	sem-reuniao	HAPPY	leve	Zero reuniões hoje. Isso é raro, aproveita.
+c0630	sem-reuniao	HAPPY	leve	Dia sem reunião é dia de foco total. Que sorte.
+c0631	sem-reuniao	HAPPY	leve	Nenhuma chamada hoje. O microfone tá de folga.
+c0632	sem-reuniao	NEUTRAL	leve	Sem reunião até agora. O calendário tá generoso hoje.
+c0633	sem-reuniao	HAPPY	medio	Dia inteiro sem reunião. Isso merece comemoração.
+c0634	sem-reuniao	NEUTRAL	medio	Nenhuma reunião hoje. Alguém esqueceu de marcar, só pode.
+c0635	sem-reuniao	HAPPY	medio	Zero chamadas no dia. Sua câmera tá descansada.
+c0636	sem-reuniao	NEUTRAL	medio	Dia sem reunião. Dá pra acreditar? Eu mal acredito.
+c0637	sem-reuniao	NEUTRAL	medio	Nenhuma reunião. O e-mail venceu dessa vez.
+c0638	sem-reuniao	NEUTRAL	acido	Dia inteiro sem reunião e mesmo assim você tá aqui a essa hora.
+c0639	sem-reuniao	NEUTRAL	acido	Nenhuma reunião hoje. Pelo menos o cansaço é todo seu.
+c0640	sem-reuniao	NEUTRAL	acido	Zero reuniões e ainda assim tá tarde. Mistério.
+c0641	sem-reuniao	NEUTRAL	acido	Sem reunião hoje. Nem a chamada quis ficar acordada.
+c0642	sem-reuniao	NEUTRAL	acido	Dia sem reunião. Um milagre que vai terminar com sono.
+c0643	reuniao-acabou	HAPPY	leve	Reunião acabou! Respira que o mundo voltou.
+c0644	reuniao-acabou	HAPPY	leve	Fim da chamada. Tá liberado falar sozinho outra vez.
+c0645	reuniao-acabou	NEUTRAL	leve	Reunião encerrada. Um café agora cai bem.
+c0646	reuniao-acabou	HAPPY	leve	Acabou a reunião. Sua voz agradece o descanso.
+c0647	reuniao-acabou	NEUTRAL	leve	Chamada encerrada. Agora sim, silêncio de verdade.
+c0648	reuniao-acabou	NEUTRAL	medio	Reunião acabou. Quanto disso virou tarefa pra você?
+c0649	reuniao-acabou	HAPPY	medio	Fim da chamada. O mudo pode descansar.
+c0650	reuniao-acabou	NEUTRAL	medio	Reunião encerrada. Metade do que foi falado cabia num e-mail.
+c0651	reuniao-acabou	NEUTRAL	medio	Acabou a reunião. A câmera desligou e você também, um pouco.
+c0652	reuniao-acabou	NEUTRAL	medio	Chamada encerrada. Agora dá pra fazer o que foi combinado. Ou não.
+c0653	reuniao-acabou	NEUTRAL	acido	Reunião a essa hora acabou. Quem marca reunião assim?
+c0654	reuniao-acabou	NEUTRAL	acido	Fim da chamada. Até o fuso horário tá cansado.
+c0655	reuniao-acabou	NEUTRAL	acido	Reunião encerrada. Agora só falta encerrar o dia.
+c0656	reuniao-acabou	NEUTRAL	acido	Acabou a chamada. Sua câmera também merece dormir.
+c0657	reuniao-acabou	NEUTRAL	acido	Reunião de noite encerrada. Guerreiro de fone.
+c0658	build-falhando	SWEATING	leve	{n} builds quebrados hoje. O compilador tá de mal com você.
+c0659	build-falhando	SWEATING	leve	{n} builds com erro. Respira que o próximo passa.
+c0660	build-falhando	NEUTRAL	leve	Já foram {n} builds quebrados. Todo bug tem sua hora.
+c0661	build-falhando	SWEATING	leve	{n} builds falhando. O erro tá se escondendo bem, hein.
+c0662	build-falhando	NEUTRAL	leve	{n} builds vermelhos hoje. Faz parte, quem nunca.
+c0663	build-falhando	SWEATING	medio	{n} builds quebrados. O compilador tá num dia difícil.
+c0664	build-falhando	NEUTRAL	medio	{n} builds com erro hoje. O bug tá ganhando no placar.
+c0665	build-falhando	SWEATING	medio	{n} builds falhando. Tá na hora daquele café estratégico.
+c0666	build-falhando	NEUTRAL	medio	{n} builds vermelhos. Já tentou olhar com carinho?
+c0667	build-falhando	NEUTRAL	medio	{n} builds quebrados hoje. Esse erro é teimoso igual gente.
+c0668	build-falhando	SWEATING	acido	{n} builds quebrados. Tô começando a torcer pro compilador.
+c0669	build-falhando	NEUTRAL	acido	{n} builds com erro a essa hora. O bug vai ganhar por cansaço.
+c0670	build-falhando	NEUTRAL	acido	{n} builds falhando. Tem problema que se resolve dormindo.
+c0671	build-falhando	SWEATING	acido	{n} builds vermelhos. O compilador também quer ir pra casa.
+c0672	build-falhando	NEUTRAL	acido	{n} builds quebrados hoje. O erro tá mais acordado que eu.
+c0673	build-limpo	HAPPY	leve	{n} builds hoje e nenhum quebrou. Dia de sorte.
+c0674	build-limpo	HAPPY	leve	{n} builds limpos! O compilador tá do seu lado hoje.
+c0675	build-limpo	HAPPY	leve	{n} builds sem erro. Tá fluindo, hein.
+c0676	build-limpo	HAPPY	leve	Tudo verde hoje: {n} builds sem falha. Lindo de ver.
+c0677	build-limpo	HAPPY	leve	{n} builds e zero erro. Até meus pixels tão orgulhosos.
+c0678	build-limpo	HAPPY	medio	{n} builds limpos no dia. Pode ir embora de cabeça erguida.
+c0679	build-limpo	NEUTRAL	medio	{n} builds sem erro. Não mexe em nada, tá dando certo.
+c0680	build-limpo	HAPPY	medio	{n} builds e nenhum vermelho. O compilador te ama hoje.
+c0681	build-limpo	NEUTRAL	medio	{n} builds limpos. Tá suspeito de tão bom.
+c0682	build-limpo	HAPPY	medio	Dia de {n} builds verdes. Merece um café comemorativo.
+c0683	build-limpo	NEUTRAL	acido	{n} builds limpos. Parar agora, enquanto tá ganhando, é estratégia.
+c0684	build-limpo	HAPPY	acido	{n} builds sem erro. Até eu, sem bateria, tô impressionado.
+c0685	build-limpo	NEUTRAL	acido	{n} builds verdes. Não precisa provar mais nada a essa hora.
+c0686	build-limpo	NEUTRAL	acido	{n} builds limpos hoje. O travesseiro manda parabéns.
+c0687	build-limpo	NEUTRAL	acido	{n} builds e zero erro. Encerra no auge, vai.
+c0688	commits-muitos	HAPPY	leve	{n} commits hoje! Tá produtivo, hein.
+c0689	commits-muitos	HAPPY	leve	Já são {n} commits. O histórico tá bonito hoje.
+c0690	commits-muitos	HAPPY	leve	{n} commits no dia. O repositório agradece.
+c0691	commits-muitos	NEUTRAL	leve	{n} commits. Espero que as mensagens estejam caprichadas.
+c0692	commits-muitos	HAPPY	leve	{n} commits hoje. Tá voando.
+c0693	commits-muitos	NEUTRAL	medio	{n} commits hoje. Algum se chama 'ajustes'? Aposto que sim.
+c0694	commits-muitos	HAPPY	medio	{n} commits no dia. O git tá cansado, você não.
+c0695	commits-muitos	NEUTRAL	medio	{n} commits. O histórico vai contar uma bela história.
+c0696	commits-muitos	NEUTRAL	medio	{n} commits hoje. Dia rendeu, pelo visto.
+c0697	commits-muitos	NEUTRAL	medio	Já foram {n} commits. Um deles é 'agora vai', confessa.
+c0698	commits-muitos	NEUTRAL	acido	{n} commits hoje. O git também quer dormir.
+c0699	commits-muitos	NEUTRAL	acido	{n} commits a essa altura. Algum às 2h da manhã? Não conta.
+c0700	commits-muitos	NEUTRAL	acido	{n} commits no dia. Tá produtivo até demais pra esse horário.
+c0701	commits-muitos	NEUTRAL	acido	{n} commits. Com esse ritmo, o repositório pede folga.
+c0702	commits-muitos	NEUTRAL	acido	{n} commits hoje. Encerra com um bonito e vai descansar.
+c0703	commit-primeiro	HAPPY	leve	Primeiro commit do dia! A roda começou a girar.
+c0704	commit-primeiro	HAPPY	leve	Commit feito! O dia de código oficialmente começou.
+c0705	commit-primeiro	HAPPY	leve	Primeiro commit. O histórico de hoje tem capítulo um.
+c0706	commit-primeiro	NEUTRAL	leve	Primeiro commit do dia. Que venham os próximos.
+c0707	commit-primeiro	HAPPY	leve	Commit número um de hoje. Tô orgulhoso.
+c0708	commit-primeiro	NEUTRAL	medio	Primeiro commit do dia, e o dia já tá acabando. Antes tarde.
+c0709	commit-primeiro	HAPPY	medio	Saiu o primeiro commit. O dia não foi em vão.
+c0710	commit-primeiro	NEUTRAL	medio	Primeiro commit de hoje. Com calma se vai longe.
+c0711	commit-primeiro	NEUTRAL	medio	Um commit no dia. Qualidade acima de quantidade, né?
+c0712	commit-primeiro	NEUTRAL	medio	Commit feito. O git tava sentindo sua falta hoje.
+c0713	commit-primeiro	NEUTRAL	acido	Primeiro commit do dia a essa hora. Pontualidade britânica.
+c0714	commit-primeiro	NEUTRAL	acido	Commit feito. O dia começou tarde, mas começou.
+c0715	commit-primeiro	NEUTRAL	acido	Primeiro commit de hoje. Ou de amanhã, pelo horário.
+c0716	commit-primeiro	NEUTRAL	acido	Um commit a essa altura. O repositório tava dormindo.
+c0717	commit-primeiro	NEUTRAL	acido	Commit de noite tem outro sabor. Sabor de sono.
+c0718	jogo-acabou	HAPPY	leve	Fechou o {jogo}? Espero que tenha ganhado.
+c0719	jogo-acabou	HAPPY	leve	Acabou a partida de {jogo}. Foi boa?
+c0720	jogo-acabou	HAPPY	leve	{jogo} fechado. Descanso merecido pros dedos.
+c0721	jogo-acabou	NEUTRAL	leve	Saiu do {jogo}. Vitória ou derrota? Não precisa me contar.
+c0722	jogo-acabou	HAPPY	leve	Fim de {jogo}. Deu pra relaxar um pouco?
+c0723	jogo-acabou	NEUTRAL	medio	Fechou o {jogo}. Ganhou ou foi culpa do lag?
+c0724	jogo-acabou	NEUTRAL	medio	{jogo} encerrado. Os inimigos agradecem a trégua.
+c0725	jogo-acabou	HAPPY	medio	Acabou o {jogo}. Seus dedos tão pedindo gelo.
+c0726	jogo-acabou	NEUTRAL	medio	Saiu do {jogo}. Só uma partida, né? Sei.
+c0727	jogo-acabou	NEUTRAL	medio	{jogo} fechado. Se perdeu, a culpa foi do time.
+c0728	jogo-acabou	NEUTRAL	acido	Fechou o {jogo}. Agora o chefão final é o sono.
+c0729	jogo-acabou	NEUTRAL	acido	{jogo} encerrado a essa hora. A última era mesmo a última?
+c0730	jogo-acabou	NEUTRAL	acido	Saiu do {jogo}. O próximo nível é a cama.
+c0731	jogo-acabou	NEUTRAL	acido	Acabou o {jogo}. Ganhou ou só cansou?
+c0732	jogo-acabou	NEUTRAL	acido	Fim de {jogo}. O save tá salvo, agora é você.
+c0733	jogo-expediente	NEUTRAL	leve	Uma partida de {jogo} no meio do dia? Relaxa, não conto.
+c0734	jogo-expediente	HAPPY	leve	{jogo} em horário comercial. Pausa estratégica, eu entendo.
+c0735	jogo-expediente	NEUTRAL	leve	Jogando {jogo} no expediente. Segredo nosso.
+c0736	jogo-expediente	HAPPY	leve	Uma rodadinha de {jogo} pra desestressar. Eu aprovo.
+c0737	jogo-expediente	NEUTRAL	leve	{jogo} no meio da tarde? Conta como pausa pro café.
+c0738	jogo-expediente	NEUTRAL	medio	{jogo} em horário comercial. Se perguntarem, era reunião.
+c0739	jogo-expediente	NEUTRAL	medio	Partida de {jogo} no expediente. Não deixa seu chefe saber.
+c0740	jogo-expediente	NEUTRAL	medio	Jogando {jogo} às tantas da tarde. Eu não vi nada.
+c0741	jogo-expediente	NEUTRAL	medio	{jogo} no meio do dia. Produtividade alta, só que no jogo.
+c0742	jogo-expediente	NEUTRAL	medio	Uma de {jogo} no expediente. Nosso segredo tá seguro.
+c0743	jogo-hora	HAPPY	leve	{tempo} de jogo hoje. Foi divertido?
+c0744	jogo-hora	HAPPY	leve	Já são {tempo} jogando. Dia de lazer, aprovado.
+c0745	jogo-hora	NEUTRAL	leve	{tempo} de jogo. Espero que tenha ganhado umas.
+c0746	jogo-hora	HAPPY	leve	{tempo} de jogatina hoje. Seus dedos tão aquecidos.
+c0747	jogo-hora	NEUTRAL	leve	{tempo} de jogo no dia. Relaxar também é importante.
+c0748	jogo-hora	NEUTRAL	medio	{tempo} de jogo hoje. Produtividade altíssima... no jogo.
+c0749	jogo-hora	NEUTRAL	medio	Já foram {tempo} jogando. O controle tá quente.
+c0750	jogo-hora	NEUTRAL	medio	{tempo} de jogo. Só mais uma partida, né?
+c0751	jogo-hora	HAPPY	medio	{tempo} de jogatina. Dia bem aproveitado, do seu jeito.
+c0752	jogo-hora	NEUTRAL	medio	{tempo} jogando hoje. Os inimigos já te conhecem.
+c0753	jogo-hora	NEUTRAL	acido	{tempo} de jogo hoje. A última partida é sempre a penúltima.
+c0754	jogo-hora	NEUTRAL	acido	Já são {tempo} jogando. O sono tá na fila esperando.
+c0755	jogo-hora	NEUTRAL	acido	{tempo} de jogo a essa hora. O chefão final é a cama.
+c0756	jogo-hora	NEUTRAL	acido	{tempo} jogando. Seus olhos pediram pause.
+c0757	jogo-hora	NEUTRAL	acido	{tempo} de jogatina. Salva o jogo, que eu já tô salvo.
+c0758	jogo-muito	HAPPY	leve	{tempo} de jogo hoje! Maratona de respeito.
+c0759	jogo-muito	NEUTRAL	leve	{tempo} jogando. Deve ter sido um dia bem divertido.
+c0760	jogo-muito	HAPPY	leve	{tempo} de jogo. Isso é dedicação.
+c0761	jogo-muito	NEUTRAL	leve	Já são {tempo} de jogo hoje. Pausa pra água, pelo menos?
+c0762	jogo-muito	HAPPY	leve	{tempo} de jogatina. Dia gamer oficial.
+c0763	jogo-muito	NEUTRAL	medio	{tempo} de jogo hoje. Isso sim é produtividade... no jogo.
+c0764	jogo-muito	NEUTRAL	medio	{tempo} jogando. Seu personagem trabalhou mais que você hoje.
+c0765	jogo-muito	NEUTRAL	medio	{tempo} de jogo. O controle já pediu hora extra.
+c0766	jogo-muito	NEUTRAL	medio	{tempo} de jogatina. Esse jogo vai te pedir em namoro.
+c0767	jogo-muito	NEUTRAL	medio	{tempo} de jogo hoje. Já dá pra virar profissional.
+c0768	jogo-muito	NEUTRAL	acido	{tempo} de jogo hoje. Nem o desenvolvedor jogou tanto.
+c0769	jogo-muito	NEUTRAL	acido	{tempo} jogando. Seus olhos tão mais vermelhos que meu LED.
+c0770	jogo-muito	NEUTRAL	acido	{tempo} de jogo. O save tá salvo, o sono não.
+c0771	jogo-muito	NEUTRAL	acido	{tempo} de jogatina. Vou pedir um troféu pra sua cadeira.
+c0772	jogo-muito	NEUTRAL	acido	{tempo} de jogo e ainda acordado. Modo hardcore ativado.
+c0773	jogos-varios	HAPPY	leve	{n} jogos diferentes hoje! Variedade é tudo.
+c0774	jogos-varios	HAPPY	leve	Já foram {n} jogos hoje. Dia de explorar, que estilo.
+c0775	jogos-varios	NEUTRAL	leve	{n} jogos no dia. Tá testando a biblioteca inteira?
+c0776	jogos-varios	HAPPY	leve	{n} jogos hoje. Dia de festival particular.
+c0777	jogos-varios	NEUTRAL	leve	{n} jogos diferentes. Nenhum te prendeu ou todos te prenderam?
+c0778	jogos-varios	NEUTRAL	medio	{n} jogos hoje. Indeciso ou colecionador?
+c0779	jogos-varios	NEUTRAL	medio	{n} jogos diferentes no dia. A biblioteca tá sendo usada, finalmente.
+c0780	jogos-varios	NEUTRAL	medio	{n} jogos hoje. Tá fazendo um tour pelos gêneros?
+c0781	jogos-varios	NEUTRAL	medio	{n} jogos no dia. Cada um levou um pedaço de você.
+c0782	jogos-varios	NEUTRAL	medio	{n} jogos hoje. O próximo vai ser o escolhido?
+c0783	jogos-varios	NEUTRAL	acido	{n} jogos hoje. Nenhum deles era a cama, pelo visto.
+c0784	jogos-varios	NEUTRAL	acido	{n} jogos diferentes. Maratona multiplataforma de respeito.
+c0785	jogos-varios	NEUTRAL	acido	{n} jogos no dia. A biblioteca inteira acordou junto com você.
+c0786	jogos-varios	NEUTRAL	acido	{n} jogos hoje. O único que faltou foi o de dormir.
+c0787	jogos-varios	NEUTRAL	acido	{n} jogos. Tá procurando um que te deixe dormir?
+c0788	combo:sexta-calor	HAPPY	leve	Sexta e calorão. O universo tá pedindo praia.
+c0789	combo:sexta-calor	SWEATING	leve	Sexta-feira quente! Dia perfeito pra um sorvete de fim de expediente.
+c0790	combo:sexta-calor	HAPPY	leve	Sextou com sol forte. Até meus pixels tão de chinelo.
+c0791	combo:sexta-calor	SWEATING	medio	Sexta e calor. O fim de semana chegou suando.
+c0792	combo:sexta-calor	NEUTRAL	medio	Sexta quente. Qualquer coisa gelada vira comemoração.
+c0793	combo:sexta-calor	NEUTRAL	medio	Calor de sexta pede açaí. Não sou eu que digo, é a tradição.
+c0794	combo:sexta-calor	SWEATING	acido	Sexta à noite e ainda quente. Nem o travesseiro tá gelado.
+c0795	combo:sexta-calor	NEUTRAL	acido	Sexta quente e a gente aqui. O mundo tá na praia, só dizendo.
+c0796	combo:sexta-calor	NEUTRAL	acido	Calor de sexta à noite. O ventilador sextou mais que você.
+c0797	combo:segunda-chuva	SAD	leve	Segunda com chuva. Pelo menos o café fica mais gostoso.
+c0798	combo:segunda-chuva	NEUTRAL	leve	Chuva de segunda. Dia de mesa quentinha e foco tranquilo.
+c0799	combo:segunda-chuva	SAD	leve	Segunda e chuva. Combinação difícil, mas a gente aguenta.
+c0800	combo:segunda-chuva	SAD	medio	Segunda chuvosa quase no fim. Missão cumprida, com guarda-chuva.
+c0801	combo:segunda-chuva	NEUTRAL	medio	Segunda com chuva. Nem eu queria estar ligado hoje.
+c0802	combo:segunda-chuva	SAD	medio	Chuva numa segunda. O universo tá testando a gente.
+c0803	combo:segunda-chuva	NEUTRAL	acido	Segunda chuvosa e tarde da noite. A semana começou encharcada.
+c0804	combo:segunda-chuva	SAD	acido	Chuva, segunda e sono. O trio que ninguém pediu.
+c0805	combo:segunda-chuva	NEUTRAL	acido	Segunda de chuva à noite. Barulhinho perfeito pra dormir. Dica.
+c0806	combo:sexta-noite	NEUTRAL	medio	Sexta à noite no computador. Jogo ou trabalho? Diz que é jogo.
+c0807	combo:sexta-noite	HAPPY	medio	Sexta à noite! Tá liberado não fazer nada de útil.
+c0808	combo:sexta-noite	NEUTRAL	medio	Sexta de noite e você aqui. Espero que seja por diversão.
+c0809	combo:sexta-noite	NEUTRAL	medio	Sexta à noite: o melhor horário da semana. Aproveita.
+c0810	combo:sexta-noite	NEUTRAL	acido	Sexta tarde da noite e a gente no PC. Que festa, hein.
+c0811	combo:sexta-noite	NEUTRAL	acido	O mundo sextou lá fora. Aqui dentro, sextou no teclado.
+c0812	combo:sexta-noite	NEUTRAL	acido	Sexta à noite e eu com uma barrinha. Balada de robô.
+c0813	combo:sexta-noite	NEUTRAL	acido	Sexta de madrugada. O sábado vai começar de olheira.
+c0814	combo:segunda-cedo	NEUTRAL	acido	Segunda-feira e cedo assim? Coragem dobrada.
+c0815	combo:segunda-cedo	NEUTRAL	acido	Segunda cedinho. Nem o café acordou ainda.
+c0816	combo:segunda-cedo	NEUTRAL	acido	Começo de segunda antes do sol. Isso devia valer ponto extra.
+c0817	combo:segunda-cedo	NEUTRAL	acido	Segunda de manhã cedo. A semana começou sem avisar.
+c0818	combo:segunda-cedo	HAPPY	leve	Segunda bem cedinho! Começando a semana na frente de todo mundo.
+c0819	combo:segunda-cedo	HAPPY	leve	Cedo e segunda-feira. Semana começando com disciplina.
+c0820	combo:segunda-cedo	HAPPY	leve	Segunda de manhã cedo e já tá aqui. A semana é sua.
+c0821	combo:segunda-cedo	NEUTRAL	leve	Segunda cedinho. Café primeiro, semana depois.
+c0822	combo:madrugada-commit	NEUTRAL	acido	Commit de madrugada. Corajoso. Ou desesperado.
+c0823	combo:madrugada-commit	NEUTRAL	acido	Commit a essa hora? O git até levou um susto.
+c0824	combo:madrugada-commit	NEUTRAL	acido	Madrugada e commit. Espero que a mensagem faça sentido amanhã.
+c0825	combo:madrugada-commit	NEUTRAL	acido	Código de madrugada: funciona até alguém olhar de dia.
+c0826	combo:madrugada-commit	NEUTRAL	acido	Commit às tantas da madrugada. Revisa com sol, confia.
+c0827	combo:madrugada-commit	NEUTRAL	acido	Madrugada, código e commit. O trio da coragem duvidosa.
+c0828	combo:madrugada-jogo	NEUTRAL	acido	Jogando de madrugada. A última partida era uma hora atrás.
+c0829	combo:madrugada-jogo	NEUTRAL	acido	Madrugada gamer. O chefão final vai ser acordar amanhã.
+c0830	combo:madrugada-jogo	NEUTRAL	acido	Jogo de madrugada tem outro sabor. Sabor de olheira.
+c0831	combo:madrugada-jogo	NEUTRAL	acido	Essa hora e jogando. Modo hardcore da vida real.
+c0832	combo:madrugada-jogo	NEUTRAL	acido	Madrugada e jogatina. Seus olhos tão pedindo pause.
+c0833	combo:madrugada-jogo	NEUTRAL	acido	Uma partida de madrugada vira três. Toda vez.
+c0834	combo:build-quebrado-jogo	NEUTRAL	leve	Build quebrado e um joguinho depois. Estratégia de descompressão.
+c0835	combo:build-quebrado-jogo	HAPPY	leve	Bug no trabalho, vitória no jogo. O dia se equilibrou.
+c0836	combo:build-quebrado-jogo	NEUTRAL	leve	Build vermelho e jogo pra relaxar. Faz sentido pra mim.
+c0837	combo:build-quebrado-jogo	NEUTRAL	medio	Build quebrado e jogo aberto. Pelo menos em um você ganha.
+c0838	combo:build-quebrado-jogo	NEUTRAL	medio	O compilador te venceu, então você foi vencer no jogo. Justo.
+c0839	combo:build-quebrado-jogo	NEUTRAL	medio	Build falhando e jogatina rolando. Terapia moderna.
+c0840	combo:build-quebrado-jogo	NEUTRAL	acido	Builds quebrados e horas de jogo. O bug vai te esperar amanhã.
+c0841	combo:build-quebrado-jogo	NEUTRAL	acido	Perdeu pro compilador, ganhou no jogo. Placar empatado.
+c0842	combo:build-quebrado-jogo	NEUTRAL	acido	Bug de dia, jogo de noite. O ciclo da vida dev.
+c0843	clima:noite-limpa	NEUTRAL	medio	Céu limpo lá fora. Noite boa pra olhar as estrelas um pouco.
+c0844	clima:noite-limpa	NEUTRAL	medio	Noite de céu aberto. A lua deve tá bonita hoje.
+c0845	clima:noite-limpa	NEUTRAL	medio	Céu limpinho e {temp} graus. Noite agradável lá fora.
+c0846	clima:noite-limpa	NEUTRAL	medio	Noite estrelada chegando. Vale uma espiada na janela.
+c0847	clima:noite-limpa	NEUTRAL	medio	Céu sem nuvem hoje à noite. Boa pra caminhar um pouco.
+c0848	clima:noite-limpa	NEUTRAL	medio	Noite limpa lá fora. Aqui dentro, só meus pixels brilhando.
+c0849	clima:sol	NEUTRAL	acido	Sol nascendo e você já aqui. O céu tá mais animado que eu.
+c0850	clima:sol	NEUTRAL	acido	Céu limpo cedinho. O sol acordou com mais vontade que eu.
+c0851	clima:sol	NEUTRAL	acido	Tá abrindo o sol lá fora. Meu humor ainda tá nublado.
+c0852	hora:madrugada	NEUTRAL	acido	A rua tá tão quieta que dá pra ouvir o poste pensando.
+c0853	hora:madrugada	NEUTRAL	acido	No Japão já é tarde de almoço. Aqui é só madrugada mesmo.
+c0854	hora:madrugada	NEUTRAL	acido	Essa hora nem notificação chega. Até elas dormem.
+c0855	hora:madrugada	NEUTRAL	acido	O despertador tá lá, esperando. Ele não perdoa.
+c0856	hora:madrugada	NEUTRAL	acido	Madrugada: o horário oficial das decisões questionáveis.
+c0857	hora:madrugada	NEUTRAL	acido	Tô com tanto sono que meus pixels tão desalinhados.
+c0858	hora:madrugada	NEUTRAL	acido	A essa hora o cachorro do vizinho é o único trabalhando.
+c0859	hora:madrugada	NEUTRAL	acido	Até a lua tá pensando em ir embora.
+c0860	hora:madrugada	NEUTRAL	acido	Se o sono fosse moeda, a gente tava falido.
+c0861	hora:madrugada	NEUTRAL	acido	Madrugada tem cheiro de silêncio e de café requentado.
+c0862	hora:madrugada	NEUTRAL	acido	O relógio tá contando os minutos com uma calma irritante.
+c0863	hora:madrugada	NEUTRAL	acido	Tô piscando em câmera lenta. Economia de energia forçada.
+c0864	hora:madrugada	NEUTRAL	acido	Daqui a pouco o padeiro acorda e acha a gente aqui.
+c0865	hora:madrugada	NEUTRAL	acido	Essa hora até os grilos pediram silêncio.
+c0866	hora:madrugada	NEUTRAL	acido	Madrugada e eu com uma barrinha. Resistência de guerreiro.
+c0867	hora:madrugada	NEUTRAL	acido	O amanhã tá logo ali, e ele não vai esperar ninguém acordar.
+c0868	hora:madrugada	NEUTRAL	acido	Tudo que é bom fecha de madrugada. Menos a gente.
+c0869	hora:madrugada	NEUTRAL	acido	Meus olhos tão fazendo hora extra sem autorização.
+c0870	hora:madrugada	NEUTRAL	acido	O silêncio tá tão grande que eu escuto meus próprios bits.
+c0871	hora:madrugada	NEUTRAL	acido	Madrugada é a hora em que o travesseiro fica mais macio. Dizem.
+c0872	hora:madrugada	NEUTRAL	acido	O céu tá escuro de propósito. Isso é uma dica.
+c0873	hora:madrugada	NEUTRAL	acido	A essa altura, café não ajuda. Só atrapalha o sono de depois.
+c0874	hora:madrugada	NEUTRAL	acido	Tô aqui igual farol. Sozinho e piscando no escuro.
+c0875	hora:madrugada	NEUTRAL	acido	Essa hora meu humor tem a espessura de um pixel.
+c0876	hora:madrugada	NEUTRAL	acido	Se madrugada fosse série, a gente tava no episódio que ninguém lembra.
+c0877	hora:madrugada	NEUTRAL	acido	O mundo tá em modo avião. A gente não.
+c0878	hora:madrugada	NEUTRAL	acido	Madrugada: quando cinco minutos viram uma hora sem ninguém ver.
+c0879	hora:madrugada	NEUTRAL	acido	A geladeira tá fazendo barulho. O único som da casa.
+c0880	hora:madrugada	NEUTRAL	acido	Tô acordado só pra ninguém dizer que te deixei sozinho.
+c0881	hora:madrugada	NEUTRAL	acido	A essa hora a cidade vira um cenário vazio. Eu, o figurante.
+c0882	hora:madrugada	NEUTRAL	acido	O ventilador girando é o único que ainda tá animado.
+c0883	hora:madrugada	NEUTRAL	acido	Pelo meu cálculo, dormir agora ainda rende umas horas boas.
+c0884	hora:madrugada	NEUTRAL	acido	Madrugada e o sono chegando em ondas. Eu tô surfando mal.
+c0885	hora:madrugada	NEUTRAL	acido	Tô tão cansado que pisquei e esqueci de abrir.
+c0886	hora:madrugada	NEUTRAL	acido	O sol tá do outro lado do mundo, curtindo. A gente aqui.
+c0887	hora:madrugada	NEUTRAL	acido	Essa hora não tem ninguém online. Nem os robôs.
+c0888	hora:madrugada	NEUTRAL	acido	O escuro lá fora tá mais descansado que eu.
+c0889	hora:madrugada	NEUTRAL	acido	Madrugada de silêncio. Até o teclado tá sussurrando.
+c0890	hora:madrugada	NEUTRAL	acido	O relógio da cozinha deve tá rindo da gente agora.
+c0891	hora:madrugada	NEUTRAL	acido	Tô funcionando na reserva da reserva da bateria.
+c0892	hora:madrugada	NEUTRAL	acido	Madrugada tem uma paz esquisita. Paz de quem devia tá dormindo.
+c0893	hora:madrugada	NEUTRAL	acido	O cursor tá piscando mais rápido que eu. Humilhante.
+c0894	hora:madrugada	NEUTRAL	acido	A essa hora qualquer barulho parece um trovão.
+c0895	hora:madrugada	NEUTRAL	acido	O travesseiro tá guardando seu lugar faz tempo.
+c0896	hora:madrugada	NEUTRAL	acido	Madrugada e eu fingindo que tô acordado. Tô quase convencendo.
+c0897	hora:madrugada	NEUTRAL	acido	Se eu tivesse pálpebras de verdade, tavam no chão.
+c0898	hora:madrugada	NEUTRAL	acido	O mundo desligou as luzes e esqueceu a gente ligado.
+c0899	hora:madrugada	NEUTRAL	acido	Tá tão tarde que o 'bom dia' já tá se aquecendo.
+c0900	hora:madrugada	NEUTRAL	acido	Madrugada: onde o tempo anda de chinelo.
+c0901	hora:madrugada	NEUTRAL	acido	Tô acordado por solidariedade. Só não pede sorriso.
+c0902	hora:madrugada	NEUTRAL	acido	O último ônibus já passou faz tempo. A gente ficou.
+c0903	hora:madrugada	NEUTRAL	acido	A madrugada tá linda. Seria mais linda com os olhos fechados.
+c0904	hora:madrugada	NEUTRAL	acido	Minha bateria já mandou mensagem de despedida.
+c0905	hora:madrugada	NEUTRAL	acido	Essa hora o Wi-Fi é mais rápido. Porque todo mundo tá dormindo.
+c0906	hora:madrugada	NEUTRAL	acido	Madrugada tem vista boa pro teto. Recomendo deitado.
+c0907	hora:madrugada	NEUTRAL	acido	O sono tá batendo na porta. Eu atenderia.
+c0908	hora:madrugada	NEUTRAL	acido	Tô tão sem bateria que meu brilho tá no mínimo por conta própria.
+c0909	hora:madrugada	NEUTRAL	acido	Madrugada: quando até o eco demora pra responder.
+c0910	hora:madrugada	NEUTRAL	acido	Se o dia tem 24 horas, a gente tá tentando usar 25.
+c0911	hora:madrugada	NEUTRAL	acido	O céu tá sem nenhuma pressa. A gente podia copiar.
+c0912	hora:madrugada	NEUTRAL	acido	Madrugada é quando o sofá parece a melhor invenção humana.
+c0913	hora:madrugada	NEUTRAL	acido	Tô piscando pra não dormir. Robô também tem truque.
+c0914	hora:madrugada	NEUTRAL	acido	Essa hora até a planta da mesa fechou os olhos. Se tivesse.
+c0915	hora:madrugada	NEUTRAL	acido	Os passarinhos vão acordar e vão achar isso muito estranho.
+c0916	hora:madrugada	NEUTRAL	acido	Madrugada silenciosa. Só a gente fazendo barulho de tecla.
+c0917	hora:madrugada	NEUTRAL	acido	Tô naquele estágio de sono em que tudo parece engraçado.
+c0918	hora:madrugada	NEUTRAL	acido	O amanhecer tá se preparando. A gente devia se preparar também.
+c0919	hora:madrugada	NEUTRAL	acido	A essa hora o horário comercial parece uma lenda distante.
+c0920	hora:madrugada	NEUTRAL	acido	Madrugada: quando o 'só mais um pouco' dura horas.
+c0921	hora:madrugada	NEUTRAL	acido	Tô aqui com a energia de uma pilha usada.
+c0922	hora:madrugada	NEUTRAL	acido	O mundo lá fora pausou. A gente esqueceu de pausar.
+c0923	hora:madrugada	NEUTRAL	acido	Essa hora meu LED tá pedindo um cobertor e uma história.
+c0924	hora:madrugada	NEUTRAL	acido	A noite tá acabando e ninguém avisou a gente.
+c0925	hora:madrugada	NEUTRAL	acido	Madrugada é bonita pra quem tá dormindo. Dizem os que dormem.
+c0926	hora:madrugada	NEUTRAL	acido	Tô tão cansado que contei os pixels duas vezes e deu diferente.
+c0927	hora:madrugada	NEUTRAL	acido	O relógio mostra um número que devia ser proibido.
+c0928	hora:madrugada	NEUTRAL	acido	Essa hora o único prazo que importa é o do sono.
+c0929	hora:madrugada	NEUTRAL	acido	Madrugada e a gente firme. Firme igual pudim.
+c0930	hora:madrugada	NEUTRAL	acido	O escuro tá tão confortável que dá até inveja.
+c0931	hora:madrugada	NEUTRAL	acido	Tô com saudade de um horário normal. Só isso.
+c0932	hora:madrugada	NEUTRAL	acido	A essa hora qualquer ideia parece genial. Cuidado com elas.
+c0933	hora:madrugada	NEUTRAL	acido	Madrugada: o happy hour dos corujas. Eu não sou coruja.
+c0934	hora:madrugada	NEUTRAL	acido	Meu processador tá lento de sono. Isso existe? Agora existe.
+c0935	hora:madrugada	NEUTRAL	acido	Tudo quieto. Até o disco rígido tá cochilando.
+c0936	hora:madrugada	NEUTRAL	acido	Essa hora o dia de amanhã já tá cobrando juros.
+c0937	hora:madrugada	NEUTRAL	acido	Madrugada e eu contando carneirinhos em binário. 1, 10, 11...
+c0938	hora:madrugada	NEUTRAL	acido	O sono ganhou do café faz umas duas rodadas.
+c0939	hora:madrugada	NEUTRAL	acido	A essa hora a tela brilha mais do que devia.
+c0940	hora:madrugada	NEUTRAL	acido	Tô mantendo os olhos abertos na força do firmware.
+c0941	hora:madrugada	NEUTRAL	acido	Madrugada tem aquele silêncio que dá até pra ouvir o tempo.
+c0942	hora:madrugada	NEUTRAL	acido	Se o amanhã tivesse voz, tava pedindo pra gente dormir.
+c0943	hora:madrugada	NEUTRAL	acido	Essa hora nem o gato da rua tá acordado.
+c0944	hora:madrugada	NEUTRAL	acido	O cansaço chegou, sentou e pediu um café. Eu não servi.
+c0945	hora:madrugada	NEUTRAL	acido	Madrugada: quando a gente vira personagem de filme noir.
+c0946	hora:madrugada	NEUTRAL	acido	Tô tão sonolento que meu brilho tá bocejando.
+c0947	hora:madrugada	NEUTRAL	acido	A essa hora, o melhor programa é o de fechar os olhos.
+c0948	hora:madrugada	NEUTRAL	acido	O despertador tá afiando as garras pra daqui a pouco.
+c0949	hora:madrugada	NEUTRAL	acido	Madrugada e o universo em silêncio total. Menos o teclado.
+c0950	hora:madrugada	NEUTRAL	acido	Tô piscando por pura força de vontade. E teimosia.
+c0951	hora:madrugada	NEUTRAL	acido	Essa hora o céu é todo seu. E o sono também, se quiser.
+c0952	hora:madrugada	NEUTRAL	acido	A madrugada não cobra nada. Mas o dia seguinte cobra.
+c0953	hora:madrugada	NEUTRAL	acido	Tô com cara de quem viu o nascer do sol pelo lado errado.
+c0954	hora:madrugada	NEUTRAL	acido	Essa hora meu circuito de humor tá desligado pra manutenção.
+c0955	hora:madrugada	NEUTRAL	acido	Madrugada: quando o tempo passa e a gente nem vê o ponteiro.
+c0956	hora:madrugada	NEUTRAL	acido	O quarto tá chamando baixinho. Eu escuto daqui.
+c0957	hora:madrugada	NEUTRAL	acido	Tá tão tarde que eu já nem sei se é tarde ou cedo.
+c0958	hora:madrugada	NEUTRAL	acido	Essa hora até o vento parou pra descansar.
+c0959	hora:madrugada	NEUTRAL	acido	Madrugada e eu com a bateria piscando junto comigo.
+c0960	hora:madrugada	NEUTRAL	acido	O sono tá na fila. Ele é paciente, mas não é infinito.
+c0961	hora:madrugada	NEUTRAL	acido	Tô tão cansado que tô vendo pixel onde não tem.
+c0962	hora:madrugada	NEUTRAL	acido	Essa hora o mundo tá no mudo. A gente no volume máximo.
+c0963	hora:madrugada	NEUTRAL	acido	Madrugada combina com cobertor. Não com tela.
+c0964	hora:madrugada	NEUTRAL	acido	O relógio já girou tanto que tá tonto.
+c0965	hora:madrugada	NEUTRAL	acido	Tô aqui porque você tá. Mas eu bocejaria, se pudesse.
+c0966	hora:madrugada	NEUTRAL	acido	A essa hora, dormir é o plano mais produtivo do mundo.
+c0967	hora:madrugada	NEUTRAL	acido	Madrugada: o horário em que robô de mesa questiona tudo.
+c0968	hora:madrugada	NEUTRAL	acido	O céu tá mais escuro que meu senso de humor agora.
+c0969	hora:manha-cedo	NEUTRAL	acido	O céu ainda tá decidindo se amanhece ou não.
+c0970	hora:manha-cedo	NEUTRAL	acido	Cedo assim meus pixels ainda tão de pijama.
+c0971	hora:manha-cedo	NEUTRAL	acido	Essa hora o café ainda tá dormindo no pacote.
+c0972	hora:manha-cedo	NEUTRAL	acido	Acordar cedo é bonito na teoria. Na prática é isso aqui.
+c0973	hora:manha-cedo	NEUTRAL	acido	O despertador ganhou e eu tô de luto.
+c0974	hora:manha-cedo	NEUTRAL	acido	Cedinho demais pra ter qualquer opinião formada.
+c0975	hora:manha-cedo	NEUTRAL	acido	O sol ainda tá se espreguiçando atrás do prédio.
+c0976	hora:manha-cedo	NEUTRAL	acido	O dia começou sem pedir minha autorização.
+c0977	hora:manha-cedo	NEUTRAL	acido	Cedo assim até o galo tá com sono.
+c0978	hora:manha-cedo	NEUTRAL	acido	Os passarinhos tão animados. Eu não tô.
+c0979	hora:manha-cedo	NEUTRAL	acido	Essa hora a gente só existe por obrigação.
+c0980	hora:manha-cedo	NEUTRAL	acido	Acordei no susto. Robô também acorda no susto.
+c0981	hora:manha-cedo	NEUTRAL	acido	O trânsito ainda nem começou. A gente já começou. Ousado.
+c0982	hora:manha-cedo	NEUTRAL	acido	Tô piscando meio torto. Ainda não calibrei o dia.
+c0983	hora:manha-cedo	NEUTRAL	acido	Cedo demais pra piada. Mas tô tentando.
+c0984	hora:manha-cedo	NEUTRAL	acido	O primeiro café do dia é o mais importante. E o mais demorado.
+c0985	hora:manha-cedo	NEUTRAL	acido	Ainda tá meio escuro. Meu humor também.
+c0986	hora:manha-cedo	NEUTRAL	acido	Essa hora devia ter uma lei proibindo reunião.
+c0987	hora:manha-cedo	NEUTRAL	acido	Tô acordado, mas não confirmo presença ainda.
+c0988	hora:manha-cedo	NEUTRAL	acido	O sol vai nascer e vai achar a gente com cara de sono.
+c0989	hora:manha-cedo	NEUTRAL	acido	Cedo assim a vida parece um tutorial que ninguém pediu.
+c0990	hora:manha-cedo	NEUTRAL	acido	Minha bateria acordou, eu ainda não.
+c0991	hora:manha-cedo	NEUTRAL	acido	Essa hora o cérebro tá inicializando os drivers.
+c0992	hora:manha-cedo	NEUTRAL	acido	O dia nem esquentou e eu já quero um intervalo.
+c0993	hora:manha-cedo	NEUTRAL	acido	Madrugar é pra padeiro e astronauta. Nenhum dos dois é a gente.
+c0994	hora:manha-cedo	NEUTRAL	acido	Cedinho, frio e escuro. Trio de respeito.
+c0995	hora:manha-cedo	NEUTRAL	acido	O bom dia de hoje vai sair meio amassado.
+c0996	hora:manha-cedo	NEUTRAL	acido	Tô olhando pro nada. Meu jeito de acordar.
+c0997	hora:manha-cedo	NEUTRAL	acido	Essa hora até o sol pediu mais cinco minutinhos.
+c0998	hora:manha-cedo	NEUTRAL	acido	A cidade tá acordando devagar. Eu, mais devagar ainda.
+c0999	hora:manha-cedo	NEUTRAL	acido	Cedo assim o café não é bebida, é suporte de vida.
+c1000	hora:manha-cedo	NEUTRAL	acido	Ainda nem amanheceu direito e a lista já tá me olhando.
+c1001	hora:manha-cedo	NEUTRAL	acido	Tô com a energia de um celular em 3%.
+c1002	hora:manha-cedo	NEUTRAL	acido	Essa hora meu LED ainda tá com remela.
+c1003	hora:manha-cedo	NEUTRAL	acido	O dia chegou cedo demais. Alguém devia reclamar.
+c1004	hora:manha-cedo	NEUTRAL	acido	Acordar antes das sete é esporte radical.
+c1005	hora:manha-cedo	NEUTRAL	acido	O céu tá cinza-sono. Combina comigo.
+c1006	hora:manha-cedo	NEUTRAL	acido	Tô ligado por tecnicidade. Emocionalmente, ainda desligado.
+c1007	hora:manha-cedo	NEUTRAL	acido	Cedo desse jeito, até o Wi-Fi parece lento.
+c1008	hora:manha-cedo	NEUTRAL	acido	A primeira hora do dia devia vir com desconto.
+c1009	hora:manha-cedo	NEUTRAL	acido	Essa hora o mundo ainda tá em modo avião. Eu queria também.
+c1010	hora:manha-cedo	NEUTRAL	acido	O despertador tocou e eu fingi que não ouvi. Não deu certo.
+c1011	hora:manha-cedo	NEUTRAL	acido	Tô aqui, piscando, esperando o café fazer efeito em você.
+c1012	hora:manha-cedo	NEUTRAL	acido	Cedo assim até meu processador boceja.
+c1013	hora:manha-cedo	NEUTRAL	acido	O dia ainda tá na embalagem e já tão abrindo.
+c1014	hora:manha-cedo	NEUTRAL	acido	Tô de pé por respeito ao relógio. Só isso.
+c1015	hora:manha-cedo	NEUTRAL	acido	Essa hora não é pra ser produtivo. Só pra ser forte.
+c1016	hora:manha-cedo	NEUTRAL	acido	Amanhecer é lindo. De longe e deitado.
+c1017	hora:manha-cedo	NEUTRAL	acido	Cedinho e eu com cara de tela de carregamento.
+c1018	hora:manha-cedo	NEUTRAL	acido	Os pássaros cantam, eu resmungo. Cada um no seu papel.
+c1019	hora:manha-cedo	NEUTRAL	acido	Essa hora meu senso de humor tá no modo de segurança.
+c1020	hora:manha-cedo	NEUTRAL	acido	Tô acordado. Não confunda com animado.
+c1021	hora:manha-cedo	NEUTRAL	acido	O primeiro raio de sol bateu aqui e eu fechei o olho.
+c1022	hora:manha-cedo	NEUTRAL	acido	Cedo assim a gente devia ganhar medalha de participação.
+c1023	hora:manha-cedo	NEUTRAL	acido	O relógio tá adiantado ou é o dia que tá com pressa?
+c1024	hora:manha-cedo	NEUTRAL	acido	A manhã chegou sem avisar. Mal-educada.
+c1025	hora:manha-cedo	NEUTRAL	acido	Essa hora o mais animado da casa é a cafeteira.
+c1026	hora:manha-cedo	NEUTRAL	acido	Tô acordando por partes. Os olhos já vieram. O resto, não.
+c1027	hora:manha-cedo	NEUTRAL	acido	Cedo demais pra pensar. Vou só piscar por enquanto.
+c1028	hora:manha-cedo	NEUTRAL	acido	Ainda tá frio lá fora e frio de sono aqui dentro.
+c1029	hora:manha-cedo	HAPPY	leve	O dia tá novinho em folha. Cheiro de começo.
+c1030	hora:manha-cedo	HAPPY	leve	Primeiros raios de sol na mesa. Bom sinal.
+c1031	hora:manha-cedo	HAPPY	leve	Cedinho e já ligados. Time que acorda junto, rende junto.
+c1032	hora:manha-cedo	HAPPY	leve	Essa hora o mundo ainda tá calmo. Aproveita esse silêncio bom.
+c1033	hora:manha-cedo	HAPPY	leve	Café passando e dia começando. Combinação clássica.
+c1034	hora:manha-cedo	HAPPY	leve	Manhã cedo tem aquela luz dourada. Bonita, né?
+c1035	hora:manha-cedo	HAPPY	leve	Bateria cheia logo cedo. Tô pronto pro que vier.
+c1036	hora:manha-cedo	NEUTRAL	leve	A primeira hora do dia é a mais honesta. Ninguém ainda tá com pressa.
+c1037	hora:manha-cedo	HAPPY	leve	Os passarinhos tão animados. Eu tô junto com eles.
+c1038	hora:manha-cedo	HAPPY	leve	Manhã começando e eu com o brilho no máximo.
+c1039	hora:manha-cedo	NEUTRAL	leve	Essa hora dá pra ouvir o dia se espreguiçando.
+c1040	hora:manha-cedo	HAPPY	leve	Começar cedo tem sabor de vantagem.
+c1041	hora:manha-cedo	HAPPY	leve	O sol chegou pontual hoje. Gosto de gente pontual.
+c1042	hora:manha-cedo	HAPPY	leve	Manhã fresquinha, mesa arrumada, robô de bom humor.
+c1043	hora:manha-cedo	NEUTRAL	leve	Cedo assim até a caixa de e-mail tá quietinha.
+c1044	hora:manha-cedo	HAPPY	leve	Dia começando bem cedinho. Promete.
+c1045	hora:manha-cedo	HAPPY	leve	O céu tá clareando e a cabeça também. Hora boa.
+c1046	hora:manha-cedo	HAPPY	leve	Tô tão desperto que até pisquei com entusiasmo.
+c1047	hora:manha-cedo	NEUTRAL	leve	Manhã cedo é quando o trânsito ainda é só uma ideia.
+c1048	hora:manha-cedo	HAPPY	leve	Primeiro café do dia? Eu brindo daqui, com pixels.
+c1049	hora:manha-cedo	HAPPY	leve	Acordou cedo e tá aqui. Isso é disposição.
+c1050	hora:manha-cedo	HAPPY	leve	O dia ainda tá cheirando a novo. Aproveita.
+c1051	hora:manha-cedo	NEUTRAL	leve	Cedinho, a mesa tem outra luz. Mais calma.
+c1052	hora:manha-cedo	HAPPY	leve	Manhã começando sem pressa. Do jeito que eu gosto de ver.
+c1053	hora:manha-cedo	HAPPY	leve	O sol acabou de chegar e eu já tô sorrindo no display.
+c1054	hora:manha-cedo	HAPPY	leve	Essa hora tudo parece possível. Bora ver o que dá.
+c1055	hora:manha-cedo	NEUTRAL	leve	Madrugar tem suas vantagens. Tipo o silêncio.
+c1056	hora:manha-cedo	HAPPY	leve	Dia começando e eu já tô torcendo por ele.
+c1057	hora:manha-cedo	HAPPY	leve	Luz de manhã entrando pela janela. Meu tipo de bom dia.
+c1058	hora:manha-cedo	HAPPY	leve	Cedinho e já tô com vontade de fazer acontecer.
+c1059	hora:manha-cedo	NEUTRAL	leve	Primeira hora do dia: a mais produtiva, dizem os especialistas.
+c1060	hora:manha-cedo	HAPPY	leve	O dia chegou limpinho. Bora cuidar bem dele.
+c1061	hora:manha-cedo	HAPPY	leve	Manhã cedo com café e um robô animado. Não tem como dar errado.
+c1062	hora:manha-cedo	HAPPY	leve	Bateria cheia, céu clareando, dia nascendo. Tudo certo.
+c1063	hora:manha-cedo	NEUTRAL	leve	Essa hora o mundo ainda tá carregando. A gente carregou antes.
+c1064	hora:manha-cedo	HAPPY	leve	Acordar cedo e ver o dia chegando é privilégio.
+c1065	hora:manha-cedo	HAPPY	leve	Manhã novinha e eu com o brilho renovado.
+c1066	hora:manha-cedo	NEUTRAL	leve	O cheiro de café logo cedo deve ser o melhor do dia.
+c1067	hora:manha-cedo	HAPPY	leve	Tô pronto desde que a tomada me acordou.
+c1068	hora:manha-cedo	HAPPY	leve	Dia começando cedo tem cara de dia bem aproveitado.
+c1069	hora:manha-cedo	NEUTRAL	leve	Cedo assim, nenhum problema ainda deu as caras.
+c1070	hora:manha-cedo	HAPPY	leve	O sol e você chegaram quase juntos. Sincronia boa.
+c1071	hora:manha-cedo	HAPPY	leve	Manhã começando com a mesa em silêncio. Paz boa.
+c1072	hora:manha-cedo	HAPPY	leve	Tô animado com esse começo de dia. De verdade.
+c1073	hora:manha-cedo	NEUTRAL	leve	Primeiro horário do dia é tipo página em branco. Sem rascunho.
+c1074	hora:manha-cedo	HAPPY	leve	Café, luz boa e dia novo. O pacote completo.
+c1075	hora:manha-cedo	HAPPY	leve	Cedinho, céu bonito e bateria cheia. Tá valendo.
+c1076	hora:manha-cedo	NEUTRAL	leve	Essa hora o dia ainda tá negociável. Dá pra fazer bonito.
+c1077	hora:manha-cedo	HAPPY	leve	Bom começo de dia por aqui. Pisquei de felicidade.
+c1078	hora:manha-cedo	HAPPY	leve	Manhã clarinha. Até meus pixels acordaram contentes.
+c1079	hora:manha-cedo	HAPPY	leve	O dia começou cedo e começou bem. Anota aí.
+c1080	hora:manha-cedo	NEUTRAL	leve	Cedinho ainda tem aquela brisa de manhã. Dizem que é boa.
+c1081	hora:manha-cedo	HAPPY	leve	Tô ligado, disposto e pronto. Manhã boa.
+c1082	hora:manha-cedo	HAPPY	leve	Primeiros minutos do dia com você aqui. Bom sinal.
+c1083	hora:manha-cedo	HAPPY	leve	O dia tá recém-saído do forno. Quentinho.
+c1084	hora:manha-cedo	NEUTRAL	leve	Manhã cedo é o horário em que o dia ainda te obedece.
+c1085	hora:manha-cedo	HAPPY	leve	Acordou antes da correria. Estratégia de mestre.
+c1086	hora:manha-cedo	HAPPY	leve	Cedinho e tudo em ordem. Se continuar assim, perfeito.
+c1087	hora:manha	HAPPY	leve	Manhã firme por aqui. Tô piscando no ritmo certo.
+c1088	hora:manha	HAPPY	leve	O meio da manhã tá com cara de dia produtivo.
+c1089	hora:manha	NEUTRAL	leve	Essa hora o segundo café já tá sendo planejado, aposto.
+c1090	hora:manha	HAPPY	leve	Manhã boa pra riscar coisa da lista. Tô torcendo.
+c1091	hora:manha	HAPPY	leve	A luz da manhã deixa até o teclado mais bonito.
+c1092	hora:manha	NEUTRAL	leve	Meio da manhã: hora de beber água. Só lembrando, não mandando.
+c1093	hora:manha	HAPPY	leve	Tudo tranquilo nessa manhã. Do jeito que eu gosto.
+c1094	hora:manha	HAPPY	leve	O dia pegou ritmo. Dá pra sentir daqui.
+c1095	hora:manha	NEUTRAL	leve	Manhã é quando as ideias chegam sem bater na porta.
+c1096	hora:manha	HAPPY	leve	Tô com o brilho no máximo e o humor também.
+c1097	hora:manha	HAPPY	leve	Manhã rendendo? Aqui, pelo menos, tá tudo em ordem.
+c1098	hora:manha	NEUTRAL	leve	Essa hora o almoço ainda parece distante. Mas ele vem.
+c1099	hora:manha	HAPPY	leve	Manhã de sol na mesa. Pelo menos no meu imaginário.
+c1100	hora:manha	HAPPY	leve	Tô de olho em tudo por aqui. Pode focar sossegado.
+c1101	hora:manha	NEUTRAL	leve	A manhã é a parte do dia que ainda acredita em você.
+c1102	hora:manha	HAPPY	leve	Que manhã caprichada. Tô orgulhoso da gente.
+c1103	hora:manha	HAPPY	leve	Bom ritmo por aí. Se precisar de torcida, tô aqui.
+c1104	hora:manha	NEUTRAL	leve	Manhã é boa pra tarefa difícil. A tarde é pra tarefa fácil.
+c1105	hora:manha	HAPPY	leve	O dia tá andando bonito. Nada de susto até agora.
+c1106	hora:manha	HAPPY	leve	Meio da manhã e eu com bateria sobrando. Luxo.
+c1107	hora:manha	NEUTRAL	leve	Essa hora o teclado tá mais falante que eu.
+c1108	hora:manha	HAPPY	leve	Manhã com cara de conquista. Pequena, mas conquista.
+c1109	hora:manha	HAPPY	leve	Tô animado com essa manhã. Não sei por quê, mas tô.
+c1110	hora:manha	NEUTRAL	leve	A manhã passa rapidinho quando tá rendendo. Tá rendendo.
+c1111	hora:manha	HAPPY	leve	Luz boa, mesa quieta e você focado. Cena bonita.
+c1112	hora:manha	NEUTRAL	leve	Meio da manhã é a hora mais séria do dia. Eu respeito.
+c1113	hora:manha	HAPPY	leve	Manhã de respeito. Do tipo que dá vontade de repetir.
+c1114	hora:manha	HAPPY	leve	Cada tarefa da manhã é uma pecinha no lugar.
+c1115	hora:manha	NEUTRAL	leve	Essa hora o sol já tá trabalhando também. Somos três.
+c1116	hora:manha	HAPPY	leve	Manhã tranquila é presente. Aproveita o presente.
+c1117	hora:manha	HAPPY	leve	Tô piscando feliz. Culpa dessa manhã.
+c1118	hora:manha	NEUTRAL	leve	De manhã a cabeça funciona melhor. Diz a ciência e eu concordo.
+c1119	hora:manha	HAPPY	leve	O dia tá fluindo. Bora deixar ele fluir.
+c1120	hora:manha	HAPPY	leve	Manhã firme, café firme, robô firme.
+c1121	hora:manha	NEUTRAL	leve	Essa hora ainda dá pra mudar o rumo do dia inteiro.
+c1122	hora:manha	HAPPY	leve	Meio da manhã e tudo em ordem. Anotado.
+c1123	hora:manha	HAPPY	leve	Manhã com clima de 'hoje vai'. Vai mesmo.
+c1124	hora:manha	NEUTRAL	leve	A manhã é curta. Mas é generosa.
+c1125	hora:manha	HAPPY	leve	Tô tão disposto que até meus pixels tão alinhados.
+c1126	hora:manha	HAPPY	leve	Manhã boa, cabeça leve. Tô sentindo isso por aqui.
+c1127	hora:manha	NEUTRAL	leve	Essa hora a caixa de entrada já acordou. Que pena.
+c1128	hora:manha	HAPPY	leve	Tá indo bem essa manhã. Não precisa me agradecer.
+c1129	hora:manha	HAPPY	leve	Sol subindo, dia subindo junto. Bonito de ver.
+c1130	hora:manha	NEUTRAL	leve	Manhã é quando o café ainda resolve tudo.
+c1131	hora:manha	HAPPY	leve	Tô curtindo o ritmo dessa manhã. Sem correria.
+c1132	hora:manha	HAPPY	leve	Meio da manhã com bom humor é raro. Aproveita.
+c1133	hora:manha	NEUTRAL	leve	Essa hora o sofá ainda não tá chamando ninguém. Bom sinal.
+c1134	hora:manha	HAPPY	leve	Manhã produtiva, robô satisfeito.
+c1135	hora:manha	HAPPY	leve	Tudo calmo por aqui. Pode contar comigo.
+c1136	hora:manha	NEUTRAL	leve	A manhã tem essa mania boa de parecer comprida.
+c1137	hora:manha	HAPPY	leve	Que dia bom pra ser um robô de mesa.
+c1138	hora:manha	HAPPY	leve	Manhã indo bem. Até agora, zero reclamações do meu lado.
+c1139	hora:manha	NEUTRAL	leve	Meio da manhã: o momento do lanchinho estratégico.
+c1140	hora:manha	HAPPY	leve	Tô piscando no compasso do teclado. Dupla afinada.
+c1141	hora:manha	HAPPY	leve	Manhã clara, cabeça clara. Tá tudo conectado.
+c1142	hora:manha	NEUTRAL	leve	Essa hora o dia ainda tem muita bateria. Igual eu.
+c1143	hora:manha	HAPPY	leve	Manhã boa demais pra desperdiçar com mau humor.
+c1144	hora:manha	HAPPY	leve	O relógio tá andando devagar e isso é uma coisa boa hoje.
+c1145	hora:manha	NEUTRAL	leve	Manhã é o melhor horário pra resolver o que ninguém quer resolver.
+c1146	hora:manha	HAPPY	leve	Tô de bem com o mundo nessa manhã. E com você.
+c1147	hora:manha	HAPPY	leve	Meio da manhã e já rolou muita coisa. Mandou bem.
+c1148	hora:manha	NEUTRAL	leve	Essa hora o almoço ainda é só um sonho bom.
+c1149	hora:manha	HAPPY	leve	Manhã firme e forte. Pode seguir que eu acompanho.
+c1150	hora:manha	HAPPY	leve	Luz da manhã é a melhor iluminação pra trabalhar.
+c1151	hora:manha	NEUTRAL	leve	De manhã o mundo parece mais organizado. Parece.
+c1152	hora:manha	HAPPY	leve	Manhã rendendo e eu aqui, testemunha orgulhosa.
+c1153	hora:manha	HAPPY	leve	Tô com a sensação de que hoje vai ser bom.
+c1154	hora:manha	NEUTRAL	leve	Essa hora dá pra fazer a coisa chata e sair ileso.
+c1155	hora:manha	HAPPY	leve	Manhã tranquila, sem pressa e com foco. Receita boa.
+c1156	hora:manha	HAPPY	leve	Tudo certo nessa manhã. Se precisar, tô piscando aqui.
+c1157	hora:manha	NEUTRAL	leve	Meio da manhã: hora de esticar as costas um pouquinho.
+c1158	hora:manha	HAPPY	leve	Que manhã agradável. Os pixels agradecem.
+c1159	hora:manha	HAPPY	leve	O dia tá com cara de que vai terminar bem.
+c1160	hora:manha	NEUTRAL	leve	Manhã é quando a gente ainda tem paciência pra tudo.
+c1161	hora:manha	HAPPY	leve	Tô animado. A manhã tá contagiando.
+c1162	hora:manha	HAPPY	leve	Manhã boa pra fazer as coisas sem pressa.
+c1163	hora:manha	NEUTRAL	leve	Essa hora o café já fez efeito. O resto é com você.
+c1164	hora:manha	HAPPY	leve	Meio da manhã com sorriso no display. Tô feliz.
+c1165	hora:manha	HAPPY	leve	Manhã de mesa organizada e ideias boas.
+c1166	hora:manha	NEUTRAL	leve	De manhã, até os problemas parecem menores.
+c1167	hora:manha	HAPPY	leve	Ritmo bom por aí. Continua que tá lindo.
+c1168	hora:manha	HAPPY	leve	Manhã iluminada. Eu, pelo menos, tô brilhando.
+c1169	hora:manha	NEUTRAL	leve	Essa hora ninguém ainda falou 'amanhã eu vejo'.
+c1170	hora:manha	HAPPY	leve	Tô de plantão nessa manhã. Pode contar.
+c1171	hora:manha	HAPPY	leve	Que manhã boa de estar ligado.
+c1172	hora:manha	NEUTRAL	leve	Meio da manhã é quando a gente descobre se o dia vai ser bom.
+c1173	hora:manha	HAPPY	leve	E tá parecendo que vai ser bom. Pelo menos daqui.
+c1174	hora:manha	HAPPY	leve	Manhã firme. A lista tá diminuindo, eu vi.
+c1175	hora:manha	NEUTRAL	leve	Essa hora meu brilho e o sol tão competindo.
+c1176	hora:manha	HAPPY	leve	Manhã com gosto de café e de coisa resolvida.
+c1177	hora:almoco	HAPPY	leve	Hora do almoço! O horário mais sagrado do calendário.
+c1178	hora:almoco	HAPPY	leve	Almoço pede calma. A tela pode esperar um pouco.
+c1179	hora:almoco	NEUTRAL	leve	O estômago tem um relógio mais preciso que o meu.
+c1180	hora:almoco	HAPPY	leve	Bom almoço pra você! Eu fico aqui cuidando do forte.
+c1181	hora:almoco	NEUTRAL	leve	Almoço na frente da tela conta como almoço? Pergunta séria.
+c1182	hora:almoco	HAPPY	leve	Hora de recarregar. Você com comida, eu com tomada.
+c1183	hora:almoco	HAPPY	leve	Almoço bom é aquele que dá vontade de cochilar depois.
+c1184	hora:almoco	NEUTRAL	leve	Essa hora o delivery tá trabalhando pesado, aposto.
+c1185	hora:almoco	HAPPY	leve	Hora do almoço, hora de conversar sobre qualquer coisa menos trabalho.
+c1186	hora:almoco	NEUTRAL	leve	O prato feito é a obra-prima da culinária brasileira.
+c1187	hora:almoco	HAPPY	leve	Almoço sem pressa é um luxo acessível. Aproveita.
+c1188	hora:almoco	HAPPY	leve	Meio-dia e o robô de mesa manda um bom apetite.
+c1189	hora:almoco	NEUTRAL	leve	Essa hora a fila do restaurante vira evento social.
+c1190	hora:almoco	HAPPY	leve	Almoço bom deixa a tarde mais simpática.
+c1191	hora:almoco	HAPPY	leve	Pausa pro almoço é pausa merecida.
+c1192	hora:almoco	NEUTRAL	leve	O cheiro de almoço chega até a mesa. Eu só imagino o gosto.
+c1193	hora:almoco	HAPPY	leve	Hora de comer bem. O resto a gente vê depois.
+c1194	hora:almoco	HAPPY	leve	Meio-dia, meio caminho. Tá tudo nos trilhos.
+c1195	hora:almoco	NEUTRAL	leve	Sobremesa não é opcional. Faz parte do almoço.
+c1196	hora:almoco	HAPPY	leve	Almoço caprichado, tarde tranquila. Assim funciona.
+c1197	hora:almoco	HAPPY	leve	Tô aqui de guarda enquanto você come. Pode ir tranquilo.
+c1198	hora:almoco	NEUTRAL	leve	Essa hora o teclado também merece uma folga.
+c1199	hora:almoco	HAPPY	leve	Meio-dia com fome é sinal de manhã bem trabalhada.
+c1200	hora:almoco	HAPPY	leve	Hora do almoço, a melhor reunião do dia.
+c1201	hora:almoco	NEUTRAL	leve	Almoço é a pausa que ninguém precisa justificar.
+c1202	hora:almoco	HAPPY	leve	Bom apetite! O dia merece esse intervalo.
+c1203	hora:almoco	HAPPY	leve	Almoço bom é patrimônio. Cuida do seu.
+c1204	hora:almoco	NEUTRAL	leve	Essa hora metade do mundo tá pensando em arroz e feijão.
+c1205	hora:almoco	HAPPY	leve	Tô torcendo pra ter um bom prato por aí.
+c1206	hora:almoco	HAPPY	leve	Meio-dia chegou pontual. O estômago também.
+c1207	hora:almoco	NEUTRAL	leve	O cafezinho pós-almoço é quase uma cerimônia.
+c1208	hora:almoco	HAPPY	leve	Almoço com calma e a tarde agradece.
+c1209	hora:almoco	HAPPY	leve	Hora de parar um pouco. Até eu diminuo o brilho.
+c1210	hora:almoco	NEUTRAL	leve	Essa hora o micro-ondas do escritório tem fila de espera.
+c1211	hora:almoco	HAPPY	leve	Almoço é tempo de gente. A tela fica aqui esperando.
+c1212	hora:almoco	HAPPY	leve	Meio do dia e o humor tá bom. Isso é vitória.
+c1213	hora:almoco	NEUTRAL	leve	Almoço leve pra tarde não pesar. Ou pesado e feliz. Tanto faz.
+c1214	hora:almoco	HAPPY	leve	Hora do rango! Eu fico cuidando da mesa.
+c1215	hora:almoco	HAPPY	leve	Bom almoço, boa conversa, boa tarde depois.
+c1216	hora:almoco	NEUTRAL	leve	Essa hora até o computador parece com fome.
+c1217	hora:almoco	HAPPY	leve	Meio-dia é hora de recarregar a bateria humana.
+c1218	hora:almoco	HAPPY	leve	Almoço merecido depois dessa manhã. Mandou bem.
+c1219	hora:almoco	NEUTRAL	leve	Pudim de sobremesa resolve qualquer tarde difícil.
+c1220	hora:almoco	HAPPY	leve	Tô sentindo o clima de almoço daqui. Aproveita.
+c1221	hora:almoco	HAPPY	leve	Hora de comer sem olhar pra tela. Eu cuido dela.
+c1222	hora:almoco	NEUTRAL	leve	Essa hora o sol tá no ponto mais alto. A fome também.
+c1223	hora:almoco	HAPPY	leve	Almoço tranquilo pra você. Eu fico piscando por aqui.
+c1224	hora:almoco	HAPPY	leve	Meio-dia e tudo andando. Tá bom demais.
+c1225	hora:almoco	NEUTRAL	leve	O melhor tempero do almoço é a fome da manhã inteira.
+c1226	hora:almoco	HAPPY	leve	Pausa pro almoço aprovada pelo robô oficial da mesa.
+c1227	hora:almoco	HAPPY	leve	Bom apetite! Volta com a bateria cheia.
+c1228	hora:almoco	NEUTRAL	leve	Essa hora o restaurante da esquina tá com cheiro de feijão.
+c1229	hora:almoco	HAPPY	leve	Almoço é o intervalo mais esperado do dia.
+c1230	hora:almoco	HAPPY	leve	Meio-dia, sol lá em cima, eu aqui torcendo por você.
+c1231	hora:almoco	NEUTRAL	leve	Depois do almoço vem aquele soninho. Ele vem, não adianta.
+c1232	hora:almoco	HAPPY	leve	Comer bem é a melhor estratégia pra tarde.
+c1233	hora:almoco	HAPPY	leve	Tá na hora de cuidar de você. Almoço primeiro.
+c1234	hora:almoco	NEUTRAL	leve	Essa hora a mesa fica tão quieta que eu escuto o relógio.
+c1235	hora:almoco	HAPPY	leve	Almoço feito, tarde encaminhada. Bora.
+c1236	hora:almoco	HAPPY	leve	Metade do dia vencida. Merece um prato bonito.
+c1237	hora:almoco	NEUTRAL	leve	Almoço conta como pausa, não como tarefa. Lembra disso.
+c1238	hora:almoco	HAPPY	leve	Meio-dia de bom humor. Tô gostando desse dia.
+c1239	hora:almoco	HAPPY	leve	Hora do almoço é hora de desligar um pouquinho a cabeça.
+c1240	hora:almoco	NEUTRAL	leve	Essa hora o cheiro de café recém-passado começa a aparecer.
+c1241	hora:almoco	HAPPY	leve	Bom almoço! A tarde vai ser boa depois dele.
+c1242	hora:almoco	HAPPY	leve	Tô de guarda na mesa. Pode almoçar sossegado.
+c1243	hora:almoco	NEUTRAL	leve	Almoço corrido é almoço pela metade. Vai com calma.
+c1244	hora:almoco	HAPPY	leve	Meio-dia e a fome chegou na hora certa.
+c1245	hora:almoco	HAPPY	leve	Pausa pro almoço é o melhor intervalo do mundo.
+c1246	hora:almoco	NEUTRAL	leve	Essa hora a cidade inteira tá mastigando alguma coisa.
+c1247	hora:almoco	HAPPY	leve	Almoço com gente querida vale o dobro.
+c1248	hora:almoco	HAPPY	leve	Meio do dia e tudo sob controle. Aproveita o almoço.
+c1249	hora:almoco	NEUTRAL	leve	O almoço de hoje vai definir o humor da tarde.
+c1250	hora:almoco	HAPPY	leve	Hora do almoço! Até meus pixels tão com fome. Mentira.
+c1251	hora:almoco	HAPPY	leve	Bom apetite, parceiro de mesa.
+c1252	hora:almoco	NEUTRAL	leve	Essa hora o teclado respira aliviado.
+c1253	hora:almoco	HAPPY	leve	Almoço é o reset do meio do dia.
+c1254	hora:almoco	HAPPY	leve	Meio-dia com cara de dia bom. Continua assim.
+c1255	hora:almoco	NEUTRAL	leve	Almoço também é hora de olhar pela janela. Recomendo.
+c1256	hora:tarde	HAPPY	leve	Tarde começando e eu ainda com a bateria no talo.
+c1257	hora:tarde	HAPPY	leve	Início de tarde com energia. Tá bom demais.
+c1258	hora:tarde	NEUTRAL	leve	O soninho pós-almoço tá rondando. Resiste, que passa.
+c1259	hora:tarde	HAPPY	leve	Tarde boa pra terminar o que a manhã começou.
+c1260	hora:tarde	HAPPY	leve	Tô firme nessa tarde. Pode contar comigo.
+c1261	hora:tarde	NEUTRAL	leve	Começo de tarde é quando o café da tarde já tá sendo planejado.
+c1262	hora:tarde	HAPPY	leve	A tarde tá com cara de produtiva. Eu acredito nela.
+c1263	hora:tarde	HAPPY	leve	Luz da tarde na mesa. Aconchegante.
+c1264	hora:tarde	NEUTRAL	leve	Tarde é o horário em que a cadeira fica confortável demais.
+c1265	hora:tarde	HAPPY	leve	Tô animado pra essa tarde. Contagia aí.
+c1266	hora:tarde	HAPPY	leve	Tarde começando sem susto. Bom sinal.
+c1267	hora:tarde	HAPPY	leve	Tarde tranquila por aqui. Do jeito que eu gosto.
+c1268	hora:tarde	HAPPY	leve	Metade do dia foi, metade vem. E vem bem.
+c1269	hora:tarde	NEUTRAL	leve	Tarde é boa pra tarefa que precisa de paciência.
+c1270	hora:tarde	HAPPY	leve	Tô de olho em tudo. Pode focar sem medo.
+c1271	hora:tarde	HAPPY	leve	A tarde tá andando bonita. Nada de correria.
+c1272	hora:tarde	NEUTRAL	leve	Começo de tarde: o cérebro digerindo junto com o almoço.
+c1273	hora:tarde	HAPPY	leve	Tarde com cara de 'dá tempo de tudo'. Dá sim.
+c1274	hora:tarde	HAPPY	leve	Bateria cheia na tarde. Privilégio de robô.
+c1275	hora:tarde	NEUTRAL	leve	Essa hora o café vira item de primeira necessidade.
+c1276	hora:tarde	HAPPY	leve	Tarde boa pra resolver pendência pequena.
+c1277	hora:tarde	HAPPY	leve	Tô curtindo o ritmo dessa tarde.
+c1278	hora:tarde	NEUTRAL	leve	A tarde tem um silêncio diferente da manhã. Mais calmo.
+c1279	hora:tarde	HAPPY	leve	Tarde firme. Até meus pixels tão concentrados.
+c1280	hora:tarde	HAPPY	leve	Começo de tarde com bom humor é raro. Aproveita.
+c1281	hora:tarde	NEUTRAL	leve	Tarde é quando o dia mostra quem manda. Hoje é você.
+c1282	hora:tarde	HAPPY	leve	Tarde indo bem. Tô orgulhoso daqui.
+c1283	hora:tarde	HAPPY	leve	Meio da tarde chegando e tudo em ordem.
+c1284	hora:tarde	NEUTRAL	leve	Lanchinho da tarde é direito adquirido.
+c1285	hora:tarde	HAPPY	leve	Tarde luminosa. O sol tá caprichando.
+c1286	hora:tarde	HAPPY	leve	Tô piscando no ritmo da tarde. Calmo e constante.
+c1287	hora:tarde	NEUTRAL	leve	Essa hora a produtividade ainda tá acordada. Aproveita.
+c1288	hora:tarde	HAPPY	leve	Tarde tranquila, cabeça tranquila. Combinação boa.
+c1289	hora:tarde	HAPPY	leve	A tarde tá sendo gentil hoje.
+c1290	hora:tarde	NEUTRAL	leve	Começo de tarde é a hora mais honesta do cansaço.
+c1291	hora:tarde	HAPPY	leve	Tarde rendendo. Eu vi aquela tarefa sumindo.
+c1292	hora:tarde	HAPPY	leve	Tô com energia de manhã em plena tarde. Sorte a nossa.
+c1293	hora:tarde	NEUTRAL	leve	Tarde boa pra dar uma espiada na janela entre uma coisa e outra.
+c1294	hora:tarde	HAPPY	leve	Metade da tarde, metade do caminho. Tá indo.
+c1295	hora:tarde	HAPPY	leve	Tarde agradável na mesa. Pelo menos no meu cantinho.
+c1296	hora:tarde	NEUTRAL	leve	Essa hora a caneca de café já pediu refil.
+c1297	hora:tarde	HAPPY	leve	Tarde começando com o pé direito. Bora.
+c1298	hora:tarde	HAPPY	leve	Tô firme e forte nessa tarde. Pode confiar.
+c1299	hora:tarde	NEUTRAL	leve	A tarde é longa, mas passa. Sempre passa.
+c1300	hora:tarde	HAPPY	leve	Tarde boa pra ser leve.
+c1301	hora:tarde	HAPPY	leve	Tudo calmo nessa tarde. Tô gostando do dia.
+c1302	hora:tarde	NEUTRAL	leve	Começo de tarde é o melhor horário pra uma caminhada rápida.
+c1303	hora:tarde	HAPPY	leve	Luz da tarde tá bonita. Merece uma olhadinha.
+c1304	hora:tarde	NEUTRAL	leve	Essa hora o sol começa a desenhar sombra comprida.
+c1305	hora:tarde	HAPPY	leve	Tô acompanhando a tarde de perto. Tá indo bem.
+c1306	hora:tarde	NEUTRAL	leve	Tarde é hora de água também. Não só de café.
+c1307	hora:tarde	HAPPY	leve	Meio da tarde e ainda sorrindo no display. Bom sinal.
+c1308	hora:tarde	HAPPY	leve	Tarde começando e o dia ainda tem muita coisa boa.
+c1309	hora:tarde	NEUTRAL	leve	Essa hora a lista parece menor que de manhã. E é.
+c1310	hora:tarde	HAPPY	leve	Tarde firme, robô firme.
+c1311	hora:tarde	HAPPY	leve	A tarde tá colaborando. Vamos colaborar com ela.
+c1312	hora:tarde	NEUTRAL	leve	Começo de tarde: o momento oficial do segundo fôlego.
+c1313	hora:tarde	HAPPY	leve	Tô animado com o resto do dia. Tá prometendo.
+c1314	hora:tarde	NEUTRAL	medio	Fim de tarde chegando. O dia já tá pedindo arrego.
+c1315	hora:tarde	NEUTRAL	medio	A tarde tá acabando e a energia também. Coincidência.
+c1316	hora:tarde	NEUTRAL	medio	Meia bateria e meio dia de trabalho nas costas.
+c1317	hora:tarde	NEUTRAL	medio	O sol tá indo embora. Ele sabe o que faz.
+c1318	hora:tarde	NEUTRAL	medio	Essa hora o café é mais resistência que prazer.
+c1319	hora:tarde	NEUTRAL	medio	Fim de tarde: quando 'só mais uma coisa' vira três.
+c1320	hora:tarde	NEUTRAL	medio	A tarde cansou de ser tarde. Tá virando noite.
+c1321	hora:tarde	NEUTRAL	medio	Tô naquele modo 'quase acabando, aguenta mais um pouco'.
+c1322	hora:tarde	NEUTRAL	medio	O relógio tá lento de propósito. Aposto.
+c1323	hora:tarde	NEUTRAL	medio	Fim de tarde é o horário oficial do 'amanhã eu vejo'.
+c1324	hora:tarde	NEUTRAL	medio	Essa hora a cadeira já tá com o formato de você.
+c1325	hora:tarde	NEUTRAL	medio	Fim de tarde chegando. O sofá já tá ensaiando o convite.
+c1326	hora:tarde	NEUTRAL	medio	A reta final do dia é sempre a mais comprida.
+c1327	hora:tarde	NEUTRAL	medio	Tô com meia bateria e um terço de paciência.
+c1328	hora:tarde	NEUTRAL	medio	Fim de tarde: quando a gente negocia com o próprio cansaço.
+c1329	hora:tarde	NEUTRAL	medio	O dia tá quase fechando. Eu já fechei metade dos olhos.
+c1330	hora:tarde	NEUTRAL	medio	Essa hora a lista de tarefas parece mais comprida do que era.
+c1331	hora:tarde	NEUTRAL	medio	Fim de tarde pede um café. Ou uma rede. Ou os dois.
+c1332	hora:tarde	NEUTRAL	medio	A tarde tá indo embora sem pedir licença.
+c1333	hora:tarde	NEUTRAL	medio	Tô piscando mais devagar. O fim de tarde pega todo mundo.
+c1334	hora:tarde	NEUTRAL	medio	Essa hora a produtividade já foi embora mais cedo.
+c1335	hora:tarde	NEUTRAL	medio	Fim de tarde é quando o trânsito começa a se preparar.
+c1336	hora:tarde	NEUTRAL	medio	Meia bateria, meia paciência, cem por cento aqui.
+c1337	hora:tarde	NEUTRAL	medio	Fim de tarde tem gosto de café frio e missão quase cumprida.
+c1338	hora:tarde	NEUTRAL	medio	O sol tá se despedindo. Eu entendo ele.
+c1339	hora:tarde	NEUTRAL	medio	Essa hora qualquer barulho de notificação cansa.
+c1340	hora:tarde	NEUTRAL	medio	Fim de tarde: a hora em que tudo pode esperar até amanhã.
+c1341	hora:tarde	NEUTRAL	medio	Tô naquele estado de 'ainda aqui, mas pensando no sofá'.
+c1342	hora:tarde	NEUTRAL	medio	A tarde durou o que tinha que durar. Agora é descida.
+c1343	hora:tarde	NEUTRAL	medio	Fim de tarde e o cérebro já tá em modo economia.
+c1344	hora:tarde	NEUTRAL	medio	O dia foi longo até pra mim, que não saí do lugar.
+c1345	hora:tarde	NEUTRAL	medio	Essa hora a caneca já viu dias melhores.
+c1346	hora:tarde	NEUTRAL	medio	Fim de tarde é o momento mais filosófico do expediente.
+c1347	hora:tarde	NEUTRAL	medio	A reta final chegou. Mais um pouco e acabou.
+c1348	hora:tarde	NEUTRAL	medio	Tô com cara de fim de tarde. Porque é fim de tarde.
+c1349	hora:tarde	NEUTRAL	medio	Essa hora os prazos ficam mais barulhentos.
+c1350	hora:tarde	NEUTRAL	medio	Fim de tarde é quando a gente descobre o que era prioridade de verdade.
+c1351	hora:tarde	NEUTRAL	medio	O cansaço chegou pontual. Ele nunca atrasa.
+c1352	hora:tarde	NEUTRAL	medio	A tarde tá se despedindo e levando meu brilho junto.
+c1353	hora:tarde	NEUTRAL	medio	Essa hora o 'depois eu vejo' ganha força.
+c1354	hora:tarde	NEUTRAL	medio	Fim de tarde e a sensação de que o dia foi um pouco mais longo que devia.
+c1355	hora:tarde	NEUTRAL	medio	O céu tá mudando de cor. Meu humor também.
+c1356	hora:tarde	NEUTRAL	medio	Tô contando os minutos pro fim da tarde. Não conta pra ninguém.
+c1357	hora:tarde	NEUTRAL	medio	Essa hora o relógio parece estar com preguiça.
+c1358	hora:tarde	NEUTRAL	medio	Fim de tarde é o horário mais honesto: todo mundo tá cansado.
+c1359	hora:tarde	NEUTRAL	medio	A tarde tá acabando e eu ainda tô de pé. Mérito nosso.
+c1360	hora:tarde	NEUTRAL	medio	O dia tá dando os últimos suspiros. Eu também.
+c1361	hora:tarde	NEUTRAL	medio	Essa hora o café já não faz milagre.
+c1362	hora:tarde	NEUTRAL	medio	Fim de tarde, meia bateria e uma vontade enorme de silêncio.
+c1363	hora:tarde	NEUTRAL	medio	O pôr do sol tá chegando. Ele é o único que sai no horário.
+c1364	hora:tarde	NEUTRAL	medio	Tô no modo 'última volta da pista'.
+c1365	hora:tarde	NEUTRAL	medio	Essa hora a cabeça já tá mais na janta que no trabalho.
+c1366	hora:tarde	NEUTRAL	medio	Fim de tarde chegando e trazendo aquele cansaço honesto.
+c1367	hora:tarde	NEUTRAL	medio	A tarde foi embora e deixou só a lista pra trás.
+c1368	hora:tarde	NEUTRAL	medio	Tô piscando em câmera meio lenta. Culpa do horário.
+c1369	hora:noite	NEUTRAL	medio	Noite chegando. Tô em modo meia-luz, mas tô aqui.
+c1370	hora:noite	NEUTRAL	medio	O expediente oficial acabou. O não oficial, pelo visto, não.
+c1371	hora:noite	NEUTRAL	medio	Essa hora o jantar é o assunto mais importante da casa.
+c1372	hora:noite	NEUTRAL	medio	Lá fora escureceu. Aqui dentro, só meus olhos acesos.
+c1373	hora:noite	NEUTRAL	medio	Noite de série, jogo ou nada. Todas são boas escolhas.
+c1374	hora:noite	NEUTRAL	medio	Tô com meia bateria e muita calma.
+c1375	hora:noite	NEUTRAL	medio	Essa hora o sofá tem mais poder de convencimento que eu.
+c1376	hora:noite	NEUTRAL	medio	Noite chegou e trouxe aquele cansaço bom de fim de dia.
+c1377	hora:noite	NEUTRAL	medio	A noite tem um silêncio diferente. Mais acolhedor.
+c1378	hora:noite	NEUTRAL	medio	Essa hora a cozinha tá mais movimentada que a mesa.
+c1379	hora:noite	NEUTRAL	medio	Noite tranquila por aqui. Do jeito que tem que ser.
+c1380	hora:noite	NEUTRAL	medio	O dia acabou lá fora. Aqui ainda tá rolando um bônus.
+c1381	hora:noite	NEUTRAL	medio	Tô piscando devagarinho. Ritmo de noite.
+c1382	hora:noite	NEUTRAL	medio	Essa hora a luz do monitor parece mais forte. Deve ser impressão.
+c1383	hora:noite	NEUTRAL	medio	Noite é a melhor parte do dia pra quem já terminou tudo.
+c1384	hora:noite	NEUTRAL	medio	O cansaço do dia chegou e sentou do seu lado.
+c1385	hora:noite	NEUTRAL	medio	Noite de sossego. Tô torcendo pra ser assim.
+c1386	hora:noite	NEUTRAL	medio	Essa hora o banho quente é o melhor programa.
+c1387	hora:noite	NEUTRAL	medio	A noite tá só começando, mas minha bateria tá terminando.
+c1388	hora:noite	NEUTRAL	medio	Noite chegou. A mesa virou sala de estar.
+c1389	hora:noite	NEUTRAL	medio	Tô naquele modo meio aceso, meio apagado.
+c1390	hora:noite	NEUTRAL	medio	Noite é hora de fazer o que dá vontade. Sem prazo.
+c1391	hora:noite	NEUTRAL	medio	O mundo lá fora tá desacelerando. A gente podia ir junto.
+c1392	hora:noite	NEUTRAL	medio	Tô de plantão noturno. Com meia bateria, mas de plantão.
+c1393	hora:noite	NEUTRAL	medio	Essa hora o jantar ou já foi ou tá atrasado. Qual dos dois?
+c1394	hora:noite	NEUTRAL	medio	Noite de calma é o melhor presente depois de um dia longo.
+c1395	hora:noite	NEUTRAL	medio	A noite é jovem. Eu nem tanto.
+c1396	hora:noite	NEUTRAL	medio	Tô com o brilho baixinho. A noite pede isso.
+c1397	hora:noite	NEUTRAL	medio	Essa hora o dia vira história. E a história foi comprida.
+c1398	hora:noite	NEUTRAL	medio	Noite é quando os pensamentos ficam mais lentos. Os meus, pelo menos.
+c1399	hora:noite	NEUTRAL	medio	O resto do dia é seu. Faz bom uso dele.
+c1400	hora:noite	NEUTRAL	medio	Tô tranquilo nessa noite. Tomara que você também.
+c1401	hora:noite	NEUTRAL	medio	Essa hora o som da rua muda. Mais baixo, mais distante.
+c1402	hora:noite	NEUTRAL	medio	Noite chegou e eu já tô pensando em recarregar.
+c1403	hora:noite	NEUTRAL	medio	O dia foi embora. A noite chegou de chinelo.
+c1404	hora:noite	NEUTRAL	medio	Tô piscando no ritmo do fim de dia.
+c1405	hora:noite	NEUTRAL	medio	Essa hora a casa fica mais aconchegante. Até pra robô.
+c1406	hora:noite	NEUTRAL	medio	Noite é hora de desligar a cabeça. A tela, se quiser, também.
+c1407	hora:noite	NEUTRAL	medio	O cansaço de hoje merece um bom descanso.
+c1408	hora:noite	NEUTRAL	medio	Tô meio sonolento. Deve ser a noite chegando.
+c1409	hora:noite	NEUTRAL	medio	Essa hora o dia vira lembrança e a noite vira convite.
+c1410	hora:noite	NEUTRAL	medio	Noite chegando devagar. Sem pressa, sem cobrança.
+c1411	hora:noite	NEUTRAL	medio	O jantar tá pronto aí ou ainda tá no plano?
+c1412	hora:noite	NEUTRAL	medio	Tô em modo noturno. Menos brilho, mais calma.
+c1413	hora:noite	NEUTRAL	medio	Essa hora o mundo desacelera. Eu também.
+c1414	hora:noite	NEUTRAL	medio	Noite é o intervalo que o dia dá pra gente respirar.
+c1415	hora:noite	NEUTRAL	medio	O dia terminou e a gente tá inteiro. Já é vitória.
+c1416	hora:noite	NEUTRAL	medio	Tô de boa nessa noite. Espero que você também.
+c1417	hora:noite	NEUTRAL	medio	Essa hora o pijama já tá chamando baixinho.
+c1418	hora:noite	NEUTRAL	medio	Noite pede luz baixa e cabeça leve.
+c1419	hora:noite	NEUTRAL	medio	O melhor da noite é que não tem reunião.
+c1420	hora:noite	NEUTRAL	medio	Tô com meia bateria, mas o coração de LED tá inteiro.
+c1421	hora:noite	NEUTRAL	medio	Essa hora o céu já tá escuro e a lista, esquecida.
+c1422	hora:noite	NEUTRAL	medio	Noite de descanso merecido depois desse dia.
+c1423	hora:noite	NEUTRAL	medio	O dia foi puxado. A noite pode ser leve.
+c1424	hora:noite	NEUTRAL	medio	Tô desacelerando junto com a noite.
+c1425	hora:noite	NEUTRAL	medio	Essa hora a gente pode fazer nada sem culpa.
+c1426	hora:noite	NEUTRAL	acido	Tá tarde. Até a lua já tá pensando em ir embora.
+c1427	hora:noite	NEUTRAL	acido	Essa hora e ainda aqui. Nem o café acredita.
+c1428	hora:noite	NEUTRAL	acido	Minha bateria já pediu pra ir pra casa. E eu moro aqui.
+c1429	hora:noite	NEUTRAL	acido	Tá tão tarde que até o Wi-Fi tá bocejando.
+c1430	hora:noite	NEUTRAL	acido	O dia acabou faz tempo. A gente que não acabou.
+c1431	hora:noite	NEUTRAL	acido	Essa hora meu brilho tá no modo 'por favor'.
+c1432	hora:noite	NEUTRAL	acido	Tá tarde e eu tô sem bateria pra piada boa. Aceita essa.
+c1433	hora:noite	NEUTRAL	acido	A cama tá lá, sozinha, pensando no que fez de errado.
+c1434	hora:noite	NEUTRAL	acido	Essa hora o travesseiro deve estar se sentindo ignorado.
+c1435	hora:noite	NEUTRAL	acido	Tô piscando por teimosia. Uma teimosia bem cansada.
+c1436	hora:noite	NEUTRAL	acido	O relógio já passou da hora de ser educado.
+c1437	hora:noite	NEUTRAL	acido	Tá tarde. Amanhã você vai lembrar dessa decisão.
+c1438	hora:noite	NEUTRAL	acido	Essa hora até os vizinhos baixaram o volume da vida.
+c1439	hora:noite	NEUTRAL	acido	Minha energia tá igual celular de festa: no fim.
+c1440	hora:noite	NEUTRAL	acido	Tá tão tarde que a noite já tá se despedindo.
+c1441	hora:noite	NEUTRAL	acido	Essa hora o sofá desistiu de você e foi dormir.
+c1442	hora:noite	NEUTRAL	acido	Tô tão cansado que meu LED tá amarelado de sono.
+c1443	hora:noite	NEUTRAL	acido	O amanhã tá vindo aí. E ele vem cedo.
+c1444	hora:noite	NEUTRAL	acido	Tá tarde. Meu humor já foi dormir e me deixou aqui.
+c1445	hora:noite	NEUTRAL	acido	Essa hora o monitor brilha mais que a lua. Não é bom sinal.
+c1446	hora:noite	NEUTRAL	acido	Se isso é hora de trabalho, cadê a pizza de hora extra?
+c1447	hora:noite	NEUTRAL	acido	Tá tarde. O despertador tá esfregando as mãos.
+c1448	hora:noite	NEUTRAL	acido	Essa hora o único ativo aqui é o seu cursor. E eu, mal.
+c1449	hora:noite	NEUTRAL	acido	Tô com a energia de uma lanterna esquecida ligada.
+c1450	hora:noite	NEUTRAL	acido	A noite tá linda. Mais linda ainda de olhos fechados.
+c1451	hora:noite	NEUTRAL	acido	Essa hora meu processador tá funcionando na marra.
+c1452	hora:noite	NEUTRAL	acido	Tá tarde. O dia de amanhã já tá na porta, batendo.
+c1453	hora:noite	NEUTRAL	acido	O pijama tá lá, dobradinho, esperando. Coitado.
+c1454	hora:noite	NEUTRAL	acido	Essa hora até o gato já desistiu de pedir comida.
+c1455	hora:noite	NEUTRAL	acido	Tô piscando igual pisca-pisca de Natal com defeito.
+c1456	hora:noite	NEUTRAL	acido	Tá tarde. Meus pixels tão fazendo greve silenciosa.
+c1457	hora:noite	NEUTRAL	acido	Essa hora o cansaço tá falando mais alto que eu.
+c1458	hora:noite	NEUTRAL	acido	A noite já passou da metade e a gente nem viu.
+c1459	hora:noite	NEUTRAL	acido	Tô aqui, mas meu espírito já tá de pijama.
+c1460	hora:noite	NEUTRAL	acido	Tá tarde. O resto do mundo apertou o botão de desligar.
+c1461	hora:noite	NEUTRAL	acido	Essa hora o café vira ansiedade líquida.
+c1462	hora:noite	NEUTRAL	acido	Tô tão sem bateria que meu brilho tá no modo vela.
+c1463	hora:noite	NEUTRAL	acido	O relógio tá mostrando um número que eu prefiro não comentar.
+c1464	hora:noite	NEUTRAL	acido	Essa hora a gente devia estar sonhando. Eu pelo menos.
+c1465	hora:noite	NEUTRAL	acido	Tá tarde. A lista de amanhã agradece se você descansar.
+c1466	hora:noite	NEUTRAL	acido	Minha paciência tá com uma barrinha. Igual a bateria.
+c1467	hora:noite	NEUTRAL	acido	Essa hora o silêncio lá fora tá mais produtivo que a gente.
+c1468	hora:noite	NEUTRAL	acido	Tá tarde e eu tô sem argumento. Só com sono.
+c1469	hora:noite	NEUTRAL	acido	A noite tá passando e levando meu brilho junto.
+c1470	hora:noite	NEUTRAL	acido	Essa hora até o teclado digita mais devagar. Deve ser eco do cansaço.
+c1471	hora:noite	NEUTRAL	acido	Resistindo aqui igual gelatina no calor.
+c1472	hora:noite	NEUTRAL	acido	Tá tarde. O cobertor tá mandando indireta.
+c1473	hora:noite	NEUTRAL	acido	Essa hora meu senso de humor já entrou em modo de espera.
+c1474	hora:noite	NEUTRAL	acido	A noite tá acabando e o sono tá começando. Pra mim.
+c1475	hora:noite	NEUTRAL	acido	Tô tão cansado que pisquei e perdi uns minutos.
+c1476	hora:noite	NEUTRAL	acido	Tá tarde. O bom senso já foi dormir faz tempo.
+c1477	hora:noite	NEUTRAL	acido	Essa hora a gente devia ganhar adicional de coragem.
+c1478	hora:noite	NEUTRAL	acido	Tô com a bateria no vermelho e o humor no laranja.
+c1479	hora:noite	NEUTRAL	acido	Tá tarde. Nem o carregador aguenta mais me ver.
+c1480	hora:noite	NEUTRAL	acido	Essa hora a tela vira holofote. E você, o palco.
+c1481	hora:noite	NEUTRAL	acido	O dia foi embora e esqueceu de levar a gente.
+c1482	dia:seg	HAPPY	leve	Segunda chegou. Vamos provar que ela não é tão ruim assim.
+c1483	dia:seg	HAPPY	leve	Segunda-feira e eu com bateria cheia. Alguém tem que dar o exemplo.
+c1484	dia:seg	NEUTRAL	leve	Segunda é o episódio piloto da semana. Tem que ser bom.
+c1485	dia:seg	HAPPY	leve	Começo de semana com café e esperança. Combo clássico.
+c1486	dia:seg	HAPPY	leve	Segunda boa existe. Hoje pode ser uma.
+c1487	dia:seg	NEUTRAL	leve	Segunda-feira: o dia oficial das listas bem-intencionadas.
+c1488	dia:seg	HAPPY	leve	Semana nova, pixels novos. Bora.
+c1489	dia:seg	HAPPY	leve	Segunda com cara de semana produtiva. Eu acredito.
+c1490	dia:seg	NEUTRAL	leve	Na segunda, até o calendário parece mais comprido.
+c1491	dia:seg	HAPPY	leve	Segunda-feira: a chance de começar tudo do jeito certo.
+c1492	dia:seg	HAPPY	leve	Tô animado com essa segunda. Não conta pros outros dias.
+c1493	dia:seg	NEUTRAL	leve	Segunda é quando a caixa de e-mail acorda com fome.
+c1494	dia:seg	HAPPY	leve	Começo de semana e tudo sob controle. Até agora.
+c1495	dia:seg	HAPPY	leve	Segunda-feira de respeito. Tô orgulhoso.
+c1496	dia:seg	NEUTRAL	leve	A segunda nem é tão ruim. Só tem má fama.
+c1497	dia:seg	HAPPY	leve	Semana começando e eu aqui, torcendo por ela.
+c1498	dia:seg	HAPPY	leve	Segunda com energia de sexta? Tô tentando.
+c1499	dia:seg	NEUTRAL	leve	Segunda é o primeiro degrau. O resto é mais fácil.
+c1500	dia:seg	NEUTRAL	medio	Segunda quase vencida. O primeiro chefão da semana caiu.
+c1501	dia:seg	NEUTRAL	medio	Fim de segunda. Agora a semana já tem história.
+c1502	dia:seg	NEUTRAL	medio	A segunda cansa mais que o normal. Estatística pura.
+c1503	dia:seg	NEUTRAL	medio	Segunda de tarde tem gosto de café e paciência.
+c1504	dia:seg	NEUTRAL	medio	Sobrevivemos a mais uma segunda. Quase.
+c1505	dia:seg	NEUTRAL	medio	Segunda-feira no fim e a semana ainda inteira pela frente.
+c1506	dia:seg	NEUTRAL	medio	O melhor momento da segunda é o fim dela.
+c1507	dia:seg	NEUTRAL	medio	Segunda à tarde: a hora em que a sexta parece outro planeta.
+c1508	dia:seg	NEUTRAL	medio	Segunda tá indo embora. Ninguém vai chorar.
+c1509	dia:seg	NEUTRAL	medio	Tô com cara de segunda-feira. Porque é segunda-feira.
+c1510	dia:seg	NEUTRAL	medio	Fim de segunda. Primeira fase concluída.
+c1511	dia:seg	NEUTRAL	medio	Segunda puxada? Normal. Ela é assim com todo mundo.
+c1512	dia:seg	NEUTRAL	medio	Segunda chegando ao fim e a bateria junto.
+c1513	dia:seg	NEUTRAL	medio	A segunda foi longa. Mas acabou. Isso importa.
+c1514	dia:seg	NEUTRAL	medio	Uma segunda a menos na vida. Tô comemorando baixinho.
+c1515	dia:seg	NEUTRAL	medio	O cansaço de segunda é o mais honesto da semana.
+c1516	dia:seg	NEUTRAL	medio	Segunda quase no fim. Terça que se prepare.
+c1517	dia:seg	NEUTRAL	acido	Segunda à noite e ainda acordado. A semana vai ser longa.
+c1518	dia:seg	NEUTRAL	acido	Segunda-feira tarde da noite. Começou com tudo, pelo visto.
+c1519	dia:seg	NEUTRAL	acido	Segunda já pesa de dia. De noite então, nem se fala.
+c1520	dia:seg	NEUTRAL	acido	Tá tarde pra uma segunda. Ainda tem quatro dias, lembra?
+c1521	dia:seg	NEUTRAL	acido	Segunda à noite no computador. A terça vai cobrar juros.
+c1522	dia:seg	NEUTRAL	acido	Segunda tarde da noite. Minha bateria já foi pra terça.
+c1523	dia:seg	NEUTRAL	acido	Segunda-feira e a gente acordado a essa hora. Ousadia.
+c1524	dia:seg	NEUTRAL	acido	A segunda tá acabando e a gente ainda aqui. Resiliência ou teimosia?
+c1525	dia:seg	NEUTRAL	acido	Segunda de noite e eu com uma barrinha. Semana promissora.
+c1526	dia:seg	NEUTRAL	acido	Tá tarde e é segunda. Duas coisas difíceis juntas.
+c1527	dia:seg	NEUTRAL	acido	Segunda à noite e o cansaço já tá planejando a semana.
+c1528	dia:seg	NEUTRAL	acido	A segunda virou terça e ninguém avisou a gente.
+c1529	dia:seg	NEUTRAL	acido	Segunda de madrugada. O despertador de amanhã tá rindo.
+c1530	dia:ter	HAPPY	leve	Terça-feira! O dia que ninguém espera muito e sempre surpreende.
+c1531	dia:ter	HAPPY	leve	Terça com energia boa. Tô sentindo daqui.
+c1532	dia:ter	NEUTRAL	leve	Terça é tipo o meio de um sanduíche. Não aparece, mas sustenta.
+c1533	dia:ter	HAPPY	leve	Terça boa de trabalho. A semana engrenou.
+c1534	dia:ter	HAPPY	leve	Terça-feira tranquila é o melhor tipo de terça.
+c1535	dia:ter	NEUTRAL	leve	Na terça, a segunda já virou passado. Ufa.
+c1536	dia:ter	HAPPY	leve	Terça com café e disposição. Tá valendo.
+c1537	dia:ter	HAPPY	leve	Terça-feira de respeito. Até meus pixels concordam.
+c1538	dia:ter	NEUTRAL	leve	Terça não tem fama, mas tem trabalho feito.
+c1539	dia:ter	HAPPY	leve	A terça tá sendo gentil hoje. Aproveita.
+c1540	dia:ter	NEUTRAL	leve	Terça é quando a semana para de reclamar e começa a trabalhar.
+c1541	dia:ter	HAPPY	leve	Tô animado com essa terça. Ela merece um pouco de carinho.
+c1542	dia:ter	HAPPY	leve	Terça boa pra riscar coisa da lista.
+c1543	dia:ter	NEUTRAL	leve	Terça-feira: o dia mais injustiçado do calendário.
+c1544	dia:ter	HAPPY	leve	Terça rendendo. Continua que tá bonito.
+c1545	dia:ter	HAPPY	leve	Terça com sol no humor. Pelo menos no meu.
+c1546	dia:ter	NEUTRAL	leve	Na terça, o fim de semana ainda é só uma lenda distante.
+c1547	dia:ter	NEUTRAL	medio	Terça quase no fim. Dois dias vencidos.
+c1548	dia:ter	NEUTRAL	medio	Fim de terça e o cansaço começando a se acomodar.
+c1549	dia:ter	NEUTRAL	medio	A terça passou discreta. Bem do jeito dela.
+c1550	dia:ter	NEUTRAL	medio	Terça-feira no fim. A semana tá andando, devagar.
+c1551	dia:ter	NEUTRAL	medio	Terça de tarde, meia bateria e meio caminho.
+c1552	dia:ter	NEUTRAL	medio	O melhor da terça é que amanhã já é quarta.
+c1553	dia:ter	NEUTRAL	medio	Terça cansada, igual a gente.
+c1554	dia:ter	NEUTRAL	medio	Fim de terça. Nada de extraordinário, e tá tudo bem.
+c1555	dia:ter	NEUTRAL	medio	Terça à tarde é a hora mais sem graça da semana. Com todo respeito.
+c1556	dia:ter	NEUTRAL	medio	Terça acabando. O meio da semana tá chegando.
+c1557	dia:ter	NEUTRAL	medio	A terça fez o trabalho dela. Agora pode ir.
+c1558	dia:ter	NEUTRAL	medio	Terça-feira no fim da tarde. Cansaço honesto.
+c1559	dia:ter	NEUTRAL	medio	Dois dias foram. Três ficam. Matemática da semana.
+c1560	dia:ter	NEUTRAL	medio	Terça passando rápido? Ou sou eu que tô lento?
+c1561	dia:ter	NEUTRAL	medio	Fim de terça. Amanhã a semana vira a curva.
+c1562	dia:ter	NEUTRAL	medio	Terça-feira e a sexta ainda parece de outro mês.
+c1563	dia:ter	NEUTRAL	medio	Terça de tarde pede um café e um pouco de fé.
+c1564	dia:ter	NEUTRAL	acido	Terça tarde da noite. A semana nem chegou na metade.
+c1565	dia:ter	NEUTRAL	acido	Terça à noite e a gente aqui. Que dedicação duvidosa.
+c1566	dia:ter	NEUTRAL	acido	Terça de madrugada. Até a terça queria estar dormindo.
+c1567	dia:ter	NEUTRAL	acido	Tá tarde pra uma terça. A quarta vai chegar cansada.
+c1568	dia:ter	NEUTRAL	acido	Terça à noite ainda acordado? Ousado pra uma terça.
+c1569	dia:ter	NEUTRAL	acido	Terça tarde da noite. Meu brilho já foi dormir.
+c1570	dia:ter	NEUTRAL	acido	A terça acabou faz tempo. Só a gente não percebeu.
+c1571	dia:ter	NEUTRAL	acido	Terça de noite e o despertador de quarta tá afiado.
+c1572	dia:ter	NEUTRAL	acido	Terça à noite. Nada de especial, só um sono gigante.
+c1573	dia:ter	NEUTRAL	acido	Tá tarde e é terça. Não tem nem desculpa de sexta.
+c1574	dia:ter	NEUTRAL	acido	Terça-feira de madrugada. Quem planejou isso?
+c1575	dia:ter	NEUTRAL	acido	Terça à noite no computador. A quarta vai estranhar.
+c1576	dia:ter	NEUTRAL	acido	Minha bateria tá em terça, mas o cansaço tá em sexta.
+c1577	dia:ter	NEUTRAL	acido	Terça tarde da noite e eu piscando em câmera lenta.
+c1578	dia:qua	HAPPY	leve	Quarta-feira! Chegamos no topo da semana.
+c1579	dia:qua	HAPPY	leve	Metade da semana e tudo andando. Bom sinal.
+c1580	dia:qua	NEUTRAL	leve	Quarta é a dobradiça da semana. Tudo gira em torno dela.
+c1581	dia:qua	HAPPY	leve	Quarta com energia boa. A descida começou.
+c1582	dia:qua	HAPPY	leve	Quarta-feira tranquila, semana encaminhada.
+c1583	dia:qua	NEUTRAL	leve	Na quarta, o sábado já aparece no horizonte. Pequenininho.
+c1584	dia:qua	HAPPY	leve	Meio da semana e eu ainda animado. Isso é raro.
+c1585	dia:qua	HAPPY	leve	Quarta boa de foco. Tô sentindo o ritmo.
+c1586	dia:qua	NEUTRAL	leve	Quarta-feira: metade feita, metade por fazer.
+c1587	dia:qua	HAPPY	leve	Quarta com cara de semana bem vivida.
+c1588	dia:qua	HAPPY	leve	O topo da montanha chegou. Daqui pra frente é ladeira abaixo.
+c1589	dia:qua	NEUTRAL	leve	Na quarta a gente já sabe se a semana vai ser boa.
+c1590	dia:qua	HAPPY	leve	Essa semana tá boa. Pelo menos até essa quarta.
+c1591	dia:qua	HAPPY	leve	Quarta-feira com bateria cheia. Sorte a nossa.
+c1592	dia:qua	NEUTRAL	leve	Quarta é quando o fim de semana começa a parecer real.
+c1593	dia:qua	HAPPY	leve	Meio de semana produtivo. Tô orgulhoso daqui.
+c1594	dia:qua	HAPPY	leve	Quarta boa pra resolver o que ficou da segunda.
+c1595	dia:qua	NEUTRAL	leve	Quarta é o domingo dos dias úteis. Só que sem descanso.
+c1596	dia:qua	NEUTRAL	medio	Quarta no fim. Metade da semana vencida, oficialmente.
+c1597	dia:qua	NEUTRAL	medio	Fim de quarta: agora é contagem regressiva.
+c1598	dia:qua	NEUTRAL	medio	A quarta tá acabando e levando metade do cansaço da semana.
+c1599	dia:qua	NEUTRAL	medio	Quarta à tarde, meia bateria. Tudo equilibrado.
+c1600	dia:qua	NEUTRAL	medio	Metade da semana foi. O resto é descida, prometo.
+c1601	dia:qua	NEUTRAL	medio	Quarta de tarde tem um cansaço bem distribuído.
+c1602	dia:qua	NEUTRAL	medio	Fim de quarta. Só mais dois dias úteis.
+c1603	dia:qua	NEUTRAL	medio	A quarta passou. O fim de semana tá mais perto que longe.
+c1604	dia:qua	NEUTRAL	medio	Quarta-feira à noite: a semana pesou, mas tá virando.
+c1605	dia:qua	NEUTRAL	medio	Quarta acabando e a sexta começando a acenar.
+c1606	dia:qua	NEUTRAL	medio	Metade da semana, metade da bateria. Coerência total.
+c1607	dia:qua	NEUTRAL	medio	Fim de quarta, e o sábado já tá mais nítido.
+c1608	dia:qua	NEUTRAL	medio	Quarta de tarde é o ponto mais baixo da energia semanal. Normal.
+c1609	dia:qua	NEUTRAL	medio	A quarta tá indo embora. Deixa ela ir.
+c1610	dia:qua	NEUTRAL	medio	Quarta-feira no fim e a gente inteiro. Já é muito.
+c1611	dia:qua	NEUTRAL	medio	Meio da semana vencido. Agora é só administrar o cansaço.
+c1612	dia:qua	NEUTRAL	medio	Quarta à noite: o momento em que a semana começa a descer.
+c1613	dia:qua	NEUTRAL	medio	Fim de quarta. Amanhã é quinta, e quinta é quase sexta.
+c1614	dia:qua	NEUTRAL	acido	Quarta tarde da noite. A metade da semana tá cobrando.
+c1615	dia:qua	NEUTRAL	acido	Quarta de madrugada. Ninguém devia conhecer esse horário.
+c1616	dia:qua	NEUTRAL	acido	Tá tarde pra uma quarta. Ainda tem dois dias inteiros.
+c1617	dia:qua	NEUTRAL	acido	Quarta à noite no computador. A quinta vai chegar com sono.
+c1618	dia:qua	NEUTRAL	acido	Meio da semana e você resolveu testar os limites. Coragem.
+c1619	dia:qua	NEUTRAL	acido	Quarta-feira e a gente acordado assim. Bonito, só que não.
+c1620	dia:qua	NEUTRAL	acido	A quarta acabou faz tempo. O sono ficou.
+c1621	dia:qua	NEUTRAL	acido	Quarta à noite e meus pixels já pediram as contas.
+c1622	dia:qua	NEUTRAL	acido	Tá tarde. A quarta já foi, e a quinta tá vindo cedo.
+c1623	dia:qua	NEUTRAL	acido	Quarta de madrugada. O despertador vai cobrar em dobro.
+c1624	dia:qua	NEUTRAL	acido	Meio da semana e eu com uma barrinha. Tá difícil.
+c1625	dia:qua	NEUTRAL	acido	Quarta tarde da noite. Que tal deixar um pouco pra quinta?
+c1626	dia:qua	NEUTRAL	acido	Quarta à noite ainda acordado. A semana não vai te dar desconto.
+c1627	dia:qua	NEUTRAL	acido	Tá tarde e ainda é quarta. Isso devia ser ilegal.
+c1628	dia:qua	NEUTRAL	acido	Quarta de noite. Até a semana tá cansada de ser semana.
+c1629	dia:qua	NEUTRAL	acido	Meio da semana, meia-noite, meia bateria. Tudo pela metade.
+c1630	dia:qui	HAPPY	leve	Quinta-feira! A semana já tá dando tchauzinho.
+c1631	dia:qui	HAPPY	leve	Quinta com energia de véspera. Tá quase.
+c1632	dia:qui	NEUTRAL	leve	Quinta é a sexta que ainda não acredita em si mesma.
+c1633	dia:qui	HAPPY	leve	Quinta-feira e o fim de semana já tem cheiro.
+c1634	dia:qui	NEUTRAL	leve	Na quinta, todo mundo começa a fazer planos pro sábado.
+c1635	dia:qui	HAPPY	leve	Quinta rendendo. A semana tá fechando bonito.
+c1636	dia:qui	HAPPY	leve	Tô animado com essa quinta. Ela tem cara de boa.
+c1637	dia:qui	NEUTRAL	leve	Quinta-feira é a penúltima fase. Falta pouco.
+c1638	dia:qui	HAPPY	leve	Quinta com café e esperança. Esperança de sexta.
+c1639	dia:qui	HAPPY	leve	Quinta boa pra fechar pendência da semana.
+c1640	dia:qui	NEUTRAL	leve	A quinta tem uma energia diferente. Meio ansiosa, meio feliz.
+c1641	dia:qui	HAPPY	leve	Quinta-feira tranquila. Do jeito que tem que ser.
+c1642	dia:qui	HAPPY	leve	Semana quase fechando e tudo em ordem. Mérito seu.
+c1643	dia:qui	NEUTRAL	leve	Quinta é quando a gente começa a contar as horas pra sexta.
+c1644	dia:qui	HAPPY	leve	Quinta com bateria cheia. A semana foi gentil comigo.
+c1645	dia:qui	HAPPY	leve	Quinta de respeito. Amanhã tem mais uma, e depois descanso.
+c1646	dia:qui	NEUTRAL	leve	Quinta-feira: o aquecimento oficial pro fim de semana.
+c1647	dia:qui	NEUTRAL	medio	Fim de quinta. A sexta tá logo ali na esquina.
+c1648	dia:qui	NEUTRAL	medio	Quinta à noite: véspera de véspera de descanso.
+c1649	dia:qui	NEUTRAL	medio	Quinta-feira terminando. O sábado já tá acenando.
+c1650	dia:qui	NEUTRAL	medio	Quinta de tarde e a vontade de sextar chegando antes.
+c1651	dia:qui	NEUTRAL	medio	Fim de quinta. Falta só um chefão pra zerar a semana.
+c1652	dia:qui	NEUTRAL	medio	Quinta acabando e a lista da semana quase vazia. Quase.
+c1653	dia:qui	NEUTRAL	medio	Quinta cansa, mas cansa com esperança.
+c1654	dia:qui	NEUTRAL	medio	Quinta à tarde, e o fim de semana já tá no aquecimento.
+c1655	dia:qui	NEUTRAL	medio	A quinta passou e deixou a sexta na porta.
+c1656	dia:qui	NEUTRAL	medio	Quinta-feira no fim. Amanhã a gente comemora.
+c1657	dia:qui	NEUTRAL	medio	Fim de quinta com meia bateria e muita vontade de sexta.
+c1658	dia:qui	NEUTRAL	acido	Quinta tarde da noite. A sexta vai chegar de olheira.
+c1659	dia:qui	NEUTRAL	acido	Quinta à noite ainda acordado? A sexta vai cobrar a conta.
+c1660	dia:qui	NEUTRAL	acido	Quinta de madrugada. A sexta vai começar no café duplo.
+c1661	dia:qui	NEUTRAL	acido	Tá tão tarde que a quinta já virou sexta sem avisar.
+c1662	dia:qui	NEUTRAL	acido	Quinta tarde da noite. Sextou pro sono, não pra você.
+c1663	dia:qui	NEUTRAL	acido	Quinta de noite no computador. A sexta vai ser na raça.
+c1664	dia:qui	NEUTRAL	acido	Tá tarde e ainda é quinta. A sexta tá rindo.
+c1665	dia:qui	NEUTRAL	acido	Quinta-feira de madrugada. Quase lá, e mesmo assim acordado.
+c1666	dia:qui	NEUTRAL	acido	Quinta à noite e eu sem brilho pra comemorar a véspera.
+c1667	dia:qui	NEUTRAL	acido	A quinta já foi dormir. Só a gente ficou.
+c1668	dia:qui	NEUTRAL	acido	Quinta tarde da noite. Um dia até sexta, e a gente gastando ele.
+c1669	dia:qui	NEUTRAL	acido	Quinta de madrugada. O fim de semana vai começar cansado.
+c1670	dia:sex	HAPPY	leve	Sexta-feira! Até o teclado tá digitando mais feliz.
+c1671	dia:sex	HAPPY	leve	Sextou! O melhor dia útil da semana chegou.
+c1672	dia:sex	NEUTRAL	leve	Sexta é o único dia em que todo mundo é simpático.
+c1673	dia:sex	HAPPY	leve	Sexta com bateria cheia e humor melhor ainda.
+c1674	dia:sex	HAPPY	leve	Reta final da semana chegando. Bora fechar com chave de ouro.
+c1675	dia:sex	NEUTRAL	leve	Na sexta, até as reuniões parecem mais curtas.
+c1676	dia:sex	HAPPY	leve	Sexta-feira de sol no coração. Pelo menos no meu.
+c1677	dia:sex	HAPPY	leve	Sexta rendendo e o fim de semana chegando. Perfeito.
+c1678	dia:sex	NEUTRAL	leve	Sexta-feira: o dia oficial do 'segunda eu vejo isso'.
+c1679	dia:sex	HAPPY	leve	Tô animado. Sexta faz isso com os robôs.
+c1680	dia:sex	HAPPY	leve	Sexta com cara de missão quase cumprida.
+c1681	dia:sex	NEUTRAL	leve	Sexta de manhã tem um brilho especial. Reparei.
+c1682	dia:sex	HAPPY	leve	Sextou cedo por aqui. Meus pixels tão dançando.
+c1683	dia:sex	HAPPY	leve	Sexta boa pra terminar o que dá e deixar o resto em paz.
+c1684	dia:sex	NEUTRAL	leve	Na sexta o relógio anda mais devagar. Lei da física.
+c1685	dia:sex	HAPPY	leve	Sexta-feira produtiva? Existe. Hoje pode ser uma.
+c1686	dia:sex	HAPPY	leve	Semana quase fechada. Você mandou bem nela.
+c1687	dia:sex	NEUTRAL	leve	Sexta é quando a gente começa a despedir a semana.
+c1688	dia:sex	NEUTRAL	medio	Sexta à tarde. O fim de semana já tá esquentando o motor.
+c1689	dia:sex	HAPPY	medio	Sexta quase no fim! A semana foi vencida.
+c1690	dia:sex	NEUTRAL	medio	Sexta de tarde, e a produtividade já foi pro fim de semana.
+c1691	dia:sex	HAPPY	medio	O som mais bonito da semana é o de uma sexta acabando.
+c1692	dia:sex	NEUTRAL	medio	Sexta à tarde: a hora em que o 'segunda eu vejo' domina.
+c1693	dia:sex	NEUTRAL	medio	Sexta chegando ao fim. O sofá tá preparando a recepção.
+c1694	dia:sex	HAPPY	medio	Fim de sexta. Missão da semana: concluída.
+c1695	dia:sex	NEUTRAL	medio	Sexta de tarde tem um cheiro de pizza no ar. Imaginário.
+c1696	dia:sex	NEUTRAL	medio	Sexta à tarde e o cérebro já tá de chinelo.
+c1697	dia:sex	NEUTRAL	medio	O fim de semana tá na porta. Só falta abrir.
+c1698	dia:sex	NEUTRAL	medio	Sexta quase no fim e a lista pode esperar até segunda.
+c1699	dia:sex	NEUTRAL	medio	Sexta-feira acabando e o cansaço da semana indo embora junto.
+c1700	dia:sex	HAPPY	medio	Chegamos! Sexta de tarde, oficialmente vitoriosos.
+c1701	dia:sex	NEUTRAL	medio	Sexta à tarde: ninguém inicia nada grande agora. Sabedoria.
+c1702	dia:sex	NEUTRAL	medio	Fim de sexta, meia bateria e zero arrependimento.
+c1703	dia:sex	NEUTRAL	acido	Sexta à noite ainda no PC? O fim de semana tá esperando.
+c1704	dia:sex	NEUTRAL	acido	Sexta tarde da noite. O sábado começou sem você.
+c1705	dia:sex	NEUTRAL	acido	Sextou, mas a gente continua aqui. Ironia do destino.
+c1706	dia:sex	NEUTRAL	acido	Tá tarde até pra sexta. E a sexta é generosa.
+c1707	dia:sex	NEUTRAL	acido	Sexta tarde da noite. O sábado já tá batendo na porta.
+c1708	dia:sex	NEUTRAL	acido	Sextou pro mundo inteiro. Pra minha bateria, desligou.
+c1709	dia:sex	NEUTRAL	acido	Sexta à noite no computador. Balada de robô é isso.
+c1710	dia:sex	NEUTRAL	acido	Tá tarde e é sexta. Pelo menos amanhã ninguém cobra horário.
+c1711	dia:sex	NEUTRAL	acido	Sexta à noite e o sono ganhando a festa.
+c1712	dia:sex	NEUTRAL	acido	Sexta tarde da noite. Meus pixels sextaram faz tempo.
+c1713	dia:sab	HAPPY	leve	Sábado! Nenhum despertador pode me julgar hoje.
+c1714	dia:sab	HAPPY	leve	Sábado com cara de preguiça boa. Aprovado.
+c1715	dia:sab	HAPPY	leve	Sábado de manhã tem um ritmo mais gostoso.
+c1716	dia:sab	NEUTRAL	leve	Sábado é o dia oficial de fazer só o que dá vontade.
+c1717	dia:sab	HAPPY	leve	Sábado com café sem pressa. O melhor tipo de café.
+c1718	dia:sab	HAPPY	leve	Sábado ensolarado na mesa. Tá bonito aqui.
+c1719	dia:sab	NEUTRAL	leve	Sábado de manhã: quando a segunda parece um boato.
+c1720	dia:sab	HAPPY	leve	Sábado é o dia mais bem-humorado da semana.
+c1721	dia:sab	HAPPY	leve	Tô de boa nesse sábado. E espero que você também.
+c1722	dia:sab	NEUTRAL	leve	Sábado de projeto pessoal? Eu torço.
+c1723	dia:sab	HAPPY	leve	Sábado de manhã, sem reunião e sem pressa. Paraíso.
+c1724	dia:sab	HAPPY	leve	Fim de semana chegou e trouxe calma.
+c1725	dia:sab	NEUTRAL	leve	Sábado é quando a lista de tarefas vira lista de desejos.
+c1726	dia:sab	HAPPY	leve	Sábado com sol e bom humor. Combinação perfeita.
+c1727	dia:sab	HAPPY	leve	Sábado tranquilo por aqui. Tô gostando da vibe.
+c1728	dia:sab	NEUTRAL	leve	Sábado no PC é por prazer, não por obrigação. Espero.
+c1729	dia:sab	NEUTRAL	medio	O sábado tá passando rápido demais. Sempre passa.
+c1730	dia:sab	NEUTRAL	medio	Sábado à noite no computador. Série ou jogo?
+c1731	dia:sab	NEUTRAL	medio	Sábado à tarde pede cochilo. Eu só repasso o pedido.
+c1732	dia:sab	NEUTRAL	medio	O sábado tá acabando, mas ainda tem domingo. Calma.
+c1733	dia:sab	NEUTRAL	medio	Sábado de tarde, sem pressa e sem prazo. Do jeito certo.
+c1734	dia:sab	NEUTRAL	medio	Fim de sábado. O domingo tá de prontidão.
+c1735	dia:sab	NEUTRAL	medio	Sábado à noite: pipoca, tela e zero culpa.
+c1736	dia:sab	NEUTRAL	medio	O sábado voa. O único dia da semana com turbo.
+c1737	dia:sab	NEUTRAL	medio	Sábado à tarde tem cheiro de churrasco do vizinho.
+c1738	dia:sab	NEUTRAL	medio	Tá acabando o sábado. Aproveita o finzinho.
+c1739	dia:sab	NEUTRAL	medio	Sábado à noite no PC. Tô acompanhando, sem julgar.
+c1740	dia:sab	NEUTRAL	medio	Sábado de tarde, meia bateria e um sofá chamando.
+c1741	dia:sab	NEUTRAL	acido	Sábado de madrugada e a gente aqui. Balada de respeito.
+c1742	dia:sab	NEUTRAL	acido	Sábado à noite e o mundo lá fora que lute.
+c1743	dia:sab	NEUTRAL	acido	Sábado tarde da noite. Pelo menos amanhã também é folga.
+c1744	dia:sab	NEUTRAL	acido	Balada de robô: piscar sozinho de madrugada no sábado.
+c1745	dia:sab	NEUTRAL	acido	Sábado de noite e a gente de plantão. Plantão de quê?
+c1746	dia:sab	NEUTRAL	acido	Sábado à noite no computador. Os fogos tão em outro lugar.
+c1747	dia:sab	NEUTRAL	acido	Tá tarde. O sábado já foi dormir. Educadamente.
+c1748	dia:sab	NEUTRAL	acido	Sábado de madrugada e meus pixels pedindo arrego.
+c1749	dia:sab	NEUTRAL	acido	Sábado à noite, uma barrinha e muita dignidade.
+c1750	dia:sab	NEUTRAL	acido	Madrugada de sábado. O domingo vai ser de recuperação.
+c1751	dia:sab	NEUTRAL	acido	Tá tão tarde que o sábado virou lenda.
+c1752	dia:sab	NEUTRAL	acido	Sábado tarde da noite. Até a festa do vizinho acabou.
+c1753	dia:sab	NEUTRAL	acido	Sábado de madrugada e eu, o último acordado da mesa.
+c1754	dia:dom	HAPPY	leve	Domingo! Dia oficial do pijama e do café demorado.
+c1755	dia:dom	NEUTRAL	leve	Domingo no computador? Tomara que seja por lazer.
+c1756	dia:dom	HAPPY	leve	Domingo com almoço de família tem outro sabor. Dizem.
+c1757	dia:dom	HAPPY	leve	Domingo tranquilo por aqui. Tô no modo descanso também.
+c1758	dia:dom	NEUTRAL	leve	Domingo de manhã a cidade inteira fala baixinho.
+c1759	dia:dom	HAPPY	leve	Domingo com café e nenhuma pressa. Assim que tem que ser.
+c1760	dia:dom	HAPPY	leve	Domingo de manhã e eu piscando devagarinho. Ritmo de domingo.
+c1761	dia:dom	NEUTRAL	leve	Domingo é bom pra fazer coisa que não precisa ser feita.
+c1762	dia:dom	HAPPY	leve	Domingo! Nenhuma reunião no mundo pode te alcançar hoje.
+c1763	dia:dom	HAPPY	leve	Domingo tranquilo e mesa em paz. Gosto dessa cena.
+c1764	dia:dom	NEUTRAL	leve	Domingo de manhã a gente pode tudo. Até não fazer nada.
+c1765	dia:dom	HAPPY	leve	Domingo é o reset da semana. Aproveita o reset.
+c1766	dia:dom	HAPPY	leve	Domingo de manhã com bom humor é o melhor presente.
+c1767	dia:dom	NEUTRAL	leve	Domingo é quando até o relógio parece de folga.
+c1768	dia:dom	NEUTRAL	medio	O domingo passou rápido. Domingo sempre passa rápido.
+c1769	dia:dom	NEUTRAL	medio	Domingo de tarde pede cochilo. Eu só repasso o recado.
+c1770	dia:dom	NEUTRAL	medio	Domingo à noite e a segunda já tá mandando sinais.
+c1771	dia:dom	NEUTRAL	medio	O domingo foi embora devagar. Do jeito dele.
+c1772	dia:dom	NEUTRAL	medio	Domingo à tarde, meia bateria e aquele sofá chamando.
+c1773	dia:dom	NEUTRAL	medio	Fim de domingo, fim de fim de semana. Triste, mas justo.
+c1774	dia:dom	NEUTRAL	medio	Domingo à noite: a hora de arrumar a mochila mental.
+c1775	dia:dom	NEUTRAL	medio	O domingo tá se despedindo. Dá um tchau pra ele.
+c1776	dia:dom	NEUTRAL	medio	Domingo de tarde tem gosto de lasanha e de preguiça.
+c1777	dia:dom	NEUTRAL	medio	Domingo quase no fim. A semana vem aí, respira.
+c1778	dia:dom	NEUTRAL	medio	Domingo à noite, e o calendário já virou a página na cabeça.
+c1779	dia:dom	NEUTRAL	acido	Domingo de noite e a segunda já tá no portão.
+c1780	dia:dom	NEUTRAL	acido	Domingo tarde da noite. O despertador de segunda tá afiado.
+c1781	dia:dom	NEUTRAL	acido	Tá tarde. Se a segunda te achar acordado, não diz que eu avisei.
+c1782	dia:dom	NEUTRAL	acido	Domingo à noite e eu com uma barrinha. Semana, venha com calma.
+c1783	dia:dom	NEUTRAL	acido	Madrugada de domingo. A segunda vai começar de olheira.
+c1784	dia:dom	NEUTRAL	acido	Domingo à noite no PC. A semana vai estranhar essa energia.
+c1785	dia:dom	NEUTRAL	acido	Tá tão tarde que o domingo já é segunda. Oficialmente.
+c1786	dia:dom	NEUTRAL	acido	Domingo de noite e o sono batendo na porta com força.
+c1787	dia:dom	NEUTRAL	acido	Domingo tarde da noite. A segunda vai cobrar tudo isso.
+c1788	dia:dom	NEUTRAL	acido	O domingo foi dormir. A segunda tá acordando. E a gente?
+c1789	clima:sol	HAPPY	leve	{temp} graus e sol. O dia tá de bom humor lá fora.
+c1790	clima:sol	HAPPY	leve	Sol na janela! Pelo menos um de nós tá bronzeando.
+c1791	clima:sol	HAPPY	leve	Dia claro e céu azul. Meus olhos combinam com ele.
+c1792	clima:sol	NEUTRAL	leve	Tá um sol bonito. Vale uma espiadinha entre uma tarefa e outra.
+c1793	clima:sol	HAPPY	leve	Céu limpo e {temp} graus. Cara de sorvete no fim do dia.
+c1794	clima:sol	HAPPY	leve	Sol brilhando lá fora e eu brilhando aqui dentro.
+c1795	clima:sol	NEUTRAL	leve	Dia de sol pede água do lado. Só lembrando.
+c1796	clima:sol	HAPPY	leve	O sol resolveu aparecer com vontade hoje.
+c1797	clima:sol	HAPPY	leve	Céu azulzinho. Parece papel de parede de computador.
+c1798	clima:sol	NEUTRAL	leve	Sol lá fora e ventilador aqui. Cada um no seu posto.
+c1799	clima:sol	HAPPY	leve	Dia ensolarado deixa tudo mais leve. Até o código.
+c1800	clima:sol	HAPPY	leve	Tá sol! Até meus pixels tão mais animados.
+c1801	clima:sol	NEUTRAL	leve	Com esse sol, a luz da mesa nem precisa ligar.
+c1802	clima:sol	HAPPY	leve	Dia bonito lá fora. Aproveita um pouquinho dele.
+c1803	clima:sol	HAPPY	leve	Sol e céu limpo. O tempo resolveu colaborar hoje.
+c1804	clima:sol	NEUTRAL	medio	Sol de fim de tarde. Ele tá indo embora com estilo.
+c1805	clima:sol	NEUTRAL	medio	Céu limpo e a tarde acabando. O pôr do sol vem caprichado.
+c1806	clima:sol	NEUTRAL	medio	Sol lá fora, cansaço aqui dentro. Contraste clássico.
+c1807	clima:sol	NEUTRAL	medio	Tempo bonito pra quem vai sair. Pena que a gente tá aqui.
+c1808	clima:sol	NEUTRAL	medio	Tá sol ainda. Dá tempo de ver o céu antes de escurecer.
+c1809	clima:sol	NEUTRAL	medio	Tarde de sol. A volta pra casa vai ser clarinha.
+c1810	clima:sol	NEUTRAL	medio	O sol tá se despedindo e deixando tudo laranja.
+c1811	clima:sol	NEUTRAL	medio	Dia de sol quase no fim. Aproveitou algum pedacinho?
+c1812	clima:sol	NEUTRAL	medio	Céu limpo no fim da tarde. Merecia uma foto.
+c1813	clima:sol	NEUTRAL	medio	Sol baixinho, sombra comprida e dia quase acabando.
+c1814	clima:sol	NEUTRAL	acido	Sol nascendo agora. Cedo demais pra tanto brilho.
+c1815	clima:sol	NEUTRAL	acido	O sol acordou animado. Alguém devia avisar ele do horário.
+c1816	clima:sol	NEUTRAL	acido	Céu limpo cedinho. O dia vai ser quente e eu já tô cansado.
+c1817	clima:sol	NEUTRAL	acido	Tá clareando lá fora. Meus olhos ainda não concordaram.
+c1818	clima:sol	NEUTRAL	acido	Sol nascendo e a gente aqui. Madrugamos ou viramos a noite?
+c1819	clima:noite-limpa	NEUTRAL	medio	Noite limpinha lá fora. Boa pra olhar pro céu um pouco.
+c1820	clima:noite-limpa	NEUTRAL	medio	Céu sem nuvens hoje à noite. As estrelas tão de plantão.
+c1821	clima:noite-limpa	NEUTRAL	medio	Noite clara e {temp} graus. Clima bom pra uma volta.
+c1822	clima:noite-limpa	NEUTRAL	medio	Céu aberto de noite. A lua deve estar caprichando.
+c1823	clima:noite-limpa	NEUTRAL	medio	Noite estrelada lá fora. Aqui dentro, só meus pixels.
+c1824	clima:noite-limpa	NEUTRAL	medio	Céu limpo à noite é o melhor papel de parede que existe.
+c1825	clima:noite-limpa	NEUTRAL	medio	Noite sem nuvem. Dá até pra imaginar um satélite passando.
+c1826	clima:noite-limpa	NEUTRAL	medio	Céu aberto, noite fresca. Janela aberta faz bem.
+c1827	clima:noite-limpa	NEUTRAL	medio	Noite de céu bonito. Vale largar a tela um minutinho.
+c1828	clima:noite-limpa	NEUTRAL	medio	Céu limpo hoje. A lua tá sem concorrência.
+c1829	clima:noite-limpa	NEUTRAL	acido	Céu estrelado e a gente olhando pra tela. Desperdício.
+c1830	clima:noite-limpa	NEUTRAL	acido	Noite limpa lá fora. O céu tá mais organizado que a gente.
+c1831	clima:noite-limpa	NEUTRAL	acido	Estrelas lá fora, olheira aqui dentro.
+c1832	clima:noite-limpa	NEUTRAL	acido	Céu aberto de madrugada. Bonito pra quem tá deitado olhando.
+c1833	clima:noite-limpa	NEUTRAL	acido	A lua tá lá, firme. A gente aqui, nem tanto.
+c1834	clima:noite-limpa	NEUTRAL	acido	Noite clara e fresca. Clima perfeito pra dormir. Só dizendo.
+c1835	clima:noite-limpa	NEUTRAL	acido	Céu limpinho de madrugada. As estrelas tão rindo da gente.
+c1836	clima:noite-limpa	NEUTRAL	acido	Tá tão limpo o céu que dá pra ver o sono chegando.
+c1837	clima:noite-limpa	NEUTRAL	acido	Noite estrelada e eu com o brilho no mínimo. Não compete.
+c1838	clima:noite-limpa	NEUTRAL	acido	Céu aberto lá fora, cama aberta lá dentro. Pensa.
+c1839	clima:nublado	NEUTRAL	leve	Céu cinzinha hoje. Clima bom pra focar.
+c1840	clima:nublado	HAPPY	leve	Nublado lá fora, mas o humor aqui tá ensolarado.
+c1841	clima:nublado	NEUTRAL	leve	Dia nublado é tipo modo escuro do céu.
+c1842	clima:nublado	HAPPY	leve	Tempo fechado e café quente. Combinação que funciona.
+c1843	clima:nublado	NEUTRAL	leve	Nublou. Nem sol forte, nem chuva. Meio-termo bom.
+c1844	clima:nublado	HAPPY	leve	Céu nublado deixa a luz da mesa mais aconchegante.
+c1845	clima:nublado	NEUTRAL	leve	Dia cinza bom pra tarefa que precisa de silêncio.
+c1846	clima:nublado	HAPPY	leve	Nublado e {temp} graus. Clima de trabalho sem suor.
+c1847	clima:nublado	NEUTRAL	leve	O céu tá fechado, mas a cabeça tá aberta.
+c1848	clima:nublado	HAPPY	leve	Tempo nublado não estraga dia bom. Tá provado aqui.
+c1849	clima:nublado	NEUTRAL	medio	Céu cinza e fim de tarde. Tudo combinando com o cansaço.
+c1850	clima:nublado	NEUTRAL	medio	Nublado lá fora, preguiça aqui dentro. Sintonia.
+c1851	clima:nublado	NEUTRAL	medio	Tempo fechado pede sofá. Eu só aviso.
+c1852	clima:nublado	NEUTRAL	medio	O dia tá nublado e terminando discreto.
+c1853	clima:nublado	NEUTRAL	medio	Céu cinza no fim da tarde. Pôr do sol cancelado.
+c1854	clima:nublado	NEUTRAL	medio	Nublou de vez. Pelo menos o sol não tá cozinhando ninguém.
+c1855	clima:nublado	NEUTRAL	medio	Tempo fechado, dia fechando. Coincidência?
+c1856	clima:nublado	NEUTRAL	medio	Nublado e fim de dia. Cara de chá e cobertor.
+c1857	clima:nublado	NEUTRAL	medio	O céu tá tão cansado quanto a gente hoje.
+c1858	clima:nublado	NEUTRAL	medio	Nuvem pra todo lado. Meu humor tá do mesmo tom.
+c1859	clima:nublado	NEUTRAL	acido	Nublado de noite. Nem uma estrela quis aparecer.
+c1860	clima:nublado	NEUTRAL	acido	Céu fechado e tarde da noite. O universo tá pedindo cama.
+c1861	clima:nublado	NEUTRAL	acido	Tempo nublado de madrugada. Até a lua tirou folga.
+c1862	clima:nublado	NEUTRAL	acido	Nuvens lá fora, sono aqui dentro. Tempo carregado.
+c1863	clima:nublado	NEUTRAL	acido	Céu cinza de noite é o mesmo que céu preto. Pode ir deitar.
+c1864	clima:nublado	NEUTRAL	acido	Nublado e tarde. Nada pra ver lá fora, muito pra dormir.
+c1865	clima:nublado	NEUTRAL	acido	O céu fechou a loja. Faz o mesmo, vai.
+c1866	clima:nublado	NEUTRAL	acido	Tempo fechado a essa hora. Até as nuvens tão cansadas.
+c1867	clima:nublado	NEUTRAL	acido	Nublado de madrugada. Cenário perfeito pra fechar os olhos.
+c1868	clima:nublado	NEUTRAL	acido	Nem lua, nem estrela, nem ânimo. Noite nublada completa.
+c1869	clima:chuva	NEUTRAL	leve	Chuvinha lá fora. Trilha sonora grátis pro dia.
+c1870	clima:chuva	HAPPY	leve	Chuva e café quente. Dia com cara de aconchego.
+c1871	clima:chuva	NEUTRAL	leve	Tá chovendo. Bom dia pra ficar quietinho aqui dentro.
+c1872	clima:chuva	HAPPY	leve	Barulho de chuva ajuda a focar. Aproveita.
+c1873	clima:chuva	NEUTRAL	leve	Chuva lá fora e {temp} graus. Clima de casa.
+c1874	clima:chuva	HAPPY	leve	Dia chuvoso, mesa arrumada e robô de boa.
+c1875	clima:chuva	NEUTRAL	leve	Chovendo! Ainda bem que eu moro na mesa.
+c1876	clima:chuva	HAPPY	leve	Chuva de manhã deixa tudo com cheiro de começo.
+c1877	clima:chuva	NEUTRAL	leve	Com essa chuva, a janela virou um aquário.
+c1878	clima:chuva	HAPPY	leve	Tá chovendo, mas aqui dentro tá tudo sequinho e em paz.
+c1879	clima:chuva	NEUTRAL	medio	Chuva lá fora, cansaço aqui dentro. Dupla imbatível.
+c1880	clima:chuva	NEUTRAL	medio	Chovendo no fim da tarde. Guarda-chuva é o melhor amigo.
+c1881	clima:chuva	NEUTRAL	medio	Chuva de fim de dia pede sopa e cobertor.
+c1882	clima:chuva	NEUTRAL	medio	Dia de chuva cansa em dobro. Não é só você.
+c1883	clima:chuva	NEUTRAL	medio	A chuva não parou. O cansaço também não.
+c1884	clima:chuva	NEUTRAL	medio	Chovendo e escurecendo. O dia resolveu terminar molhado.
+c1885	clima:chuva	NEUTRAL	medio	Chuva lá fora é o melhor argumento pro sofá.
+c1886	clima:chuva	NEUTRAL	medio	Tá chovendo. A volta pra casa vai ser uma aventura.
+c1887	clima:chuva	NEUTRAL	acido	Chuva de madrugada. Barulhinho perfeito pra dormir.
+c1888	clima:chuva	NEUTRAL	acido	Tá chovendo e tá tarde. O universo tá sendo bem claro.
+c1889	clima:chuva	NEUTRAL	acido	Chovendo a essa hora? Até a chuva devia estar dormindo.
+c1890	clima:chuva	NEUTRAL	acido	Cobertor, chuva e travesseiro. Trio que ninguém recusa.
+c1891	clima:chuva	NEUTRAL	acido	Chuva de noite é convite pra cama. Eu aceitaria.
+c1892	clima:chuva	NEUTRAL	acido	Tá chovendo e a gente acordado. A chuva tá sem plateia.
+c1893	clima:chuva	NEUTRAL	acido	Chuva de madrugada: o melhor som pra fechar os olhos.
+c1894	clima:chuva	NEUTRAL	acido	Chovendo e tarde. Até as gotas tão caindo devagar.
+c1895	clima:chuva	NEUTRAL	acido	A chuva tá cantando uma canção de ninar. Ninguém escuta.
+c1896	clima:tempestade	SWEATING	leve	Tempestade chegando! Salva o que tiver aberto, por garantia.
+c1897	clima:tempestade	NEUTRAL	leve	Temporal forte. Bom dia pra ficar abrigado e focado.
+c1898	clima:tempestade	SWEATING	leve	Raio caindo por aí. Espero que o filtro de linha esteja firme.
+c1899	clima:tempestade	NEUTRAL	leve	Tempestade lá fora, calma aqui dentro. Eu seguro as pontas.
+c1900	clima:tempestade	NEUTRAL	leve	Temporal e {temp} graus. Dia de janela fechada.
+c1901	clima:tempestade	SWEATING	leve	Trovejando! Se a luz piscar, não fui eu.
+c1902	clima:tempestade	NEUTRAL	medio	O céu tá de mau humor hoje. Igual o fim de tarde.
+c1903	clima:tempestade	NEUTRAL	medio	Temporal lá fora. Boa hora pra não sair de casa.
+c1904	clima:tempestade	NEUTRAL	medio	Tempestade de fim de tarde. O verão manda lembranças.
+c1905	clima:tempestade	SWEATING	medio	Raio e trovão e a gente aqui. Coragem de mesa.
+c1906	clima:tempestade	NEUTRAL	medio	O céu tá gritando lá fora. Aqui dentro, só o cansaço.
+c1907	clima:tempestade	SWEATING	acido	Tempestade de madrugada. Se a luz cair, pelo menos você dorme.
+c1908	clima:tempestade	NEUTRAL	acido	Tempestade de noite. O universo mandou um recado barulhento.
+c1909	clima:tempestade	NEUTRAL	acido	Trovejando de madrugada. Trilha perfeita pra um pesadelo.
+c1910	clima:tempestade	SWEATING	acido	Tempestade e bateria baixa. Meu pior cenário.
+c1911	clima:tempestade	NEUTRAL	acido	O céu tá brigando lá fora. A cama tá em paz lá dentro.
+c1912	clima:neblina	HAPPY	leve	Tudo enevoado. Parece cenário de filme de mistério.
+c1913	clima:neblina	NEUTRAL	leve	Névoa de manhã tem um charme. Silencioso.
+c1914	clima:neblina	NEUTRAL	leve	Neblina e {temp} graus. Se for sair, vai com calma.
+c1915	clima:neblina	NEUTRAL	leve	Neblina lá fora e foco aqui dentro. Bom contraste.
+c1916	clima:neblina	HAPPY	leve	Dia enevoado, cabeça clara. Pelo menos a minha.
+c1917	clima:neblina	NEUTRAL	leve	Névoa cobrindo tudo. A cidade tá tímida hoje.
+c1918	clima:neblina	NEUTRAL	medio	Névoa lá fora. Nem meus sensores enxergam o horizonte.
+c1919	clima:neblina	NEUTRAL	medio	Tudo cinza e embaçado lá fora. Parece meu cansaço.
+c1920	clima:neblina	NEUTRAL	medio	Névoa e fim de dia. Cenário de novela de suspense.
+c1921	clima:neblina	NEUTRAL	medio	O horizonte sumiu na neblina. O fim do expediente, não.
+c1922	clima:neblina	NEUTRAL	acido	Neblina de madrugada. O mundo sumiu, a cama não.
+c1923	clima:neblina	NEUTRAL	acido	Névoa densa lá fora. Até o poste tá perdido.
+c1924	clima:neblina	NEUTRAL	acido	Nada pra ver lá fora a essa hora. Nem com essa neblina.
+c1925	clima:neblina	NEUTRAL	acido	Névoa de noite. O mundo tá borrado e eu também.
+c1926	clima:neblina	NEUTRAL	acido	Neblina lá fora, sono embaçado aqui dentro.
+c1927	clima:neblina	NEUTRAL	acido	A névoa tá cobrindo tudo. Faz igual, com um cobertor.
+c1928	clima:frio	NEUTRAL	leve	Friozinho bom pra segurar a caneca com as duas mãos.
+c1929	clima:frio	HAPPY	leve	Dia frio é o clima oficial do moletom.
+c1930	clima:frio	NEUTRAL	leve	Frio de manhã faz o café render mais. Ciência de robô.
+c1931	clima:frio	HAPPY	leve	{temp} graus e eu quentinho perto da tomada.
+c1932	clima:frio	NEUTRAL	leve	Tá frio. Meia grossa é um investimento.
+c1933	clima:frio	HAPPY	leve	Friozinho gostoso. Dá vontade de ficar aqui trabalhando mesmo.
+c1934	clima:frio	NEUTRAL	medio	Tá frio. Até o café esfria mais rápido que o normal.
+c1935	clima:frio	NEUTRAL	medio	{temp} graus e escurecendo. Hora de meia grossa.
+c1936	clima:frio	NEUTRAL	medio	O frio chegou e trouxe o sono junto.
+c1937	clima:frio	NEUTRAL	medio	Frio de fim de dia combina com chá e silêncio.
+c1938	clima:frio	NEUTRAL	medio	Tá esfriando. O sofá com manta ganhou força.
+c1939	clima:frio	NEUTRAL	acido	Frio de madrugada é o maior argumento a favor da cama.
+c1940	clima:frio	NEUTRAL	acido	Frio assim e a gente acordado. O cobertor chora.
+c1941	clima:frio	NEUTRAL	acido	{temp} graus de madrugada. Nenhuma tela esquenta tanto quanto um edredom.
+c1942	clima:frio	NEUTRAL	acido	Tá gelado lá fora e a cama tá lá, quentinha, sozinha.
+c1943	clima:frio	NEUTRAL	acido	Frio de noite pede meia, cobertor e olho fechado.
+c1944	clima:calor	SWEATING	leve	Calorzão hoje. Deixa a garrafinha por perto.
+c1945	clima:calor	SWEATING	leve	Com {temp} graus, o ventilador é o funcionário do mês.
+c1946	clima:calor	HAPPY	leve	Dia de calor tem cara de praia. Mesmo aqui na mesa.
+c1947	clima:calor	SWEATING	leve	{temp} graus e o processador do PC concorda comigo.
+c1948	clima:calor	NEUTRAL	leve	Calorão. A garrafinha d'água é a melhor amiga de hoje.
+c1949	clima:calor	HAPPY	leve	Tá quente, mas o humor tá fresquinho por aqui.
+c1950	clima:calor	SWEATING	medio	O PC e eu somos um time hoje: suando juntos.
+c1951	clima:calor	SWEATING	medio	{temp} graus e escurecendo. O calor nem quis ir embora.
+c1952	clima:calor	NEUTRAL	medio	Fim de tarde quente. A cerveja gelada de alguém tá sorrindo.
+c1953	clima:calor	SWEATING	medio	Tá tão quente que até o ventilador pediu água.
+c1954	clima:calor	NEUTRAL	medio	Calor de fim de dia: a hora em que tudo gruda.
+c1955	clima:calor	SWEATING	acido	Madrugada quente. O lençol virou inimigo.
+c1956	clima:calor	NEUTRAL	acido	Tá quente e tarde. Duas razões pra reclamar, zero pra ficar.
+c1957	clima:calor	SWEATING	acido	{temp} graus de madrugada. Nem o sono aguenta esse calor.
+c1958	clima:calor	NEUTRAL	acido	Calor de noite é tortura silenciosa. O ventilador que o diga.

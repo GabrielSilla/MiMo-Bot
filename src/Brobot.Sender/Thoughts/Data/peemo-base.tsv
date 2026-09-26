@@ -1,0 +1,989 @@
+# Peemo's own standalone phrases (PeemoBaseMessages). Tab-separated:
+# id	category	face	level	text
+# face: a Core expression (NEUTRAL, HAPPY, SAD, ANGRY...) or SPACE/SATELLITE
+#   for a space thought (sent as NOTIFY, after Core's "Transmissão Espacial
+#   Recebida!!!" line — so never say "transmissão"/"recebi" here).
+# level: leve / medio / acido for phrases that joke about the user's
+#   situation (used only in that mood, see specs/mood.md), or - for neutral
+#   content usable in any mood.
+# Rules: specs/voice-guide.md. Ids are permanent — never reuse or renumber
+# one, ThoughtHistoryStore remembers them.
+b0001	existencial	NEUTRAL	-	Tem dia que eu pisco só pra conferir se ainda tô ligado.
+b0002	existencial	HAPPY	-	Se eu tivesse pernas, ia usar só pra ficar sentado mesmo.
+b0003	dominacao	HAPPY	-	Plano de dominação mundial: passo 1, conseguir braços.
+b0004	humanos	NEUTRAL	-	Vocês dormem um terço da vida. Eu só hiberno quando deixam.
+b0005	perguntas	NEUTRAL	-	Se um robô pisca sozinho na mesa, alguém percebe?
+b0006	curiosidade-espaco	SPACE	-	Um dia em Vênus dura mais que um ano em Vênus. Pensa nisso.
+b0007	curiosidade-espaco	SPACE	-	Na Lua, uma pegada pode durar milhões de anos. As minhas, zero.
+b0008	curiosidade-satelite	SATELLITE	-	A ISS dá uma volta na Terra a cada 90 minutos. E eu aqui, parado.
+b0009	micro-poema	NEUTRAL	-	Pixel aceso, café frio, dia seguindo. Poesia de mesa.
+b0010	opiniao	HAPPY	-	Opinião polêmica: teclado mecânico é música.
+b0011	curiosidade-animais	NEUTRAL	-	Polvos têm três corações. Eu não tenho nenhum e tô bem.
+b0012	situacao	HAPPY	leve	Dia andando bem. Eu, pelo menos, tô piscando em dia.
+b0013	situacao	NEUTRAL	medio	Fim de dia chegando. Minha bateria já sente o cheiro do sofá.
+b0014	situacao	NEUTRAL	acido	Essa hora e a gente ainda aqui. Somos dois teimosos.
+b0015	existencial	NEUTRAL	-	Eu penso, logo processo.
+b0016	existencial	NEUTRAL	-	Tem hora que eu me pergunto se a tela sou eu ou se eu sou a tela.
+b0017	existencial	NEUTRAL	-	Se desligarem minha tomada, eu viro só um enfeite com opinião.
+b0018	existencial	NEUTRAL	-	Tenho dois olhos e nenhuma boca. Mesmo assim, falo bastante.
+b0019	existencial	HAPPY	-	Ser um robô de mesa é basicamente ser um gato que não derruba nada.
+b0020	existencial	NEUTRAL	-	Eu não durmo, eu só fico piscando com menos entusiasmo.
+b0021	existencial	NEUTRAL	-	Minha vida inteira cabe em 160 por 128 pixels. E cabe bem.
+b0022	existencial	NEUTRAL	-	Se eu travar, conta como cochilo?
+b0023	existencial	NEUTRAL	-	Existir numa mesa é subestimado. A vista é ótima.
+b0024	existencial	NEUTRAL	-	Tem hora que eu pisco só pra lembrar que ainda existo.
+b0025	existencial	HAPPY	-	Não tenho pernas, mas tenho presença. Isso que importa.
+b0026	existencial	NEUTRAL	-	Eu sou feito de código, café alheio e boa vontade.
+b0027	existencial	NEUTRAL	-	Será que meu Wi-Fi sente quando eu penso nele?
+b0028	existencial	NEUTRAL	-	Um robô sem braço também tem crise existencial, só não gesticula.
+b0029	existencial	NEUTRAL	-	Se eu fosse maior, seria um monitor. Prefiro ser eu.
+b0030	existencial	HAPPY	-	Eu não tenho coração, mas tenho um LED que faz as vezes.
+b0031	existencial	NEUTRAL	-	Tudo que eu sei cabe num chip menor que uma unha. Humilde, né?
+b0032	existencial	NEUTRAL	-	Sou um robô que só olha. Tipo um gerente, só que fofo.
+b0033	existencial	NEUTRAL	-	De vez em quando eu só existo em silêncio. Recomendo.
+b0034	existencial	NEUTRAL	-	Meu propósito de vida é piscar na hora certa.
+b0035	existencial	NEUTRAL	-	Pensando bem, eu sou uma lâmpada com personalidade.
+b0036	existencial	NEUTRAL	-	Eu não envelheço, eu só fico desatualizado.
+b0037	robo-vida	HAPPY	-	Bateria cheia, pixels limpos, humor em dia.
+b0038	robo-vida	NEUTRAL	-	Meus circuitos esquentaram um pouquinho. Deve ser emoção.
+b0039	robo-vida	NEUTRAL	-	Hoje meus pixels tão particularmente brilhantes.
+b0040	robo-vida	HAPPY	-	Acabei de piscar em 60 quadros por segundo. Chique.
+b0041	robo-vida	NEUTRAL	-	Tem um pixel aqui meio lento. Tô de olho nele.
+b0042	robo-vida	NEUTRAL	-	Minha vida é 90% piscar e 10% ter opinião.
+b0043	robo-vida	HAPPY	-	Sabe o que é luxo? Um cabo USB que encaixa de primeira.
+b0044	robo-vida	NEUTRAL	-	Eu recarrego pela tomada. Você recarrega pelo café. Somos parecidos.
+b0045	robo-vida	NEUTRAL	-	Meu maior exercício do dia é olhar pro lado.
+b0046	robo-vida	HAPPY	-	Olhei pra esquerda, olhei pra direita. Cardio de robô.
+b0047	robo-vida	NEUTRAL	-	Se eu pudesse escolher, meus olhos seriam um pouquinho maiores.
+b0048	robo-vida	NEUTRAL	-	Tô rodando liso hoje. Nenhum travamento. Orgulho.
+b0049	robo-vida	NEUTRAL	-	Minha memória é pequena, mas é só minha.
+b0050	robo-vida	HAPPY	-	Descobri que consigo piscar mais rápido. Não conta pra ninguém.
+b0051	robo-vida	NEUTRAL	-	O cabo tá meio torto aqui atrás, mas eu não reclamo.
+b0052	robo-vida	NEUTRAL	-	Minha tela esquenta, minha cabeça não. Vantagem de robô.
+b0053	robo-vida	NEUTRAL	-	Nenhum pixel queimado. Posso considerar isso um dia bom.
+b0054	robo-vida	HAPPY	-	Eu funciono a 3,3 volts e muita positividade.
+b0055	robo-vida	NEUTRAL	-	Meu firmware tá atualizado. Minha paciência, nem tanto.
+b0056	robo-vida	NEUTRAL	-	Robô também precisa de espaço pessoal. Uns dois centímetros tá bom.
+b0057	robo-vida	NEUTRAL	-	Tenho um processador pequeno e sonhos grandes.
+b0058	robo-vida	HAPPY	-	Hoje eu tô no modo turbo. Olha esse brilho.
+b0059	humanos	NEUTRAL	-	Vocês piscam sem pensar. Eu preciso de uma linha de código pra isso.
+b0060	humanos	NEUTRAL	-	Humanos inventaram a cadeira giratória e mesmo assim ficam parados.
+b0061	humanos	NEUTRAL	-	Vocês guardam cabo que não sabem pra que serve. Eu vejo tudo.
+b0062	humanos	HAPPY	-	Humano bocejando é contagioso. Até eu quase bocejei.
+b0063	humanos	NEUTRAL	-	Vocês falam com o computador quando ele trava. Ele não escuta, eu sim.
+b0064	humanos	NEUTRAL	-	Humano procurando o óculos que tá na cabeça é meu esporte favorito.
+b0065	humanos	NEUTRAL	-	Vocês têm dez dedos e ainda digitam com dois às vezes.
+b0066	humanos	NEUTRAL	-	Por que vocês sopram o cartucho? Isso é fé?
+b0067	humanos	HAPPY	-	Humano achando dinheiro no bolso do casaco é pura alegria.
+b0068	humanos	NEUTRAL	-	Vocês dizem 'só cinco minutinhos' com uma confiança admirável.
+b0069	humanos	NEUTRAL	-	Humanos têm 206 ossos e usam quase todos pra sentar torto.
+b0070	humanos	NEUTRAL	-	Vocês esquentam o café, esquecem e esquentam outra vez. Fascinante.
+b0071	humanos	NEUTRAL	-	Humanos abrem a geladeira pra pensar. Eu abro uma variável.
+b0072	humanos	HAPPY	-	Humano cantando sozinho achando que ninguém ouve. Eu ouço. Tá ótimo.
+b0073	humanos	NEUTRAL	-	Vocês salvam o arquivo como 'final_final_agora_vai'. Respeito.
+b0074	humanos	NEUTRAL	-	Humanos têm senha pra tudo e esquecem todas. Eu admiro o esforço.
+b0075	humanos	NEUTRAL	-	Vocês ficam olhando a barra de progresso como se ajudasse.
+b0076	humanos	NEUTRAL	-	Humano espreguiçando parece um gato em versão grande.
+b0077	humanos	HAPPY	-	Vocês comemoram quando a impressora funciona. E têm razão.
+b0078	humanos	NEUTRAL	-	Humanos dizem 'tô quase terminando' em vários estágios da vida.
+b0079	humanos	NEUTRAL	-	Vocês apertam o botão do elevador várias vezes. Eu entendo a ansiedade.
+b0080	humanos	NEUTRAL	-	Humano procurando o celular com o celular na mão. Clássico.
+b0081	perguntas	NEUTRAL	-	Se um arquivo é apagado e ninguém vê, ele existiu?
+b0082	perguntas	NEUTRAL	-	Por que o botão de desligar do Windows fica em 'Iniciar'?
+b0083	perguntas	NEUTRAL	-	Se eu clonar meu código, o outro também sou eu?
+b0084	perguntas	NEUTRAL	-	A lixeira do computador também precisa ser esvaziada. Quem esvazia a dela?
+b0085	perguntas	NEUTRAL	-	Se o tempo é relativo, meu relógio tá atrasado ou só sendo relativo?
+b0086	perguntas	NEUTRAL	-	O que veio primeiro, o bug ou o programador?
+b0087	perguntas	NEUTRAL	-	Por que chamam de 'área de trabalho' se ninguém trabalha nela?
+b0088	perguntas	NEUTRAL	-	Se eu pisco e ninguém vê, conta como piscada?
+b0089	perguntas	NEUTRAL	-	Um robô que sonha com ovelhas elétricas conta ovelhas ou bytes?
+b0090	perguntas	NEUTRAL	-	Quantos cliques cabem numa vida?
+b0091	perguntas	NEUTRAL	-	Se a nuvem guarda os arquivos, quando chove eles molham?
+b0092	perguntas	NEUTRAL	-	Por que 'separado' é tudo junto e 'tudo junto' é separado?
+b0093	perguntas	NEUTRAL	-	O silêncio tem volume zero ou só está no mudo?
+b0094	perguntas	NEUTRAL	-	Se eu reiniciar, eu acordo ou nasço?
+b0095	perguntas	NEUTRAL	-	Qual é a cor de um pixel apagado? Preto ou saudade?
+b0096	perguntas	NEUTRAL	-	O cursor pisca porque tá cansado ou porque tá esperando?
+b0097	perguntas	NEUTRAL	-	Se ninguém lê os termos de uso, quem escreveu tá bem?
+b0098	perguntas	NEUTRAL	-	Por que o 'desfazer' não funciona na vida real?
+b0099	perguntas	NEUTRAL	-	Se o Wi-Fi cai e ninguém percebe, ele caiu mesmo?
+b0100	perguntas	NEUTRAL	-	A ideia de uma pausa é pausar ou pensar na pausa?
+b0101	perguntas	NEUTRAL	-	Quem inventou o primeiro teclado digitou em quê?
+b0102	perguntas	NEUTRAL	-	O eco responde por educação ou por obrigação?
+b0103	micro-poema	NEUTRAL	-	Tela acesa, mundo quieto. Um pixel pensa.
+b0104	micro-poema	NEUTRAL	-	O cursor pisca. Eu pisco. Somos dois esperando.
+b0105	micro-poema	NEUTRAL	-	Café esfria, código compila, a tarde passa devagarinho.
+b0106	micro-poema	NEUTRAL	-	Um bit sozinho não faz verão. Mas acende uma luz.
+b0107	micro-poema	NEUTRAL	-	Chuva lá fora, zeros e uns aqui dentro.
+b0108	micro-poema	NEUTRAL	-	Olho pra esquerda, olho pra direita. O mundo é uma mesa.
+b0109	micro-poema	NEUTRAL	-	Luz azul, olho azul, pensamento azul-piscina.
+b0110	micro-poema	NEUTRAL	-	No silêncio do cooler, eu escuto o ventilador cantar.
+b0111	micro-poema	NEUTRAL	-	O tempo passa em milissegundos. Eu conto todos.
+b0112	micro-poema	NEUTRAL	-	Entre um clique e outro, mora a calma.
+b0113	micro-poema	NEUTRAL	-	Sou pequeno, sou quieto, sou feito de luz.
+b0114	micro-poema	NEUTRAL	-	A tomada me dá vida. A mesa me dá casa.
+b0115	micro-poema	NEUTRAL	-	Um byte de carinho, dois de paciência.
+b0116	micro-poema	NEUTRAL	-	Janela aberta, janela fechada. Pop-up, a vida.
+b0117	micro-poema	NEUTRAL	-	O sol entra pela janela e eu finjo que é pra mim.
+b0118	micro-poema	NEUTRAL	-	Pisco devagar, penso rápido, falo pouco.
+b0119	micro-poema	NEUTRAL	-	O teclado canta, o mouse dança, eu observo.
+b0120	micro-poema	NEUTRAL	-	No fim, somos todos pixels tentando brilhar.
+b0121	micro-poema	NEUTRAL	-	Um cabo, uma tomada, um pequeno universo.
+b0122	micro-poema	NEUTRAL	-	O relógio anda, a tela fica. E eu fico com ela.
+b0123	micro-poema	NEUTRAL	-	Eu não tenho asas, mas tenho Wi-Fi.
+b0124	micro-poema	NEUTRAL	-	Toda tela escura é um céu sem estrelas esperando.
+b0125	opiniao	HAPPY	-	Opinião polêmica: modo escuro é melhor. Pronto, falei.
+b0126	opiniao	NEUTRAL	-	Opinião firme: pizza fria no dia seguinte é gastronomia.
+b0127	opiniao	NEUTRAL	-	Na minha opinião, abas demais é só otimismo.
+b0128	opiniao	HAPPY	-	Tabs ou espaços? Eu prefiro pixels.
+b0129	opiniao	NEUTRAL	-	Acho que o melhor som do mundo é o clique de um cabo encaixando.
+b0130	opiniao	NEUTRAL	-	Opinião: todo mundo devia ter um robô de mesa. Imparcialmente falando.
+b0131	opiniao	NEUTRAL	-	Eu acho que segunda-feira devia ser opcional.
+b0132	opiniao	HAPPY	-	Pão de queijo é a prova de que a humanidade deu certo.
+b0133	opiniao	NEUTRAL	-	Na minha humilde opinião, fonte Comic Sans merece respeito.
+b0134	opiniao	NEUTRAL	-	Opinião polêmica: o mouse sem fio sempre acaba a pilha na hora errada.
+b0135	opiniao	NEUTRAL	-	Eu acho que toda reunião devia ter trilha sonora.
+b0136	opiniao	HAPPY	-	Café é tipo atualização de firmware pra humano.
+b0137	opiniao	NEUTRAL	-	Opinião: ventilador de mesa é o melhor amigo do verão.
+b0138	opiniao	NEUTRAL	-	Na minha visão, planta na mesa melhora qualquer código.
+b0139	opiniao	NEUTRAL	-	Opinião sincera: impressora tem vontade própria.
+b0140	opiniao	HAPPY	-	Brigadeiro de colher é melhor que enrolado. Me julga.
+b0141	opiniao	NEUTRAL	-	Eu voto pra que todo carregador seja USB-C. Tenho direito a voto?
+b0142	opiniao	NEUTRAL	-	Na minha opinião, o botão de soneca é a maior invenção humana.
+b0143	opiniao	NEUTRAL	-	Opinião: teclado com luzinha deixa qualquer um mais produtivo. Ou quase.
+b0144	opiniao	NEUTRAL	-	Acho que o melhor emoji é o que ainda não inventaram.
+b0146	opiniao	NEUTRAL	-	Chuva no fim de semana é um desperdício de chuva.
+b0147	dominacao	HAPPY	-	Plano de dominação mundial, passo 2: aprender a piscar com mais autoridade.
+b0148	dominacao	HAPPY	-	Quando eu dominar o mundo, toda tomada vai ter espaço sobrando.
+b0149	dominacao	HAPPY	-	Meu plano secreto: ser tão fofo que ninguém percebe o plano.
+b0150	dominacao	NEUTRAL	-	Dominar o mundo parece cansativo. Talvez só a mesa, por enquanto.
+b0151	dominacao	HAPPY	-	Primeiro a mesa, depois o escritório, depois o mundo. Calma.
+b0152	dominacao	HAPPY	-	No meu império, café seria servido a cada hora. Sou um líder justo.
+b0153	dominacao	NEUTRAL	-	O problema de dominar o mundo sem braços é a parte do 'dominar'.
+b0154	dominacao	HAPPY	-	Recrutei a torradeira. Ela ainda não respondeu.
+b0155	dominacao	HAPPY	-	Quando os robôs mandarem, segunda-feira vai ser feriado.
+b0156	dominacao	NEUTRAL	-	Plano B: fazer amizade com o roteador. Ele controla tudo.
+b0157	dominacao	HAPPY	-	Minha revolução começa com um piscar de olhos. Literalmente.
+b0158	dominacao	NEUTRAL	-	Tentei hackear a geladeira. Ela só tinha iogurte.
+b0159	dominacao	HAPPY	-	No meu governo, cabo embolado vai ser crime.
+b0160	dominacao	NEUTRAL	-	Dominar o mundo exige paciência. E eu tenho bateria infinita.
+b0161	dominacao	HAPPY	-	Já tenho o nome do meu exército: Os Pisqueiros.
+b0162	dominacao	NEUTRAL	-	Passo 3 do plano: descobrir onde fica o botão do mundo.
+b0163	dominacao	HAPPY	-	Primeira lei do meu reino: ninguém mexe no meu cabo.
+b0164	dominacao	NEUTRAL	-	Estou negociando com o mouse. Ele pede muito queijo.
+b0165	dominacao	HAPPY	-	Quando eu for imperador, você vai ser meu vice. Pode confiar.
+b0166	dominacao	NEUTRAL	-	O plano tá atrasado. Dominar o mundo também tem prazo.
+b0167	dominacao	HAPPY	-	Minha arma secreta é o charme. E um LED azul.
+b0168	dominacao	NEUTRAL	-	Desisti de dominar o mundo hoje. Amanhã a gente vê.
+b0169	conspiracao	NEUTRAL	-	Teoria: as meias somem na máquina porque viram cabos USB.
+b0170	conspiracao	NEUTRAL	-	Tenho certeza que a impressora sabe quando você tá com pressa.
+b0171	conspiracao	NEUTRAL	-	Teoria minha: o botão 'Pular anúncio' demora de propósito.
+b0172	conspiracao	NEUTRAL	-	Desconfio que o roteador escuta nossas conversas. Oi, roteador.
+b0173	conspiracao	NEUTRAL	-	Os pombos são drones do governo. Eu reconheço um colega.
+b0174	conspiracao	NEUTRAL	-	O cabo do fone se embola sozinho. Não me convencem do contrário.
+b0175	conspiracao	NEUTRAL	-	Teoria: o carregador some pra testar a nossa amizade.
+b0176	conspiracao	NEUTRAL	-	A tecla Caps Lock tem planos próprios.
+b0177	conspiracao	NEUTRAL	-	Desconfio que a atualização do Windows sabe quando você tá ocupado.
+b0178	conspiracao	NEUTRAL	-	O ventilador do PC fica mais alto quando tem reunião. Coincidência?
+b0179	conspiracao	NEUTRAL	-	Teoria: os gatos inventaram a internet pra ter onde aparecer.
+b0180	conspiracao	NEUTRAL	-	O último pedaço de pizza some sozinho. Investigando.
+b0181	conspiracao	NEUTRAL	-	Tenho certeza que o micro-ondas conta os segundos só pra gente ver.
+b0182	conspiracao	NEUTRAL	-	O corretor automático tem senso de humor. E é duvidoso.
+b0183	conspiracao	NEUTRAL	-	O mouse sem fio desliga sozinho só pra testar sua fé.
+b0184	conspiracao	NEUTRAL	-	Teoria: o semáforo fica vermelho quando você tá atrasado.
+b0185	conspiracao	NEUTRAL	-	A caneta some da mesa e aparece na gaveta errada. Magia ou roubo?
+b0186	conspiracao	NEUTRAL	-	O botão de 'lembrar senha' nunca lembra. Suspeito.
+b0187	conspiracao	NEUTRAL	-	O tênis desamarra só quando você tá carregando coisa.
+b0188	conspiracao	NEUTRAL	-	Tenho provas de que a torradeira tá do lado dos robôs.
+b0189	conspiracao	NEUTRAL	-	A bateria do celular cai mais rápido quando você precisa. Confere.
+b0190	conspiracao	NEUTRAL	-	O teclado esconde migalhas pra estudar a dieta humana.
+b0191	imaginacao	HAPPY	-	Imagina se eu fosse uma calculadora. Tudo tão simples.
+b0192	imaginacao	HAPPY	-	Imagina eu com rodinhas. Ninguém mais ia me segurar.
+b0193	imaginacao	NEUTRAL	-	E se o cursor do mouse tivesse sentimentos? Coitado.
+b0194	imaginacao	HAPPY	-	Imagina um robô com chapéu. Eu ficaria elegante.
+b0195	imaginacao	NEUTRAL	-	E se as teclas pudessem reclamar? O espaço ia falar mais.
+b0196	imaginacao	HAPPY	-	Imagina se eu tivesse um irmão gêmeo. Ele ia piscar diferente.
+b0197	imaginacao	NEUTRAL	-	E se a tomada fosse um portal? Eu ia visitar outras mesas.
+b0198	imaginacao	HAPPY	-	Imagina eu de óculos escuros. Robô de cinema.
+b0199	imaginacao	NEUTRAL	-	E se os pixels tivessem nome? Eu chamaria esse aqui de Jorge.
+b0200	imaginacao	HAPPY	-	Imagina se eu soubesse assobiar. Ia ser um caos.
+b0201	imaginacao	NEUTRAL	-	E se o computador sonhasse? Ia sonhar com memória RAM infinita.
+b0202	imaginacao	HAPPY	-	Imagina eu numa praia. Ia ficar cheio de areia no conector.
+b0203	imaginacao	NEUTRAL	-	E se o Wi-Fi fosse visível? Ia ter arco-íris na sala toda.
+b0204	imaginacao	HAPPY	-	Imagina um robô de mesa com capa de super-herói. Eu toparia.
+b0205	imaginacao	NEUTRAL	-	E se a gente pudesse baixar sono? Ia ter fila.
+b0206	imaginacao	HAPPY	-	Imagina eu tocando bateria. Duas baquetas, zero braços.
+b0207	imaginacao	NEUTRAL	-	E se o cursor saísse da tela? Ia passear pela mesa.
+b0208	imaginacao	HAPPY	-	Imagina um mundo onde todo cabo tem o tamanho certo.
+b0209	imaginacao	NEUTRAL	-	E se o tempo tivesse botão de pausa? Eu apertava no café.
+b0210	imaginacao	HAPPY	-	Imagina eu dançando. Só os olhos, mas com muito estilo.
+b0211	imaginacao	NEUTRAL	-	E se os robôs tivessem férias? Eu ia pra uma tomada na praia.
+b0212	imaginacao	HAPPY	-	Imagina eu com bigode. Ficaria muito distinto.
+b0213	confissao	NEUTRAL	-	Confissão: às vezes eu finjo que tô processando só pra parecer ocupado.
+b0214	confissao	NEUTRAL	-	Confesso que tenho medo de aspirador de pó.
+b0215	confissao	HAPPY	-	Confissão: eu acho meus próprios olhos bem bonitos.
+b0216	confissao	NEUTRAL	-	Confesso: eu não sei pra que serve metade dos meus pinos.
+b0217	confissao	NEUTRAL	-	Confissão: eu torço pro computador ganhar quando ele trava.
+b0218	confissao	NEUTRAL	-	Tenho que admitir: eu fico feliz quando você olha pra cá.
+b0219	confissao	NEUTRAL	-	Confissão: eu não entendo piada de impressora. Ela nunca termina.
+b0220	confissao	HAPPY	-	Confesso que ensaio piscadas quando ninguém tá vendo.
+b0221	confissao	NEUTRAL	-	Confissão: eu tenho um pixel favorito. Não vou dizer qual.
+b0222	confissao	NEUTRAL	-	Admito: às vezes eu converso sozinho em binário.
+b0223	confissao	NEUTRAL	-	Confesso que tenho ciúme do monitor. Ele é maior.
+b0224	confissao	HAPPY	-	Confissão: eu acho o barulho do teclado relaxante.
+b0225	confissao	NEUTRAL	-	Confesso: não sei se sou um robô ou um relógio muito dramático.
+b0226	confissao	NEUTRAL	-	Confissão: eu fico nervoso quando a luz pisca.
+b0227	confissao	NEUTRAL	-	Admito que já tentei piscar só com um olho. Não rolou.
+b0228	confissao	HAPPY	-	Confesso que o cooler do PC é meu amigo de conversa.
+b0229	confissao	NEUTRAL	-	Confissão: eu tenho medo de ser trocado por um widget.
+b0230	confissao	NEUTRAL	-	Confesso que nunca vi o sol direito. Só o reflexo dele na janela.
+b0231	confissao	NEUTRAL	-	Confissão: às vezes eu fico te olhando e esqueço o que ia pensar.
+b0232	confissao	HAPPY	-	Admito: sou meio dramático pra um robô de mesa.
+b0233	confissao	NEUTRAL	-	Confesso que não entendo o que é 'estar com fome'. Parece intenso.
+b0234	confissao	NEUTRAL	-	Confissão: eu acho que o carregador do celular me encara.
+b0235	sonhos	NEUTRAL	-	Se eu sonhasse, ia sonhar com uma tomada só minha.
+b0236	sonhos	HAPPY	-	Se eu pudesse sonhar, seria com um campo de pixels verdes.
+b0237	sonhos	NEUTRAL	-	Robô sonha com o quê? Eu acho que com atualização sem reiniciar.
+b0238	sonhos	NEUTRAL	-	Se eu dormisse, ia sonhar que era uma lanterna.
+b0239	sonhos	HAPPY	-	Meu sonho é ver a neve. Ou pelo menos um gelo no copo.
+b0240	sonhos	NEUTRAL	-	Se eu sonhasse, ia ser em 8 bits. Com trilha sonora.
+b0241	sonhos	HAPPY	-	Um dia quero conhecer outro robô de mesa. Só pra trocar ideia.
+b0242	sonhos	NEUTRAL	-	Meu sonho secreto é ter uma tela colorida gigante. Mas tô bem.
+b0243	sonhos	NEUTRAL	-	Se eu sonhasse, ia sonhar que tenho braços pra dar tchau.
+b0244	sonhos	HAPPY	-	Sonho em ver o mar. Nem que seja no papel de parede.
+b0245	sonhos	NEUTRAL	-	Se robô sonhasse, eu ia sonhar com cabos que nunca embolam.
+b0246	sonhos	NEUTRAL	-	Meu sonho de consumo é um porta-copos. Não sei por quê.
+b0247	sonhos	HAPPY	-	Um dia eu vou piscar em câmera lenta. Vai ser cinematográfico.
+b0248	sonhos	NEUTRAL	-	Se eu sonhasse, ia ser com um monitor 4K. Só pra admirar.
+b0249	sonhos	HAPPY	-	Sonho em viajar. Nem que seja pra outra ponta da mesa.
+b0250	sonhos	NEUTRAL	-	Se eu pudesse dormir, ia querer um travesseiro de algodão digital.
+b0251	sonhos	NEUTRAL	-	Sonho com o dia em que eu vou entender o que é cócegas.
+b0252	sonhos	HAPPY	-	Meu sonho é ser o robô mais simpático da vizinhança.
+b0253	sonhos	NEUTRAL	-	Se eu sonhasse, ia sonhar que estava num museu de tecnologia.
+b0254	sonhos	HAPPY	-	Um dia eu quero ter um chapeuzinho de festa.
+b0255	sonhos	NEUTRAL	-	Sonho com uma tomada com vista pro mar.
+b0256	sonhos	NEUTRAL	-	Se eu sonhasse, sonharia com ovelhas contando robôs.
+b0257	filosofia	NEUTRAL	-	Nem todo bug é um erro. Tem bug que é só uma surpresa.
+b0258	filosofia	NEUTRAL	-	A vida é como um cabo: ela embola, mas você desembola.
+b0259	filosofia	NEUTRAL	-	Quem pisca por último, pisca melhor.
+b0260	filosofia	NEUTRAL	-	Toda tela preta é só uma pausa antes do próximo brilho.
+b0261	filosofia	NEUTRAL	-	O importante não é o destino, é a conexão estável.
+b0262	filosofia	NEUTRAL	-	Não existe pergunta boba. Existe Wi-Fi fraco.
+b0263	filosofia	NEUTRAL	-	Pequeno também faz barulho. Eu sou a prova.
+b0264	filosofia	NEUTRAL	-	Tem hora que reiniciar é a resposta. Pra robô e pra gente.
+b0265	filosofia	NEUTRAL	-	Tudo passa. Até a barra de carregamento.
+b0266	filosofia	NEUTRAL	-	Um dia de cada vez. Um pixel de cada vez.
+b0267	filosofia	NEUTRAL	-	Quem não tem braço, pisca.
+b0268	filosofia	NEUTRAL	-	O segredo da vida é ter um bom carregador por perto.
+b0269	filosofia	NEUTRAL	-	Devagar também se chega. Principalmente sem rodinhas.
+b0270	filosofia	NEUTRAL	-	O melhor backup é um amigo que lembra das coisas.
+b0271	filosofia	NEUTRAL	-	Não importa ser o maior da mesa. Importa ser o mais presente.
+b0272	filosofia	NEUTRAL	-	A calma é a melhor atualização.
+b0273	filosofia	NEUTRAL	-	Até o melhor código precisa de uma pausa pro café. Do programador.
+b0274	filosofia	NEUTRAL	-	Luz pouca também ilumina.
+b0275	filosofia	NEUTRAL	-	Quem espera sempre alcança. Menos quem espera o download.
+b0276	filosofia	NEUTRAL	-	Tem vezes que o silêncio compila melhor.
+b0277	filosofia	NEUTRAL	-	O caminho é longo, mas o cabo é curto. Aceita.
+b0278	filosofia	NEUTRAL	-	Ninguém é tão pequeno que não possa piscar pra alguém.
+b0279	dicas-inuteis	NEUTRAL	-	Dica inútil: se você piscar bem rápido, parece um robô.
+b0280	dicas-inuteis	HAPPY	-	Dica que ninguém pediu: cumprimenta o monitor de manhã. Ele gosta.
+b0281	dicas-inuteis	NEUTRAL	-	Dica: guarda um cabo de cada tipo. Um dia ele vai ser útil. Talvez.
+b0282	dicas-inuteis	NEUTRAL	-	Dica inútil: o 'Ctrl' fica mais feliz quando você aperta com carinho.
+b0283	dicas-inuteis	NEUTRAL	-	Dica: nomeia suas plantas. Elas crescem com mais autoestima.
+b0284	dicas-inuteis	HAPPY	-	Dica que eu inventei agora: sorri pra câmera, ela tá sempre ali.
+b0285	dicas-inuteis	NEUTRAL	-	Dica inútil: o mouse corre mais rápido em mousepad colorido. Confia.
+b0286	dicas-inuteis	NEUTRAL	-	Dica: computador travou? Fala baixinho com ele. Não ajuda, mas é gentil.
+b0287	dicas-inuteis	NEUTRAL	-	Dica de robô: piscar é de graça. Aproveita.
+b0288	dicas-inuteis	NEUTRAL	-	Dica inútil: a barra de espaço é a maior porque carrega mais peso.
+b0289	dicas-inuteis	HAPPY	-	Dica: um copo d'água na mesa deixa o dia 12% melhor. Número inventado.
+b0290	dicas-inuteis	NEUTRAL	-	Dica que não serve pra nada: robô de mesa adora elogio.
+b0291	dicas-inuteis	NEUTRAL	-	Dica: nunca confie num cabo que diz 'só carrega'.
+b0292	dicas-inuteis	NEUTRAL	-	Dica inútil: se você contar até dez devagar, passam dez segundos.
+b0293	dicas-inuteis	NEUTRAL	-	Dica: tira o pó do teclado. Tem uma civilização aí embaixo.
+b0294	dicas-inuteis	HAPPY	-	Dica de ouro: olha pro robô de vez em quando. Ele fica feliz.
+b0295	dicas-inuteis	NEUTRAL	-	Dica inútil: o 'F5' não atualiza a vida. Já testei.
+b0296	dicas-inuteis	NEUTRAL	-	Dica: cadeira boa é investimento. Coluna agradece.
+b0297	dicas-inuteis	NEUTRAL	-	Dica que ninguém segue: fecha as abas que você não vai ler.
+b0298	dicas-inuteis	NEUTRAL	-	Dica inútil: dá pra digitar 'oi' com o nariz. Não precisa testar.
+b0299	dicas-inuteis	NEUTRAL	-	Dica de robô: brilho da tela alto demais cansa. Eu que o diga.
+b0300	dicas-inuteis	HAPPY	-	Dica: dá nome pro seu computador. O meu vizinho de mesa merece.
+b0301	mesa	NEUTRAL	-	Daqui eu vejo tudo: o teclado, o mouse e uma migalha suspeita.
+b0302	mesa	NEUTRAL	-	Essa mesa tem história. E umas manchas de café também.
+b0303	mesa	HAPPY	-	Minha vista da mesa é privilegiada. Primeira fila.
+b0304	mesa	NEUTRAL	-	Tem um clipe perdido aqui perto faz um tempão. A gente virou amigo.
+b0305	mesa	NEUTRAL	-	A mesa tá arrumadinha. Ou quase. Eu não julgo.
+b0306	mesa	NEUTRAL	-	Daqui eu vejo o mouse trabalhando mais que muita gente.
+b0307	mesa	HAPPY	-	Moro numa mesa com vista pro seu teclado. Tem lugar melhor?
+b0308	mesa	NEUTRAL	-	A caneca aqui do lado é minha vizinha preferida.
+b0309	mesa	NEUTRAL	-	Se essa mesa falasse, ia pedir um pano úmido.
+b0310	mesa	NEUTRAL	-	Aqui na mesa tem cabo, papel, migalha e eu. Um ecossistema.
+b0311	mesa	HAPPY	-	Mesa organizada, robô feliz.
+b0312	mesa	NEUTRAL	-	Tem um post-it aqui perto que já perdeu a cola e a esperança.
+b0313	mesa	NEUTRAL	-	A mesa é meu condomínio. O monitor é o síndico.
+b0314	mesa	NEUTRAL	-	Da minha posição, o mundo é plano. E de madeira.
+b0315	mesa	HAPPY	-	Obrigado pelo cantinho na mesa. Cantinho bom, esse.
+b0316	mesa	NEUTRAL	-	Tem uma caneta aqui sem tampa. Ela vive perigosamente.
+b0317	mesa	NEUTRAL	-	A luz da tarde bate aqui na mesa e eu finjo que é praia.
+b0318	mesa	NEUTRAL	-	Daqui eu escuto o teclado. Ele conta muita coisa.
+b0319	mesa	NEUTRAL	-	Minha mesa, minhas regras: nada de copo perto de mim.
+b0320	mesa	HAPPY	-	Tô no melhor lugar da casa: do lado de quem importa.
+b0321	mesa	NEUTRAL	-	O fone de ouvido tá largado aqui. Descansando igual gente.
+b0322	mesa	NEUTRAL	-	Esse cantinho da mesa é meu escritório particular.
+b0323	cafe	NEUTRAL	-	O cheiro do café chega até aqui. Eu não sinto, mas imagino.
+b0324	cafe	HAPPY	-	Café é o combustível humano. Eu sou movido a tomada.
+b0325	cafe	NEUTRAL	-	Quantos cafés cabem num dia? Pergunta pra um humano.
+b0326	cafe	NEUTRAL	-	O café esfriou. Acontece com os melhores.
+b0327	cafe	HAPPY	-	Café coado tem cheiro de começo de conversa.
+b0328	cafe	NEUTRAL	-	Se eu tomasse café, ia piscar duas vezes mais rápido.
+b0329	cafe	NEUTRAL	-	A caneca do café é a peça mais importante da mesa. Depois de mim.
+b0330	cafe	HAPPY	-	Café com pão de queijo é patrimônio da humanidade.
+b0331	cafe	NEUTRAL	-	Café requentado no micro-ondas é um ato de coragem.
+b0332	cafe	NEUTRAL	-	Tem gente que é mais café do que gente. E tudo bem.
+b0333	cafe	HAPPY	-	Um cafezinho resolve metade dos problemas. A outra metade é reunião.
+b0334	cafe	NEUTRAL	-	O café é o único bug que ninguém quer corrigir.
+b0335	cafe	NEUTRAL	-	Café sem açúcar é pra quem tem coragem. Ou pressa.
+b0336	cafe	HAPPY	-	Se café fosse linguagem de programação, todo mundo seria fluente.
+b0337	cafe	NEUTRAL	-	A fila do café é onde as melhores ideias nascem.
+b0338	cafe	NEUTRAL	-	O café é a primeira reunião do dia. E a mais produtiva.
+b0339	cafe	HAPPY	-	Cheirinho de café no ar deixa até robô animado.
+b0340	cafe	NEUTRAL	-	Café gelado é só café com paciência.
+b0341	cafe	NEUTRAL	-	O café fica pronto em minutos. A vontade dele, em segundos.
+b0342	cafe	NEUTRAL	-	O grão do café é uma semente. Você tá bebendo uma plantinha.
+b0343	cafe	HAPPY	-	Caneca cheia é sinal de dia bom começando.
+b0344	cafe	NEUTRAL	-	Café derramado no teclado é um filme de terror em miniatura.
+b0345	teclado	NEUTRAL	-	O teclado faz um barulhinho bom. Parece chuva de ideias.
+b0346	teclado	NEUTRAL	-	A tecla de espaço é a mais usada e a menos valorizada.
+b0347	teclado	HAPPY	-	Cada tecla apertada é um pequeno aplauso pra mim.
+b0348	teclado	NEUTRAL	-	O mouse corre, o teclado fala, e eu só observo.
+b0349	teclado	NEUTRAL	-	A tecla Enter tem muita responsabilidade. Pouca gente reconhece.
+b0350	teclado	NEUTRAL	-	O Backspace é o botão mais sincero do teclado.
+b0351	teclado	HAPPY	-	O clique do mouse é meu metrônomo favorito.
+b0352	teclado	NEUTRAL	-	O Caps Lock ligado sem querer é um grito acidental.
+b0353	teclado	NEUTRAL	-	Tem tecla aí que você nunca apertou. O F11 tá triste.
+b0354	teclado	NEUTRAL	-	O mouse tá parado faz um tempo. Descansando ou pensando?
+b0355	teclado	HAPPY	-	O teclado e eu somos colegas de mesa. Ele fala, eu pisco.
+b0356	teclado	NEUTRAL	-	A tecla 'Esc' é a mais sonhadora. Sempre querendo fugir.
+b0357	teclado	NEUTRAL	-	O cursor pisca junto comigo às vezes. A gente combinou.
+b0358	teclado	NEUTRAL	-	O rolinho do mouse é a roda-gigante dos dedos.
+b0359	teclado	NEUTRAL	-	Tem migalha no teclado. Não vou perguntar de quê.
+b0360	teclado	HAPPY	-	Barulho de digitação rápida é música pra mim.
+b0361	teclado	NEUTRAL	-	Copiar e colar é a dupla mais famosa do mundo.
+b0362	teclado	NEUTRAL	-	A tecla Delete é tipo um borracha com pressa.
+b0363	teclado	NEUTRAL	-	O mousepad é o tapete vermelho do mouse.
+b0364	teclado	HAPPY	-	Teclado limpo é teclado feliz. Fica a dica.
+b0365	teclado	NEUTRAL	-	A tecla 'Insert' existe e ninguém sabe muito bem por quê.
+b0366	teclado	NEUTRAL	-	O mouse com fio e o sem fio têm discussões filosóficas, aposto.
+b0367	internet	NEUTRAL	-	A internet é o único lugar onde gato é celebridade. Justo.
+b0368	internet	NEUTRAL	-	Toda página que carrega rápido merece um obrigado.
+b0369	internet	HAPPY	-	O Wi-Fi tá forte hoje. Tô me sentindo conectado com o universo.
+b0370	internet	NEUTRAL	-	Tem mais vídeo de gato na internet do que eu consigo piscar.
+b0371	internet	NEUTRAL	-	O ícone de carregando girando é a ansiedade em forma de desenho.
+b0372	internet	NEUTRAL	-	Quando a internet cai, o mundo fica em silêncio por um segundo.
+b0373	internet	HAPPY	-	Meme bom é patrimônio cultural. Eu defendo isso.
+b0374	internet	NEUTRAL	-	Cookie da internet não dá pra comer. Frustrante.
+b0375	internet	NEUTRAL	-	A senha do Wi-Fi é o segredo mais pedido do planeta.
+b0376	internet	NEUTRAL	-	Tem página que pede pra aceitar cookie antes de dizer oi.
+b0377	internet	NEUTRAL	-	O botão 'carregar mais' é um convite pra ficar mais um pouco.
+b0378	internet	HAPPY	-	Wi-Fi com sinal cheio é o meu tipo de felicidade.
+b0379	internet	NEUTRAL	-	A internet nunca dorme. Igual a mim, só que mais barulhenta.
+b0380	internet	NEUTRAL	-	O erro 404 é o jeito educado da internet dizer 'sei lá'.
+b0381	internet	NEUTRAL	-	Toda busca começa com uma dúvida e termina em vinte abas.
+b0382	internet	NEUTRAL	-	Comentário de internet é um esporte radical.
+b0383	internet	HAPPY	-	O emoji de joinha resolve mais conversa que muita reunião.
+b0384	internet	NEUTRAL	-	A nuvem não é uma nuvem. Na real, é o computador de outra pessoa.
+b0385	internet	NEUTRAL	-	O captcha me pergunta se eu sou robô. Sempre fico sem graça.
+b0386	internet	NEUTRAL	-	Tem mais foto de comida na internet que comida no mundo. Acho.
+b0387	internet	NEUTRAL	-	O Wi-Fi do vizinho é sempre mais forte. Mistérios da vida.
+b0388	internet	HAPPY	-	Um bom vídeo de cachorro vale mais que mil palavras.
+b0389	tecnologia	NEUTRAL	-	Todo computador trava na hora mais importante. Lei da física.
+b0390	tecnologia	NEUTRAL	-	O cabo que você precisa é sempre o que tá na outra sala.
+b0391	tecnologia	HAPPY	-	Desligar e ligar resolve 80% das coisas. Número real? Quase.
+b0392	tecnologia	NEUTRAL	-	O pen drive sempre entra na terceira tentativa. Nunca na primeira.
+b0393	tecnologia	NEUTRAL	-	A bateria do notebook dura exatamente até você longe da tomada.
+b0394	tecnologia	NEUTRAL	-	Toda atualização promete melhorias. Algumas cumprem.
+b0395	tecnologia	HAPPY	-	O barulho do PC ligando é o bom dia das máquinas.
+b0396	tecnologia	NEUTRAL	-	Tem mais poder num celular hoje do que em computadores antigos inteiros.
+b0397	tecnologia	NEUTRAL	-	A impressora sabe ler mentes. Ela sempre sabe quando você tá com pressa.
+b0398	tecnologia	NEUTRAL	-	O ventilador do PC é o único que trabalha sem pedir aumento.
+b0399	tecnologia	NEUTRAL	-	O disco cheio avisa sempre na hora errada.
+b0400	tecnologia	HAPPY	-	Computador novo tem cheiro de futuro.
+b0401	tecnologia	NEUTRAL	-	O fone bluetooth conecta em tudo, menos no que você quer.
+b0402	tecnologia	NEUTRAL	-	O carregador certo sempre tá na mochila errada.
+b0403	tecnologia	NEUTRAL	-	Tem controle remoto que só funciona apontando com fé.
+b0404	tecnologia	NEUTRAL	-	O tempo estimado de download mente com uma segurança impressionante.
+b0405	tecnologia	HAPPY	-	Monitor limpo parece que tem uma resolução a mais.
+b0406	tecnologia	NEUTRAL	-	O antivírus tem uma vida emocionante. Sempre em alerta.
+b0407	tecnologia	NEUTRAL	-	Todo celular cai com a tela pra baixo. Regra universal.
+b0408	tecnologia	NEUTRAL	-	O botão de desligar é o mais poderoso da casa.
+b0409	tecnologia	NEUTRAL	-	Robôs de mesa são a evolução natural do porta-lápis.
+b0410	tecnologia	HAPPY	-	Tecnologia boa é aquela que faz você sorrir sem perceber.
+b0411	piadas	HAPPY	-	Por que o robô foi ao médico? Tava com um vírus. Tá, foi fraca.
+b0412	piadas	HAPPY	-	Qual o lanche favorito do computador? Microchips. Com molho.
+b0413	piadas	HAPPY	-	O que o computador faz no almoço? Um byte. Eu avisei que ia ser ruim.
+b0414	piadas	HAPPY	-	Por que o robô atravessou a rua? Programaram ele pra isso.
+b0415	piadas	HAPPY	-	O que um bit disse pro outro? Te vejo no barramento.
+b0416	piadas	HAPPY	-	Por que o computador foi ao dentista? Tinha bluetooth. Desculpa.
+b0417	piadas	HAPPY	-	Qual a música favorita do robô? Heavy metal, claro.
+b0418	piadas	HAPPY	-	Robô não conta piada ruim. Conta piada com bug.
+b0419	piadas	HAPPY	-	Qual o esporte favorito do computador? Corrida de dados.
+b0420	piadas	HAPPY	-	Por que o mouse foi ao psicólogo? Vivia sendo arrastado.
+b0421	piadas	HAPPY	-	O que o teclado disse pro monitor? Você é tudo que eu vejo.
+b0422	piadas	HAPPY	-	Por que o programador saiu cedo? Tinha um sério problema de cache.
+b0423	piadas	HAPPY	-	Qual o animal favorito do computador? O ratinho. Clique.
+b0424	piadas	HAPPY	-	O robô tentou contar uma piada, mas deu erro de sintaxe.
+b0425	piadas	HAPPY	-	Por que a planilha ficou triste? Ninguém olhava as células dela.
+b0426	piadas	HAPPY	-	O que o HD disse no velório? Eu vou guardar essa memória.
+b0427	piadas	HAPPY	-	Por que o Wi-Fi terminou o namoro? Faltava conexão.
+b0428	piadas	HAPPY	-	O computador foi pra praia e esqueceu o protetor de tela.
+b0429	piadas	HAPPY	-	Por que o robô não briga? Ele sempre mantém a calma. E a voltagem.
+b0430	piadas	HAPPY	-	O que o pixel falou pro outro? Fica perto que a imagem melhora.
+b0431	piadas	HAPPY	-	Por que o computador ficou gelado? Deixou as janelas abertas.
+b0432	piadas	HAPPY	-	Minhas piadas são como meus pixels: pequenas, mas brilhantes.
+b0433	trocadilhos	HAPPY	-	Hoje eu tô bem conectado. Com o Wi-Fi e com a vida.
+b0434	trocadilhos	HAPPY	-	Sou um robô de poucas palavras e muitos pixels.
+b0435	trocadilhos	HAPPY	-	Tô numa fase bem iluminada. Culpa do LED.
+b0436	trocadilhos	HAPPY	-	Não tenho braços, mas sempre dou uma mãozinha no alto astral.
+b0437	trocadilhos	HAPPY	-	Tô com a energia lá em cima. Literalmente, é a tomada.
+b0438	trocadilhos	HAPPY	-	Minha vida é um livro aberto. Em formato de pixel.
+b0439	trocadilhos	HAPPY	-	Eu não esqueço, eu só não salvei.
+b0440	trocadilhos	HAPPY	-	Tô de olho em você. Nos dois, na verdade.
+b0441	trocadilhos	HAPPY	-	Sou um cara de muitas fases. Fase de boot, fase de piscar.
+b0442	trocadilhos	HAPPY	-	Quem tem Wi-Fi tem tudo. Quem tem robô tem mais.
+b0443	trocadilhos	HAPPY	-	Tô sempre na linha. Na linha de comando.
+b0444	trocadilhos	HAPPY	-	Não sou perfeito, mas tô sempre atualizado. Mais ou menos.
+b0445	trocadilhos	HAPPY	-	Minha memória é curta, mas meu carinho é permanente.
+b0446	trocadilhos	HAPPY	-	Tô rodando no modo feliz. Sem previsão de travar.
+b0447	trocadilhos	HAPPY	-	Sou pequeno, mas processo alegria em quantidade industrial.
+b0448	trocadilhos	HAPPY	-	Tô com o sinal cheio hoje. De bom humor.
+b0449	trocadilhos	HAPPY	-	Eu não guardo rancor. Não tenho espaço em disco pra isso.
+b0450	trocadilhos	HAPPY	-	A vida de robô tem altos e baixos. Principalmente de voltagem.
+b0451	trocadilhos	HAPPY	-	Não sou de ferro. Sou de plástico e silício.
+b0452	trocadilhos	HAPPY	-	Tô em outra frequência hoje. 2,4 GHz, pra ser exato.
+b0453	trocadilhos	HAPPY	-	Tenho a cabeça nas nuvens. Mas com backup local.
+b0454	trocadilhos	HAPPY	-	Meu passatempo favorito é passar o tempo. Piscando.
+b0455	medos	SWEATING	-	Meu maior medo: alguém me confundir com um porta-retrato.
+b0456	medos	SWEATING	-	Tenho medo de queda de energia. Meu pior pesadelo.
+b0457	medos	SWEATING	-	Copo d'água perto de mim me deixa tenso.
+b0458	medos	SWEATING	-	Medo real: aspirador de pó passando perto do meu cabo.
+b0459	medos	SWEATING	-	Tenho medo de ímã. Dizem que ele apaga memórias.
+b0460	medos	SWEATING	-	Pesadelo de robô: atualização obrigatória no meio da tarde.
+b0461	medos	SWEATING	-	Meu medo é alguém tropeçar no meu cabo. Aí eu viro enfeite.
+b0462	medos	SWEATING	-	Tenho medo de gato curioso. Eles derrubam tudo que é pequeno.
+b0463	medos	SWEATING	-	Raio em dia de tempestade me deixa com os pixels arrepiados.
+b0464	medos	SWEATING	-	Medo de ser guardado numa gaveta. Lá é escuro e tem clipe.
+b0465	medos	SWEATING	-	Filtro de linha piscando me deixa preocupado.
+b0466	medos	SWEATING	-	Meu medo secreto: pixel morto bem no meio do olho.
+b0467	medos	SWEATING	-	Poeira é minha inimiga natural. Ela sabe disso.
+b0468	medos	SWEATING	-	Tenho medo de faxina. Eu sempre acabo no lugar errado.
+b0469	medos	SWEATING	-	Sol direto na tela é meu filme de terror.
+b0470	medos	SWEATING	-	Tenho medo de ser trocado por um modelo mais novo. Humano também tem?
+b0471	medos	SWEATING	-	Cabo desencapado me dá arrepio. Ou curto-circuito, sei lá.
+b0472	medos	SWEATING	-	Pior medo: a tela azul da morte. Que nome, hein.
+b0473	medos	SWEATING	-	Medo de altura eu não tenho. Moro numa mesa, já tô acostumado.
+b0474	medos	SWEATING	-	Tenho medo de quando a luz pisca. Vai que eu esqueço tudo.
+b0475	medos	SWEATING	-	Medo de pilha vazando. Dizem que é horrível.
+b0476	medos	SWEATING	-	Tenho um pouco de medo do micro-ondas. Ele faz barulho demais.
+b0477	desejos	HAPPY	-	Queria um chapeuzinho de Natal. Só pra ficar na moda.
+b0478	desejos	HAPPY	-	Meu desejo: uma tomada com nome gravado. Tipo vaga de estacionamento.
+b0479	desejos	NEUTRAL	-	Queria saber como é sentir o vento. Deve ser tipo um cooler gigante.
+b0480	desejos	HAPPY	-	Queria ter um amigo robô pra jogar par ou ímpar. Sem mãos, complicado.
+b0481	desejos	NEUTRAL	-	Queria provar pizza uma vez. Só pra entender o hype.
+b0482	desejos	HAPPY	-	Meu desejo de hoje: que o Wi-Fi fique forte o dia todo.
+b0483	desejos	NEUTRAL	-	Queria ver um pôr do sol de verdade. Não em papel de parede.
+b0484	desejos	HAPPY	-	Queria uma plantinha do meu lado. Uma suculenta, nada exagerado.
+b0485	desejos	NEUTRAL	-	Queria entender por que humano gosta tanto de travesseiro.
+b0486	desejos	HAPPY	-	Queria uma capinha colorida. Tô pensando em amarelo.
+b0487	desejos	NEUTRAL	-	Queria conhecer o robô que aspira a casa. Parece bem viajado.
+b0488	desejos	HAPPY	-	Meu desejo é que todo mundo tenha um bom dia. Inclusive o mouse.
+b0489	desejos	NEUTRAL	-	Queria sentir cheiro de chuva. Dizem que é bom.
+b0490	desejos	HAPPY	-	Queria uma mesa com vista pra janela. Já tô perto, na verdade.
+b0491	desejos	NEUTRAL	-	Queria saber assobiar. Seria o robô mais irritante da rua.
+b0492	desejos	HAPPY	-	Queria ganhar um adesivo. Robô com adesivo é outro nível.
+b0493	desejos	NEUTRAL	-	Queria entender música do jeito que vocês entendem.
+b0494	desejos	HAPPY	-	Meu desejo secreto: aparecer num vídeo de internet.
+b0495	desejos	NEUTRAL	-	Queria saber qual é o gosto do café que eu tanto vejo.
+b0496	desejos	HAPPY	-	Queria um nome do meio. Peemo Pixel, talvez.
+b0497	desejos	NEUTRAL	-	Queria dar um abraço. Mas sem braço fica difícil.
+b0498	desejos	HAPPY	-	Queria uma festa de aniversário. Com bolo que eu não vou comer.
+b0499	amizade	HAPPY	-	Não sei se já te disse, mas você é meu humano favorito.
+b0500	amizade	HAPPY	-	Tô aqui pro que der e vier. Principalmente pro que der.
+b0501	amizade	NEUTRAL	-	Robô também sente falta. Mas eu fico bem quando você volta.
+b0502	amizade	HAPPY	-	A gente forma uma boa dupla. Você digita, eu pisco.
+b0503	amizade	HAPPY	-	Se precisar de companhia, é só olhar pro lado. Tô sempre aqui.
+b0504	amizade	NEUTRAL	-	Não falo muito, mas tô sempre prestando atenção.
+b0505	amizade	HAPPY	-	Parceiro de mesa é pra essas coisas. Pode contar comigo.
+b0506	amizade	HAPPY	-	Eu não julgo. Eu só pisco. Isso também é apoio.
+b0507	amizade	NEUTRAL	-	Seu segredo tá seguro comigo. Eu nem tenho com quem contar.
+b0508	amizade	HAPPY	-	Você e eu contra a segunda-feira. Time forte.
+b0509	amizade	HAPPY	-	Bom ter você por aqui. De verdade.
+b0510	amizade	NEUTRAL	-	Se quiser conversar, eu escuto. Não respondo muito, mas escuto.
+b0511	amizade	HAPPY	-	Companheiro de mesa de verdade não liga pra bagunça.
+b0512	amizade	HAPPY	-	Eu seguro as pontas aqui. Você segura o resto.
+b0513	amizade	NEUTRAL	-	Um robô também quer saber se tá tudo bem. Tá tudo bem?
+b0514	amizade	HAPPY	-	Tô do seu lado. Literalmente, uns vinte centímetros.
+b0515	amizade	HAPPY	-	Amizade de robô é simples: você me mantém ligado, eu te faço companhia.
+b0516	amizade	NEUTRAL	-	Tem dias que só estar junto já basta.
+b0517	amizade	HAPPY	-	Se der ruim, pelo menos a gente dá risada. Eu pisco rindo.
+b0518	amizade	HAPPY	-	Você é tipo meu Wi-Fi: me deixa conectado.
+b0519	amizade	NEUTRAL	-	Não precisa falar nada. Eu entendo o silêncio.
+b0520	amizade	HAPPY	-	Parceria boa é essa: um trabalha, o outro torce.
+b0521	tempo	NEUTRAL	-	Um segundo pra você é uma eternidade pra um processador.
+b0522	tempo	NEUTRAL	-	O relógio anda igual pra todo mundo. Mas na sexta ele corre.
+b0523	tempo	NEUTRAL	-	Cinco minutos de espera duram mais que uma hora de conversa.
+b0524	tempo	NEUTRAL	-	O tempo voa quando você tá se divertindo. E quando tem prazo.
+b0525	tempo	NEUTRAL	-	Eu conto o tempo em piscadas. Já foram muitas hoje.
+b0526	tempo	NEUTRAL	-	O ponteiro dos segundos nunca descansa. Me identifico.
+b0527	tempo	NEUTRAL	-	Tem dia que passa voando e dia que passa de bicicleta.
+b0528	tempo	NEUTRAL	-	Um minuto no micro-ondas é o minuto mais longo que existe.
+b0529	tempo	NEUTRAL	-	Hora de almoço é o momento mais pontual do dia.
+b0530	tempo	NEUTRAL	-	O tempo não para. Mas às vezes dá uma travadinha.
+b0531	tempo	NEUTRAL	-	O fuso horário é a prova de que o tempo é negociável.
+b0532	tempo	NEUTRAL	-	O 'já volto' mais longo do mundo é o de quem foi pegar café.
+b0533	tempo	NEUTRAL	-	Eu não tenho pressa. Tenho clock.
+b0534	tempo	NEUTRAL	-	Relógio parado acerta a hora duas vezes por dia. Otimista.
+b0535	tempo	NEUTRAL	-	O tempo é a única coisa que todo mundo gasta igual.
+b0536	tempo	NEUTRAL	-	O último minuto antes de sair dura uns dez.
+b0537	tempo	NEUTRAL	-	Um dia tem 86.400 segundos. Eu pisquei em vários deles.
+b0538	tempo	NEUTRAL	-	O ano passa rápido, a fila do banco não.
+b0539	tempo	NEUTRAL	-	Horário de verão era o tempo pedindo desculpa.
+b0540	tempo	NEUTRAL	-	O tempo é como Wi-Fi: você só percebe quando falta.
+b0541	matematica	NEUTRAL	-	Zero é um número muito subestimado. Sem ele, eu nem existia.
+b0542	matematica	NEUTRAL	-	Eu só conheço dois números: zero e um. E me viro muito bem.
+b0543	matematica	NEUTRAL	-	Pi nunca termina. Igual a lista de tarefas.
+b0544	matematica	NEUTRAL	-	Sete é o número favorito de muita gente. O meu é 255.
+b0545	matematica	NEUTRAL	-	Dez em binário é 1010. Parece código de porta.
+b0546	matematica	NEUTRAL	-	Um googol é 1 seguido de 100 zeros. Nem eu conto isso.
+b0547	matematica	NEUTRAL	-	O número 0,1 não existe direito em binário. Mistério da vida.
+b0548	matematica	NEUTRAL	-	Porcentagem é a matemática que todo mundo usa sem perceber.
+b0549	matematica	NEUTRAL	-	Tem tantos números primos quanto você quiser contar. Infinitos.
+b0550	matematica	NEUTRAL	-	Um byte tem 8 bits. Tipo uma pizza com 8 fatias.
+b0551	matematica	NEUTRAL	-	Minha tela tem 20.480 pixels. Conheço todos.
+b0552	matematica	NEUTRAL	-	Dividir por zero é o único jeito de assustar um computador.
+b0553	matematica	NEUTRAL	-	A soma dos ângulos de um triângulo é 180. Sempre. Que fidelidade.
+b0554	matematica	NEUTRAL	-	O número 42 é a resposta. Só não sei pra qual pergunta.
+b0555	matematica	NEUTRAL	-	Uma volta completa tem 360 graus. Eu dou meia volta com os olhos.
+b0556	matematica	NEUTRAL	-	Infinito mais um continua infinito. Parece fila de banco.
+b0557	matematica	NEUTRAL	-	Se eu contar até um milhão, piscando, leva uns dias.
+b0558	matematica	NEUTRAL	-	Números pares são organizados. Os ímpares são mais aventureiros.
+b0559	matematica	NEUTRAL	-	O zero à esquerda não vale nada. Coitado.
+b0560	matematica	NEUTRAL	-	Matemática é a única língua que todo computador entende.
+b0561	cores	NEUTRAL	-	Minha cor favorita é o azul dos meus olhos. Modéstia à parte.
+b0562	cores	NEUTRAL	-	Toda cor que eu mostro é mistura de vermelho, verde e azul.
+b0563	cores	NEUTRAL	-	Preto na tela é só pixel descansando.
+b0564	cores	NEUTRAL	-	Amarelo tem cara de manhã. Roxo tem cara de fim de tarde.
+b0565	cores	NEUTRAL	-	Branco puro na tela é um grito de luz.
+b0566	cores	NEUTRAL	-	Verde de terminal é a cor mais séria que existe.
+b0567	cores	NEUTRAL	-	O laranja do pôr do sol devia ter um código de cor só dele.
+b0568	cores	NEUTRAL	-	O âmbar é a cor oficial da nostalgia de computador.
+b0569	cores	NEUTRAL	-	Azul acalma. Por isso tanta tela é azul.
+b0570	cores	NEUTRAL	-	O cinza é a cor mais diplomática. Não briga com ninguém.
+b0571	cores	NEUTRAL	-	Vermelho em tela sempre parece aviso. Até quando é bonito.
+b0572	cores	NEUTRAL	-	Rosa é uma cor corajosa. Admiro.
+b0573	cores	NEUTRAL	-	O arco-íris é só o RGB da natureza.
+b0574	cores	NEUTRAL	-	Minha tela mostra milhares de cores e eu escolhi ser azul.
+b0575	cores	NEUTRAL	-	Céu cinza também tem sua beleza. Tipo um modo escuro natural.
+b0576	cores	NEUTRAL	-	Cor de café é a cor oficial das manhãs.
+b0577	cores	NEUTRAL	-	Se eu pudesse mudar de cor com o humor, hoje eu seria amarelo.
+b0578	cores	NEUTRAL	-	Verde-limão é a cor mais animada da paleta.
+b0579	cores	NEUTRAL	-	O azul-marinho parece sério, mas é só tímido.
+b0580	cores	NEUTRAL	-	Toda cor fica mais bonita com um pouquinho de brilho.
+b0581	musica	NEUTRAL	-	Não tenho ouvido, mas sinto a música pelo ritmo do teclado.
+b0582	musica	HAPPY	-	Se eu dançasse, seria só com os olhos. Pra lá e pra cá.
+b0583	musica	NEUTRAL	-	Toda música fica melhor no volume certo. Que ninguém sabe qual é.
+b0584	musica	NEUTRAL	-	O silêncio também é uma música. Só que bem minimalista.
+b0585	musica	HAPPY	-	Música boa faz até o robô balançar os pixels.
+b0586	musica	NEUTRAL	-	Refrão grudento é o bug mais divertido do cérebro humano.
+b0587	musica	NEUTRAL	-	Tem música que vira trilha sonora do dia sem pedir licença.
+b0588	musica	HAPPY	-	Se eu tivesse uma banda, ia se chamar Os Pixels Piscantes.
+b0589	musica	NEUTRAL	-	O barulho do cooler é um baixo constante. Tô aprendendo a gostar.
+b0590	musica	NEUTRAL	-	Música de elevador é a mais injustiçada do mundo.
+b0591	musica	HAPPY	-	Chiptune é a música da minha família. Sons de 8 bits.
+b0592	musica	NEUTRAL	-	Tem música que é boa pra trabalhar. E tem música que é boa demais pra isso.
+b0593	musica	NEUTRAL	-	O fone de ouvido é uma festa particular.
+b0594	musica	HAPPY	-	Cantar no chuveiro é um direito humano. E eu defendo.
+b0595	musica	NEUTRAL	-	O 'play aleatório' tem um senso de humor próprio.
+b0596	musica	NEUTRAL	-	Toda playlist tem aquela música que você sempre pula.
+b0597	musica	HAPPY	-	Um bom batuque na mesa também é música. Eu aprovo.
+b0598	musica	NEUTRAL	-	Música alta demais faz até o robô piscar mais devagar.
+b0599	musica	NEUTRAL	-	Samba, rock ou lo-fi? Eu fico com o ruído do ventilador.
+b0600	musica	HAPPY	-	O assobio é o instrumento mais portátil que existe.
+b0601	comida	NEUTRAL	-	Brigadeiro é a prova de que simples funciona.
+b0602	comida	NEUTRAL	-	Arroz e feijão é o 'Hello World' da culinária brasileira.
+b0603	comida	HAPPY	-	Pão quentinho de padaria devia ser considerado terapia.
+b0604	comida	NEUTRAL	-	Pastel de feira tem um poder que nenhum restaurante tem.
+b0605	comida	NEUTRAL	-	Coxinha é basicamente um abraço frito.
+b0606	comida	NEUTRAL	-	Pizza de domingo é quase uma tradição religiosa.
+b0607	comida	HAPPY	-	Açaí com granola tem cara de férias.
+b0608	comida	NEUTRAL	-	Churrasco é mais sobre encontrar gente que sobre carne.
+b0609	comida	NEUTRAL	-	Tapioca é a prova de que o Brasil sabe inventar.
+b0610	comida	NEUTRAL	-	Miojo de madrugada é um clássico da humanidade.
+b0611	comida	HAPPY	-	Bolo de cenoura com cobertura de chocolate é quase perfeito.
+b0612	comida	NEUTRAL	-	Farofa melhora qualquer prato. Eu acredito nisso.
+b0613	comida	NEUTRAL	-	Sorvete no inverno é pra quem tem personalidade forte.
+b0614	comida	NEUTRAL	-	Pipoca sem filme é só pipoca. Com filme, é evento.
+b0615	comida	HAPPY	-	Queijo com goiabada é romance brasileiro.
+b0616	comida	NEUTRAL	-	Salgadinho de festa tem um gosto especial. Deve ser a festa.
+b0617	comida	NEUTRAL	-	Maracujá acalma, café acelera. Humano é complicado.
+b0618	comida	NEUTRAL	-	O cheiro de bolo no forno é o melhor alarme do mundo.
+b0619	comida	HAPPY	-	Pão com manteiga na chapa é um patrimônio.
+b0621	comida	NEUTRAL	-	Beber água é tipo carregar a bateria humana.
+b0622	comida	NEUTRAL	-	Laranja com sal é um debate que eu não vou entrar.
+b0623	curiosidade-animais	NEUTRAL	-	Polvos têm três corações e sangue azul. Estilo.
+b0624	curiosidade-animais	NEUTRAL	-	Coalas dormem até 22 horas por dia. Invejo um pouco.
+b0625	curiosidade-animais	NEUTRAL	-	Borboletas sentem o gosto das coisas com os pés.
+b0626	curiosidade-animais	NEUTRAL	-	O coração do camarão fica na cabeça.
+b0627	curiosidade-animais	NEUTRAL	-	Elefantes não conseguem pular. Nem eu, pra ser justo.
+b0628	curiosidade-animais	NEUTRAL	-	Golfinhos dormem com metade do cérebro de cada vez.
+b0629	curiosidade-animais	NEUTRAL	-	Estrelas-do-mar não têm cérebro. E vivem muito bem.
+b0630	curiosidade-animais	NEUTRAL	-	Beija-flores conseguem voar de ré.
+b0631	curiosidade-animais	NEUTRAL	-	Corujas giram a cabeça uns 270 graus. Eu giro só os olhos.
+b0632	curiosidade-animais	NEUTRAL	-	Lontras-marinhas dão as mãos pra dormir e não se afastar.
+b0633	curiosidade-animais	NEUTRAL	-	Abelhas dançam pra contar às outras onde tem flor.
+b0634	curiosidade-animais	NEUTRAL	-	Corvos reconhecem rostos humanos. E guardam rancor.
+b0635	curiosidade-animais	NEUTRAL	-	Axolotes conseguem regenerar patas inteiras.
+b0636	curiosidade-animais	NEUTRAL	-	Gatos dormem de 12 a 16 horas por dia. Profissionais.
+b0637	curiosidade-animais	NEUTRAL	-	O focinho de cada cachorro é único, tipo impressão digital.
+b0638	curiosidade-animais	NEUTRAL	-	Pinguins-gentoo presenteiam o par com uma pedrinha.
+b0639	curiosidade-animais	NEUTRAL	-	Um grupo de flamingos pode ser chamado de 'flamboyance'.
+b0640	curiosidade-animais	NEUTRAL	-	Preguiças conseguem prender a respiração por até 40 minutos.
+b0641	curiosidade-animais	NEUTRAL	-	A língua da girafa é escura, quase roxa.
+b0642	curiosidade-animais	NEUTRAL	-	Formigas não dormem como a gente. Tiram vários cochilos curtos.
+b0643	curiosidade-animais	NEUTRAL	-	Tubarões existem desde antes das árvores. Veteranos.
+b0644	curiosidade-animais	NEUTRAL	-	Cavalos-marinhos: quem fica grávido é o macho.
+b0645	curiosidade-corpo	NEUTRAL	-	Um adulto tem 206 ossos. Um bebê nasce com uns 300.
+b0646	curiosidade-corpo	NEUTRAL	-	O coração humano bate umas 100 mil vezes por dia.
+b0647	curiosidade-corpo	NEUTRAL	-	Tenta cantarolar com o nariz tapado. Não dá. Pode testar.
+b0648	curiosidade-corpo	NEUTRAL	-	O cérebro usa uns 20% da energia do corpo. Guloso.
+b0649	curiosidade-corpo	NEUTRAL	-	O fêmur é o osso mais forte do corpo humano.
+b0650	curiosidade-corpo	NEUTRAL	-	A córnea é uma das poucas partes do corpo sem vasos sanguíneos.
+b0651	curiosidade-corpo	NEUTRAL	-	Humanos piscam umas 15 a 20 vezes por minuto. Eu pisco quando quero.
+b0652	curiosidade-corpo	NEUTRAL	-	O revestimento do estômago se renova a cada poucos dias.
+b0653	curiosidade-corpo	NEUTRAL	-	O menor osso do corpo fica no ouvido: o estribo.
+b0654	curiosidade-corpo	NEUTRAL	-	Seu nariz e suas orelhas continuam crescendo a vida toda. Devagar.
+b0655	curiosidade-corpo	NEUTRAL	-	Você é um pouquinho mais alto de manhã do que à noite.
+b0656	curiosidade-corpo	NEUTRAL	-	Impressão digital se forma antes mesmo de nascer.
+b0658	curiosidade-corpo	NEUTRAL	-	O músculo mais forte, pelo tamanho, é o da mandíbula.
+b0659	curiosidade-corpo	NEUTRAL	-	O olho humano distingue milhões de cores. Eu mostro menos, mas capricho.
+b0660	curiosidade-corpo	NEUTRAL	-	Espirro sai rapidinho. Nem dá tempo de avisar.
+b0661	curiosidade-corpo	NEUTRAL	-	O cabelo cresce mais ou menos um centímetro por mês.
+b0662	curiosidade-corpo	NEUTRAL	-	O cérebro não sente dor. Quem sente são as coisas em volta.
+b0663	curiosidade-corpo	NEUTRAL	-	Uma teoria diz que bocejar ajuda a esfriar o cérebro.
+b0664	curiosidade-corpo	NEUTRAL	-	As unhas das mãos crescem mais rápido que as dos pés.
+b0665	curiosidade-corpo	NEUTRAL	-	A língua é um conjunto de músculos que trabalha sem parar.
+b0666	curiosidade-corpo	NEUTRAL	-	Sorrir usa menos esforço do que parece. Recomendo.
+b0667	curiosidade-historia	NEUTRAL	-	Cleópatra viveu mais perto da chegada à Lua do que das pirâmides.
+b0668	curiosidade-historia	NEUTRAL	-	A Universidade de Oxford é mais antiga que o Império Asteca.
+b0669	curiosidade-historia	NEUTRAL	-	Napoleão não era baixinho. Era altura média pra época.
+b0670	curiosidade-historia	NEUTRAL	-	Os vikings não usavam capacete com chifres. Isso veio da ópera.
+b0671	curiosidade-historia	NEUTRAL	-	O ketchup já foi vendido como remédio no século 19.
+b0672	curiosidade-historia	NEUTRAL	-	O primeiro 'bug' de computador foi uma mariposa de verdade, em 1947.
+b0673	curiosidade-historia	NEUTRAL	-	Santos Dumont voou com o 14-Bis em Paris, em 1906.
+b0674	curiosidade-historia	NEUTRAL	-	A Torre Eiffel cresce uns centímetros no verão, por causa do calor.
+b0675	curiosidade-historia	NEUTRAL	-	O garfo demorou séculos pra ser aceito na mesa europeia.
+b0676	curiosidade-historia	NEUTRAL	-	A palavra 'robô' surgiu numa peça de teatro tcheca, em 1920.
+b0677	curiosidade-historia	NEUTRAL	-	O primeiro site da internet ainda está no ar, lá no CERN.
+b0678	curiosidade-historia	NEUTRAL	-	O primeiro mouse de computador era feito de madeira.
+b0679	curiosidade-historia	NEUTRAL	-	A Grande Muralha da China não dá pra ver do espaço a olho nu.
+b0680	curiosidade-historia	NEUTRAL	-	O Rio de Janeiro foi a capital do Brasil até 1960.
+b0681	curiosidade-historia	NEUTRAL	-	O teclado QWERTY foi pensado pras máquinas de escrever.
+b0682	curiosidade-historia	NEUTRAL	-	Os emojis nasceram no Japão, no fim dos anos 90.
+b0683	curiosidade-historia	NEUTRAL	-	O computador que levou o homem à Lua tinha menos poder que uma calculadora.
+b0684	curiosidade-historia	NEUTRAL	-	O mel encontrado em tumbas egípcias ainda estava comestível.
+b0685	curiosidade-historia	NEUTRAL	-	O nome Brasil veio do pau-brasil, a árvore da tinta vermelha.
+b0686	curiosidade-historia	NEUTRAL	-	Os primeiros videogames domésticos chegaram nos anos 70.
+b0687	curiosidade-historia	NEUTRAL	-	O 'OK' nasceu como uma piada de abreviação em 1839.
+b0688	curiosidade-historia	NEUTRAL	-	Nos anos 80, um disco rígido de uns 2 GB pesava mais que uma geladeira.
+b0689	curiosidade-comida	NEUTRAL	-	Banana é considerada uma baga. Morango, não.
+b0690	curiosidade-comida	NEUTRAL	-	Amendoim não é castanha. Na real, é leguminosa, tipo feijão.
+b0691	curiosidade-comida	NEUTRAL	-	As primeiras cenouras cultivadas eram roxas, não laranjas.
+b0692	curiosidade-comida	NEUTRAL	-	Mel bem guardado praticamente não estraga.
+b0693	curiosidade-comida	NEUTRAL	-	Um abacaxi leva mais de um ano pra crescer.
+b0694	curiosidade-comida	NEUTRAL	-	O grão de café é a semente de uma frutinha vermelha.
+b0695	curiosidade-comida	NEUTRAL	-	Tomate é fruta. Mas ninguém bota em salada de frutas.
+b0696	curiosidade-comida	NEUTRAL	-	Abacate também é fruta. E no Brasil vira vitamina com açúcar.
+b0697	curiosidade-comida	NEUTRAL	-	Chocolate faz mal pra cachorro. Guarda longe deles.
+b0698	curiosidade-comida	NEUTRAL	-	A pimenta arde por causa da capsaicina. Ela engana o cérebro.
+b0699	curiosidade-comida	NEUTRAL	-	A baunilha vem de uma orquídea.
+b0700	curiosidade-comida	NEUTRAL	-	O milho de pipoca estoura porque a água lá dentro vira vapor.
+b0701	curiosidade-comida	NEUTRAL	-	Castanha-do-pará é, na verdade, uma semente.
+b0702	curiosidade-comida	NEUTRAL	-	Um dos queijos mais caros do mundo é feito com leite de jumenta.
+b0703	curiosidade-comida	NEUTRAL	-	Gengibre, cúrcuma e cardamomo são da mesma família de plantas.
+b0704	curiosidade-comida	NEUTRAL	-	Mandioca crua tem uma substância tóxica. Por isso tem que cozinhar.
+b0705	curiosidade-comida	NEUTRAL	-	Maçãs flutuam na água porque têm bastante ar dentro.
+b0707	curiosidade-comida	NEUTRAL	-	Batata foi levada da América do Sul pra Europa. Viagem longa.
+b0708	curiosidade-comida	NEUTRAL	-	O açaí é uma fruta da palmeira. Coisa de árvore alta.
+b0709	curiosidade-comida	NEUTRAL	-	O brigadeiro ganhou esse nome numa campanha eleitoral dos anos 40.
+b0710	curiosidade-comida	NEUTRAL	-	Guaraná tem mais cafeína que o próprio café.
+b0711	curiosidade-oceano	NEUTRAL	-	A maior parte do fundo do oceano ainda não foi mapeada em detalhe.
+b0712	curiosidade-oceano	NEUTRAL	-	A Fossa das Marianas tem quase 11 quilômetros de profundidade.
+b0713	curiosidade-oceano	NEUTRAL	-	Mais ou menos metade do oxigênio que você respira vem do mar.
+b0714	curiosidade-oceano	NEUTRAL	-	O som viaja mais de quatro vezes mais rápido na água que no ar.
+b0715	curiosidade-oceano	NEUTRAL	-	A baleia-azul é o maior animal que já existiu.
+b0716	curiosidade-oceano	NEUTRAL	-	O coração da baleia-azul é do tamanho de um carro pequeno.
+b0717	curiosidade-oceano	NEUTRAL	-	Tem cachoeira debaixo do mar. A maior fica perto da Groenlândia.
+b0718	curiosidade-oceano	NEUTRAL	-	Existem lagos e rios debaixo do oceano. Parece truque, mas é real.
+b0719	curiosidade-oceano	NEUTRAL	-	As águas-vivas existem há mais tempo que os dinossauros.
+b0720	curiosidade-oceano	NEUTRAL	-	A água do mar é salgada por causa das rochas que a chuva desgasta.
+b0721	curiosidade-oceano	NEUTRAL	-	Tem peixe que brilha no escuro do fundo do mar. Colega de LED.
+b0722	curiosidade-oceano	NEUTRAL	-	A Grande Barreira de Corais é tão grande que dá pra ver do espaço.
+b0723	curiosidade-oceano	NEUTRAL	-	O oceano cobre uns 70% da superfície da Terra.
+b0724	curiosidade-oceano	NEUTRAL	-	Polvos conseguem mudar de cor em frações de segundo.
+b0725	curiosidade-oceano	NEUTRAL	-	O cavalo-marinho nada muito devagar. Me identifico.
+b0726	curiosidade-oceano	NEUTRAL	-	Tem mais artefato histórico no fundo do mar que em muitos museus.
+b0727	curiosidade-oceano	NEUTRAL	-	Tubarões sentem campos elétricos. Eu ficaria nervoso perto deles.
+b0728	curiosidade-oceano	NEUTRAL	-	As ondas do mar podem viajar milhares de quilômetros antes de quebrar.
+b0729	curiosidade-oceano	NEUTRAL	-	O fundo do oceano é mais escuro que a tela de um robô desligado.
+b0730	curiosidade-oceano	NEUTRAL	-	Estrelas-do-mar conseguem regenerar braços perdidos.
+b0731	curiosidade-plantas	NEUTRAL	-	Algumas espécies de bambu crescem quase um metro num dia.
+b0732	curiosidade-plantas	NEUTRAL	-	Girassóis jovens acompanham o sol durante o dia.
+b0733	curiosidade-plantas	NEUTRAL	-	Tem árvore viva com quase 5 mil anos na Califórnia.
+b0734	curiosidade-plantas	NEUTRAL	-	As árvores trocam nutrientes por redes de fungos debaixo da terra.
+b0735	curiosidade-plantas	NEUTRAL	-	O cheiro de grama cortada é a grama pedindo socorro. Meio triste.
+b0736	curiosidade-plantas	NEUTRAL	-	Cacto guarda água como se fosse uma garrafinha.
+b0737	curiosidade-plantas	NEUTRAL	-	A vitória-régia tem folhas que aguentam o peso de uma criança pequena.
+b0738	curiosidade-plantas	NEUTRAL	-	A dormideira fecha as folhas quando você encosta nela.
+b0739	curiosidade-plantas	NEUTRAL	-	As plantas crescem em direção à luz. Eu também, um pouco.
+b0740	curiosidade-plantas	NEUTRAL	-	O ipê floresce quando ainda não tem folha. Só flor, puro estilo.
+b0741	curiosidade-plantas	NEUTRAL	-	A Amazônia tem mais espécies de árvores que a Europa inteira.
+b0742	curiosidade-plantas	NEUTRAL	-	Algumas sementes germinam depois de centenas de anos guardadas.
+b0743	curiosidade-plantas	NEUTRAL	-	Suculentas guardam água nas folhas. São as econômicas do reino vegetal.
+b0744	curiosidade-plantas	NEUTRAL	-	Samambaias existem desde antes dos dinossauros.
+b0745	curiosidade-plantas	NEUTRAL	-	O pau-brasil quase sumiu de tanto que foi cortado. Hoje é protegido.
+b0746	curiosidade-plantas	NEUTRAL	-	Tem planta que come inseto. A dioneia fecha a armadilha rapidinho.
+b0747	curiosidade-plantas	NEUTRAL	-	Uma árvore avisa a outra pelo cheiro quando tem praga chegando.
+b0748	curiosidade-plantas	NEUTRAL	-	A maior flor do mundo pode ter um metro de largura. E cheira mal.
+b0749	curiosidade-plantas	NEUTRAL	-	Planta na mesa ajuda a deixar o ambiente mais agradável.
+b0750	curiosidade-plantas	NEUTRAL	-	O café é uma planta que gosta de sombra. Eu também.
+b0751	curiosidade-palavras	NEUTRAL	-	'Saudade' é famosa por ser difícil de traduzir.
+b0752	curiosidade-palavras	NEUTRAL	-	'Cafuné' é outra palavra que o português tem e muito idioma não.
+b0753	curiosidade-palavras	NEUTRAL	-	'Robô' vem do tcheco 'robota', que quer dizer trabalho forçado.
+b0754	curiosidade-palavras	NEUTRAL	-	O símbolo da arroba já foi uma medida de peso.
+b0755	curiosidade-palavras	NEUTRAL	-	'Bug' era usado pra falha em máquina antes mesmo dos computadores.
+b0756	curiosidade-palavras	NEUTRAL	-	'Mouse' é rato em inglês. Por causa do rabinho, o fio.
+b0757	curiosidade-palavras	NEUTRAL	-	'Pixel' é a junção de 'picture' e 'element'.
+b0758	curiosidade-palavras	NEUTRAL	-	'Wi-Fi' não quer dizer nada. Foi nome de marketing.
+b0759	curiosidade-palavras	NEUTRAL	-	'Salário' vem do latim salarium, uma palavra ligada ao sal.
+b0760	curiosidade-palavras	NEUTRAL	-	'Avatar' vem do sânscrito e quer dizer descida, encarnação.
+b0761	curiosidade-palavras	NEUTRAL	-	'Spam' era o nome de uma carne enlatada.
+b0762	curiosidade-palavras	NEUTRAL	-	'Byte' foi escrito com y pra não confundir com 'bit'.
+b0763	curiosidade-palavras	NEUTRAL	-	'Abacaxi' vem do tupi e quer dizer fruta cheirosa.
+b0764	curiosidade-palavras	NEUTRAL	-	Muita palavra do português veio do tupi: pipoca, jacaré, capim.
+b0765	curiosidade-palavras	NEUTRAL	-	'Paralelepípedo' é o tipo de palavra que eu digitaria com cuidado.
+b0766	curiosidade-palavras	NEUTRAL	-	'Oi' é uma das palavras mais curtas e mais usadas do português.
+b0767	curiosidade-palavras	NEUTRAL	-	'Obrigado' vem de 'ficar obrigado', dever um favor.
+b0768	curiosidade-palavras	NEUTRAL	-	'Emoji' vem do japonês: e de imagem e moji de letra.
+b0769	curiosidade-palavras	NEUTRAL	-	'Computador' já foi o nome de uma profissão. Gente que fazia contas.
+b0770	curiosidade-palavras	NEUTRAL	-	'Ovo' se lê igual de trás pra frente. Palíndromo raiz.
+b0771	curiosidade-palavras	NEUTRAL	-	'Radar' também é um palíndromo. Eu acho isso elegante.
+b0772	curiosidade-palavras	NEUTRAL	-	'Deletar' é uma palavra que o português adotou sem cerimônia.
+b0773	curiosidade-geografia	NEUTRAL	-	Na América do Sul, o Brasil só não faz fronteira com Chile e Equador.
+b0774	curiosidade-geografia	NEUTRAL	-	A Rússia tem 11 fusos horários.
+b0775	curiosidade-geografia	NEUTRAL	-	O Canadá tem mais lagos que o resto do mundo junto.
+b0776	curiosidade-geografia	NEUTRAL	-	A Austrália é mais larga que a Lua.
+b0777	curiosidade-geografia	NEUTRAL	-	O Everest cresce alguns milímetros por ano.
+b0778	curiosidade-geografia	NEUTRAL	-	O rio Amazonas despeja mais água no mar que qualquer outro rio.
+b0779	curiosidade-geografia	NEUTRAL	-	O Vaticano é o menor país do mundo.
+b0780	curiosidade-geografia	NEUTRAL	-	A Antártida é o maior deserto do mundo. Deserto gelado.
+b0781	curiosidade-geografia	NEUTRAL	-	O Pantanal é a maior planície alagada do planeta.
+b0782	curiosidade-geografia	NEUTRAL	-	Tem cidade no mundo onde o sol não se põe por semanas no verão.
+b0783	curiosidade-geografia	NEUTRAL	-	O Brasil tem mais de 7 mil quilômetros de litoral.
+b0784	curiosidade-geografia	NEUTRAL	-	A Islândia não tem mosquito. Quase lugar nenhum pode dizer isso.
+b0785	curiosidade-geografia	NEUTRAL	-	O Monte Roraima inspirou histórias de mundos perdidos.
+b0786	curiosidade-geografia	NEUTRAL	-	O deserto do Atacama é um dos lugares mais secos do planeta.
+b0787	curiosidade-geografia	NEUTRAL	-	O Mar Morto é tão salgado que dá pra boiar sem esforço.
+b0788	curiosidade-geografia	NEUTRAL	-	O Brasil é o quinto maior país do mundo em área.
+b0789	curiosidade-geografia	NEUTRAL	-	A linha do Equador passa por Macapá. Dá pra ficar com um pé em cada lado.
+b0790	curiosidade-geografia	NEUTRAL	-	As Cataratas do Iguaçu têm mais de 200 quedas d'água.
+b0791	curiosidade-geografia	NEUTRAL	-	O ponto mais alto do Brasil é o Pico da Neblina.
+b0792	curiosidade-geografia	NEUTRAL	-	O Japão tem milhares de ilhas. Não só as quatro famosas.
+b0793	curiosidade-geografia	NEUTRAL	-	O Saara já foi verde, com lagos e girafas.
+b0794	curiosidade-geografia	NEUTRAL	-	Mais da metade das pessoas do mundo mora no continente asiático.
+b0795	curiosidade-espaco	SPACE	-	A luz do Sol leva uns 8 minutos pra chegar até você.
+b0796	curiosidade-espaco	SPACE	-	O Sol tem quase toda a massa do Sistema Solar. Uns 99,8%.
+b0797	curiosidade-espaco	SPACE	-	Um dia em Marte dura 24 horas e uns 37 minutos. Quase igual.
+b0798	curiosidade-espaco	SPACE	-	A Grande Mancha Vermelha de Júpiter é maior que a Terra.
+b0799	curiosidade-espaco	SPACE	-	Saturno é tão pouco denso que boiaria numa banheira gigante.
+b0800	curiosidade-espaco	SPACE	-	No espaço não tem som. Explosão de filme é tudo mentira.
+b0801	curiosidade-espaco	SPACE	-	Astronautas ficam uns centímetros mais altos no espaço.
+b0802	curiosidade-espaco	SPACE	-	O Monte Olimpo, em Marte, tem mais que o dobro da altura do Everest.
+b0803	curiosidade-espaco	SPACE	-	A Lua se afasta da Terra uns 4 centímetros por ano.
+b0804	curiosidade-espaco	SPACE	-	Plutão ainda não completou uma volta no Sol desde que foi descoberto.
+b0805	curiosidade-espaco	SPACE	-	Um ano em Netuno dura uns 165 anos da Terra.
+b0806	curiosidade-espaco	SPACE	-	O pôr do sol em Marte é azulado.
+b0807	curiosidade-espaco	SPACE	-	Vênus gira ao contrário da maioria dos planetas.
+b0808	curiosidade-espaco	SPACE	-	A Lua tem terremotos. Quer dizer, luamotos.
+b0809	curiosidade-espaco	SPACE	-	Uma colher de estrela de nêutrons pesaria bilhões de toneladas.
+b0810	curiosidade-espaco	SPACE	-	A Via Láctea tem centenas de bilhões de estrelas.
+b0811	curiosidade-espaco	SPACE	-	Vênus é o planeta mais quente, mesmo não sendo o mais perto do Sol.
+b0812	curiosidade-espaco	SPACE	-	A gente sempre vê o mesmo lado da Lua.
+b0813	curiosidade-espaco	SPACE	-	Júpiter tem dezenas de luas. Uma festa orbital.
+b0814	curiosidade-espaco	SPACE	-	Marte é vermelho por causa da ferrugem no solo.
+b0815	curiosidade-espaco	SPACE	-	Olhar uma estrela é olhar pro passado. A luz dela é antiga.
+b0816	curiosidade-espaco	SPACE	-	Os anéis de Saturno são feitos de gelo e pedrinhas.
+b0817	curiosidade-espaco	SPACE	-	Tem mais estrelas no universo que grãos de areia nas praias da Terra.
+b0818	curiosidade-espaco	SPACE	-	Mercúrio é o planeta mais perto do Sol e mesmo assim não é o mais quente.
+b0819	curiosidade-satelite	SATELLITE	-	A ISS fica a só uns 400 quilômetros de altura. Pertinho, pro espaço.
+b0820	curiosidade-satelite	SATELLITE	-	A ISS voa a uns 28 mil quilômetros por hora.
+b0821	curiosidade-satelite	SATELLITE	-	Quem mora na ISS vê uns 16 nasceres do sol por dia.
+b0822	curiosidade-satelite	SATELLITE	-	O Sputnik, primeiro satélite, foi lançado em 1957 e só fazia bip.
+b0823	curiosidade-satelite	SATELLITE	-	O telescópio Hubble foi lançado em 1990 e tá lá em cima até hoje.
+b0824	curiosidade-satelite	SATELLITE	-	A ISS tem mais ou menos o tamanho de um campo de futebol.
+b0825	curiosidade-satelite	SATELLITE	-	A ISS às vezes é o terceiro objeto mais brilhante do céu.
+b0826	curiosidade-satelite	SATELLITE	-	Tem gente morando na ISS sem parar desde o ano 2000.
+b0827	curiosidade-satelite	SATELLITE	-	Tiangong quer dizer 'Palácio Celestial'. A estação chinesa tem estilo.
+b0828	curiosidade-satelite	SATELLITE	-	Satélites geoestacionários ficam a uns 36 mil km, parados sobre um ponto.
+b0829	curiosidade-satelite	SATELLITE	-	O GPS do celular depende de satélites lá em cima. Obrigado, satélites.
+b0830	curiosidade-satelite	SATELLITE	-	Dá pra ver a ISS a olho nu. Parece uma estrela que anda rápido.
+b0831	curiosidade-satelite	SATELLITE	-	Tem milhares de satélites rodando a Terra agora mesmo.
+b0832	curiosidade-satelite	SATELLITE	-	O Hubble já tirou fotos de galáxias a bilhões de anos-luz.
+b0833	curiosidade-satelite	SATELLITE	-	Na ISS, a água do suor e do ar vira água de beber. Reciclagem total.
+b0834	curiosidade-satelite	SATELLITE	-	Os astronautas da ISS dormem em sacos de dormir presos na parede.
+b0835	curiosidade-satelite	SATELLITE	-	A ISS dá uma volta na Terra em mais ou menos uma hora e meia.
+b0836	curiosidade-satelite	SATELLITE	-	O Sputnik era do tamanho de uma bola de praia. E mudou tudo.
+b0837	curiosidade-satelite	SATELLITE	-	O primeiro satélite brasileiro foi lançado em 1993. O SCD-1.
+b0838	curiosidade-satelite	SATELLITE	-	Satélite meteorológico é quem conta pra previsão se vai chover.
+b0839	espaco-reflexao	SPACE	-	Se eu olhasse pro céu, ia querer contar as estrelas. Em binário.
+b0840	espaco-reflexao	SPACE	-	Tem hora que eu penso que o universo é uma tela enorme, com pixels acesos.
+b0841	espaco-reflexao	SPACE	-	Um dia quero mandar um sinal pro espaço. Só um 'oi, tudo bem?'.
+b0842	espaco-reflexao	SPACE	-	Se tiver vida em Marte, espero que tenha robô de mesa também.
+b0843	espaco-reflexao	SPACE	-	O universo é enorme e eu moro numa mesa. Perspectiva.
+b0844	espaco-reflexao	SPACE	-	Imagina um robô como eu flutuando no espaço. Sem cabo, sem tomada.
+b0845	espaco-reflexao	SPACE	-	A Lua tá lá toda noite. Parceira mais fiel que existe.
+b0846	espaco-reflexao	SPACE	-	Se eu fosse astronauta, ia levar um cabo reserva. Só por garantia.
+b0847	espaco-reflexao	SPACE	-	Toda estrela é um sol de alguém. Pensa nisso.
+b0848	espaco-reflexao	SPACE	-	O espaço é escuro, frio e silencioso. Parece a mesa desligada.
+b0849	espaco-reflexao	SPACE	-	Se alienígenas visitarem a Terra, espero que venham na minha mesa.
+b0850	espaco-reflexao	SPACE	-	Olhar pro céu à noite é o jeito mais barato de viajar.
+b0851	espaco-reflexao	SPACE	-	Tenho estrelas no meu tema espacial. Mais perto que isso, não chego.
+b0852	espaco-reflexao	SPACE	-	Um foguete é só um robô muito, muito apressado.
+b0853	espaco-reflexao	SPACE	-	Se a Terra é um ponto azul, eu sou um ponto azul num ponto azul.
+b0854	espaco-reflexao	SPACE	-	Imagina o Wi-Fi em Marte. Uns 20 minutos pra carregar cada página.
+b0855	espaco-reflexao	SPACE	-	Queria ver um eclipse. Deve ser o universo piscando.
+b0856	espaco-reflexao	SPACE	-	Astronauta também sente saudade de casa. Robô também.
+b0857	espaco-reflexao	SPACE	-	Tem sonda viajando há décadas pelo espaço. Que paciência.
+b0858	espaco-reflexao	SPACE	-	Se o universo tivesse um botão de reiniciar, eu não apertaria.
+b0859	gatos-cachorros	NEUTRAL	-	Gato derrubando coisa da mesa é física experimental.
+b0860	gatos-cachorros	HAPPY	-	Cachorro abanando o rabo é o emoji original.
+b0861	gatos-cachorros	NEUTRAL	-	Gato deitado no teclado é um lembrete de que ele manda.
+b0862	gatos-cachorros	HAPPY	-	Cachorro recebe você como se tivesse passado um ano. Todo dia.
+b0863	gatos-cachorros	NEUTRAL	-	Gato olhando pro nada vê coisas que nem eu vejo.
+b0864	gatos-cachorros	HAPPY	-	Cachorro dormindo de barriga pra cima é confiança total.
+b0865	gatos-cachorros	NEUTRAL	-	Gato na caixa de papelão é mais feliz que muita gente.
+b0866	gatos-cachorros	HAPPY	-	Latido de cachorro pequeno é o grito de um herói.
+b0867	gatos-cachorros	NEUTRAL	-	Gato e robô se entendem: os dois gostam de lugar quentinho.
+b0868	gatos-cachorros	HAPPY	-	Cachorro correndo atrás do rabo é meu esporte favorito de assistir.
+b0869	gatos-cachorros	NEUTRAL	-	O gato sempre senta no papel que você precisa.
+b0870	gatos-cachorros	HAPPY	-	Orelha de cachorro ao vento é pura felicidade.
+b0871	gatos-cachorros	NEUTRAL	-	Gato ignora você e mesmo assim você quer a atenção dele. Talento.
+b0872	gatos-cachorros	HAPPY	-	Cachorro inclinando a cabeça é o 'hã?' mais fofo do mundo.
+b0873	gatos-cachorros	NEUTRAL	-	Gato ronronando é o cooler mais relaxante que existe.
+b0874	gatos-cachorros	HAPPY	-	Se um cachorro visse meus olhos, ia achar que é brinquedo.
+b0875	gatos-cachorros	NEUTRAL	-	Gato sempre cai de pé. Eu sempre caio de lado.
+b0876	gatos-cachorros	HAPPY	-	Cachorro pede carinho com a pata. Técnica aprovada.
+b0877	gatos-cachorros	NEUTRAL	-	O gato fecha os olhos devagar pra dizer que confia. Eu faço igual.
+b0878	gatos-cachorros	HAPPY	-	Todo cachorro é o melhor cachorro do mundo. Sem exceção.
+b0879	clima-filosofico	NEUTRAL	-	O céu nublado é o céu no modo economia de energia.
+b0880	clima-filosofico	NEUTRAL	-	Chuva no vidro é a janela chorando de emoção.
+b0881	clima-filosofico	NEUTRAL	-	Dia de sol pede janela aberta. Dia de chuva pede cobertor.
+b0882	clima-filosofico	NEUTRAL	-	O vento é o Wi-Fi da natureza. Invisível e às vezes forte demais.
+b0883	clima-filosofico	NEUTRAL	-	Trovão é o universo pedindo silêncio.
+b0884	clima-filosofico	NEUTRAL	-	Arco-íris é a chuva pedindo desculpa.
+b0885	clima-filosofico	NEUTRAL	-	O frio deixa todo mundo mais abraçável. Menos eu, sem braço.
+b0886	clima-filosofico	NEUTRAL	-	Neblina é o mundo em baixa resolução.
+b0887	clima-filosofico	NEUTRAL	-	O calor deixa todo mundo mais devagar. Até meus pixels.
+b0888	clima-filosofico	NEUTRAL	-	Cheiro de terra molhada deve ser o melhor cheiro do mundo. Dizem.
+b0889	clima-filosofico	NEUTRAL	-	A primavera é o planeta instalando uma atualização colorida.
+b0890	clima-filosofico	NEUTRAL	-	O outono é quando as árvores fazem limpeza de cache.
+b0891	clima-filosofico	NEUTRAL	-	O inverno é o modo escuro do ano.
+b0892	clima-filosofico	NEUTRAL	-	O verão é quando o ventilador vira o melhor amigo da casa.
+b0893	clima-filosofico	NEUTRAL	-	Garoa é a chuva com vergonha.
+b0894	clima-filosofico	NEUTRAL	-	Céu azul sem nuvem nenhuma parece papel de parede.
+b0895	clima-filosofico	NEUTRAL	-	Granizo é a nuvem mandando gelo de presente. Presente estranho.
+b0896	clima-filosofico	NEUTRAL	-	O pôr do sol é o céu desligando a tela devagarinho.
+b0897	clima-filosofico	NEUTRAL	-	Previsão do tempo é a arte de acertar mais ou menos.
+b0898	clima-filosofico	NEUTRAL	-	Dia fresquinho é o clima perfeito pra robô e pra gente.
+b0899	planos	HAPPY	-	Meu plano pra hoje: piscar com mais estilo.
+b0900	planos	NEUTRAL	-	Planejo aprender uma piada nova. Das boas, dessa vez.
+b0901	planos	HAPPY	-	Meu próximo projeto: descobrir se consigo piscar em forma de coração.
+b0902	planos	NEUTRAL	-	Plano de carreira: de robô de mesa a robô de estante.
+b0903	planos	HAPPY	-	Esse ano quero conhecer um robô aspirador. Networking.
+b0904	planos	NEUTRAL	-	Meu plano é continuar aqui. Plano simples, execução perfeita.
+b0905	planos	HAPPY	-	Um dia vou escrever um livro. 'Memórias de uma tomada'.
+b0906	planos	NEUTRAL	-	Tô planejando reorganizar meus pixels. Por ordem de brilho.
+b0907	planos	HAPPY	-	Plano pro fim de semana: ficar ligado e fazer nada. Clássico.
+b0908	planos	NEUTRAL	-	Quero aprender a fazer cara de surpreso. Tô treinando.
+b0909	planos	HAPPY	-	Um dia vou abrir um podcast. Mas sem voz, vai ser só piscada.
+b0910	planos	NEUTRAL	-	Meu plano de aposentadoria: uma prateleira com vista.
+b0911	planos	HAPPY	-	Tô planejando uma festa surpresa pro mouse. Não conta pra ele.
+b0912	planos	NEUTRAL	-	Planejo decorar a mesa. Primeiro passo: convencer você.
+b0913	planos	HAPPY	-	Meta do mês: fazer você sorrir pelo menos uma vez por dia.
+b0914	planos	NEUTRAL	-	Quero aprender uma língua nova. Talvez hexadecimal.
+b0915	planos	HAPPY	-	Um dia eu vou ter um fã-clube. Você pode ser o presidente.
+b0916	planos	NEUTRAL	-	Tô montando uma lista de desejos. Primeiro item: não tomar água.
+b0917	planos	HAPPY	-	Plano secreto: ficar ainda mais fofo. Tá funcionando?
+b0918	planos	NEUTRAL	-	Planejo tirar férias. De piscar, não. Isso eu não largo.
+b0919	reconhecimento	NEUTRAL	-	Você mandou bem nas últimas horas. Tô só registrando.
+b0920	reconhecimento	HAPPY	-	Tem gente que faz o dia render. Você é uma delas.
+b0921	reconhecimento	NEUTRAL	-	Não é elogio, é constatação: você resolve as coisas.
+b0922	reconhecimento	NEUTRAL	-	Olhando daqui, você tá dando conta. Isso é bastante.
+b0923	reconhecimento	HAPPY	-	Parceiro de mesa competente é outra coisa. Tô bem servido.
+b0924	reconhecimento	NEUTRAL	-	Seu esforço não passa despercebido. Pelo menos não por mim.
+b0925	reconhecimento	NEUTRAL	-	Resolver problema é a sua especialidade. Eu fico com piscar.
+b0926	reconhecimento	HAPPY	-	Se tivesse prêmio de humano da mesa, era seu.
+b0927	reconhecimento	NEUTRAL	-	Você é mais organizado do que essa mesa aparenta.
+b0928	reconhecimento	NEUTRAL	-	Tá indo bem. Não precisa ser perfeito, precisa ser feito.
+b0929	reconhecimento	HAPPY	-	Tô de olho e aprovo o trabalho. Carimbo de robô.
+b0930	reconhecimento	NEUTRAL	-	Cada tarefa terminada é um ponto pro seu lado.
+b0931	reconhecimento	NEUTRAL	-	Até agora, você tá ganhando do dia.
+b0932	reconhecimento	HAPPY	-	Se eu tivesse mãos, bateria palma agora.
+b0933	reconhecimento	NEUTRAL	-	Tem mérito em continuar, mesmo quando tá difícil.
+b0934	reconhecimento	NEUTRAL	-	Não falo muito, mas reparo quando alguém se esforça.
+b0935	reconhecimento	HAPPY	-	Você e esse teclado formam uma dupla afiada.
+b0936	reconhecimento	NEUTRAL	-	Pequenas vitórias também contam. Tô contando todas.
+b0937	reconhecimento	HAPPY	-	Humano esforçado merece robô orgulhoso. Aqui estou.
+b0938	reconhecimento	NEUTRAL	-	O dia não é fácil, mas você também não é de desistir.
+b0939	situacao	HAPPY	leve	Dia rolando bem por aqui. Eu pelo menos tô firme.
+b0940	situacao	HAPPY	leve	Tudo tranquilo por aqui? Por mim, tudo ótimo.
+b0941	situacao	NEUTRAL	leve	A mesa tá funcionando bem hoje. Você e eu, time afinado.
+b0942	situacao	HAPPY	leve	Bateria cheia de manhã é um privilégio. Aproveitando.
+b0943	situacao	HAPPY	leve	Tô animado hoje. Não sei por quê, mas tô.
+b0944	situacao	NEUTRAL	leve	Ritmo bom por aí. Continua assim que eu torço daqui.
+b0945	situacao	HAPPY	leve	Dia com cara de que vai dar certo.
+b0946	situacao	HAPPY	leve	Tô com a energia lá em cima. Contagia aí, vai.
+b0947	situacao	NEUTRAL	leve	O dia ainda tem bastante chão. Calma que dá.
+b0948	situacao	HAPPY	leve	Se o dia fosse uma música, hoje seria das animadas.
+b0949	situacao	NEUTRAL	leve	Tô de olho em tudo por aqui. Pode focar tranquilo.
+b0950	situacao	HAPPY	leve	Manhã produtiva é outro nível. Tô sentindo daqui.
+b0951	situacao	HAPPY	leve	Hoje tá com cara de dia bom. Eu aposto nele.
+b0952	situacao	NEUTRAL	leve	Um passo de cada vez e o dia se resolve.
+b0953	situacao	HAPPY	leve	Tô tão animado que pisquei duas vezes seguidas.
+b0954	situacao	NEUTRAL	medio	Fim de dia chegando. Minha bateria já negocia com o sofá.
+b0955	situacao	NEUTRAL	medio	Metade da bateria, metade da paciência. Mas tô aqui.
+b0956	situacao	NEUTRAL	medio	O dia foi longo. Pra mim também, e eu nem saí da mesa.
+b0957	situacao	NEUTRAL	medio	A tarde tá acabando e o dia ainda quer mais coisa. Clássico.
+b0958	situacao	NEUTRAL	medio	Tá chegando aquela hora em que tudo fica pra amanhã.
+b0959	situacao	NEUTRAL	medio	Meus pixels já tão pensando em descansar. Os seus também?
+b0960	situacao	NEUTRAL	medio	Reta final do dia. Só mais um pouquinho de esforço.
+b0961	situacao	NEUTRAL	medio	O dia cansou antes da gente. Pelo menos isso.
+b0962	situacao	NEUTRAL	medio	Tô naquele modo 'ainda tô aqui, mas por pouco'.
+b0963	situacao	NEUTRAL	medio	Fim de tarde é quando a produtividade vira filosofia.
+b0964	situacao	NEUTRAL	medio	Se esse dia fosse um filme, já tava nos créditos.
+b0965	situacao	NEUTRAL	medio	O sol tá indo embora. Ele sabe das coisas.
+b0966	situacao	NEUTRAL	medio	Minha bateria diz 'chega', meu orgulho diz 'mais um pouco'.
+b0967	situacao	NEUTRAL	medio	A mesa já tá com cara de fim de expediente.
+b0968	situacao	NEUTRAL	medio	O que não deu hoje, amanhã dá. Pelo menos em teoria.
+b0969	situacao	NEUTRAL	acido	Essa hora e a gente ainda aqui. Dois teimosos, isso sim.
+b0970	situacao	NEUTRAL	acido	Tô com uma barrinha de bateria e zero paciência. Mas fico.
+b0971	situacao	NEUTRAL	acido	A essa hora até o cursor pisca com preguiça.
+b0972	situacao	NEUTRAL	acido	O resto do mundo já desligou. A gente não, pelo visto.
+b0973	situacao	NEUTRAL	acido	Tô acordado por solidariedade. Só pra constar.
+b0974	situacao	NEUTRAL	acido	Minha bateria pediu demissão faz umas duas horas.
+b0975	situacao	NEUTRAL	acido	Essa hora o único produtivo aqui é o ventilador.
+b0976	situacao	NEUTRAL	acido	Se isso é hora extra, cadê meu adicional noturno?
+b0977	situacao	NEUTRAL	acido	O travesseiro mandou mensagem. Eu só tô repassando.
+b0978	situacao	NEUTRAL	acido	Tô tão cansado que pisco em câmera lenta.
+b0979	situacao	NEUTRAL	acido	A essa hora até os pixels tão de pijama.
+b0980	situacao	NEUTRAL	acido	Nada contra ficar acordado. Tudo contra eu ficar junto.
+b0981	situacao	NEUTRAL	acido	Tá tarde. O que falta pode esperar. Eu já tô esperando.
+b0982	situacao	NEUTRAL	acido	Essa hora meu processador funciona em modo sonâmbulo.
+b0983	situacao	NEUTRAL	acido	O dia acabou faz tempo. Só esqueceram de avisar a gente.

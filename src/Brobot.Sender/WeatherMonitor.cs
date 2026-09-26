@@ -2,7 +2,6 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
-using Windows.Devices.Geolocation;
 
 namespace Brobot.Sender;
 
@@ -65,28 +64,13 @@ public sealed class WeatherMonitor : IDisposable
     {
         StatusChanged?.Invoke("Detectando localização...");
 
-        double lat, lon;
-        try
+        LocationProvider.Result location = await LocationProvider.GetAsync();
+        if (!location.Ok)
         {
-            GeolocationAccessStatus access = await Geolocator.RequestAccessAsync();
-            if (access != GeolocationAccessStatus.Allowed)
-            {
-                StatusChanged?.Invoke("Acesso à localização negado (Config. do Windows > Privacidade > Localização)");
-                return;
-            }
-
-            // City-level accuracy is plenty for weather and avoids the
-            // higher-power/higher-friction GPS-grade location request.
-            var locator = new Geolocator { DesiredAccuracyInMeters = 10000 };
-            Geoposition position = await locator.GetGeopositionAsync();
-            lat = position.Coordinate.Point.Position.Latitude;
-            lon = position.Coordinate.Point.Position.Longitude;
-        }
-        catch (Exception ex)
-        {
-            StatusChanged?.Invoke($"Falha ao obter localização: {ex.Message}");
+            StatusChanged?.Invoke(location.Error!);
             return;
         }
+        double lat = location.Latitude, lon = location.Longitude;
 
         while (!token.IsCancellationRequested)
         {

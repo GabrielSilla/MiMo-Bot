@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Brobot.Connection;
+using Brobot.Sender.Thoughts;
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
 
@@ -54,6 +55,22 @@ public partial class MainWindow : Window
     private readonly Dictionary<string, (Border Card, TextBlock Icon, TextBlock Description, TextBlock Status)> _achievementCards = new();
 
     private readonly DailyReportTracker _dailyReport = new();
+
+    // Pensamentos do Peemo (see specs/sender-thoughts.md) — always on, no
+    // card or setting. The scheduler decides *when*, the director *which
+    // source*, the history keeps Sender from repeating itself.
+    private readonly ThoughtHistoryStore _thoughtHistory = new();
+    private readonly ThoughtScheduler _thoughtScheduler = new(DateTime.Now);
+    private readonly ThoughtDirector _thoughtDirector;
+    private readonly SpaceMessages _spaceMessages;
+    // Hold conditions and ThoughtContext inputs that nothing else tracked.
+    private DateTime _lastNotificationSentAt = DateTime.MinValue; // UTC; see SendNotification
+    private string? _currentGameName;
+    private string? _lastGameName;
+    private DateTime? _lastGameEndedAt;
+    private DateTime? _lastMeetingEndedAt;
+    private static readonly TimeSpan ThoughtAfterNotificationGap = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan ThoughtAwayAfter = TimeSpan.FromMinutes(10);
 
     private WindowsMediaMonitor? _mediaMonitor;
     private bool _mediaFaceActive;
@@ -247,6 +264,21 @@ public partial class MainWindow : Window
         _achievements.Unlocked += OnAchievementUnlocked;
         BuildAchievementCards();
 
+        _spaceMessages = new SpaceMessages(_thoughtHistory);
+        IThoughtSource[] thoughtSources =
+        {
+            _spaceMessages,
+            new RandomFactsMessages(_thoughtHistory),
+            new OnThisDayMessages(_thoughtHistory),
+            new WorkContextMessages(_thoughtHistory),
+            new PeemoBaseMessages(_thoughtHistory),
+        };
+        _thoughtDirector = new ThoughtDirector(thoughtSources, _thoughtHistory);
+        foreach (IBackgroundThoughtSource source in thoughtSources.OfType<IBackgroundThoughtSource>())
+        {
+            source.Start();
+        }
+
         _dailyReport.VideoWatchMilestoneReached += OnVideoWatchMilestoneReached;
         _dailyReport.SocialWatchMilestoneReached += OnSocialWatchMilestoneReached;
 
@@ -391,7 +423,7 @@ public partial class MainWindow : Window
             // unique accent on the shared trophy for this achievement.
             // Achievement.Emoji is WPF-only — Core's bitmap font has no
             // glyph for it, so it's left out of the text sent here.
-            _connection.SendCommand(
+            SendNotification(
                 $"ACHIEVEMENT {achievement.Id} Conquista desbloqueada: {achievement.Name} - {achievement.Quote}");
         });
     }
@@ -480,7 +512,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            _connection.SendCommand($"NOTIFY READING {message}");
+            SendNotification($"NOTIFY READING {message}");
         });
     }
 
@@ -606,7 +638,7 @@ public partial class MainWindow : Window
             // lines — picked here rather than on Core, since Core has no
             // RTC and no memory of previous days (see GreetingMessages).
             (string greetingFace, string greetingText) = GreetingMessages.ForConnect(DateTime.Now);
-            _connection.SendCommand($"NOTIFY {greetingFace} {greetingText}");
+            SendNotification($"NOTIFY {greetingFace} {greetingText}");
             _achievements.OnConnected();
         }
         _achievements.Tick(connected);
@@ -614,7 +646,90 @@ public partial class MainWindow : Window
         // happen at the OS level, independent of whether Peemo is currently
         // reachable (see DailyReportTracker.Tick's own comment).
         _dailyReport.Tick();
+        TickThoughts(connected);
         _wasConnected = connected;
+    }
+
+    /// <summary>
+    /// Sends a full-screen notification line (NOTIFY / ACHIEVEMENT / REPORT)
+    /// and remembers when — Pensamentos holds its turn for a couple of
+    /// minutes after one, so a musing never lands right on top of it.
+    /// </summary>
+    private void SendNotification(string command)
+    {
+        _lastNotificationSentAt = DateTime.UtcNow;
+        _connection.SendCommand(command);
+    }
+
+    /// <summary>
+    /// Why Peemo shouldn't think out loud right now, or null when it can.
+    /// A due slot that's held isn't skipped — it waits (see ThoughtScheduler).
+    /// </summary>
+    private string? ThoughtHoldReason(bool connected)
+    {
+        if (!connected) return "desconectado";
+        if (_activeCalls.Count > 0) return "em reunião";
+        if (_gameRunning) return "jogo aberto";
+        if (_pongStartTimer != null || _pongHook != null || _rpgStartTimer != null || _rpgHook != null) return "minijogo rodando";
+        if (_aiThoughtFaceActive || DateTime.UtcNow < _aiMessageHoldUntil) return "mensagem da IA na tela";
+        if (DateTime.UtcNow - _lastNotificationSentAt < ThoughtAfterNotificationGap) return "notificação recente";
+        if (UserPresence.IdleTime > ThoughtAwayAfter) return "usuário ausente";
+        return null;
+    }
+
+    private void TickThoughts(bool connected)
+    {
+        DateTime now = DateTime.Now;
+        if (!_thoughtScheduler.IsDue(now) || ThoughtHoldReason(connected) != null)
+        {
+            return;
+        }
+
+        Thought? thought = _thoughtDirector.Pick(BuildThoughtContext(now));
+        _thoughtScheduler.ScheduleNext(now);
+        if (thought != null)
+        {
+            SpeakThought(thought, now);
+        }
+    }
+
+    private ThoughtContext BuildThoughtContext(DateTime now)
+    {
+        bool devTools = BuildCheckBox.IsChecked == true;
+        return new ThoughtContext(
+            now,
+            PeemoMood.At(now),
+            _dailyReport.BuildReport(includeDevTools: devTools),
+            _dailyReport.SocialMinutesBySite(),
+            _dailyReport.GameMinutesByName(),
+            ClimaCheckBox.IsChecked == true ? _lastWeatherReading : null,
+            devTools,
+            MediaCheckBox.IsChecked == true,
+            GameCheckBox.IsChecked == true,
+            NotificationsCheckBox.IsChecked == true,
+            _lastGameName,
+            _lastGameEndedAt,
+            _lastMeetingEndedAt);
+    }
+
+    /// <summary>
+    /// A plain foreground FACE + MSG, which Core clears by itself after the
+    /// message has had its time (whatever tier was underneath comes back) —
+    /// or, for a space thought, a full-screen NOTIFY SATELLITE/SPACE.
+    /// </summary>
+    private void SpeakThought(Thought thought, DateTime now)
+    {
+        if (thought.IsSpace)
+        {
+            SendNotification($"NOTIFY {thought.Face} {thought.Text}");
+        }
+        else
+        {
+            _connection.SendCommand($"FACE {thought.Face}");
+            _connection.SendCommand($"MSG {thought.Text}");
+        }
+        _thoughtHistory.RecordSpoken(thought, thought.PhraseId, _thoughtDirector.CountsAsLastSource(thought), now);
+        LogAiEvent($"Pensamento ({thought.Source}/{thought.Category}): {thought.Text}");
     }
 
     /// <summary>
@@ -922,7 +1037,7 @@ public partial class MainWindow : Window
             // routed somewhere else by _lastCommandTier.
             if (_lastWeatherCondition.HasValue && _lastWeatherCondition.Value != reading.Condition)
             {
-                _connection.SendCommand($"NOTIFY WEATHER {WeatherAlerts.RandomFor(reading.Condition)}");
+                SendNotification($"NOTIFY WEATHER {WeatherAlerts.RandomFor(reading.Condition)}");
             }
             _lastWeatherCondition = reading.Condition;
         });
@@ -1012,7 +1127,7 @@ public partial class MainWindow : Window
     private void SendBreakReminder()
     {
         string message = PausaMessages.RandomNow();
-        _connection.SendCommand($"NOTIFY COFFEE {message}");
+        SendNotification($"NOTIFY COFFEE {message}");
         PausaStatusText.Text = $"Último lembrete: {message}";
         _achievements.OnBreakReminderSent();
     }
@@ -1081,7 +1196,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            _connection.SendCommand($"NOTIFY NEUTRAL {AlertMessages.ForVideoWatch(minutes)}");
+            SendNotification($"NOTIFY NEUTRAL {AlertMessages.ForVideoWatch(minutes)}");
         });
     }
 
@@ -1090,7 +1205,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            _connection.SendCommand($"NOTIFY NEUTRAL {AlertMessages.ForSocialWatch(minutes)}");
+            SendNotification($"NOTIFY NEUTRAL {AlertMessages.ForSocialWatch(minutes)}");
         });
     }
 
@@ -1133,7 +1248,7 @@ public partial class MainWindow : Window
             $"{Math.Round(result.MeetingMinutes)} {Math.Round(result.MediaMinutes)} {Math.Round(result.VideoFocusedMinutes)} " +
             $"{Math.Round(result.SocialFocusedMinutes)} {Math.Round(result.GameMinutes)} {ratingToken} {text}";
 
-        _connection.SendCommand(command);
+        SendNotification(command);
         RelatorioStatusText.Text = $"Último relatório: {ratingLabel}";
     }
 
@@ -1171,7 +1286,7 @@ public partial class MainWindow : Window
             _achievements.SetMusicActive(false);
             _dailyReport.SetMediaActive(false);
             _dailyReport.SetVideoFocused(false);
-            _dailyReport.SetSocialFocused(false);
+            _dailyReport.SetSocialFocused(null);
         }
     }
 
@@ -1207,7 +1322,7 @@ public partial class MainWindow : Window
     private void UpdateSocialMediaState()
     {
         string? site = SocialMediaTabDetector.TryFindFocusedSite();
-        _dailyReport.SetSocialFocused(site != null);
+        _dailyReport.SetSocialFocused(site);
 
         if (_lastNowPlaying != null)
         {
@@ -1500,7 +1615,12 @@ public partial class MainWindow : Window
                 _activeCalls[appName] = (sourceLabel, label);
             }
 
+            bool wasInMeeting = _dailyReport.IsMeetingActive;
             _dailyReport.SetMeetingActive(_activeCalls.Count > 0);
+            if (wasInMeeting && _activeCalls.Count == 0)
+            {
+                _lastMeetingEndedAt = DateTime.Now;
+            }
 
             if (_activeCalls.Count > 0)
             {
@@ -1637,7 +1757,7 @@ public partial class MainWindow : Window
             }
 
             NotificationsStatusText.Text = $"{notification.AppName}: {notification.Text}";
-            _connection.SendCommand($"NOTIFY {expression} {text}");
+            SendNotification($"NOTIFY {expression} {text}");
         });
     }
 
@@ -1703,7 +1823,7 @@ public partial class MainWindow : Window
             string message = kind == ResourceKind.Cpu
                 ? AlertMessages.ForCpu(percent)
                 : AlertMessages.ForRam(percent);
-            _connection.SendCommand($"NOTIFY SWEATING {message}");
+            SendNotification($"NOTIFY SWEATING {message}");
             ResourceAlertStatusText.Text = $"Último alerta ({DateTime.Now:HH:mm}): {message}";
         });
     }
@@ -1740,7 +1860,7 @@ public partial class MainWindow : Window
             GameStatusText.Text = string.Empty;
             ClearGameFaceIfActive();
             _achievements.SetGameActive(false);
-            _dailyReport.SetGameActive(false);
+            _dailyReport.SetGameActive(null);
             _gameRunning = false;
             RefreshResourceAlertMonitor();
         }
@@ -1752,7 +1872,13 @@ public partial class MainWindow : Window
         Dispatcher.Invoke(() =>
         {
             _achievements.SetGameActive(game != null);
-            _dailyReport.SetGameActive(game != null);
+            _dailyReport.SetGameActive(game);
+            if (game == null && _currentGameName != null)
+            {
+                _lastGameName = _currentGameName;
+                _lastGameEndedAt = DateTime.Now;
+            }
+            _currentGameName = game;
             _gameRunning = game != null;
             RefreshResourceAlertMonitor();
 
@@ -2611,7 +2737,7 @@ public partial class MainWindow : Window
                     // behind whatever is already up. READING carries it because
                     // its "olha aqui" chirp is already the sound for exactly
                     // this, and asking permission isn't an error.
-                    _connection.SendCommand($"NOTIFY READING {(string.IsNullOrWhiteSpace(thought.Text) ? "Preciso da sua permissao!" : thought.Text.Trim())}");
+                    SendNotification($"NOTIFY READING {(string.IsNullOrWhiteSpace(thought.Text) ? "Preciso da sua permissao!" : thought.Text.Trim())}");
                     break;
 
                 case "PermissionDenied":
@@ -3004,6 +3130,57 @@ public partial class MainWindow : Window
     /// form) clears both lower tiers at once, and NEUTRAL releases the
     /// foreground one; see PROTOCOL.md's FACE priority notes.
     /// </summary>
+    /// <summary>
+    /// Makes the next Pensamentos slot due right now. Hold conditions still
+    /// apply, so the status says which one is blocking it, if any — that's
+    /// the part worth seeing when testing.
+    /// </summary>
+    private void TestePensamento_Click(object sender, RoutedEventArgs e)
+    {
+        bool connected = _connection.IsConnected;
+        string? hold = ThoughtHoldReason(connected);
+        if (hold != null && hold != "notificação recente")
+        {
+            ShowTestStatus($"Pensamento segurado: {hold}.");
+            return;
+        }
+
+        DateTime now = DateTime.Now;
+        Thought? thought = _thoughtDirector.Pick(BuildThoughtContext(now));
+        if (thought == null)
+        {
+            ShowTestStatus("Nenhuma fonte tinha pensamento agora.");
+            return;
+        }
+        SpeakThought(thought, now);
+        _thoughtScheduler.ScheduleNext(now);
+        ShowTestStatus($"Pensamento ({thought.Source}): {thought.Text}");
+    }
+
+    /// <summary>
+    /// Modo teste: announces the next visible satellite pass right away,
+    /// even if it's hours off, so the text can be checked on the device.
+    /// </summary>
+    private void TesteSatelite_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_connection.IsConnected)
+        {
+            ShowTestStatus("Sem conexão com o Peemo.");
+            return;
+        }
+
+        (Thought? thought, string? why) = _spaceMessages.ForceNextPass(DateTime.Now);
+        if (thought == null)
+        {
+            ShowTestStatus($"Sem passagem pra anunciar: {why}.");
+            return;
+        }
+        // Sent directly rather than via SpeakThought: a test shouldn't use
+        // up the real one-space-thought-a-day allowance in the history.
+        SendNotification($"NOTIFY {thought.Face} {thought.Text}");
+        ShowTestStatus($"Satélite: {thought.Text}");
+    }
+
     private void TesteLimpar_Click(object sender, RoutedEventArgs e)
     {
         if (!_connection.IsConnected)
@@ -3255,7 +3432,7 @@ public partial class MainWindow : Window
             return;
         }
         (string face, string text) = GreetingMessages.ForDisconnect(DateTime.Now);
-        _connection.SendCommand($"NOTIFY {face} {text}");
+        SendNotification($"NOTIFY {face} {text}");
         System.Threading.Thread.Sleep(text.Length * CoreTypingCharIntervalMs + FarewellReadMarginMs);
     }
 

@@ -10,7 +10,7 @@
 ; before installing/uninstalling, instead of failing on a locked .exe.
 
 #define MyAppName "Peemo Sender"
-#define MyAppVersion "1.3.0"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "Brobot"
 #define MyAppExeName "Brobot.Sender.exe"
 #define MyPublishDir "publish"

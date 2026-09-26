@@ -17,6 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Pensamentos do Peemo's phrase data (see Thoughts/PeemoBaseMessages
+         and specs/sender-thoughts.md) — embedded rather than C# arrays,
+         since the full pools run to thousands of lines. -->
+    <EmbeddedResource Include="Thoughts\Data\peemo-base.tsv" />
+    <EmbeddedResource Include="Thoughts\Data\work-context.tsv" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Copied (not embedded as a Resource) so ClaudeCodeHookInstaller can point
          a Claude Code hook command at a real file path next to the running exe,
          rather than a source-repo path that only exists on the dev machine. -->
@@ -65,6 +73,7 @@
          RAM load, GPU load, GPU temperature) all come from sources that need
          no kernel driver at all. -->
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <PackageReference Include="SGP.NET" Version="1.6.0" />
     <!-- MsBuildProcessMonitor's process command-line reads (Process itself
          exposes a name and PID, never its arguments for anyone else's
          process) — not included by default in a net8.0-windows TFM the way
@@ -94,7 +103,7 @@
     <Product>Peemo Sender</Product>
     <AssemblyTitle>Peemo Sender</AssemblyTitle>
     <Description>Envia hora, clima, mídia e atividade de IA para o seu Brobot</Description>
-    <Version>1.3.0</Version>
+    <Version>1.4.0</Version>
     <NeutralLanguage>pt-BR</NeutralLanguage>
 
     <!-- The app's own UI has no other language, but WPF/WinForms still ship a

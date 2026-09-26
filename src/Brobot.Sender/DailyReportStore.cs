@@ -32,6 +32,11 @@ public sealed class DailyReportProgress
     // product decision (YouTube stays its own thing).
     public double SocialFocusedSeconds { get; set; }
     public double GameSeconds { get; set; }
+    // Breakdowns of SocialFocusedSeconds/GameSeconds for Pensamentos do
+    // Peemo, which names the site or game ("2h de Instagram hoje").
+    // The Relatório itself only ever shows the grouped totals above.
+    public Dictionary<string, double> SocialSecondsBySite { get; set; } = new();
+    public Dictionary<string, double> GameSecondsByName { get; set; } = new();
 }
 
 /// <summary>Loads/saves DailyReportProgress to %AppData%\Brobot\daily-report.json — same on-disk neighborhood and best-effort error handling as AchievementStore/SenderSettings.</summary>

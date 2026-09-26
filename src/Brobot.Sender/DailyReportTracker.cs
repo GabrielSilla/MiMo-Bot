@@ -30,10 +30,10 @@ public sealed class DailyReportTracker
 
     private readonly DailyReportProgress _progress;
 
-    private bool _gameActive;
+    private string? _gameName;
     private bool _mediaActive;
     private bool _videoFocused;
-    private bool _socialFocused;
+    private string? _socialSite;
     private bool _meetingActive;
     private DateTime _lastTick;
     private DateTime _lastPeriodicSave = DateTime.MinValue;
@@ -92,8 +92,8 @@ public sealed class DailyReportTracker
         DailyReportStore.Save(_progress);
     }
 
-    /// <summary>Call from GameMonitor's own GameChanged handler (and when the Jogos checkbox turns off) with whether a game is currently detected.</summary>
-    public void SetGameActive(bool active) => _gameActive = active;
+    /// <summary>Call from GameMonitor's own GameChanged handler (and with null when the Jogos checkbox turns off) with the game currently detected, if any.</summary>
+    public void SetGameActive(string? gameName) => _gameName = gameName;
 
     /// <summary>
     /// Call from WindowsMediaMonitor's NowPlayingChanged handler (and when
@@ -120,13 +120,17 @@ public sealed class DailyReportTracker
     /// riding a WindowsMediaMonitor event the way SetVideoFocused does —
     /// TikTok/Instagram/Facebook never register an SMTC session just from
     /// being open) with whether a TikTok/Instagram/Facebook tab is both
-    /// open and focused right now. Independent of SetMediaActive/
-    /// SetVideoFocused — this is its own bucket, not a subset of either.
+    /// open and focused right now (the site name, or null for none).
+    /// Independent of SetMediaActive/SetVideoFocused — this is its own
+    /// bucket, not a subset of either.
     /// </summary>
-    public void SetSocialFocused(bool focused) => _socialFocused = focused;
+    public void SetSocialFocused(string? site) => _socialSite = site;
 
     /// <summary>Call from OnLiveCallChanged with whether _activeCalls is non-empty — a live call in any watched app counts as "in a meeting".</summary>
     public void SetMeetingActive(bool active) => _meetingActive = active;
+
+    /// <summary>What SetMeetingActive last said — lets the caller notice a call ending.</summary>
+    public bool IsMeetingActive => _meetingActive;
 
     /// <summary>
     /// Drives every time-based accumulator here — called from the same
@@ -173,9 +177,11 @@ public sealed class DailyReportTracker
             }
         }
 
-        if (_socialFocused)
+        if (_socialSite != null)
         {
             _progress.SocialFocusedSeconds += elapsed;
+            _progress.SocialSecondsBySite[_socialSite] =
+                _progress.SocialSecondsBySite.GetValueOrDefault(_socialSite) + elapsed;
 
             int socialMilestone = (int)(_progress.SocialFocusedSeconds / SocialWatchMilestoneSeconds);
             if (socialMilestone > _lastNotifiedSocialMilestone)
@@ -185,9 +191,11 @@ public sealed class DailyReportTracker
             }
         }
 
-        if (_gameActive)
+        if (_gameName != null)
         {
             _progress.GameSeconds += elapsed;
+            _progress.GameSecondsByName[_gameName] =
+                _progress.GameSecondsByName.GetValueOrDefault(_gameName) + elapsed;
         }
 
         MaybeSave(now);
@@ -202,6 +210,20 @@ public sealed class DailyReportTracker
             _progress.BuildSuccessCount, _progress.BuildFailCount, _progress.CommitCount,
             _progress.MeetingSeconds, _progress.MediaSeconds, _progress.VideoFocusedSeconds,
             _progress.SocialFocusedSeconds, _progress.GameSeconds);
+    }
+
+    /// <summary>Today's focused social-media minutes per site — for Pensamentos, not the Relatório.</summary>
+    public IReadOnlyDictionary<string, double> SocialMinutesBySite()
+    {
+        RollOverDayIfNeeded();
+        return _progress.SocialSecondsBySite.ToDictionary(kv => kv.Key, kv => kv.Value / 60.0);
+    }
+
+    /// <summary>Today's minutes per detected game — for Pensamentos, not the Relatório.</summary>
+    public IReadOnlyDictionary<string, double> GameMinutesByName()
+    {
+        RollOverDayIfNeeded();
+        return _progress.GameSecondsByName.ToDictionary(kv => kv.Key, kv => kv.Value / 60.0);
     }
 
     private void RollOverDayIfNeeded()
@@ -221,6 +243,8 @@ public sealed class DailyReportTracker
         _progress.VideoFocusedSeconds = 0;
         _progress.SocialFocusedSeconds = 0;
         _progress.GameSeconds = 0;
+        _progress.SocialSecondsBySite.Clear();
+        _progress.GameSecondsByName.Clear();
         _lastNotifiedVideoMilestone = 0;
         _lastNotifiedSocialMilestone = 0;
     }

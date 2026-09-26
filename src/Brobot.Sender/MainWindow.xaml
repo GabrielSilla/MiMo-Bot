@@ -704,6 +704,12 @@
                             <Button Content="NOTIFY SPACE" Style="{StaticResource InstallButtonStyle}"
                                     Margin="0,0,6,6" Tag="NOTIFY SPACE Tem 7 pessoas no espaço agora, e nenhuma delas é você"
                                     Click="TesteAtalho_Click"/>
+                            <Button Content="Pensamento" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Click="TestePensamento_Click"
+                                    ToolTip="Força um Pensamento do Peemo agora, sem esperar o horário sorteado"/>
+                            <Button Content="Satélite" Style="{StaticResource InstallButtonStyle}"
+                                    Margin="0,0,6,6" Click="TesteSatelite_Click"
+                                    ToolTip="Anuncia a próxima passagem visível de satélite, mesmo que falte horas"/>
                             <Button Content="THINKING" Style="{StaticResource InstallButtonStyle}"
                                     Margin="0,0,6,6" Tag="FACE THINKING" Click="TesteAtalho_Click"/>
                             <Button Content="PING" Style="{StaticResource InstallButtonStyle}"

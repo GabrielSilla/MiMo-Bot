@@ -1,11 +1,31 @@
-# Brobot.Sender Internals — Pensamentos do Peemo (PLANNED, not implemented yet)
+# Brobot.Sender Internals — Pensamentos do Peemo (in progress)
 
-> Status: design agreed with the user, nothing built yet. This file is the
+> Status: step 1 (skeleton) built — `src/Brobot.Sender/Thoughts/` with the
+> scheduler, director, history store, presence check and PeemoBaseMessages
+> on a small seed `peemo-base.tsv`; per-site/per-game tracking in
+> DailyReportTracker; MainWindow routing (FACE+MSG vs NOTIFY) and a
+> "Pensamento" button in Modo teste. Step 2 built too: RandomFactsMessages
+> (uselessfacts + MyMemory, on-disk stock), OnThisDayMessages (Wikimedia,
+> "selected" with "events" as fallback), SpaceMessages (CelesTrak TLE +
+> SGP.NET, sun/shadow visibility check), SpaceTopic, ThoughtText (cleanup
+> of fetched text), LocationProvider (shared with WeatherMonitor) and a
+> "Satélite" button in Modo teste. Step 4 (phase 1) built: WorkContextMessages
+> (situation tiers, see the class header), `tools/validate-thoughts.py`
+> (run it before committing any phrase change; `--sample N` writes a review
+> file) and the content — 979 base phrases in 45 categories and 842 context
+> phrases covering every situation group (fewer than the ~1,500 context
+> aimed for; phase 2 grows the big general groups). Both data files are TSV
+> (`peemo-base.tsv`, `work-context.tsv`), not JSON. Step 5 (real-device
+> test) done — it added the "last group goes last" rule and split a clear
+> sky into `clima:sol` (06–18h) / `clima:noite-limpa`. Step 6 (phase 2) in
+> progress: first round grew the general groups to 1,958 context phrases
+> (hora:* 109–148 each, dia:* 59–76, clima:* 32–48). This file is the
 > plan to implement from; once the feature lands, rewrite it as the usual
-> "how it works and why" spec and link it from CLAUDE.md,
-> specs/overview.md and specs/sender-feature-cards.md.
+> "how it works and why" spec and link it from CLAUDE.md and
+> specs/overview.md.
 
-A new checkbox card in Configurações Gerais, **"Pensamentos do Peemo"**. At
+**"Pensamentos do Peemo"** — always on, part of who Peemo is rather than a
+feature to opt into (no checkbox, no setting). At
 random, unpredictable moments through the day Peemo "thinks out loud" — a
 short remark about the user's day (built from the Relatório data), the
 moment (time, weekday, weather, games), a line from Peemo's own huge phrase
@@ -21,8 +41,10 @@ Core still owns how it's shown.
 
 ## Behavior
 
-- **Toggle**: checkbox persisted in `SenderSettings` (`PensamentosEnabled`).
-  The card shows `Último pensamento: <texto>`.
+- **No toggle, no card**: there is deliberately no checkbox, no setting and
+  no card for this in the Sender UI — thoughts can't be turned off. (Which
+  *triggers* are possible still follows the other cards: dev triggers need
+  Ferramentas de Dev, social/YouTube need Mídia, games need Jogos.)
 - **Display**: plain `FACE <expr>` + `MSG <texto>` — a normal foreground
   message, **not** `NOTIFY` (a musing must not take over the whole screen).
   Core auto-clears it `MESSAGE_DURATION_MS` (10s) after typing finishes and
@@ -258,7 +280,7 @@ Thoughts/
   ThoughtHistoryStore.cs   persisted shuffle queues, used phrases, cooldowns, today's fired triggers
   Data/
     peemo-base.tsv          embedded resource
-    work-context.json      embedded resource, grouped by situation
+    work-context.tsv       embedded resource, one row per phrase with its situation group
 ```
 
 - **Each source owns its rules and its own data file.** Phrases live in
@@ -266,7 +288,7 @@ Thoughts/
   unreadable at 18k lines, and the validation script shouldn't parse C#.
 - A new source later = one class implementing `IThoughtSource`, registered
   in `ThoughtDirector` with a weight.
-- `MainWindow` only wires the checkbox, builds the `ThoughtContext` from
+- `MainWindow` only starts the scheduler once connected, builds the `ThoughtContext` from
   what it already has (`_dailyReport`, `_lastWeatherReading`, meeting/game/AI
   flags) and sends `FACE` + `MSG` — or `NOTIFY SATELLITE|SPACE` for a space
   thought.
@@ -290,7 +312,7 @@ Total ~18,200 phrases — the heaviest part of the work, far more than the code.
 ## Implementation order
 
 1. Skeleton: `IThoughtSource`, `ThoughtScheduler`, `ThoughtDirector`,
-   `ThoughtHistoryStore`, checkbox + `SenderSettings`, presence check,
+   `ThoughtHistoryStore`, presence check,
    per-site and per-game tracking in `DailyReportTracker`, and the
    `FACE`+`MSG` vs `NOTIFY SATELLITE|SPACE` routing in `MainWindow`. (The
    two Core animations themselves are already done.)
@@ -303,5 +325,5 @@ Total ~18,200 phrases — the heaviest part of the work, far more than the code.
 4. Phase 1 content + validation script + review sample.
 5. Real-device test, with a Modo teste way to force a thought (no waiting 30+ min).
 6. Phase 2 content.
-7. Docs: rewrite this file as a real spec, update specs/overview.md,
-   specs/sender-feature-cards.md and CLAUDE.md's index.
+7. Docs: rewrite this file as a real spec, update specs/overview.md and
+   CLAUDE.md's index (not sender-feature-cards.md: there's no card).
