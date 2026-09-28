@@ -115,11 +115,26 @@ Columns `id  group  face  level  text`. Every phrase belongs to a
 **situation group** and can only be said while that situation holds
 (`Situations(context)`). When several hold, the most specific **tier** wins:
 
-1. **Combinations** — `combo:sexta-calor` (Fri, ≥28°), `combo:segunda-chuva`,
-   `combo:sexta-noite` (Fri ≥18h), `combo:segunda-cedo` (Mon 5–9h),
-   `combo:madrugada-commit` (<5h with a commit today),
-   `combo:madrugada-jogo` (<5h, game closed in the last hour),
-   `combo:build-quebrado-jogo` (3+ failed builds and 30+ min of games).
+1. **Combinations** (42, all `combo:*`) — two things that hold at once:
+   - weekday × something: `sexta-calor`, `segunda-chuva`, `sexta-noite`,
+     `segunda-cedo`, `sexta-build-quebrado`, `segunda-sem-reuniao`,
+     `sexta-sem-reuniao`, `sexta-noite-chuva`, `segunda-jogo`,
+     `domingo-noite-jogo`, `fim-de-semana-commit` / `-reuniao` / `-jogo`;
+   - time of day × something: `madrugada-commit` / `-jogo` / `-youtube` /
+     `-rede-social` / `-musica` / `-reuniao` / `-frio` / `-calor` (all <5h),
+     `manha-cedo-frio` / `-neblina` (5–8h), `almoco-jogo` / `-youtube`
+     (12–14h), `tempestade-noite`;
+   - weather × the day's numbers: `chuva-reuniao-longa`,
+     `calor-reuniao-longa`, `calor-jogo-muito`, `chuva-jogo`, `chuva-youtube`;
+   - the day's numbers × each other: `build-quebrado-jogo`,
+     `reuniao-acabou-build-quebrado`, `dia-dev-perfeito` (≥5 commits and
+     clean builds), `reuniao-longa-sem-commit`, `musica-build-limpo`,
+     `rede-social-reuniao-longa`;
+   - special date × something: `sexta-13-build-quebrado`, `natal-trabalho`,
+     `ano-novo-jogo`, `inicio-mes-segunda`, `fim-mes-sexta`.
+   Thresholds reuse the triggers' (rain/storm, ≥28° / <15°, ≥2h of calls,
+   ≥3 failed builds, ≥1h of games...); the exact rules live in the
+   "Combinations" block of `Situations`.
 2. **Triggers and "just happened"** — `rede-social` / `rede-social-muito`
    (top site ≥30 / ≥90 min, fills `{site}` `{tempo}`), `youtube` /
    `youtube-muito` (≥30 / ≥90 min), `musica-longa` (media minus video ≥2h),
@@ -249,9 +264,10 @@ has phrases for every mood it can happen in (`GROUP_MOODS`). A new group
 needs adding to `KNOWN_GROUPS` (and `GROUP_MOODS` / `GROUP_VALUES` when it
 applies) as well as to `Situations`.
 
-Size today: ~980 base phrases and ~1,960 context phrases — the general
-groups (hora 109–148 each, dia 59–76, clima 32–48) were grown first since
-they come up most; triggers, dates and combos have ~9–15 each. The original
+Size today: ~1,220 base phrases in 56 categories and ~3,120 context
+phrases — the general groups (hora 109–148 each, dia 59–76, clima 49–74)
+were grown first since they come up most, then the daily triggers (34–54
+each), and 42 combos (~12 each); special dates, once a year, have 9 each. The original
 plan aimed at ~10,000 base and ~8,200 context; growing further is best done
 in rounds after real use shows what repeats and what lands, with the voice
 guide adjusted from that feedback. Weather is the hardest to grow without

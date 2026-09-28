@@ -52,6 +52,20 @@ GROUP_MOODS = {
     'jogo-expediente': {'leve', 'medio'},
     'clima:sol': {'acido', 'leve', 'medio'},          # 06-18 only
     'clima:noite-limpa': {'medio', 'acido'},          # 18-06, clear sky
+    'combo:madrugada-youtube': {'acido'},
+    'combo:madrugada-rede-social': {'acido'},
+    'combo:madrugada-musica': {'acido'},
+    'combo:madrugada-reuniao': {'acido'},
+    'combo:madrugada-frio': {'acido'},
+    'combo:madrugada-calor': {'acido'},
+    'combo:manha-cedo-frio': {'acido', 'leve'},
+    'combo:manha-cedo-neblina': {'acido', 'leve'},
+    'combo:almoco-jogo': {'leve'},
+    'combo:almoco-youtube': {'leve'},
+    'combo:tempestade-noite': {'medio', 'acido'},
+    'combo:sexta-noite-chuva': {'medio', 'acido'},
+    'combo:domingo-noite-jogo': {'medio', 'acido'},
+    'combo:reuniao-longa-sem-commit': {'medio', 'acido'},
 }
 KNOWN_GROUPS = set(GROUP_MOODS) | {
     'dia:seg', 'dia:ter', 'dia:qua', 'dia:qui', 'dia:sex', 'dia:sab', 'dia:dom',
@@ -63,6 +77,13 @@ KNOWN_GROUPS = set(GROUP_MOODS) | {
     'build-falhando', 'build-limpo', 'commits-muitos', 'commit-primeiro',
     'jogo-acabou', 'jogo-hora', 'jogo-muito', 'jogos-varios',
     'combo:sexta-calor', 'combo:segunda-chuva', 'combo:build-quebrado-jogo',
+    'combo:sexta-build-quebrado', 'combo:segunda-sem-reuniao', 'combo:sexta-sem-reuniao',
+    'combo:segunda-jogo', 'combo:fim-de-semana-commit', 'combo:fim-de-semana-reuniao',
+    'combo:fim-de-semana-jogo', 'combo:chuva-reuniao-longa', 'combo:calor-reuniao-longa',
+    'combo:calor-jogo-muito', 'combo:chuva-jogo', 'combo:chuva-youtube',
+    'combo:reuniao-acabou-build-quebrado', 'combo:dia-dev-perfeito', 'combo:musica-build-limpo',
+    'combo:rede-social-reuniao-longa', 'combo:sexta-13-build-quebrado', 'combo:natal-trabalho',
+    'combo:ano-novo-jogo', 'combo:inicio-mes-segunda', 'combo:fim-mes-sexta',
 }
 # Placeholders each group actually fills in.
 GROUP_VALUES = defaultdict(set, {

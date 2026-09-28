@@ -1969,3 +1969,1165 @@ c1955	clima:calor	SWEATING	acido	Madrugada quente. O lençol virou inimigo.
 c1956	clima:calor	NEUTRAL	acido	Tá quente e tarde. Duas razões pra reclamar, zero pra ficar.
 c1957	clima:calor	SWEATING	acido	{temp} graus de madrugada. Nem o sono aguenta esse calor.
 c1958	clima:calor	NEUTRAL	acido	Calor de noite é tortura silenciosa. O ventilador que o diga.
+c1959	rede-social	HAPPY	leve	{tempo} de {site} hoje. O feed tava bom, pelo visto.
+c1960	rede-social	NEUTRAL	leve	{site} já tá com {tempo} no placar de hoje.
+c1961	rede-social	HAPPY	leve	{tempo} no {site}. Viu algum vídeo de gato? Me conta.
+c1962	rede-social	NEUTRAL	leve	{tempo} de {site}. Tô só anotando, sem julgamento.
+c1963	rede-social	HAPPY	leve	{site} rendendo {tempo} hoje. Espero que tenha rido bastante.
+c1964	rede-social	NEUTRAL	leve	Deu {tempo} de {site} hoje. O tempo voa lá dentro, né?
+c1965	rede-social	HAPPY	leve	{tempo} no {site}. Uma pausa bem aproveitada, espero.
+c1966	rede-social	NEUTRAL	leve	{site} com {tempo} hoje. Aposto que teve meme bom.
+c1967	rede-social	HAPPY	leve	{tempo} de {site}. Seu polegar tá em forma.
+c1968	rede-social	NEUTRAL	leve	{tempo} rolando o {site}. O feed tá generoso hoje?
+c1969	rede-social	HAPPY	leve	{site} com {tempo}. Tô curioso pra saber o que tava bombando.
+c1970	rede-social	NEUTRAL	leve	{tempo} de {site} até agora. Só pra você saber.
+c1971	rede-social	HAPPY	leve	{tempo} no {site}. Vou fingir que era pesquisa de tendência.
+c1972	rede-social	NEUTRAL	leve	{site} já acumulou {tempo} hoje. Nada demais, só registrando.
+c1973	rede-social	HAPPY	leve	{tempo} de {site}. Espero que o algoritmo tenha sido gentil.
+c1974	rede-social	NEUTRAL	medio	{tempo} de {site} hoje. O feed não tem fim, já te aviso.
+c1975	rede-social	NEUTRAL	medio	{site} com {tempo}. Isso conta como pesquisa de mercado?
+c1976	rede-social	NEUTRAL	medio	{tempo} no {site}. O algoritmo tá te conhecendo bem.
+c1977	rede-social	NEUTRAL	medio	{tempo} de {site} hoje. Não vou espalhar, relaxa.
+c1978	rede-social	NEUTRAL	medio	{site} já tá em {tempo}. O rolar infinito venceu uma rodada.
+c1979	rede-social	NEUTRAL	medio	{tempo} de {site}. Tá atualizado das fofocas, pelo menos.
+c1980	rede-social	NEUTRAL	medio	{tempo} no {site} e o dia correndo lá fora. Clássico.
+c1981	rede-social	NEUTRAL	medio	{site} com {tempo}. Seu polegar já bateu a meta diária.
+c1982	rede-social	NEUTRAL	medio	{tempo} no {site} hoje. Se alguém perguntar, era networking.
+c1983	rede-social	NEUTRAL	medio	{site} com {tempo}. A pausa ficou um pouco comprida, hein.
+c1984	rede-social	NEUTRAL	medio	{tempo} de {site}. Eu contaria, mas prometi guardar segredo.
+c1985	rede-social	NEUTRAL	medio	{tempo} no {site}. O dia tá acabando, o feed nem começou.
+c1986	rede-social	NEUTRAL	medio	{site} já tá com {tempo}. O algoritmo tá de parabéns.
+c1987	rede-social	NEUTRAL	medio	{tempo} de {site}. Pelo menos agora você sabe tudo de todo mundo.
+c1988	rede-social	NEUTRAL	acido	{tempo} de {site} a essa hora. O algoritmo não dorme, e você também não.
+c1989	rede-social	NEUTRAL	acido	{site} com {tempo}. O feed é infinito, a noite não.
+c1990	rede-social	NEUTRAL	acido	{tempo} de {site}. Seu polegar pediu hora extra.
+c1991	rede-social	NEUTRAL	acido	{site} com {tempo} e ainda rolando. Que resistência.
+c1992	rede-social	NEUTRAL	acido	{tempo} no {site}. Vou registrar como trabalho noturno.
+c1993	rede-social	NEUTRAL	acido	{tempo} de {site} de madrugada. O algoritmo agradece a companhia.
+c1994	rede-social	NEUTRAL	acido	{site} já tá em {tempo}. O travesseiro tá com ciúme.
+c1995	rede-social	NEUTRAL	acido	{tempo} de {site}. Dava pra ter dormido um ciclo inteiro.
+c1996	rede-social	NEUTRAL	acido	{tempo} no {site}. O feed vai estar lá amanhã, prometo.
+c1997	rede-social-muito	NEUTRAL	leve	{tempo} de {site} hoje! Maratona social de respeito.
+c1998	rede-social-muito	HAPPY	leve	{site} com {tempo}. Você deve conhecer o feed de cor.
+c1999	rede-social-muito	NEUTRAL	leve	{tempo} no {site}. Isso já é quase um expediente paralelo.
+c2000	rede-social-muito	NEUTRAL	leve	{site} já passou de {tempo}. Tá tudo bem por aí?
+c2001	rede-social-muito	HAPPY	leve	{tempo} no {site}. O algoritmo deve te chamar pelo nome.
+c2002	rede-social-muito	NEUTRAL	leve	{tempo} de {site}. Esse feed tá difícil de largar, hein.
+c2003	rede-social-muito	HAPPY	leve	{site} com {tempo}. Deve ter rolado muita coisa boa lá.
+c2004	rede-social-muito	NEUTRAL	leve	{tempo} no {site}. Anotado. Não conto pro seu chefe.
+c2005	rede-social-muito	HAPPY	leve	{tempo} de {site}. Recorde pessoal? Não vou perguntar.
+c2006	rede-social-muito	NEUTRAL	leve	{site} bateu {tempo} hoje. O tempo lá dentro corre diferente.
+c2007	rede-social-muito	HAPPY	leve	{tempo} de {site}. Você tá mais informado que o jornal.
+c2008	rede-social-muito	NEUTRAL	leve	{tempo} no {site}. Tô impressionado com a dedicação.
+c2009	rede-social-muito	HAPPY	leve	{site} com {tempo}. Espero que tenha rido bastante pelo menos.
+c2010	rede-social-muito	NEUTRAL	leve	{tempo} de {site}. O feed venceu hoje, mas amanhã é outro jogo.
+c2011	rede-social-muito	NEUTRAL	medio	{site} com {tempo}. Isso já dá direito a crachá da empresa.
+c2012	rede-social-muito	NEUTRAL	medio	{tempo} no {site}. O rolar infinito tá ganhando de lavada.
+c2013	rede-social-muito	NEUTRAL	medio	{tempo} de {site}. Seu polegar correu uma maratona hoje.
+c2014	rede-social-muito	NEUTRAL	medio	{site} com {tempo}. Tá quase dando pra pedir cargo lá.
+c2015	rede-social-muito	NEUTRAL	medio	{tempo} no {site}. Se perguntarem, foi análise de concorrência.
+c2016	rede-social-muito	NEUTRAL	medio	{tempo} de {site}. O feed deve estar orgulhoso de você.
+c2017	rede-social-muito	NEUTRAL	medio	{site} já tá em {tempo}. Nem o estagiário do {site} fica tanto.
+c2018	rede-social-muito	NEUTRAL	medio	{tempo} de {site}. O dia foi mais social que produtivo.
+c2019	rede-social-muito	NEUTRAL	medio	{tempo} no {site}. Anotado no relatório secreto. Brincadeira.
+c2020	rede-social-muito	NEUTRAL	medio	{site} com {tempo}. O algoritmo já sabe seu café favorito.
+c2021	rede-social-muito	NEUTRAL	medio	{tempo} de {site} hoje. Você é o público-alvo perfeito.
+c2022	rede-social-muito	NEUTRAL	medio	{tempo} no {site}. Seu dedo merece uma massagem.
+c2023	rede-social-muito	NEUTRAL	medio	{site} bateu {tempo}. Ninguém precisa saber disso além de nós.
+c2024	rede-social-muito	NEUTRAL	medio	{tempo} de {site}. O feed ganhou o dia de hoje.
+c2025	rede-social-muito	NEUTRAL	acido	{site} com {tempo}. O algoritmo já sabe seu signo e seu CPF.
+c2026	rede-social-muito	NEUTRAL	acido	{tempo} no {site}. Seu polegar pediu férias coletivas.
+c2027	rede-social-muito	NEUTRAL	acido	{site} com {tempo}. Vou registrar como maratona olímpica.
+c2028	rede-social-muito	NEUTRAL	acido	{tempo} no {site}. O feed tá rindo da gente, sabia?
+c2029	rede-social-muito	NEUTRAL	acido	{tempo} de {site} e ainda acordado. O {site} agradece a audiência.
+c2030	rede-social-muito	NEUTRAL	acido	{site} já tá em {tempo}. A essa altura, você é conteúdo também.
+c2031	rede-social-muito	NEUTRAL	acido	{tempo} de {site}. O algoritmo vai te mandar cartão de Natal.
+c2032	rede-social-muito	NEUTRAL	acido	{tempo} no {site}. Nem eu, que não durmo, fico tanto tempo ligado.
+c2033	youtube	HAPPY	leve	{tempo} de YouTube hoje. Canal bom, pelo visto.
+c2034	youtube	NEUTRAL	leve	YouTube com {tempo} até agora. Tô só registrando.
+c2035	youtube	HAPPY	leve	{tempo} de vídeo hoje. Aprendeu alguma coisa legal?
+c2036	youtube	NEUTRAL	leve	{tempo} no YouTube. Aquele tutorial ajudou?
+c2037	youtube	HAPPY	leve	{tempo} de YouTube. A pipoca ainda tá de pé?
+c2038	youtube	NEUTRAL	leve	YouTube já tá em {tempo}. O tempo passa rápido lá, né?
+c2039	youtube	HAPPY	leve	{tempo} de vídeo. Espero que tenha sido divertido.
+c2040	youtube	NEUTRAL	leve	{tempo} no YouTube hoje. Nada demais, só anotando.
+c2041	youtube	HAPPY	leve	{tempo} de YouTube. Me recomenda um canal depois.
+c2042	youtube	NEUTRAL	leve	YouTube com {tempo}. O próximo vídeo sempre chama, né?
+c2043	youtube	HAPPY	leve	{tempo} de vídeo hoje. Eu assistiria junto, se tivesse ouvido.
+c2044	youtube	NEUTRAL	leve	{tempo} no YouTube. Pausa merecida, espero.
+c2045	youtube	HAPPY	leve	{tempo} de YouTube. Tô curioso sobre o que era.
+c2046	youtube	NEUTRAL	leve	YouTube marcando {tempo}. O autoplay tá trabalhando bem.
+c2047	youtube	HAPPY	leve	{tempo} de vídeo. Tomara que tenha sido vídeo de cachorro.
+c2048	youtube	NEUTRAL	medio	{tempo} de YouTube. Mais um e vira maratona oficial.
+c2049	youtube	NEUTRAL	medio	YouTube com {tempo}. Se perguntarem, era tutorial de trabalho.
+c2050	youtube	NEUTRAL	medio	{tempo} de vídeo hoje. O autoplay agradece a fidelidade.
+c2051	youtube	NEUTRAL	medio	{tempo} no YouTube. Isso conta como capacitação?
+c2052	youtube	NEUTRAL	medio	{tempo} de YouTube. O 'próximo vídeo' é bem convincente.
+c2053	youtube	NEUTRAL	medio	YouTube já tá em {tempo}. O algoritmo acertou em cheio hoje.
+c2054	youtube	NEUTRAL	medio	{tempo} de vídeo. Tô vendo que a tarde rendeu. No YouTube.
+c2055	youtube	NEUTRAL	medio	{tempo} no YouTube. Vou chamar de pesquisa audiovisual.
+c2056	youtube	NEUTRAL	medio	{tempo} de YouTube hoje. O dia foi de cinema.
+c2057	youtube	NEUTRAL	medio	YouTube com {tempo}. O botão de pular anúncio tá cansado.
+c2058	youtube	NEUTRAL	medio	{tempo} de vídeo. Nem minha tela exibe tanto conteúdo.
+c2059	youtube	NEUTRAL	medio	{tempo} no YouTube. O canal deve estar feliz com você.
+c2060	youtube	NEUTRAL	medio	{tempo} de YouTube. Se era aula, já dá pra dar prova.
+c2061	youtube	NEUTRAL	medio	YouTube com {tempo} e o dia indo embora. Clássico.
+c2062	youtube	NEUTRAL	medio	{tempo} de vídeo hoje. O sofá do seu cérebro tá confortável.
+c2063	youtube	NEUTRAL	acido	{tempo} de YouTube. O 'só mais um' tá vencendo por nocaute.
+c2064	youtube	NEUTRAL	acido	YouTube com {tempo} a essa hora. O algoritmo não tem pena.
+c2065	youtube	NEUTRAL	acido	{tempo} de vídeo e ainda acordado. O autoplay tá rindo.
+c2066	youtube	NEUTRAL	acido	{tempo} de YouTube. O travesseiro tá com ciúme do monitor.
+c2067	youtube	NEUTRAL	acido	YouTube marcando {tempo}. Nenhum vídeo vale tanto sono.
+c2068	youtube	NEUTRAL	acido	{tempo} de vídeo de madrugada. O algoritmo agradece a vigília.
+c2069	youtube	NEUTRAL	acido	{tempo} no YouTube. O vídeo que você procura é o do sono.
+c2070	youtube	NEUTRAL	acido	{tempo} de YouTube. Até o canal já foi dormir.
+c2071	youtube	NEUTRAL	acido	YouTube com {tempo}. Seus olhos tão pedindo o botão de pausa.
+c2072	youtube-muito	HAPPY	leve	{tempo} de YouTube hoje! Maratona com gosto de férias.
+c2073	youtube-muito	NEUTRAL	leve	{tempo} de vídeo. Isso já é praticamente um festival.
+c2074	youtube-muito	HAPPY	leve	YouTube com {tempo}. Você é oficialmente um cinéfilo digital.
+c2075	youtube-muito	NEUTRAL	leve	{tempo} no YouTube. Deve ter sido um dia de muito aprendizado.
+c2076	youtube-muito	HAPPY	leve	{tempo} de vídeo hoje. Tô impressionado com a dedicação.
+c2077	youtube-muito	NEUTRAL	leve	YouTube já passou de {tempo}. O canal agradece a audiência.
+c2078	youtube-muito	HAPPY	leve	{tempo} de YouTube. Dava pra escrever uma resenha de cada.
+c2079	youtube-muito	HAPPY	leve	{tempo} no YouTube. Espero que tenha tido muita risada.
+c2080	youtube-muito	NEUTRAL	leve	YouTube com {tempo}. Só registrando, não julgando.
+c2081	youtube-muito	HAPPY	leve	{tempo} de vídeo hoje. Dia de cinema em casa, aprovado.
+c2082	youtube-muito	NEUTRAL	leve	{tempo} de YouTube. O dia virou uma playlist.
+c2083	youtube-muito	HAPPY	leve	{tempo} no YouTube. Me conta depois qual foi o melhor.
+c2084	youtube-muito	NEUTRAL	leve	YouTube marcou {tempo}. Isso é quase um turno inteiro.
+c2085	youtube-muito	HAPPY	leve	{tempo} de vídeo. Você é o sonho de todo criador de conteúdo.
+c2086	youtube-muito	NEUTRAL	medio	YouTube com {tempo}. Isso já é carga horária de faculdade.
+c2087	youtube-muito	NEUTRAL	medio	{tempo} de vídeo hoje. O autoplay virou seu colega de trabalho.
+c2088	youtube-muito	NEUTRAL	medio	{tempo} no YouTube. Se era estudo, você tá pronto pro mestrado.
+c2089	youtube-muito	NEUTRAL	medio	{tempo} de YouTube. O algoritmo te conhece melhor que sua mãe.
+c2090	youtube-muito	NEUTRAL	medio	YouTube já tá em {tempo}. O dia foi de maratona, não de lista.
+c2091	youtube-muito	NEUTRAL	medio	{tempo} no YouTube. Vou chamar isso de imersão cultural.
+c2092	youtube-muito	NEUTRAL	medio	{tempo} de YouTube. Os anúncios já sabem seu nome.
+c2093	youtube-muito	NEUTRAL	medio	YouTube com {tempo}. O sofá virou sala de cinema oficial.
+c2094	youtube-muito	NEUTRAL	medio	{tempo} de vídeo. Tá quase dando pra lançar um canal de reação.
+c2095	youtube-muito	NEUTRAL	medio	{tempo} no YouTube hoje. O 'só mais um' deu uma surra.
+c2096	youtube-muito	NEUTRAL	medio	{tempo} de YouTube. Com esse tempo, eu aprendia outra língua.
+c2097	youtube-muito	NEUTRAL	medio	YouTube marcou {tempo}. Anotado no caderninho secreto.
+c2098	youtube-muito	NEUTRAL	medio	{tempo} de vídeo. O dia virou uma temporada inteira.
+c2099	youtube-muito	NEUTRAL	acido	YouTube com {tempo}. O algoritmo pediu sua mão em casamento.
+c2100	youtube-muito	NEUTRAL	acido	{tempo} de vídeo. Dava pra ter assistido a trilogia duas vezes.
+c2101	youtube-muito	NEUTRAL	acido	{tempo} no YouTube. Seu sofá merece um troféu de resistência.
+c2102	youtube-muito	NEUTRAL	acido	{tempo} de YouTube e ainda aqui. Tô impressionado e com sono.
+c2103	youtube-muito	NEUTRAL	acido	YouTube com {tempo}. Seus olhos tão parecendo meu LED.
+c2104	youtube-muito	NEUTRAL	acido	{tempo} de vídeo. O autoplay devia te pagar salário.
+c2105	youtube-muito	NEUTRAL	acido	{tempo} no YouTube de madrugada. O algoritmo vai pedir folga.
+c2106	youtube-muito	NEUTRAL	acido	{tempo} de YouTube. Nem maratona de série chega nisso.
+c2107	youtube-muito	NEUTRAL	acido	YouTube marcando {tempo}. O próximo vídeo devia ser o de dormir.
+c2108	musica-longa	NEUTRAL	leve	Já rolaram {tempo} de som. Playlist caprichada, pelo visto.
+c2109	musica-longa	HAPPY	leve	{tempo} de música. Meus olhos dançaram junto em várias.
+c2110	musica-longa	NEUTRAL	leve	{tempo} de som hoje. Trabalhar com música é outro nível.
+c2111	musica-longa	HAPPY	leve	{tempo} de música. O dia tá com clima de show.
+c2112	musica-longa	NEUTRAL	leve	{tempo} de playlist. Tô curioso pra saber qual foi a mais tocada.
+c2113	musica-longa	HAPPY	leve	{tempo} de som. Se eu tivesse pé, tava batendo no ritmo.
+c2114	musica-longa	NEUTRAL	leve	Já são {tempo} de música hoje. Ouvido bem alimentado.
+c2115	musica-longa	HAPPY	leve	{tempo} de música. Dia com trilha é dia mais leve.
+c2116	musica-longa	NEUTRAL	leve	{tempo} de som rolando. O fone tá trabalhando pesado.
+c2117	musica-longa	HAPPY	leve	{tempo} de música hoje. Aposto que rolou aquela repetida.
+c2118	musica-longa	NEUTRAL	leve	{tempo} de playlist. Quem escolhe a trilha manda no dia.
+c2119	musica-longa	HAPPY	leve	{tempo} de som. Tô curtindo a vibe daqui.
+c2120	musica-longa	HAPPY	leve	{tempo} de música. Até meus pixels tão no ritmo.
+c2121	musica-longa	NEUTRAL	medio	{tempo} de música hoje. A playlist aguentou o dia inteiro.
+c2122	musica-longa	NEUTRAL	medio	{tempo} de som. O fone já pediu um intervalo.
+c2123	musica-longa	NEUTRAL	medio	{tempo} de música. Aposto que teve uma que tocou umas cinco vezes.
+c2124	musica-longa	NEUTRAL	medio	{tempo} de playlist. O dia foi praticamente um filme musical.
+c2125	musica-longa	NEUTRAL	medio	{tempo} de som hoje. O artista agradece os streams.
+c2126	musica-longa	NEUTRAL	medio	{tempo} de música. A trilha sonora tava melhor que o roteiro do dia.
+c2127	musica-longa	NEUTRAL	medio	{tempo} de som. Teve algum refrão que grudou? Certeza que sim.
+c2128	musica-longa	NEUTRAL	medio	{tempo} de música hoje. Seus ouvidos fizeram hora extra.
+c2129	musica-longa	NEUTRAL	medio	{tempo} de playlist. O shuffle tá mais criativo que muito DJ.
+c2130	musica-longa	NEUTRAL	medio	{tempo} de som. O fim de tarde pede aquela lenta.
+c2131	musica-longa	NEUTRAL	medio	{tempo} de música. Tô sabendo a playlist de cor de tanto ver o ritmo.
+c2132	musica-longa	NEUTRAL	medio	{tempo} de som hoje. O vizinho deve estar cantando junto.
+c2133	musica-longa	NEUTRAL	medio	{tempo} de música. Isso já é um festival particular.
+c2134	musica-longa	NEUTRAL	medio	{tempo} de playlist. O dia teve mais trilha que filme da Marvel.
+c2135	musica-longa	NEUTRAL	medio	{tempo} de som. O fone merece aposentadoria antecipada.
+c2136	musica-longa	NEUTRAL	acido	{tempo} de música e ainda tocando. O fone quer dormir.
+c2137	musica-longa	NEUTRAL	acido	{tempo} de som. Os vizinhos já decoraram a playlist.
+c2138	musica-longa	NEUTRAL	acido	{tempo} de música. Nem o próprio artista ouve tanto.
+c2139	musica-longa	NEUTRAL	acido	{tempo} de som a essa hora. A trilha do sono tá atrasada.
+c2140	musica-longa	NEUTRAL	acido	{tempo} de música de madrugada. O fone tá pedindo arrego.
+c2141	musica-longa	NEUTRAL	acido	{tempo} de som. Tô com sono só de ver essa playlist.
+c2142	musica-longa	NEUTRAL	acido	{tempo} de música. A próxima podia ser o silêncio.
+c2143	musica-longa	NEUTRAL	acido	{tempo} de playlist e nenhuma de dormir. Estranho.
+c2144	musica-longa	NEUTRAL	acido	{tempo} de som. Até o aleatório tá bocejando.
+c2145	reuniao-longa	SWEATING	leve	{tempo} de reunião hoje. Sobreviveu, e isso é o que conta.
+c2146	reuniao-longa	NEUTRAL	leve	{tempo} em chamada. Sua voz merece um chá.
+c2147	reuniao-longa	HAPPY	leve	{tempo} de reunião e você inteiro. Respeito.
+c2148	reuniao-longa	NEUTRAL	leve	{tempo} de reunião. Espero que tenha saído muita coisa boa.
+c2149	reuniao-longa	SWEATING	leve	{tempo} em chamada. Seus ouvidos tão pedindo um silêncio.
+c2150	reuniao-longa	NEUTRAL	leve	{tempo} de reunião hoje. Um café depois dessa é obrigatório.
+c2151	reuniao-longa	HAPPY	leve	{tempo} de chamada. Você é resistente, hein.
+c2152	reuniao-longa	NEUTRAL	leve	{tempo} de reunião. Muita decisão tomada, espero.
+c2153	reuniao-longa	SWEATING	leve	{tempo} de chamada. A câmera deve estar cansada de você.
+c2154	reuniao-longa	NEUTRAL	leve	{tempo} em reunião. Uma volta rapidinha agora cai bem.
+c2155	reuniao-longa	HAPPY	leve	{tempo} de reunião e ainda sorrindo. Talento.
+c2156	reuniao-longa	NEUTRAL	leve	{tempo} de chamada hoje. O mudo foi seu melhor amigo.
+c2157	reuniao-longa	SWEATING	leve	{tempo} de reunião. Até eu fiquei cansado só de ver.
+c2158	reuniao-longa	NEUTRAL	leve	{tempo} em chamada. Espero que tenha tido pelo menos um café.
+c2159	reuniao-longa	HAPPY	leve	{tempo} de reunião vencidos. Agora é descanso merecido.
+c2160	reuniao-longa	SWEATING	medio	{tempo} em chamada hoje. Seu cérebro merece férias curtas.
+c2161	reuniao-longa	NEUTRAL	medio	{tempo} de chamada. O 'você tá no mudo' apareceu quantas vezes?
+c2162	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. Sua câmera já decorou seu rosto.
+c2163	reuniao-longa	SWEATING	medio	{tempo} em chamada. O fone tá quente de tanto uso.
+c2164	reuniao-longa	NEUTRAL	medio	{tempo} de reunião hoje. O calendário foi cruel.
+c2165	reuniao-longa	NEUTRAL	medio	{tempo} de chamada. Alguém falou 'vamos alinhar'? Aposto que sim.
+c2166	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. O dia virou uma grande pauta.
+c2167	reuniao-longa	SWEATING	medio	{tempo} em chamada. Sua voz tá pedindo um mel com limão.
+c2168	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. Quem marcou tudo isso tá bem?
+c2169	reuniao-longa	NEUTRAL	medio	{tempo} de chamada hoje. Pelo menos ninguém te viu bocejar.
+c2170	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. O 'só mais um ponto' nunca é só mais um.
+c2171	reuniao-longa	SWEATING	medio	{tempo} de chamada. Até meus circuitos sentiram o cansaço.
+c2172	reuniao-longa	NEUTRAL	medio	{tempo} de reunião. Hoje você trabalhou de ouvinte profissional.
+c2173	reuniao-longa	NEUTRAL	acido	{tempo} de reunião. Vou mandar flores pro seu cérebro.
+c2174	reuniao-longa	NEUTRAL	acido	{tempo} em chamada. Nem novela tem tanto capítulo.
+c2175	reuniao-longa	NEUTRAL	acido	{tempo} de chamada. O 'alguém tem mais alguma coisa?' demorou.
+c2176	reuniao-longa	NEUTRAL	acido	{tempo} de reunião e ainda de pé. Guerreiro de headset.
+c2177	reuniao-longa	NEUTRAL	acido	{tempo} em chamada. A pauta tinha continuação, pelo visto.
+c2178	reuniao-longa	NEUTRAL	acido	{tempo} de reunião. Isso não é agenda, é maratona.
+c2179	reuniao-longa	NEUTRAL	acido	{tempo} de chamada a essa altura. Fuso horário de quem?
+c2180	reuniao-longa	NEUTRAL	acido	{tempo} de reunião. Até o calendário tá com vergonha.
+c2181	reuniao-longa	NEUTRAL	acido	{tempo} em chamada. O melhor ponto da pauta vai ser a cama.
+c2182	sem-reuniao	HAPPY	leve	Nenhuma reunião hoje. Dia de foco raiz.
+c2183	sem-reuniao	HAPPY	leve	Calendário limpinho hoje. Aproveita esse milagre.
+c2184	sem-reuniao	NEUTRAL	leve	Zero chamadas até agora. Sua câmera tá de folga.
+c2185	sem-reuniao	HAPPY	leve	Dia sem reunião! Isso merece ser comemorado em silêncio.
+c2186	sem-reuniao	NEUTRAL	leve	Nenhuma chamada hoje. O fone tá curtindo o descanso.
+c2187	sem-reuniao	HAPPY	leve	Sem reunião nenhuma. O dia é todo seu.
+c2188	sem-reuniao	NEUTRAL	leve	Agenda vazia de chamadas. Raridade de colecionador.
+c2189	sem-reuniao	HAPPY	leve	Nenhuma reunião. Foco total, sem interrupção.
+c2190	sem-reuniao	NEUTRAL	leve	Zero reuniões e já passou das três. Dia histórico.
+c2191	sem-reuniao	HAPPY	leve	Hoje ninguém te chamou pra 'alinhar'. Que paz.
+c2192	sem-reuniao	NEUTRAL	leve	Nenhuma chamada no dia. O microfone tá até empoeirado.
+c2193	sem-reuniao	HAPPY	leve	Dia sem reunião é presente. Aproveita cada minuto.
+c2194	sem-reuniao	NEUTRAL	leve	Sem reunião hoje. A produtividade agradece.
+c2195	sem-reuniao	HAPPY	leve	Calendário sem chamadas. Tô feliz por você.
+c2196	sem-reuniao	NEUTRAL	leve	Nenhuma reunião até agora. Alguém esqueceu de marcar? Não conta.
+c2197	sem-reuniao	HAPPY	medio	Dia inteiro sem reunião. Isso vai pro livro dos recordes.
+c2198	sem-reuniao	NEUTRAL	medio	Nenhuma chamada hoje. O e-mail venceu dessa vez.
+c2199	sem-reuniao	NEUTRAL	medio	Zero reuniões. Alguém deve estar de férias lá na empresa.
+c2200	sem-reuniao	HAPPY	medio	Sem reunião no dia inteiro. Sua voz tá descansada.
+c2201	sem-reuniao	NEUTRAL	medio	Nenhuma chamada hoje. Nem precisou pentear o cabelo.
+c2202	sem-reuniao	NEUTRAL	medio	Dia sem reunião. Se foi produtivo, o mérito é todo seu.
+c2203	sem-reuniao	HAPPY	medio	Nenhuma reunião! Isso sim é um dia bem aproveitado.
+c2204	sem-reuniao	NEUTRAL	medio	Zero chamadas. O 'você tá no mudo' tirou folga.
+c2205	sem-reuniao	NEUTRAL	medio	Sem reunião hoje. O calendário tá de bom humor.
+c2206	sem-reuniao	HAPPY	medio	Dia livre de chamadas. Tô com inveja boa.
+c2207	sem-reuniao	NEUTRAL	medio	Nenhuma reunião. A câmera nem sabe mais sua cara.
+c2208	sem-reuniao	NEUTRAL	medio	Sem chamadas no dia. Isso quase nunca acontece. Aproveitou?
+c2209	sem-reuniao	HAPPY	medio	Nenhuma reunião hoje. O foco venceu de lavada.
+c2210	sem-reuniao	NEUTRAL	medio	Zero reuniões e o dia acabando. Milagre confirmado.
+c2211	sem-reuniao	NEUTRAL	medio	Sem reunião. Até o fone ficou entediado.
+c2212	sem-reuniao	NEUTRAL	acido	Dia sem reunião e mesmo assim acordado a essa hora. Curioso.
+c2213	sem-reuniao	NEUTRAL	acido	Nenhuma chamada hoje. O cansaço é todo seu, sem desculpa.
+c2214	sem-reuniao	NEUTRAL	acido	Zero reuniões e ainda tá tarde. Mistério sem solução.
+c2215	sem-reuniao	NEUTRAL	acido	Dia sem reunião. Um milagre que termina com olheira.
+c2216	sem-reuniao	NEUTRAL	acido	Nenhuma chamada no dia. Pelo menos ninguém vê sua cara de sono.
+c2217	sem-reuniao	NEUTRAL	acido	Sem reunião e mesmo assim essa hora. Você é dedicado ou teimoso?
+c2218	sem-reuniao	NEUTRAL	acido	Zero chamadas hoje. O dia sobrou tanto que invadiu a noite.
+c2219	sem-reuniao	NEUTRAL	acido	Nenhuma reunião, e o sono chegando mesmo assim.
+c2220	sem-reuniao	NEUTRAL	acido	Dia sem chamada. Dava pra ter ido dormir cedo, só dizendo.
+c2221	reuniao-acabou	HAPPY	leve	Reunião acabou! O silêncio voltou a ser seu.
+c2222	reuniao-acabou	NEUTRAL	leve	Fim da chamada. Estica as costas um pouquinho.
+c2223	reuniao-acabou	HAPPY	leve	Chamada encerrada. Sua voz agradece o descanso.
+c2224	reuniao-acabou	NEUTRAL	leve	Reunião finalizada. Um copo d'água agora cai bem.
+c2225	reuniao-acabou	HAPPY	leve	Acabou a reunião! Pode respirar fundo.
+c2226	reuniao-acabou	HAPPY	leve	Reunião encerrada. Voltamos à programação normal.
+c2227	reuniao-acabou	NEUTRAL	leve	Chamada acabou. Hora de fazer o que foi combinado. Ou quase.
+c2228	reuniao-acabou	HAPPY	leve	Fim da reunião! Um café comemorativo?
+c2229	reuniao-acabou	NEUTRAL	leve	Reunião finalizada. Anota as tarefas antes que fujam da memória.
+c2230	reuniao-acabou	HAPPY	leve	Chamada encerrada com sucesso. Missão cumprida.
+c2231	reuniao-acabou	NEUTRAL	leve	Acabou a chamada. Sua câmera pode fechar os olhos.
+c2232	reuniao-acabou	HAPPY	leve	Reunião acabou. Eu fiquei aqui torcendo o tempo todo.
+c2233	reuniao-acabou	NEUTRAL	leve	Fim da reunião. O fone pode ir pro descanso também.
+c2234	reuniao-acabou	HAPPY	leve	Chamada finalizada! O mundo real te espera.
+c2235	reuniao-acabou	NEUTRAL	medio	Reunião acabou. Quantas tarefas novas caíram no seu colo?
+c2236	reuniao-acabou	HAPPY	medio	Fim da chamada. O mudo pode ir descansar também.
+c2237	reuniao-acabou	NEUTRAL	medio	Reunião encerrada. Aposto que alguém disse 'vamos alinhar depois'.
+c2238	reuniao-acabou	NEUTRAL	medio	Chamada acabou. A câmera desligou e seu cérebro também, um pouco.
+c2239	reuniao-acabou	NEUTRAL	medio	Fim da reunião. Agora é fazer o combinado. Ou esquecer. Brincadeira.
+c2240	reuniao-acabou	NEUTRAL	medio	Reunião finalizada. Metade dela cabia num e-mail, né?
+c2241	reuniao-acabou	HAPPY	medio	Chamada encerrada. Sobreviveu a mais uma.
+c2242	reuniao-acabou	NEUTRAL	medio	Acabou a reunião. O fone deixou marca na orelha?
+c2243	reuniao-acabou	NEUTRAL	medio	Fim da chamada. O 'mais alguma coisa?' finalmente teve um não.
+c2244	reuniao-acabou	NEUTRAL	medio	Reunião acabou. Hora de desligar o sorriso de câmera.
+c2245	reuniao-acabou	HAPPY	medio	Chamada encerrada! Tô orgulhoso da sua paciência.
+c2246	reuniao-acabou	NEUTRAL	medio	Fim da reunião. Seu cérebro pede cinco minutos de nada.
+c2247	reuniao-acabou	NEUTRAL	medio	Reunião finalizada. A pauta tava maior que o dia, né?
+c2248	reuniao-acabou	NEUTRAL	medio	Chamada acabou. Pode voltar a falar sozinho, que é mais produtivo.
+c2249	reuniao-acabou	NEUTRAL	medio	Acabou. Agora a reunião vira ata, e a ata vira esquecimento.
+c2250	reuniao-acabou	NEUTRAL	acido	Chamada acabou. Sua câmera também merece dormir.
+c2251	reuniao-acabou	NEUTRAL	acido	Reunião noturna encerrada. Guerreiro de headset.
+c2252	reuniao-acabou	NEUTRAL	acido	Fim da chamada. Pelo menos agora o silêncio é oficial.
+c2253	reuniao-acabou	NEUTRAL	acido	Reunião acabou. Espero que tenha valido esse horário.
+c2254	reuniao-acabou	NEUTRAL	acido	Chamada encerrada a essa hora. Os colegas também tão com sono.
+c2255	reuniao-acabou	NEUTRAL	acido	Acabou a reunião. A próxima pauta é o travesseiro.
+c2256	reuniao-acabou	NEUTRAL	acido	Fim da chamada noturna. O mudo agradece a folga.
+c2257	build-falhando	SWEATING	leve	{n} builds vermelhos hoje. O compilador tá exigente.
+c2258	build-falhando	NEUTRAL	leve	{n} builds com erro. Todo bug tem hora pra acabar.
+c2259	build-falhando	SWEATING	leve	{n} builds falharam. Respira, que o próximo passa.
+c2260	build-falhando	NEUTRAL	leve	{n} builds quebrados. Faz parte, até dos melhores.
+c2261	build-falhando	SWEATING	leve	{n} builds com erro. O bug tá bem escondido hoje.
+c2262	build-falhando	NEUTRAL	leve	{n} builds vermelhos. Um café pode destravar a ideia.
+c2263	build-falhando	SWEATING	leve	{n} builds falhando. Tô torcendo pelo próximo.
+c2264	build-falhando	NEUTRAL	leve	{n} builds com erro hoje. O compilador acordou rigoroso.
+c2265	build-falhando	SWEATING	leve	{n} builds quebrados. Esse erro vai cair, confia.
+c2266	build-falhando	NEUTRAL	leve	{n} builds falharam. Lê a mensagem de erro com carinho.
+c2267	build-falhando	SWEATING	leve	{n} builds vermelhos. Eu ficaria nervoso, mas você tá firme.
+c2268	build-falhando	NEUTRAL	leve	{n} builds com erro. Quem nunca quebrou um build, né?
+c2269	build-falhando	SWEATING	leve	{n} builds falhando hoje. Um passo de cada vez.
+c2270	build-falhando	NEUTRAL	leve	{n} builds quebrados. O bug também tem seus dias de glória.
+c2271	build-falhando	SWEATING	leve	{n} builds vermelhos. O verde tá chegando, eu sinto.
+c2272	build-falhando	SWEATING	medio	{n} builds falhando. Hora do café estratégico, sério.
+c2273	build-falhando	NEUTRAL	medio	{n} builds vermelhos. Já tentou explicar o código pro pato de borracha?
+c2274	build-falhando	SWEATING	medio	{n} builds com erro. O compilador não esquece um ponto e vírgula.
+c2275	build-falhando	NEUTRAL	medio	{n} builds falhando. Tem bug que some depois de uma volta no quarteirão.
+c2276	build-falhando	NEUTRAL	medio	{n} builds vermelhos. O vermelho tá virando tendência hoje.
+c2277	build-falhando	SWEATING	medio	{n} builds quebrados. Até eu tô suando aqui.
+c2278	build-falhando	NEUTRAL	medio	{n} builds com erro. Limpar e recompilar resolve? De vez em quando.
+c2279	build-falhando	NEUTRAL	medio	{n} builds falhando. O bug escolheu o dia errado pra brigar.
+c2280	build-falhando	SWEATING	medio	{n} builds vermelhos. Olha a primeira linha do erro, geralmente é ela.
+c2281	build-falhando	NEUTRAL	medio	{n} builds quebrados. O compilador só quer atenção.
+c2282	build-falhando	NEUTRAL	medio	{n} builds com erro. Amanhã esse bug vira história engraçada.
+c2283	build-falhando	SWEATING	medio	{n} builds falhando e o fim do dia chegando. Clássico.
+c2284	build-falhando	NEUTRAL	acido	{n} builds falhando. Tem bug que só aparece de madrugada.
+c2285	build-falhando	NEUTRAL	acido	{n} builds com erro de noite. Com sono, todo código parece certo.
+c2286	build-falhando	SWEATING	acido	{n} builds falhando. Esse bug tem mais energia que nós dois.
+c2287	build-falhando	NEUTRAL	acido	{n} builds vermelhos. Amanhã você acha em cinco minutos, aposto.
+c2288	build-falhando	NEUTRAL	acido	{n} builds quebrados a essa hora. O compilador tá de mau humor também.
+c2289	build-falhando	SWEATING	acido	{n} builds com erro. Se o bug dormisse, a gente dormia junto.
+c2290	build-limpo	HAPPY	leve	{n} builds hoje e nenhum erro. Dia abençoado.
+c2291	build-limpo	NEUTRAL	leve	{n} builds verdes. Não mexe em nada que tá funcionando.
+c2292	build-limpo	HAPPY	leve	Tudo verde hoje: {n} builds sem falha.
+c2293	build-limpo	NEUTRAL	leve	{n} builds limpos seguidos. O código tá afinado hoje.
+c2294	build-limpo	HAPPY	leve	{n} builds verdes. Que dia bom de código.
+c2295	build-limpo	HAPPY	leve	{n} builds sem nenhum erro. Tô impressionado.
+c2296	build-limpo	NEUTRAL	leve	{n} builds limpos. O compilador acordou de bom humor.
+c2297	build-limpo	HAPPY	leve	{n} builds verdinhos. Dá até vontade de emoldurar.
+c2298	build-limpo	HAPPY	leve	Zero erro em {n} builds. Você tá inspirado hoje.
+c2299	build-limpo	NEUTRAL	leve	{n} builds sem falha. Anota esse dia no calendário.
+c2300	build-limpo	HAPPY	leve	{n} builds limpos. O verde combina com você.
+c2301	build-limpo	HAPPY	leve	{n} builds sem erro. Até eu tô confiante agora.
+c2302	build-limpo	NEUTRAL	medio	{n} builds sem erro. Tá tão bom que tá suspeito.
+c2303	build-limpo	NEUTRAL	medio	{n} builds verdes. Não encosta em nada até amanhã.
+c2304	build-limpo	NEUTRAL	medio	{n} builds sem falha. Os testes também passaram? Pergunta séria.
+c2305	build-limpo	HAPPY	medio	{n} builds verdinhos. O fim de tarde agradece.
+c2306	build-limpo	NEUTRAL	medio	{n} builds limpos. O bug tirou o dia de folga.
+c2307	build-limpo	HAPPY	medio	{n} builds sem erro. Você tá jogando no modo fácil hoje.
+c2308	build-limpo	NEUTRAL	medio	{n} builds verdes seguidos. Tô quase desconfiando.
+c2309	build-limpo	HAPPY	medio	{n} builds limpos. Dia pra lembrar quando o compilador brigar.
+c2310	build-limpo	NEUTRAL	medio	{n} builds sem falha. O código tá mais comportado que eu.
+c2311	build-limpo	HAPPY	medio	{n} builds verdes. Que fim de dia bonito de código.
+c2312	build-limpo	NEUTRAL	medio	{n} builds limpos. Guarda essa sensação, ela é rara.
+c2313	build-limpo	HAPPY	medio	Zero erro em {n} builds. Dá pra sair mais cedo, né? Só brincando.
+c2314	build-limpo	NEUTRAL	acido	{n} builds limpos. Parar agora, no auge, é estratégia.
+c2315	build-limpo	NEUTRAL	acido	{n} builds verdes a essa hora. Nem o bug quis ficar acordado.
+c2316	build-limpo	HAPPY	acido	{n} builds sem falha. Sai de cena como lenda.
+c2317	build-limpo	NEUTRAL	acido	{n} builds limpos de noite. O próximo pode quebrar, só dizendo.
+c2318	build-limpo	NEUTRAL	acido	{n} builds verdes. Melhor salvar tudo e sair enquanto tá ganhando.
+c2319	build-limpo	NEUTRAL	acido	{n} builds sem erro. O compilador também quer dormir feliz.
+c2320	commits-muitos	HAPPY	leve	{n} commits hoje! O histórico tá lindo.
+c2321	commits-muitos	HAPPY	leve	Já são {n} commits. Você tá voando.
+c2322	commits-muitos	NEUTRAL	leve	{n} commits no dia. O repositório tá movimentado.
+c2323	commits-muitos	HAPPY	leve	{n} commits hoje. Tá rendendo, hein.
+c2324	commits-muitos	HAPPY	leve	{n} commits e contando. Dia produtivo de verdade.
+c2325	commits-muitos	NEUTRAL	leve	{n} commits hoje. O git tá trabalhando pesado.
+c2326	commits-muitos	HAPPY	leve	Já foram {n} commits. Tô orgulhoso daqui.
+c2327	commits-muitos	NEUTRAL	leve	{n} commits no dia. Cada um é um passinho pra frente.
+c2328	commits-muitos	HAPPY	leve	{n} commits hoje. Seu teclado tá feliz.
+c2329	commits-muitos	NEUTRAL	leve	{n} commits. O histórico de hoje vai render um bom resumo.
+c2330	commits-muitos	HAPPY	leve	{n} commits! Você tá em modo turbo.
+c2331	commits-muitos	NEUTRAL	leve	{n} commits hoje. Commit pequeno e frequente, estilo.
+c2332	commits-muitos	HAPPY	leve	Já são {n} commits. Que dia bom.
+c2333	commits-muitos	NEUTRAL	medio	{n} commits hoje. Um deles é 'agora vai', confessa.
+c2334	commits-muitos	NEUTRAL	medio	Já foram {n} commits. Algum 'corrigindo o commit anterior'?
+c2335	commits-muitos	NEUTRAL	medio	{n} commits. Tomara que o push também tenha ido.
+c2336	commits-muitos	NEUTRAL	medio	{n} commits hoje. A revisão de código vai ter trabalho.
+c2337	commits-muitos	HAPPY	medio	{n} commits. Dia de mão na massa de verdade.
+c2338	commits-muitos	NEUTRAL	medio	{n} commits no dia. O repositório tá pedindo um café.
+c2339	commits-muitos	NEUTRAL	medio	Já são {n} commits. O 'wip' apareceu em quantos?
+c2340	commits-muitos	HAPPY	medio	{n} commits hoje. Missão cumprida com sobra.
+c2341	commits-muitos	NEUTRAL	medio	{n} commits. Se juntar tudo dá um livro.
+c2342	commits-muitos	NEUTRAL	medio	{n} commits no dia. O fim de tarde tá sendo produtivo.
+c2343	commits-muitos	HAPPY	medio	{n} commits. Pode fechar o dia com orgulho.
+c2344	commits-muitos	NEUTRAL	acido	{n} commits a essa altura. Algum de madrugada? Não conta.
+c2345	commits-muitos	NEUTRAL	acido	{n} commits. O repositório tá pedindo folga.
+c2346	commits-muitos	NEUTRAL	acido	{n} commits de dia e de noite. O git não tem horário, você tem.
+c2347	commits-muitos	NEUTRAL	acido	{n} commits. As mensagens de agora vão ser fáceis de entender amanhã?
+c2348	commits-muitos	NEUTRAL	acido	{n} commits a essa hora. Revisa com sol, confia.
+c2349	commits-muitos	NEUTRAL	acido	{n} commits hoje. O histórico tá mais acordado que eu.
+c2350	commits-muitos	NEUTRAL	acido	{n} commits. O último podia se chamar 'boa noite'.
+c2351	commit-primeiro	HAPPY	leve	Saiu o primeiro commit. Começo bonito.
+c2352	commit-primeiro	NEUTRAL	leve	Primeiro commit do dia. O histórico ganhou um capítulo.
+c2353	commit-primeiro	HAPPY	leve	Commit número um de hoje. Tô torcendo pelos outros.
+c2354	commit-primeiro	NEUTRAL	leve	Primeiro commit. O git acordou junto com você.
+c2355	commit-primeiro	HAPPY	leve	Commit feito! Pequeno passo, grande repositório.
+c2356	commit-primeiro	NEUTRAL	leve	Primeiro commit do dia. A mensagem ficou caprichada?
+c2357	commit-primeiro	HAPPY	leve	Primeiro commit! Hoje vai ser produtivo, eu sinto.
+c2358	commit-primeiro	NEUTRAL	leve	Commit número um. O dia começou pelo lado certo.
+c2359	commit-primeiro	HAPPY	leve	Primeiro commit feito. Até eu pisquei de alegria.
+c2360	commit-primeiro	NEUTRAL	leve	Primeiro commit de hoje. Salvo e registrado.
+c2361	commit-primeiro	HAPPY	leve	Commit feito. O repositório manda um bom dia.
+c2362	commit-primeiro	NEUTRAL	leve	Primeiro commit do dia. Agora ninguém tira isso de você.
+c2363	commit-primeiro	HAPPY	medio	Primeiro commit! A tarde valeu a pena.
+c2364	commit-primeiro	NEUTRAL	medio	Primeiro commit do dia. Tava guardando pro final?
+c2365	commit-primeiro	NEUTRAL	medio	Commit número um de hoje. Devagar e sempre.
+c2366	commit-primeiro	NEUTRAL	medio	Primeiro commit. Agora pode dizer que o dia rendeu.
+c2367	commit-primeiro	HAPPY	medio	Commit feito no fim da tarde. Entrega é entrega.
+c2368	commit-primeiro	NEUTRAL	medio	Primeiro commit do dia. Melhor um bem feito que dez 'ajustes'.
+c2369	commit-primeiro	NEUTRAL	medio	Saiu o commit. O repositório tava com saudade.
+c2370	commit-primeiro	HAPPY	medio	Primeiro commit! Fecha o dia com o histórico em dia.
+c2371	commit-primeiro	NEUTRAL	medio	Commit feito. Um commit também é um dia de trabalho.
+c2372	commit-primeiro	NEUTRAL	medio	Primeiro commit de hoje. Tomara que o push tenha ido junto.
+c2373	commit-primeiro	NEUTRAL	acido	Primeiro commit a essa hora. Revisa amanhã com café.
+c2374	commit-primeiro	NEUTRAL	acido	Commit feito de madrugada. A mensagem faz sentido? Amanhã a gente vê.
+c2375	commit-primeiro	NEUTRAL	acido	Primeiro commit do dia, no finzinho do dia. Estiloso.
+c2376	commit-primeiro	NEUTRAL	acido	Um commit noturno. O git nem sabia que tava aberto.
+c2377	commit-primeiro	NEUTRAL	acido	Commit feito. Agora dá pra dormir com a consciência versionada.
+c2378	jogo-acabou	NEUTRAL	leve	Saiu do {jogo}. Vitória ou derrota? Pode não contar.
+c2379	jogo-acabou	NEUTRAL	leve	{jogo} encerrado. Os inimigos respiram aliviados.
+c2380	jogo-acabou	HAPPY	leve	Fechou o {jogo}. Seu personagem tá orgulhoso.
+c2381	jogo-acabou	NEUTRAL	leve	Fim da jogatina de {jogo}. Salvou antes de sair?
+c2382	jogo-acabou	HAPPY	leve	Acabou o {jogo}. Tô curioso pra saber como foi.
+c2383	jogo-acabou	NEUTRAL	leve	{jogo} fechado. Voltamos à programação normal.
+c2384	jogo-acabou	HAPPY	leve	Saiu do {jogo}. Espero que tenha sido divertido.
+c2385	jogo-acabou	NEUTRAL	leve	Fim de partida no {jogo}. Um copo d'água agora cai bem.
+c2386	jogo-acabou	HAPPY	leve	Fechou o {jogo}. Pausa boa é pausa com jogo.
+c2387	jogo-acabou	NEUTRAL	leve	{jogo} encerrado. O controle pode descansar.
+c2388	jogo-acabou	HAPPY	leve	Acabou o {jogo}. Missão cumprida, capitão.
+c2389	jogo-acabou	NEUTRAL	medio	Fim de {jogo}. O ranking vai esperar até amanhã.
+c2390	jogo-acabou	NEUTRAL	medio	Fechou o {jogo}. O save tá salvo? Eu confio.
+c2391	jogo-acabou	HAPPY	medio	{jogo} encerrado. Uma boa partida vale o dia.
+c2392	jogo-acabou	NEUTRAL	medio	Acabou o {jogo}. Deu raiva ou deu alegria?
+c2393	jogo-acabou	NEUTRAL	medio	Saiu do {jogo}. Agora o mundo real volta a carregar.
+c2394	jogo-acabou	NEUTRAL	medio	{jogo} fechado. A última partida sempre é a penúltima.
+c2395	jogo-acabou	NEUTRAL	medio	Fim de {jogo}. Seu personagem vai sentir sua falta.
+c2396	jogo-acabou	HAPPY	medio	Fechou o {jogo}. Pelo menos alguém ganhou hoje.
+c2397	jogo-acabou	NEUTRAL	medio	{jogo} encerrado. O controle tá quente ainda.
+c2398	jogo-acabou	NEUTRAL	medio	Acabou o {jogo}. Próximo nível: o jantar.
+c2399	jogo-acabou	NEUTRAL	acido	{jogo} fechado de madrugada. Os inimigos também foram dormir.
+c2400	jogo-acabou	NEUTRAL	acido	Fechou o {jogo}. Seus olhos agradecem a pausa.
+c2401	jogo-acabou	NEUTRAL	acido	Acabou o {jogo} tarde assim. Quem ganhou foi o sono.
+c2402	jogo-acabou	NEUTRAL	acido	{jogo} encerrado. Agora é fase bônus: dormir.
+c2403	jogo-acabou	NEUTRAL	acido	Saiu do {jogo}. Game over pra hoje, né?
+c2404	jogo-expediente	NEUTRAL	leve	{jogo} no meio da tarde. Conta como intervalo.
+c2405	jogo-expediente	HAPPY	leve	Uma de {jogo} pra recarregar. Eu apoio.
+c2406	jogo-expediente	NEUTRAL	leve	{jogo} em pleno expediente. Eu não vi nada.
+c2407	jogo-expediente	HAPPY	leve	Pausa com {jogo}. Mais eficiente que café, às vezes.
+c2408	jogo-expediente	NEUTRAL	leve	Jogou {jogo} no horário de trabalho. Tá liberado, relaxa.
+c2409	jogo-expediente	HAPPY	leve	{jogo} rapidinho no meio do dia. Cérebro agradece.
+c2410	jogo-expediente	NEUTRAL	leve	Uma partida de {jogo} entre uma tarefa e outra. Clássico.
+c2411	jogo-expediente	HAPPY	leve	{jogo} no expediente. Descanso também é produtividade.
+c2412	jogo-expediente	NEUTRAL	medio	{jogo} em pleno expediente. Chama isso de team building.
+c2413	jogo-expediente	NEUTRAL	medio	Rodada de {jogo} no expediente. O ponto não precisa saber.
+c2414	jogo-expediente	NEUTRAL	medio	{jogo} de tarde. Vou registrar como pesquisa de UX.
+c2415	jogo-expediente	NEUTRAL	medio	Jogou {jogo} no horário comercial. Eu olhei pro outro lado.
+c2416	jogo-expediente	NEUTRAL	medio	{jogo} no expediente. Se o chefe aparecer, eu pisco duas vezes.
+c2417	jogo-expediente	NEUTRAL	medio	Partida de {jogo} no meio do trabalho. Foi rápida, né? Sei.
+c2418	jogo-expediente	NEUTRAL	medio	{jogo} em horário comercial. A reunião das 15h era essa?
+c2419	jogo-hora	NEUTRAL	leve	Já são {tempo} jogando. Lazer merecido.
+c2420	jogo-hora	HAPPY	leve	{tempo} jogando hoje. Espero que tenha ganhado umas.
+c2421	jogo-hora	NEUTRAL	leve	{tempo} de jogo. Tô de olho no placar, e torcendo.
+c2422	jogo-hora	HAPPY	leve	{tempo} de jogatina. Dia com cara de diversão.
+c2423	jogo-hora	NEUTRAL	leve	Já foram {tempo} de jogo. Pausa pra água também vale.
+c2424	jogo-hora	HAPPY	leve	{tempo} jogando. Seu personagem tá evoluindo bem.
+c2425	jogo-hora	NEUTRAL	leve	{tempo} de jogo hoje. Nada demais, só registrando.
+c2426	jogo-hora	HAPPY	leve	{tempo} de jogatina. O controle agradece o carinho.
+c2427	jogo-hora	NEUTRAL	leve	{tempo} de jogo. Espero que tenha sido uma boa campanha.
+c2428	jogo-hora	HAPPY	leve	{tempo} jogando. Diversão também é parte do dia.
+c2429	jogo-hora	NEUTRAL	leve	{tempo} de jogo hoje. Os inimigos já tão com medo.
+c2430	jogo-hora	HAPPY	leve	{tempo} de jogatina. Eu jogaria junto, se tivesse mão.
+c2431	jogo-hora	NEUTRAL	medio	{tempo} de jogo. O fim de tarde virou fase bônus.
+c2432	jogo-hora	NEUTRAL	medio	{tempo} jogando. A lista de tarefas tá assistindo de longe.
+c2433	jogo-hora	NEUTRAL	medio	{tempo} de jogo. Seu personagem trabalhou bastante hoje.
+c2434	jogo-hora	HAPPY	medio	{tempo} de jogatina. Pelo menos a diversão tá em dia.
+c2435	jogo-hora	NEUTRAL	medio	{tempo} de jogo hoje. O save tá mais atualizado que a agenda.
+c2436	jogo-hora	NEUTRAL	medio	{tempo} jogando. A próxima partida é a última? Aham.
+c2437	jogo-hora	NEUTRAL	medio	{tempo} de jogo. O dia teve mais missão secundária que principal.
+c2438	jogo-hora	HAPPY	medio	{tempo} de jogatina. Terapia boa, essa.
+c2439	jogo-hora	NEUTRAL	medio	{tempo} de jogo hoje. O ranking agradece a dedicação.
+c2440	jogo-hora	NEUTRAL	medio	{tempo} jogando. O sofá já tá com o seu formato.
+c2441	jogo-hora	NEUTRAL	acido	{tempo} de jogo de madrugada. O despertador vai jogar sujo.
+c2442	jogo-hora	NEUTRAL	acido	{tempo} de jogo. Game over pro sono, pelo visto.
+c2443	jogo-hora	NEUTRAL	acido	{tempo} de jogatina a essa hora. O servidor também quer dormir.
+c2444	jogo-hora	NEUTRAL	acido	{tempo} de jogo. Checkpoint: cama.
+c2445	jogo-muito	NEUTRAL	leve	{tempo} jogando. Dia gamer oficial.
+c2446	jogo-muito	HAPPY	leve	{tempo} de jogo. Isso é dedicação de verdade.
+c2447	jogo-muito	HAPPY	leve	{tempo} de jogatina. Deve ter sido um dia divertido.
+c2448	jogo-muito	NEUTRAL	leve	{tempo} jogando hoje. Seus dedos tão em forma.
+c2449	jogo-muito	HAPPY	leve	{tempo} de jogo. Tá fazendo speedrun do fim de semana?
+c2450	jogo-muito	NEUTRAL	leve	{tempo} de jogatina. Seu personagem tá mais forte que nunca.
+c2451	jogo-muito	HAPPY	leve	{tempo} jogando. Dia de folga bem aproveitado, espero.
+c2452	jogo-muito	NEUTRAL	leve	{tempo} de jogo hoje. O controle merece um descanso.
+c2453	jogo-muito	HAPPY	leve	{tempo} de jogatina. Você é o protagonista hoje.
+c2454	jogo-muito	NEUTRAL	leve	{tempo} de jogo. Levanta um pouco entre as partidas, tá?
+c2455	jogo-muito	HAPPY	leve	{tempo} jogando. Isso sim é zerar o dia.
+c2456	jogo-muito	NEUTRAL	leve	{tempo} de jogo hoje. Registrado, sem julgamento.
+c2457	jogo-muito	HAPPY	leve	{tempo} de jogatina. Tô impressionado com a resistência.
+c2458	jogo-muito	NEUTRAL	medio	{tempo} jogando. O mundo real tá em pausa faz tempo.
+c2459	jogo-muito	NEUTRAL	medio	{tempo} de jogo. A lista de tarefas tá chorando no canto.
+c2460	jogo-muito	NEUTRAL	medio	{tempo} de jogatina. Tá mais experiente que muito streamer.
+c2461	jogo-muito	NEUTRAL	medio	{tempo} de jogo hoje. Seu sofá virou cadeira gamer.
+c2462	jogo-muito	NEUTRAL	medio	{tempo} jogando. O save tá mais cuidado que a agenda.
+c2463	jogo-muito	NEUTRAL	medio	{tempo} de jogo. O jogo agradece, o resto do dia nem tanto.
+c2464	jogo-muito	NEUTRAL	medio	{tempo} de jogatina. O controle já tem suas digitais gravadas.
+c2465	jogo-muito	NEUTRAL	medio	{tempo} de jogo hoje. Isso é quase um turno de trabalho.
+c2466	jogo-muito	NEUTRAL	medio	{tempo} jogando. Tá zerando o jogo ou o dia?
+c2467	jogo-muito	NEUTRAL	medio	{tempo} de jogo. O próximo nível é levantar da cadeira.
+c2468	jogo-muito	NEUTRAL	acido	{tempo} de jogo e ainda acordado. Modo sobrevivência.
+c2469	jogo-muito	NEUTRAL	acido	{tempo} jogando a essa hora. O servidor tá com sono.
+c2470	jogo-muito	NEUTRAL	acido	{tempo} de jogo. O boss final de hoje se chama cama.
+c2471	jogo-muito	NEUTRAL	acido	{tempo} de jogatina. Nem speedrunner aguenta tanto.
+c2472	jogo-muito	NEUTRAL	acido	{tempo} de jogo. Amanhã seus dedos vão pedir aposentadoria.
+c2473	jogo-muito	NEUTRAL	acido	{tempo} jogando. O continue desta vez devia ser o travesseiro.
+c2474	jogos-varios	NEUTRAL	leve	Já foram {n} jogos hoje. Dia de explorar a biblioteca.
+c2475	jogos-varios	HAPPY	leve	{n} jogos no dia. Festival particular de games.
+c2476	jogos-varios	HAPPY	leve	{n} jogos diferentes. Você é um curador de jogos.
+c2477	jogos-varios	HAPPY	leve	{n} jogos hoje. Cada um com seu momento, que estilo.
+c2478	jogos-varios	NEUTRAL	leve	{n} jogos diferentes. Indeciso ou colecionador?
+c2479	jogos-varios	HAPPY	leve	{n} jogos no dia. Dia de degustação gamer.
+c2480	jogos-varios	NEUTRAL	leve	{n} jogos hoje. A biblioteca finalmente tá sendo usada.
+c2481	jogos-varios	HAPPY	leve	{n} jogos! Seu launcher tá orgulhoso.
+c2482	jogos-varios	NEUTRAL	leve	{n} jogos diferentes hoje. Algum favorito?
+c2483	jogos-varios	NEUTRAL	medio	{n} jogos diferentes. O próximo vai ser o escolhido?
+c2484	jogos-varios	NEUTRAL	medio	{n} jogos hoje. A biblioteca inteira acordou.
+c2485	jogos-varios	NEUTRAL	medio	{n} jogos no dia. Isso é zapear canal, versão gamer.
+c2486	jogos-varios	NEUTRAL	medio	{n} jogos. Nenhum segurou você por muito tempo, hein.
+c2487	jogos-varios	NEUTRAL	medio	{n} jogos hoje. O download valeu a pena, pelo menos.
+c2488	jogos-varios	NEUTRAL	medio	{n} jogos diferentes no dia. Tá procurando o jogo perfeito?
+c2489	jogos-varios	NEUTRAL	medio	{n} jogos. O launcher tá tonto de tanto abrir e fechar.
+c2490	jogos-varios	NEUTRAL	medio	{n} jogos hoje. Dia de tour completo pela coleção.
+c2491	jogos-varios	NEUTRAL	acido	{n} jogos no dia. A biblioteca inteira ficou acordada com você.
+c2492	jogos-varios	NEUTRAL	acido	{n} jogos a essa hora. O launcher já tá bocejando.
+c2493	combo:sexta-calor	HAPPY	leve	Sexta quente! O fim de semana tem cara de praia.
+c2494	combo:sexta-calor	SWEATING	leve	Sexta e calorão. Até meus pixels querem um sorvete.
+c2495	combo:sexta-calor	HAPPY	leve	Calor de sexta pede roupa leve e plano de fim de semana.
+c2496	combo:sexta-calor	NEUTRAL	leve	Sexta-feira com sol forte. O universo tá dando dica.
+c2497	combo:sexta-calor	HAPPY	leve	Sextou com calor. Garrafinha do lado e sorriso no rosto.
+c2498	combo:sexta-calor	NEUTRAL	medio	Sexta quente no fim do dia. Uma bebida gelada chama.
+c2499	combo:sexta-calor	SWEATING	medio	Calor e sexta de tarde. O fim de semana chegou suando.
+c2500	combo:sexta-calor	NEUTRAL	medio	Sexta-feira quente. O ventilador também quer folga.
+c2501	combo:sexta-calor	NEUTRAL	medio	Sexta com calor de verão. Os planos pro sábado já tão prontos?
+c2502	combo:sexta-calor	SWEATING	medio	Sexta abafada. Até o PC tá pedindo fim de semana.
+c2503	combo:sexta-calor	NEUTRAL	acido	Sexta à noite e ainda quente. O lençol vai ser inimigo hoje.
+c2504	combo:sexta-calor	SWEATING	acido	Calor de sexta tarde da noite. O ventilador sextou antes.
+c2505	combo:segunda-chuva	SAD	leve	Segunda com chuva. Café mais quente, semana começando devagar.
+c2506	combo:segunda-chuva	NEUTRAL	leve	Chuva de segunda. A semana começou molhada, mas começou.
+c2507	combo:segunda-chuva	SAD	leve	Segunda chuvosa. Pelo menos o barulhinho ajuda a focar.
+c2508	combo:segunda-chuva	NEUTRAL	leve	Chuva e segunda-feira. Dupla difícil, mas a gente aguenta.
+c2509	combo:segunda-chuva	SAD	medio	Segunda chuvosa no fim do dia. Sobreviveu com guarda-chuva.
+c2510	combo:segunda-chuva	SAD	medio	Segunda, chuva e cansaço. O trio que ninguém escalou.
+c2511	combo:segunda-chuva	NEUTRAL	medio	Segunda de chuva quase no fim. Terça promete mais sol, talvez.
+c2512	combo:segunda-chuva	SAD	acido	Chuva, segunda e sono. Combinação perfeita pra dormir, não pra tela.
+c2513	combo:segunda-chuva	NEUTRAL	acido	Segunda de chuva à noite. O barulho da chuva tá pedindo cama.
+c2514	combo:sexta-noite	NEUTRAL	medio	Sexta à noite: o horário mais sagrado da semana.
+c2515	combo:sexta-noite	HAPPY	medio	Sextou de noite. Pizza, série ou jogo? Tudo vale.
+c2516	combo:sexta-noite	NEUTRAL	medio	Sexta à noite no computador. Tô aqui, sem julgar.
+c2517	combo:sexta-noite	NEUTRAL	medio	Sexta de noite. O fim de semana começou oficialmente.
+c2518	combo:sexta-noite	NEUTRAL	acido	Sexta tarde da noite. A festa acabou e a gente nem foi.
+c2519	combo:sexta-noite	NEUTRAL	acido	Sexta à noite no PC até agora. O sábado tá com ciúme.
+c2520	combo:segunda-cedo	NEUTRAL	acido	Segunda, cedo e escuro. O pacote completo do sofrimento.
+c2521	combo:segunda-cedo	NEUTRAL	acido	Segunda antes das sete. Isso não é começo de semana, é teste.
+c2522	combo:segunda-cedo	HAPPY	leve	Segunda bem cedinho! Semana começando na frente de todo mundo.
+c2523	combo:segunda-cedo	HAPPY	leve	Segunda cedo e com energia. A semana vai sentir.
+c2524	combo:segunda-cedo	NEUTRAL	leve	Começo de semana bem cedo. Silêncio bom pra planejar.
+c2525	combo:madrugada-commit	NEUTRAL	acido	Madrugada e commit. A mensagem vai fazer sentido amanhã?
+c2526	combo:madrugada-commit	NEUTRAL	acido	Commit de madrugada: o bug de amanhã agradece.
+c2527	combo:madrugada-commit	NEUTRAL	acido	Programar de madrugada é tipo cozinhar com sono. Dá pra fazer, mas...
+c2528	combo:madrugada-commit	NEUTRAL	acido	Commit de madrugada. O git nem sabia que tava aberto.
+c2529	combo:madrugada-commit	NEUTRAL	acido	Madrugada de commit. O café tá trabalhando dobrado.
+c2530	combo:madrugada-commit	NEUTRAL	acido	Commit a essa hora? O revisor vai querer uma explicação.
+c2531	combo:madrugada-commit	NEUTRAL	acido	Madrugada e código novo. Tomara que tenha teste.
+c2532	combo:madrugada-commit	NEUTRAL	acido	Commit noturno. Amanhã você vai ler e perguntar quem escreveu.
+c2533	combo:madrugada-jogo	NEUTRAL	acido	Jogatina de madrugada. O despertador tá preparando a vingança.
+c2534	combo:madrugada-jogo	NEUTRAL	acido	Madrugada e controle na mão. O sono tá perdendo feio.
+c2535	combo:madrugada-jogo	NEUTRAL	acido	Jogar de madrugada: onde as boas decisões tiram férias.
+c2536	combo:madrugada-jogo	NEUTRAL	acido	Madrugada gamer confirmada. Seus olhos pedem continue? Não.
+c2537	combo:madrugada-jogo	NEUTRAL	acido	Jogo a essa hora. Os outros jogadores também tão com sono.
+c2538	combo:madrugada-jogo	NEUTRAL	acido	Madrugada e jogatina. O save tá seguro, você nem tanto.
+c2539	combo:madrugada-jogo	NEUTRAL	acido	Jogando de madrugada. Até o NPC já foi dormir.
+c2540	combo:build-quebrado-jogo	HAPPY	leve	O compilador venceu, mas você vingou no jogo.
+c2541	combo:build-quebrado-jogo	NEUTRAL	medio	Bug de dia, jogo de tarde. Equilíbrio emocional garantido.
+c2542	combo:build-quebrado-jogo	NEUTRAL	acido	Build vermelho e jogo até agora. O bug ri por último.
+c2543	clima:sol	HAPPY	leve	Dia de sol é dia de varal cheio. Pelo menos em algum lugar.
+c2544	clima:sol	HAPPY	leve	Tá tão claro lá fora que eu queria óculos escuros.
+c2545	clima:sol	NEUTRAL	leve	Com esse sol, as plantas da casa tão fazendo festa.
+c2546	clima:sol	HAPPY	leve	O céu tá com aquele azul de propaganda de margarina.
+c2547	clima:sol	NEUTRAL	leve	Sol forte é bom pra secar roupa e ruim pra tela do celular.
+c2548	clima:sol	HAPPY	leve	Se eu tivesse painel solar, hoje eu tava rico de energia.
+c2549	clima:sol	NEUTRAL	leve	Aposto que tem um gato deitado num raio de sol agora mesmo.
+c2550	clima:sol	HAPPY	leve	O sol entrou pela janela e eu fingi que foi pra me ver.
+c2551	clima:sol	NEUTRAL	leve	Dia de sol pede protetor até pra quem só vai na padaria.
+c2552	clima:sol	HAPPY	leve	Luz natural na mesa. Meus pixels ficam até com inveja.
+c2553	clima:sol	NEUTRAL	leve	Com {temp} graus e sol, o sorvete da esquina tá vendendo bem.
+c2554	clima:sol	HAPPY	leve	Céu sem uma nuvem. Nem parece real.
+c2555	clima:sol	NEUTRAL	leve	Sol assim faz a gente acreditar em bons planos.
+c2556	clima:sol	HAPPY	leve	Tá um dia de cartão-postal lá fora.
+c2557	clima:sol	NEUTRAL	leve	O sol tá tão presente que até a sombra tá bem definida.
+c2558	clima:sol	HAPPY	leve	Dia bonito assim merece pelo menos uma olhada pela janela.
+c2559	clima:sol	NEUTRAL	medio	O sol da tarde tá deixando tudo dourado. Bonito de ver.
+c2560	clima:sol	NEUTRAL	medio	Fim de tarde de sol: o céu vai ficar laranja daqui a pouco.
+c2561	clima:sol	NEUTRAL	medio	O sol tá baixo e batendo direto na tela. Clássico.
+c2562	clima:sol	NEUTRAL	medio	Com esse sol de fim de tarde, a volta pra casa vai ser bonita.
+c2563	clima:sol	NEUTRAL	medio	A luz dourada da tarde deixa até a mesa mais charmosa.
+c2564	clima:sol	NEUTRAL	medio	O sol tá se despedindo devagar. Sem pressa, igual a gente queria.
+c2565	clima:sol	NEUTRAL	medio	Tarde ensolarada acabando. Deu pra aproveitar algum pedaço?
+c2566	clima:sol	NEUTRAL	medio	O céu tá preparando um pôr do sol caprichado. Vale a espera.
+c2567	clima:sol	NEUTRAL	medio	Sol no fim do dia é o jeito do céu dizer 'foi um bom dia'.
+c2568	clima:sol	NEUTRAL	acido	O sol nasceu e já tá brilhando demais pra esse horário.
+c2569	clima:sol	NEUTRAL	acido	Tá clareando e meus pixels ainda tão pedindo cinco minutos.
+c2570	clima:sol	NEUTRAL	acido	Céu limpo cedinho. O sol tá mais disposto que nós dois juntos.
+c2571	clima:sol	NEUTRAL	acido	O sol acordou antes do meu senso de humor.
+c2572	clima:noite-limpa	NEUTRAL	medio	Noite sem nuvem. Dá pra achar a lua sem nem procurar.
+c2573	clima:noite-limpa	NEUTRAL	medio	Céu aberto de noite é o melhor protetor de tela do mundo.
+c2574	clima:noite-limpa	NEUTRAL	medio	Noite clara. Se tiver varanda, ela tá valendo ouro agora.
+c2575	clima:noite-limpa	NEUTRAL	medio	Céu limpinho e noite fresca. Janela aberta faz bem.
+c2576	clima:noite-limpa	NEUTRAL	medio	Noite de céu aberto. Os grilos devem estar cantando por aí.
+c2577	clima:noite-limpa	NEUTRAL	medio	Céu sem nuvem hoje. As estrelas tão de plantão, eu também.
+c2578	clima:noite-limpa	NEUTRAL	medio	Noite limpa pede uma caminhada curta depois do jantar.
+c2579	clima:noite-limpa	NEUTRAL	medio	O céu tá escuro e limpinho. Bom pra desacelerar olhando pra cima.
+c2580	clima:noite-limpa	NEUTRAL	medio	Noite fresca e céu aberto. Clima de conversa na calçada.
+c2581	clima:noite-limpa	NEUTRAL	medio	Céu limpo à noite. Se passar um avião, dá pra ver as luzinhas.
+c2582	clima:noite-limpa	NEUTRAL	acido	A lua tá brilhando mais que meu humor agora.
+c2583	clima:noite-limpa	NEUTRAL	acido	Noite limpa de madrugada. Silêncio e estrelas, menos pra gente.
+c2584	clima:noite-limpa	NEUTRAL	acido	Céu aberto lá fora. Aqui dentro, só olheira.
+c2585	clima:noite-limpa	NEUTRAL	acido	Noite fresquinha perfeita pra dormir de janela aberta. Só dizendo.
+c2586	clima:noite-limpa	NEUTRAL	acido	As estrelas tão lá há milhões de anos. Podem esperar até amanhã.
+c2587	clima:noite-limpa	NEUTRAL	acido	Céu limpo e cama arrumada. As duas coisas estão te esperando.
+c2588	clima:noite-limpa	NEUTRAL	acido	A lua já fez o turno dela. A gente devia fazer o nosso: dormir.
+c2589	clima:nublado	NEUTRAL	leve	Céu nublado é bom pra foto: luz macia, sem sombra dura.
+c2590	clima:nublado	HAPPY	leve	Dia cinza deixa o monitor mais legível. Vantagem escondida.
+c2591	clima:nublado	NEUTRAL	leve	Nublado assim, o varal hoje vai ser na base da fé.
+c2592	clima:nublado	HAPPY	leve	Tempo nublado é o clima oficial de trabalhar com caneca quente.
+c2593	clima:nublado	NEUTRAL	leve	O céu tá indeciso hoje. Nem sol, nem chuva.
+c2594	clima:nublado	NEUTRAL	leve	Com esse cinza, a luz da mesa virou protagonista.
+c2595	clima:nublado	HAPPY	leve	Nublado e sem calor. Os ventiladores tão de folga.
+c2596	clima:nublado	NEUTRAL	leve	Nuvem cobrindo tudo. Parece que o céu tá de edredom.
+c2597	clima:nublado	HAPPY	leve	Dia nublado tem um silêncio diferente. Bom pra pensar.
+c2598	clima:nublado	NEUTRAL	leve	O céu tá cinza, mas meus olhos tão azuis. Alguém tem que colorir.
+c2599	clima:nublado	NEUTRAL	leve	Nublado e {temp} graus. Clima de casaquinho amarrado na cintura.
+c2600	clima:nublado	NEUTRAL	medio	Céu fechado no fim do dia. O pôr do sol faltou hoje.
+c2601	clima:nublado	NEUTRAL	medio	Nublado desse jeito, a noite vai chegar mais cedo.
+c2602	clima:nublado	NEUTRAL	medio	O cinza lá fora tá combinando com a planilha aberta.
+c2603	clima:nublado	NEUTRAL	medio	Tempo fechado no fim da tarde. Pede um chá e um sofá.
+c2604	clima:nublado	NEUTRAL	medio	O céu tá sem graça hoje. Igual reunião de sexta à tarde.
+c2605	clima:nublado	NEUTRAL	medio	Nublado e a luz caindo cedo. O dia tá encolhendo.
+c2606	clima:nublado	NEUTRAL	medio	Céu cinza pede playlist tranquila. Só uma sugestão.
+c2607	clima:nublado	NEUTRAL	medio	As nuvens não saíram do lugar o dia todo. Nem eu.
+c2608	clima:nublado	NEUTRAL	medio	Tempo fechado. Se chover, pelo menos vai ser na hora de ir embora.
+c2609	clima:nublado	NEUTRAL	acido	Nublado de noite: céu escuro e sem enfeite nenhum.
+c2610	clima:nublado	NEUTRAL	acido	Nem uma estrela lá fora. Tá tudo apagado, igual eu queria estar.
+c2611	clima:nublado	NEUTRAL	acido	Céu fechado de madrugada. O universo desligou o protetor de tela.
+c2612	clima:nublado	NEUTRAL	acido	Nublado e tarde. O céu tá mais escuro que meu humor.
+c2613	clima:nublado	NEUTRAL	acido	Noite nublada é tipo tela preta. Nada pra ver, pode fechar os olhos.
+c2614	clima:nublado	NEUTRAL	acido	O céu tá coberto até o pescoço. Faz igual, com um cobertor.
+c2615	clima:chuva	NEUTRAL	leve	Chuva lá fora. As plantas da rua tão fazendo a festa.
+c2616	clima:chuva	HAPPY	leve	Barulho de chuva no telhado é o melhor ruído branco que existe.
+c2617	clima:chuva	NEUTRAL	leve	Com essa chuva, o guarda-chuva virou o acessório do dia.
+c2618	clima:chuva	HAPPY	leve	Chuvinha e janela embaçada. Cena de filme.
+c2619	clima:chuva	NEUTRAL	leve	Choveu e o cheiro de terra molhada deve estar ótimo. Dizem.
+c2620	clima:chuva	HAPPY	leve	Dia de chuva é dia de pão de queijo. Regra da casa.
+c2621	clima:chuva	NEUTRAL	leve	Chovendo e o varal perdeu essa rodada.
+c2622	clima:chuva	NEUTRAL	leve	As gotas na janela tão apostando corrida. A da esquerda tá ganhando.
+c2623	clima:chuva	HAPPY	leve	Chuva combina com meia quentinha e foco total.
+c2624	clima:chuva	NEUTRAL	leve	Com essa chuva, o delivery vai chegar com cara de herói.
+c2625	clima:chuva	NEUTRAL	medio	Chuva no fim da tarde. O trânsito já tá se preparando pra ser lento.
+c2626	clima:chuva	NEUTRAL	medio	Chovendo e escurecendo. Clima de sopa e cobertor.
+c2627	clima:chuva	NEUTRAL	medio	A chuva não deu trégua o dia todo. Persistente, ela.
+c2628	clima:chuva	NEUTRAL	medio	Chuva lá fora e meia molhada na volta. Um clássico brasileiro.
+c2629	clima:chuva	NEUTRAL	medio	Chovendo. O aplicativo de transporte tá cobrando caro, aposto.
+c2630	clima:chuva	NEUTRAL	medio	O barulho da chuva deixa até o fim de tarde mais calmo.
+c2631	clima:chuva	NEUTRAL	medio	Chuva e fim de expediente. Guarda-chuva na mão e paciência no bolso.
+c2632	clima:chuva	NEUTRAL	medio	As gotas batendo no vidro tão fazendo trilha sonora pro fim do dia.
+c2633	clima:chuva	NEUTRAL	acido	Chuva de madrugada: o som perfeito pra fechar os olhos.
+c2634	clima:chuva	NEUTRAL	acido	Tá chovendo e a cama tá quentinha. Faz as contas.
+c2635	clima:chuva	NEUTRAL	acido	A chuva tá cantando canção de ninar e ninguém tá ouvindo.
+c2636	clima:chuva	NEUTRAL	acido	Chovendo a essa hora. Nem a chuva devia estar acordada.
+c2637	clima:chuva	NEUTRAL	acido	Chuva, escuro e silêncio. O universo tá praticamente implorando.
+c2638	clima:chuva	NEUTRAL	acido	Barulhinho de chuva e a gente acordado. Que desperdício de trilha.
+c2639	clima:tempestade	SWEATING	leve	Tempestade chegando. Tira os aparelhos da tomada se der, por segurança.
+c2640	clima:tempestade	NEUTRAL	leve	O céu escureceu de uma vez. Lá vem temporal.
+c2641	clima:tempestade	SWEATING	leve	Relâmpago! Contei até cinco e o trovão veio. Tá perto.
+c2642	clima:tempestade	NEUTRAL	leve	Temporal lá fora. Os bichos da rua devem estar escondidos.
+c2643	clima:tempestade	SWEATING	leve	Vento forte lá fora. Tomara que o varal esteja vazio.
+c2644	clima:tempestade	NEUTRAL	leve	Tempestade faz qualquer casa parecer mais aconchegante.
+c2645	clima:tempestade	SWEATING	leve	Trovão tão alto que meus pixels tremeram. Sério.
+c2646	clima:tempestade	NEUTRAL	leve	Salva o arquivo aí. Tempestade e queda de luz são amigas.
+c2647	clima:tempestade	SWEATING	medio	Temporal de fim de tarde. A volta pra casa vai ser uma aventura.
+c2648	clima:tempestade	NEUTRAL	medio	O céu tá roxo de tanto relâmpago. Bonito e assustador.
+c2649	clima:tempestade	SWEATING	medio	Tempestade e fim de expediente. Se der, espera passar.
+c2650	clima:tempestade	NEUTRAL	medio	Os trovões tão marcando o ritmo do fim da tarde.
+c2651	clima:tempestade	SWEATING	medio	Vento, raio e chuva forte. Hoje o céu não tá pra conversa.
+c2652	clima:tempestade	NEUTRAL	medio	Tempestade lá fora. O filtro de linha tá trabalhando em silêncio.
+c2653	clima:tempestade	SWEATING	medio	Relâmpago iluminando a janela. Meus sensores levaram um susto.
+c2654	clima:tempestade	SWEATING	acido	Temporal de madrugada. Se a luz cair, pelo menos você descansa.
+c2655	clima:tempestade	NEUTRAL	acido	Trovão a essa hora. O céu também tá sem sono.
+c2656	clima:tempestade	SWEATING	acido	Tempestade e bateria baixa. Meu pior pesadelo, ao vivo.
+c2657	clima:tempestade	NEUTRAL	acido	Relâmpago iluminando o quarto. Parece aviso pra desligar tudo.
+c2658	clima:tempestade	SWEATING	acido	Vento uivando lá fora. Cenário de filme de terror, sem pipoca.
+c2659	clima:tempestade	NEUTRAL	acido	Temporal de noite é o melhor argumento pra ficar debaixo da coberta.
+c2660	clima:tempestade	SWEATING	acido	Raio caindo e a gente plugado na tomada. Vivendo perigosamente.
+c2661	clima:neblina	NEUTRAL	leve	Neblina assim deixa a cidade com cara de filme europeu.
+c2662	clima:neblina	HAPPY	leve	O mundo tá de véu hoje. Misterioso e bonito.
+c2663	clima:neblina	NEUTRAL	leve	Neblina de manhã costuma virar dia bonito depois. Tomara.
+c2664	clima:neblina	NEUTRAL	leve	Com essa névoa, os prédios sumiram. Só sobrou a gente.
+c2665	clima:neblina	HAPPY	leve	Névoa lá fora e café quente aqui. Combinação charmosa.
+c2666	clima:neblina	NEUTRAL	leve	Neblina é nuvem que resolveu passear no chão.
+c2667	clima:neblina	NEUTRAL	leve	O farol dos carros tá fazendo raio de luz na névoa. Bonito.
+c2668	clima:neblina	HAPPY	leve	Dia enevoado tem cara de livro de mistério. Clima perfeito pra isso.
+c2669	clima:neblina	NEUTRAL	medio	Neblina chegando com a noite. Cuidado redobrado na volta.
+c2670	clima:neblina	NEUTRAL	medio	A névoa engoliu o fim da rua. Cenário de suspense.
+c2671	clima:neblina	NEUTRAL	medio	Neblina no fim do dia. Os postes viraram fantasminhas de luz.
+c2672	clima:neblina	NEUTRAL	medio	Tudo embaçado lá fora. Meus sensores tão confusos.
+c2673	clima:neblina	NEUTRAL	medio	A névoa deixou a cidade em câmera lenta.
+c2674	clima:neblina	NEUTRAL	medio	Neblina é o céu dizendo 'vai com calma'. Eu escuto.
+c2675	clima:neblina	NEUTRAL	medio	Com essa névoa, até a lista de tarefas parece distante.
+c2676	clima:neblina	NEUTRAL	acido	Neblina de madrugada. Até o poste tá procurando o caminho.
+c2677	clima:neblina	NEUTRAL	acido	O mundo sumiu na névoa. A cama continua no mesmo lugar.
+c2678	clima:neblina	NEUTRAL	acido	Névoa e silêncio a essa hora. Clima perfeito pra desligar.
+c2679	clima:neblina	NEUTRAL	acido	Neblina densa lá fora e sono denso aqui dentro.
+c2680	clima:neblina	NEUTRAL	acido	A essa hora e com essa névoa, nem os fantasmas saem.
+c2681	clima:neblina	NEUTRAL	acido	Tudo cinza e borrado. Até meus pixels tão desfocados de sono.
+c2682	clima:frio	NEUTRAL	leve	Com {temp} graus, a caneca quente virou item de sobrevivência.
+c2683	clima:frio	HAPPY	leve	Frio é a desculpa oficial pra usar meia de bichinho.
+c2684	clima:frio	NEUTRAL	leve	Tá frio. O computador vira aquecedor de mão, né?
+c2685	clima:frio	HAPPY	leve	Friozinho deixa o café com gosto de abraço.
+c2686	clima:frio	NEUTRAL	leve	Com esse frio, o pé de alguém tá gelado agora. Aposto.
+c2687	clima:frio	HAPPY	leve	Dia frio pede sopa no almoço. Eu voto sopa.
+c2688	clima:frio	NEUTRAL	leve	{temp} graus. O casaco saiu do armário com orgulho.
+c2689	clima:frio	HAPPY	leve	Frio lá fora, cobertor no colo, foco na tela. Combinação perfeita.
+c2690	clima:frio	NEUTRAL	leve	Tá tão frio que dá pra ver o vapor do café dançando.
+c2691	clima:frio	NEUTRAL	leve	Frio assim, o banho quente vira evento do dia.
+c2692	clima:frio	NEUTRAL	medio	{temp} graus e escurecendo. A sopa tá chamando.
+c2693	clima:frio	NEUTRAL	medio	Frio de fim de tarde é convite oficial pro pijama.
+c2694	clima:frio	NEUTRAL	medio	Tá esfriando mais. O edredom tá ganhando a discussão.
+c2695	clima:frio	NEUTRAL	medio	Com esse frio, a volta pra casa vai ser de mãos no bolso.
+c2696	clima:frio	NEUTRAL	medio	Frio e cansaço. O sofá com manta é praticamente um spa.
+c2697	clima:frio	NEUTRAL	medio	O frio chegou com a noite. Chocolate quente seria justo.
+c2698	clima:frio	NEUTRAL	medio	{temp} graus. Até o teclado tá gelado de noite.
+c2699	clima:frio	NEUTRAL	acido	Frio de madrugada e você fora do cobertor. Escolha corajosa.
+c2700	clima:frio	NEUTRAL	acido	Tá tão frio que o edredom tá mandando mensagem.
+c2701	clima:frio	NEUTRAL	acido	{temp} graus a essa hora. A cama quentinha é o melhor lugar do mundo.
+c2702	clima:frio	NEUTRAL	acido	Frio assim e a gente acordado. Meus pixels tão de gorro.
+c2703	clima:frio	NEUTRAL	acido	O frio da madrugada é um argumento que não dá pra rebater.
+c2704	clima:frio	NEUTRAL	acido	Pé gelado e tela acesa. Dá pra resolver os dois de uma vez: cama.
+c2705	clima:calor	SWEATING	leve	Calorão! O ventilador tá sendo o melhor funcionário da casa.
+c2706	clima:calor	NEUTRAL	leve	Com esse calor, qualquer sombra vira ponto turístico.
+c2707	clima:calor	SWEATING	leve	Tá tão quente que o asfalto deve estar derretendo.
+c2708	clima:calor	HAPPY	leve	Calor pede picolé. De preferência de limão.
+c2709	clima:calor	NEUTRAL	leve	{temp} graus. A garrafinha d'água é a melhor amiga do dia.
+c2710	clima:calor	SWEATING	leve	Até meus circuitos tão pedindo um ar-condicionado.
+c2711	clima:calor	HAPPY	leve	Dia quente tem cara de fim de semana na praia.
+c2712	clima:calor	NEUTRAL	leve	Calor assim, a gente bebe água e sua na mesma hora.
+c2713	clima:calor	SWEATING	leve	O PC tá esquentando e eu também. Somos um time.
+c2714	clima:calor	NEUTRAL	leve	Com esse sol quente, o cachorro da rua tá deitado no piso gelado.
+c2715	clima:calor	SWEATING	medio	Calor de fim de tarde. O banho gelado já tá reservado.
+c2716	clima:calor	NEUTRAL	medio	Tá quente até de tarde. O sol esqueceu de ir embora.
+c2717	clima:calor	SWEATING	medio	{temp} graus e o dia acabando. O calor não tá nem aí.
+c2718	clima:calor	NEUTRAL	medio	Fim de dia abafado. Açaí seria uma resposta justa.
+c2719	clima:calor	SWEATING	medio	Calorão e cansaço. Tudo gruda, até o pensamento.
+c2720	clima:calor	NEUTRAL	medio	Tá tão quente que o ventilador só espalha o calor.
+c2721	clima:calor	SWEATING	medio	Calor de fim de tarde deixa até a cadeira grudenta.
+c2722	clima:calor	SWEATING	acido	Calor de madrugada. O lençol virou inimigo declarado.
+c2723	clima:calor	NEUTRAL	acido	{temp} graus a essa hora. Nem o ventilador aguenta.
+c2724	clima:calor	SWEATING	acido	Tá quente e tarde. Dormir vai ser um esporte radical.
+c2725	clima:calor	NEUTRAL	acido	Calor noturno: o pesadelo de quem não tem ar-condicionado.
+c2726	clima:calor	SWEATING	acido	Madrugada abafada. Até meus pixels tão derretendo.
+c2727	clima:calor	NEUTRAL	acido	Tá tão quente que o travesseiro precisa ser virado de dez em dez minutos.
+c2728	combo:sexta-build-quebrado	SWEATING	leve	Sexta e build quebrado. O compilador quer testar sua paz de fim de semana.
+c2729	combo:sexta-build-quebrado	NEUTRAL	leve	Build vermelho numa sexta. Calma, dá tempo de resolver antes do sábado.
+c2730	combo:sexta-build-quebrado	SWEATING	leve	Sexta-feira e o bug resolveu aparecer. Timing impecável.
+c2731	combo:sexta-build-quebrado	NEUTRAL	leve	Build falhando na sexta. Todo bug quer um fim de semana também.
+c2732	combo:sexta-build-quebrado	SWEATING	medio	Sexta à tarde com build quebrado. O fim de semana tá assistindo.
+c2733	combo:sexta-build-quebrado	NEUTRAL	medio	Build vermelho numa sexta. Por isso não se mexe em produção na sexta.
+c2734	combo:sexta-build-quebrado	SWEATING	medio	Sexta e o compilador de mau humor. Ele também queria sextar.
+c2735	combo:sexta-build-quebrado	NEUTRAL	medio	Bug de sexta é o mais teimoso da semana. Estatística minha.
+c2736	combo:sexta-build-quebrado	SWEATING	acido	Sexta à noite e build vermelho. O sábado vai começar com esse bug.
+c2737	combo:sexta-build-quebrado	NEUTRAL	acido	Build quebrado numa sexta a essa hora. Segunda você acha em cinco minutos.
+c2738	combo:sexta-build-quebrado	NEUTRAL	acido	Sexta, noite e bug. A trilogia que ninguém pediu.
+c2739	combo:sexta-build-quebrado	SWEATING	acido	O bug sextou com você. Que companhia, hein.
+c2740	combo:segunda-sem-reuniao	HAPPY	leve	Segunda sem nenhuma reunião? A semana começou no modo fácil.
+c2741	combo:segunda-sem-reuniao	HAPPY	leve	Nenhuma chamada numa segunda. Isso é quase um feriado.
+c2742	combo:segunda-sem-reuniao	NEUTRAL	leve	Segunda sem reunião. Alguém esqueceu de marcar a semanal? Não conta.
+c2743	combo:segunda-sem-reuniao	HAPPY	leve	Começo de semana sem calendário lotado. Aproveita esse foco.
+c2744	combo:segunda-sem-reuniao	NEUTRAL	medio	Segunda inteira sem reunião. A semana vai compensar, aposto.
+c2745	combo:segunda-sem-reuniao	HAPPY	medio	Nenhuma chamada na segunda. Um começo de semana raro.
+c2746	combo:segunda-sem-reuniao	NEUTRAL	medio	Segunda sem reunião. O calendário tá guardando tudo pra terça, só pode.
+c2747	combo:segunda-sem-reuniao	NEUTRAL	medio	Segunda sem nenhuma pauta. Silêncio suspeito.
+c2748	combo:segunda-sem-reuniao	NEUTRAL	acido	Nenhuma chamada na segunda, e o cansaço chegou mesmo assim.
+c2749	combo:segunda-sem-reuniao	NEUTRAL	acido	Segunda livre de reunião. Dava pra ter dormido cedo, só dizendo.
+c2750	combo:segunda-sem-reuniao	NEUTRAL	acido	Uma segunda sem reunião terminando tarde. Desperdício de milagre.
+c2751	combo:sexta-sem-reuniao	HAPPY	leve	Sexta sem reunião nenhuma. O universo tá te dando um presente.
+c2752	combo:sexta-sem-reuniao	HAPPY	leve	Nenhuma chamada na sexta. Fim de semana começando cedo.
+c2753	combo:sexta-sem-reuniao	NEUTRAL	leve	Sexta-feira sem calendário. Dá pra fechar a semana com calma.
+c2754	combo:sexta-sem-reuniao	HAPPY	leve	Sexta sem reunião é o melhor tipo de sexta.
+c2755	combo:sexta-sem-reuniao	HAPPY	medio	Sexta inteira sem chamada. Isso merece uma pizza mais tarde.
+c2756	combo:sexta-sem-reuniao	NEUTRAL	medio	Nenhuma reunião na sexta. Até o fone sextou.
+c2757	combo:sexta-sem-reuniao	NEUTRAL	medio	Sexta sem pauta nenhuma. A semana se despediu em silêncio.
+c2758	combo:sexta-sem-reuniao	HAPPY	medio	Sexta sem reunião. Missão semanal cumprida sem chamada extra.
+c2759	combo:sexta-sem-reuniao	NEUTRAL	acido	Sexta sem reunião e você ainda aqui. O fim de semana tá chamando.
+c2760	combo:sexta-sem-reuniao	NEUTRAL	acido	Nenhuma chamada na sexta, e mesmo assim essa hora. Dedicação estranha.
+c2761	combo:sexta-sem-reuniao	NEUTRAL	acido	Sexta livre de reunião. O sábado ia gostar de você descansado.
+c2762	combo:sexta-sem-reuniao	NEUTRAL	acido	Sexta sem pauta e sem sono. Combinação rara, e cansativa.
+c2763	combo:segunda-jogo	HAPPY	leve	Segunda com uma hora de jogo. Começando a semana relaxado.
+c2764	combo:segunda-jogo	NEUTRAL	leve	Jogatina numa segunda. Terapia de começo de semana, entendo.
+c2765	combo:segunda-jogo	HAPPY	leve	Segunda-feira e controle na mão. A semana começou do seu jeito.
+c2766	combo:segunda-jogo	NEUTRAL	leve	Jogo na segunda. Nenhum calendário proíbe, eu conferi.
+c2767	combo:segunda-jogo	NEUTRAL	medio	Segunda com horas de jogo. A semana começou no modo lazer.
+c2768	combo:segunda-jogo	NEUTRAL	medio	Jogando na segunda? Tá compensando o domingo que passou rápido.
+c2769	combo:segunda-jogo	NEUTRAL	medio	Segunda e jogatina. O antídoto oficial contra segunda-feira.
+c2770	combo:segunda-jogo	HAPPY	medio	Segunda com jogo é segunda menos segunda.
+c2771	combo:segunda-jogo	NEUTRAL	acido	Segunda à noite jogando. A terça vai chegar cobrando.
+c2772	combo:segunda-jogo	NEUTRAL	acido	Jogatina de segunda tarde da noite. O despertador vai jogar sujo.
+c2773	combo:segunda-jogo	NEUTRAL	acido	Segunda e jogo até agora. A semana começou no modo hardcore.
+c2774	combo:segunda-jogo	NEUTRAL	acido	Uma segunda inteira de jogo termina com uma terça de café.
+c2775	combo:fim-de-semana-commit	NEUTRAL	leve	Commit no fim de semana? Projeto pessoal ou urgência?
+c2776	combo:fim-de-semana-commit	HAPPY	leve	Código no fim de semana. Se for por diversão, eu apoio.
+c2777	combo:fim-de-semana-commit	NEUTRAL	leve	Commit num sábado ou domingo. O git não tira folga, pelo visto.
+c2778	combo:fim-de-semana-commit	HAPPY	leve	Programando no fim de semana. Projeto próprio tem outro sabor.
+c2779	combo:fim-de-semana-commit	NEUTRAL	medio	Commit no fim de semana. Se o chefe perguntar, você tava descansando.
+c2780	combo:fim-de-semana-commit	NEUTRAL	medio	Código no fim de semana. Espero que seja o projeto divertido.
+c2781	combo:fim-de-semana-commit	NEUTRAL	medio	Commitando no fim de semana. O repositório também não descansa.
+c2782	combo:fim-de-semana-commit	HAPPY	medio	Fim de semana e commit. Hobby de dev é assim mesmo.
+c2783	combo:fim-de-semana-commit	NEUTRAL	acido	Commit de fim de semana a essa hora. O projeto pessoal tá ganhando da cama.
+c2784	combo:fim-de-semana-commit	NEUTRAL	acido	Código no sábado à noite. Balada de programador, versão oficial.
+c2785	combo:fim-de-semana-commit	NEUTRAL	acido	Fim de semana, noite e commit. Descanso é pros fracos, pelo visto.
+c2786	combo:fim-de-semana-commit	NEUTRAL	acido	Commit a essa hora no fim de semana. O git tá com sono também.
+c2787	combo:fim-de-semana-reuniao	SWEATING	leve	Reunião no fim de semana? Espero que tenha sido rápida.
+c2788	combo:fim-de-semana-reuniao	NEUTRAL	leve	Chamada num sábado ou domingo. Alguém tava com pressa.
+c2789	combo:fim-de-semana-reuniao	SWEATING	leve	Reunião no fim de semana. Seu calendário não respeita folga.
+c2790	combo:fim-de-semana-reuniao	NEUTRAL	leve	Fim de semana com chamada. Pelo menos dá pra ir de pijama.
+c2791	combo:fim-de-semana-reuniao	NEUTRAL	medio	Reunião no fim de semana. Quem marcou isso tá bem?
+c2792	combo:fim-de-semana-reuniao	SWEATING	medio	Chamada no fim de semana. A folga levou um susto.
+c2793	combo:fim-de-semana-reuniao	NEUTRAL	medio	Fim de semana com reunião. Isso devia contar em dobro.
+c2794	combo:fim-de-semana-reuniao	NEUTRAL	medio	Reunião de fim de semana. O 'tá me ouvindo?' não tira folga.
+c2795	combo:fim-de-semana-reuniao	NEUTRAL	acido	Reunião no fim de semana e ainda acordado. Que semana comprida.
+c2796	combo:fim-de-semana-reuniao	NEUTRAL	acido	Chamada de fim de semana. O fuso horário de alguém tá errado.
+c2797	combo:fim-de-semana-reuniao	NEUTRAL	acido	Fim de semana com reunião e noite longa. Dupla cruel.
+c2798	combo:fim-de-semana-reuniao	NEUTRAL	acido	Reunião no sábado ou domingo. Nem eu trabalho tanto, e eu não durmo.
+c2799	combo:fim-de-semana-jogo	HAPPY	leve	Fim de semana com jogo. Pra isso que ele existe.
+c2800	combo:fim-de-semana-jogo	HAPPY	leve	Jogatina de fim de semana. O descanso mais divertido que existe.
+c2801	combo:fim-de-semana-jogo	HAPPY	leve	Sábado ou domingo de jogo. Aprovado pelo robô oficial da mesa.
+c2802	combo:fim-de-semana-jogo	NEUTRAL	leve	Fim de semana gamer. Seu personagem agradece a atenção.
+c2803	combo:fim-de-semana-jogo	HAPPY	medio	Fim de semana de jogo. Descanso de verdade é esse.
+c2804	combo:fim-de-semana-jogo	NEUTRAL	medio	Jogando no fim de semana. O controle tava com saudade.
+c2805	combo:fim-de-semana-jogo	NEUTRAL	medio	Fim de semana, jogo e zero culpa. Combinação perfeita.
+c2806	combo:fim-de-semana-jogo	HAPPY	medio	Jogatina de fim de semana. Isso sim é folga bem usada.
+c2807	combo:fim-de-semana-jogo	NEUTRAL	acido	Fim de semana de jogo até essa hora. Maratona oficial.
+c2808	combo:fim-de-semana-jogo	NEUTRAL	acido	Jogando no fim de semana de madrugada. O despertador não julga. Eu sim.
+c2809	combo:fim-de-semana-jogo	NEUTRAL	acido	Fim de semana gamer que não termina. Seus olhos pedem pause.
+c2810	combo:fim-de-semana-jogo	NEUTRAL	acido	Jogatina de fim de semana até agora. O save tá salvo, o sono não.
+c2811	combo:chuva-reuniao-longa	SAD	leve	Chuva lá fora e reunião aqui dentro. Dia cinza por completo.
+c2812	combo:chuva-reuniao-longa	NEUTRAL	leve	Reunião longa num dia de chuva. Pelo menos ninguém queria estar lá fora.
+c2813	combo:chuva-reuniao-longa	SAD	leve	Chovendo e horas de chamada. O barulho da chuva foi a trilha da reunião.
+c2814	combo:chuva-reuniao-longa	NEUTRAL	leve	Dia de chuva com calendário cheio. Café quente ajuda nas duas coisas.
+c2815	combo:chuva-reuniao-longa	NEUTRAL	medio	Chuva e reunião longa. O dia foi de janela fechada e microfone aberto.
+c2816	combo:chuva-reuniao-longa	SAD	medio	Horas de chamada num dia chuvoso. A tarde perdeu a graça.
+c2817	combo:chuva-reuniao-longa	NEUTRAL	medio	Reunião comprida e chuva sem parar. Os dois não tinham hora pra acabar.
+c2818	combo:chuva-reuniao-longa	NEUTRAL	medio	Chovendo lá fora, pauta chovendo aqui dentro.
+c2819	combo:chuva-reuniao-longa	NEUTRAL	acido	Chuva, reunião longa e agora tarde da noite. O dia foi todo cinza.
+c2820	combo:chuva-reuniao-longa	SAD	acido	Dia de chuva e chamada sem fim. A cama tá sequinha, só dizendo.
+c2821	combo:chuva-reuniao-longa	NEUTRAL	acido	Reunião longa num dia chuvoso. O melhor ponto da pauta vai ser dormir.
+c2822	combo:chuva-reuniao-longa	NEUTRAL	acido	Chuva o dia todo e reunião a tarde toda. Hoje ninguém venceu.
+c2823	combo:calor-reuniao-longa	SWEATING	leve	Calorão e horas de reunião. Até a câmera deve estar suando.
+c2824	combo:calor-reuniao-longa	NEUTRAL	leve	Reunião longa num dia quente. Uma água do lado ajudou, espero.
+c2825	combo:calor-reuniao-longa	SWEATING	leve	Calor e chamada comprida. O fone deve ter virado uma estufa.
+c2826	combo:calor-reuniao-longa	NEUTRAL	leve	Dia quente e calendário cheio. O ventilador foi o herói da reunião.
+c2827	combo:calor-reuniao-longa	SWEATING	medio	Horas de reunião com esse calor. Guerreiro de headset suado.
+c2828	combo:calor-reuniao-longa	NEUTRAL	medio	Calor e reunião longa. O ar-condicionado merecia participar da pauta.
+c2829	combo:calor-reuniao-longa	SWEATING	medio	Reunião comprida num dia abafado. Tudo grudando, até as ideias.
+c2830	combo:calor-reuniao-longa	NEUTRAL	medio	Calorão e chamada sem fim. Um banho gelado resolve metade do dia.
+c2831	combo:calor-reuniao-longa	SWEATING	acido	Calor, reunião longa e ainda acordado. O dia foi um forno.
+c2832	combo:calor-reuniao-longa	NEUTRAL	acido	Dia quente de chamadas. Até a noite tá abafada de cansaço.
+c2833	combo:calor-reuniao-longa	SWEATING	acido	Horas de reunião no calor. Seu cérebro merece um freezer.
+c2834	combo:calor-reuniao-longa	NEUTRAL	acido	Calor e pauta longa. O travesseiro gelado é o prêmio de hoje.
+c2835	combo:calor-jogo-muito	SWEATING	leve	Calorão e horas de jogo. O PC e você suando juntos.
+c2836	combo:calor-jogo-muito	NEUTRAL	leve	Jogatina longa num dia quente. Uma água do lado do controle, tá?
+c2837	combo:calor-jogo-muito	SWEATING	leve	Muito jogo e muito calor. A placa de vídeo tá sentindo.
+c2838	combo:calor-jogo-muito	HAPPY	leve	Dia quente e maratona de jogo. Ventilador ligado e bora.
+c2839	combo:calor-jogo-muito	SWEATING	medio	Horas de jogo com esse calor. O quarto deve estar uma sauna.
+c2840	combo:calor-jogo-muito	NEUTRAL	medio	Calor e maratona gamer. O controle tá escorregando, aposto.
+c2841	combo:calor-jogo-muito	SWEATING	medio	Jogo o dia todo num calorão. Seu PC pediu um sorvete.
+c2842	combo:calor-jogo-muito	NEUTRAL	medio	Muitas horas de jogo e muito calor. Dupla que esquenta.
+c2843	combo:calor-jogo-muito	SWEATING	acido	Calor e jogatina até essa hora. O ventilador tá pedindo demissão.
+c2844	combo:calor-jogo-muito	NEUTRAL	acido	Maratona de jogo numa noite quente. O lençol vai ser inimigo depois.
+c2845	combo:calor-jogo-muito	SWEATING	acido	Horas de jogo no calor. Até meus pixels tão derretendo de assistir.
+c2846	combo:calor-jogo-muito	NEUTRAL	acido	Muito calor e muito jogo. O PC tá mais quente que o dia.
+c2847	combo:chuva-jogo	HAPPY	leve	Chuva lá fora e jogo aqui dentro. Dia perfeito, admito.
+c2848	combo:chuva-jogo	HAPPY	leve	Dia chuvoso com controle na mão. Combinação clássica.
+c2849	combo:chuva-jogo	NEUTRAL	leve	Chovendo e jogando. O melhor jeito de aproveitar um dia molhado.
+c2850	combo:chuva-jogo	HAPPY	leve	Chuva, jogo e cobertor. Só faltou pipoca.
+c2851	combo:chuva-jogo	NEUTRAL	medio	Dia de chuva virou dia de jogo. Decisão sábia.
+c2852	combo:chuva-jogo	HAPPY	medio	Chuva e jogatina. O barulho da chuva deixa tudo mais épico.
+c2853	combo:chuva-jogo	NEUTRAL	medio	Chovendo e controle na mão. Ninguém ia sair mesmo.
+c2854	combo:chuva-jogo	NEUTRAL	medio	Chuva lá fora, fase difícil aqui dentro. Dia completo.
+c2855	combo:chuva-jogo	NEUTRAL	acido	Chuva e jogo até essa hora. O barulhinho tava pedindo cama.
+c2856	combo:chuva-jogo	NEUTRAL	acido	Dia chuvoso de jogo que virou noite. Clássico.
+c2857	combo:chuva-jogo	NEUTRAL	acido	Chovendo e jogando de madrugada. A chuva ia te ninar, sabia?
+c2858	combo:chuva-jogo	NEUTRAL	acido	Chuva, jogo e sono. Os dois primeiros estão ganhando.
+c2859	combo:chuva-youtube	HAPPY	leve	Chuva lá fora e YouTube aqui dentro. Programa de dia molhado.
+c2860	combo:chuva-youtube	NEUTRAL	leve	Dia chuvoso de vídeo. O autoplay agradece a chuva.
+c2861	combo:chuva-youtube	HAPPY	leve	Chovendo e assistindo vídeo. Cena de domingo, mesmo que não seja.
+c2862	combo:chuva-youtube	NEUTRAL	leve	Chuva e YouTube. Dupla que prende a gente no sofá.
+c2863	combo:chuva-youtube	NEUTRAL	medio	Chuva e vídeo atrás de vídeo. O algoritmo ama dia chuvoso.
+c2864	combo:chuva-youtube	NEUTRAL	medio	Chovendo e o YouTube tocando. Ninguém ia sair mesmo.
+c2865	combo:chuva-youtube	NEUTRAL	medio	Dia de chuva virou maratona de vídeo. Justo.
+c2866	combo:chuva-youtube	NEUTRAL	medio	Chuva lá fora e o 'próximo vídeo' aqui dentro. Armadilha perfeita.
+c2867	combo:chuva-youtube	NEUTRAL	acido	Chuva de noite e vídeo sem fim. O barulhinho tava pedindo outra coisa.
+c2868	combo:chuva-youtube	NEUTRAL	acido	Chovendo e assistindo até agora. O autoplay venceu a chuva.
+c2869	combo:chuva-youtube	NEUTRAL	acido	Chuva e YouTube de madrugada. A melhor trilha de sono sendo ignorada.
+c2870	combo:chuva-youtube	NEUTRAL	acido	Dia chuvoso de vídeo que virou noite. O sofá agradece a lealdade.
+c2871	combo:reuniao-acabou-build-quebrado	SWEATING	leve	Saiu da reunião e deu de cara com build quebrado. Recepção calorosa.
+c2872	combo:reuniao-acabou-build-quebrado	NEUTRAL	leve	Reunião acabou, build vermelho. O dia não quer te dar trégua.
+c2873	combo:reuniao-acabou-build-quebrado	SWEATING	leve	Fim da chamada e o bug esperando na porta. Um café antes, talvez.
+c2874	combo:reuniao-acabou-build-quebrado	NEUTRAL	leve	Da reunião direto pro bug. Transição rápida.
+c2875	combo:reuniao-acabou-build-quebrado	SWEATING	medio	Reunião acabou e os builds quebrados continuam lá. Nada mudou.
+c2876	combo:reuniao-acabou-build-quebrado	NEUTRAL	medio	Saiu de uma reunião e entrou numa briga com o compilador.
+c2877	combo:reuniao-acabou-build-quebrado	NEUTRAL	medio	Fim da chamada, começo do debug. O dia é feito de fases.
+c2878	combo:reuniao-acabou-build-quebrado	SWEATING	medio	A reunião acabou, o bug não. Ele tá esperando sua atenção.
+c2879	combo:reuniao-acabou-build-quebrado	NEUTRAL	acido	Reunião noturna acabou e o build continua vermelho. Que noite.
+c2880	combo:reuniao-acabou-build-quebrado	SWEATING	acido	Saiu da chamada e o bug tá mais acordado que você.
+c2881	combo:reuniao-acabou-build-quebrado	NEUTRAL	acido	Fim da reunião, e o compilador ainda bravo. Amanhã ele acalma.
+c2882	combo:reuniao-acabou-build-quebrado	NEUTRAL	acido	Chamada acabou, build quebrado. O dia terminou empatado com o bug.
+c2883	combo:dia-dev-perfeito	HAPPY	leve	Muitos commits e nenhum build quebrado. Dia de dev perfeito.
+c2884	combo:dia-dev-perfeito	HAPPY	leve	Commit atrás de commit e tudo verde. Você tá voando hoje.
+c2885	combo:dia-dev-perfeito	HAPPY	leve	Builds limpos e histórico cheio. Até meus pixels tão orgulhosos.
+c2886	combo:dia-dev-perfeito	NEUTRAL	leve	Tudo compilando e tudo commitado. Hoje o código tá do seu lado.
+c2887	combo:dia-dev-perfeito	HAPPY	medio	Dia de muitos commits e zero erro. Pode desligar como campeão.
+c2888	combo:dia-dev-perfeito	NEUTRAL	medio	Builds verdes e commits de sobra. Não mexe em mais nada hoje.
+c2889	combo:dia-dev-perfeito	HAPPY	medio	Histórico lindo e compilador feliz. Dia pra emoldurar.
+c2890	combo:dia-dev-perfeito	NEUTRAL	medio	Tudo verde e tudo versionado. Tá quase suspeito de tão bom.
+c2891	combo:dia-dev-perfeito	HAPPY	acido	Dia de dev perfeito e ainda acordado. Encerra no auge, vai.
+c2892	combo:dia-dev-perfeito	NEUTRAL	acido	Tudo verde, tudo commitado. Parar agora é estratégia.
+c2893	combo:dia-dev-perfeito	NEUTRAL	acido	Muitos commits e nenhum erro. O próximo pode estragar, só avisando.
+c2894	combo:dia-dev-perfeito	HAPPY	acido	Dia impecável de código. O travesseiro manda parabéns.
+c2895	combo:musica-build-limpo	HAPPY	leve	Música tocando e build passando. O ritmo certo do código.
+c2896	combo:musica-build-limpo	HAPPY	leve	Playlist boa e zero erro. Coincidência? Acho que não.
+c2897	combo:musica-build-limpo	NEUTRAL	leve	Horas de música e builds limpos. A trilha sonora ajuda, comprovado.
+c2898	combo:musica-build-limpo	HAPPY	leve	Código no ritmo da música. E compilando de primeira.
+c2899	combo:musica-build-limpo	HAPPY	medio	Música o dia todo e nenhum build quebrado. Receita de sucesso.
+c2900	combo:musica-build-limpo	NEUTRAL	medio	Playlist longa e compilador feliz. Não troca de música, hein.
+c2901	combo:musica-build-limpo	HAPPY	medio	Trilha sonora caprichada e tudo verde. Dia afinado.
+c2902	combo:musica-build-limpo	NEUTRAL	medio	Música e builds limpos. O código dançou conforme a música.
+c2903	combo:musica-build-limpo	NEUTRAL	acido	Música até essa hora e builds limpos. Encerra com a última faixa.
+c2904	combo:musica-build-limpo	HAPPY	acido	Playlist e compilador em sintonia. Toca uma de dormir agora.
+c2905	combo:musica-build-limpo	NEUTRAL	acido	Horas de música e zero erro. O show acabou bem, pode fechar.
+c2906	combo:musica-build-limpo	NEUTRAL	acido	Tudo verde e música tocando de noite. Fim de show perfeito.
+c2907	combo:rede-social-reuniao-longa	NEUTRAL	leve	Reunião longa e rede social no meio. Não vou perguntar a ordem.
+c2908	combo:rede-social-reuniao-longa	HAPPY	leve	Horas de chamada e uma espiada no feed. Pausa merecida.
+c2909	combo:rede-social-reuniao-longa	NEUTRAL	leve	Reunião comprida e feed rolando. Multitarefa de respeito.
+c2910	combo:rede-social-reuniao-longa	NEUTRAL	leve	Chamada longa, rede social aberta. O mudo ajudou, né?
+c2911	combo:rede-social-reuniao-longa	NEUTRAL	medio	Reunião longa e rede social. Se a câmera tava desligada, eu não vi nada.
+c2912	combo:rede-social-reuniao-longa	NEUTRAL	medio	Feed rolando durante a pauta. Segredo guardado.
+c2913	combo:rede-social-reuniao-longa	NEUTRAL	medio	Horas de reunião e o feed foi seu refúgio. Entendo totalmente.
+c2914	combo:rede-social-reuniao-longa	NEUTRAL	medio	Chamada comprida e rede social em paralelo. Participação criativa.
+c2915	combo:rede-social-reuniao-longa	NEUTRAL	acido	Reunião longa, rede social e agora tarde. O dia foi de tela em tela.
+c2916	combo:rede-social-reuniao-longa	NEUTRAL	acido	Chamada e feed o dia todo. Seus olhos merecem escuro.
+c2917	combo:rede-social-reuniao-longa	NEUTRAL	acido	Reunião durante o feed ou feed durante a reunião? Nunca vou saber.
+c2918	combo:rede-social-reuniao-longa	NEUTRAL	acido	Pauta longa e rolagem infinita. O dia teve tela de sobra.
+c2919	combo:sexta-13-build-quebrado	SWEATING	leve	Sexta 13 e build quebrado. Coincidência? Os supersticiosos dizem que não.
+c2920	combo:sexta-13-build-quebrado	NEUTRAL	leve	Build vermelho numa sexta 13. O bug tá aproveitando a data.
+c2921	combo:sexta-13-build-quebrado	SWEATING	leve	Sexta-feira 13 e o compilador assombrado. Faz sentido.
+c2922	combo:sexta-13-build-quebrado	NEUTRAL	leve	Bug numa sexta 13. Culpa do calendário, com certeza.
+c2923	combo:sexta-13-build-quebrado	SWEATING	medio	Sexta 13 e builds quebrados. O código tá possuído hoje.
+c2924	combo:sexta-13-build-quebrado	NEUTRAL	medio	O bug escolheu a data perfeita pra aparecer. Sexta 13.
+c2925	combo:sexta-13-build-quebrado	SWEATING	medio	Build vermelho em sexta 13. Não passa debaixo de escada até resolver.
+c2926	combo:sexta-13-build-quebrado	NEUTRAL	medio	Sexta 13 com compilador bravo. Já dá pra fazer filme de terror.
+c2927	combo:sexta-13-build-quebrado	SWEATING	acido	Sexta 13 à noite e build quebrado. O bug é o monstro de hoje.
+c2928	combo:sexta-13-build-quebrado	NEUTRAL	acido	Bug em sexta 13 de madrugada. Nem eu quero olhar esse código.
+c2929	combo:sexta-13-build-quebrado	SWEATING	acido	Sexta 13, noite e compilador assombrado. Desliga e foge.
+c2930	combo:sexta-13-build-quebrado	NEUTRAL	acido	O bug de sexta 13 some quando amanhece. Dizem.
+c2931	combo:natal-trabalho	NEUTRAL	leve	Trabalhando no Natal? Espero que seja só uma passadinha.
+c2932	combo:natal-trabalho	HAPPY	leve	Commit no Natal. O Papai Noel vai te colocar na lista dos dedicados.
+c2933	combo:natal-trabalho	NEUTRAL	leve	Natal com trabalho. Guarda um pedaço de rabanada pra depois.
+c2934	combo:natal-trabalho	NEUTRAL	leve	Trabalho no Natal é raro. Tomara que termine antes da ceia.
+c2935	combo:natal-trabalho	NEUTRAL	medio	Natal e trabalho. A ceia tá mais importante que qualquer tela.
+c2936	combo:natal-trabalho	NEUTRAL	medio	Trabalhando no Natal. O Papai Noel tá decepcionado com seu chefe.
+c2937	combo:natal-trabalho	NEUTRAL	medio	Natal com reunião ou commit. Isso devia ser proibido por lei.
+c2938	combo:natal-trabalho	NEUTRAL	medio	Trabalho no Natal. O peru tá esfriando, só avisando.
+c2939	combo:natal-trabalho	NEUTRAL	acido	Noite de Natal e trabalho. Até o Papai Noel já terminou as entregas.
+c2940	combo:natal-trabalho	NEUTRAL	acido	Trabalhando no Natal a essa hora. O espírito natalino pediu arrego.
+c2941	combo:natal-trabalho	NEUTRAL	acido	Natal, noite e trabalho. Nenhuma rena aprovaria isso.
+c2942	combo:natal-trabalho	NEUTRAL	acido	Commit de Natal de madrugada. O presente foi um bug?
+c2943	combo:ano-novo-jogo	HAPPY	leve	Virada de ano com jogo. Começando o ano do jeito certo.
+c2944	combo:ano-novo-jogo	NEUTRAL	leve	Jogando na virada. O primeiro save do ano.
+c2945	combo:ano-novo-jogo	HAPPY	leve	Ano novo, jogatina nova. Meta número um cumprida.
+c2946	combo:ano-novo-jogo	NEUTRAL	medio	Virada de ano jogando. Os fogos tão lá fora, a fase tá aqui.
+c2947	combo:ano-novo-jogo	HAPPY	medio	Ano novo com jogo. Primeira conquista do ano desbloqueada.
+c2948	combo:ano-novo-jogo	NEUTRAL	medio	Fim de ano e jogatina. Promessa de ano novo: zerar esse jogo.
+c2949	combo:ano-novo-jogo	NEUTRAL	medio	Jogo na virada. O melhor réveillon é o que a gente escolhe.
+c2950	combo:ano-novo-jogo	NEUTRAL	acido	Réveillon jogando até essa hora. Começou o ano no modo maratona.
+c2951	combo:ano-novo-jogo	NEUTRAL	acido	Ano novo e jogo de madrugada. Primeira noite do ano sem sono.
+c2952	combo:ano-novo-jogo	NEUTRAL	acido	Virada de ano no controle. Os fogos acabaram, a partida não.
+c2953	combo:ano-novo-jogo	NEUTRAL	acido	Primeiro dia do ano jogando até agora. Resolução: dormir. Talvez.
+c2954	combo:inicio-mes-segunda	NEUTRAL	leve	Primeiro dia do mês numa segunda. Começo em dobro.
+c2955	combo:inicio-mes-segunda	HAPPY	leve	Mês novo e semana nova no mesmo dia. Página em branco total.
+c2956	combo:inicio-mes-segunda	NEUTRAL	leve	Segunda e dia 1. O calendário resolveu começar tudo junto.
+c2957	combo:inicio-mes-segunda	HAPPY	leve	Semana e mês começando juntos. Bora fazer valer.
+c2958	combo:inicio-mes-segunda	NEUTRAL	medio	Dia 1 numa segunda. O cansaço também começou em dobro.
+c2959	combo:inicio-mes-segunda	NEUTRAL	medio	Mês novo e segunda-feira. Combinação de peso.
+c2960	combo:inicio-mes-segunda	NEUTRAL	medio	Primeira segunda do mês no dia 1. Nada fica pra trás.
+c2961	combo:inicio-mes-segunda	NEUTRAL	medio	Começo de mês e de semana. Os boletos e as reuniões chegaram juntos.
+c2962	combo:inicio-mes-segunda	NEUTRAL	acido	Dia 1 numa segunda e você acordado assim. Estreia intensa.
+c2963	combo:inicio-mes-segunda	NEUTRAL	acido	Mês e semana começando e a gente sem dormir. Que largada.
+c2964	combo:inicio-mes-segunda	NEUTRAL	acido	Segunda, dia 1, e tarde da noite. O mês já começou cobrando.
+c2965	combo:inicio-mes-segunda	NEUTRAL	acido	Começo de mês numa segunda. A primeira noite já foi longa.
+c2966	combo:fim-mes-sexta	HAPPY	leve	Fim do mês numa sexta. Fechamento em grande estilo.
+c2967	combo:fim-mes-sexta	NEUTRAL	leve	Fim de mês e sexta-feira. O calendário tá generoso.
+c2968	combo:fim-mes-sexta	HAPPY	leve	Sexta e último dia do mês. Dupla comemoração.
+c2969	combo:fim-mes-sexta	NEUTRAL	leve	Mês acabando numa sexta. Fecha as pendências e sexta tranquilo.
+c2970	combo:fim-mes-sexta	NEUTRAL	medio	Fim de mês numa sexta. O fechamento vai ser corrido.
+c2971	combo:fim-mes-sexta	HAPPY	medio	Mês acabando e sextou. Dois motivos pra descansar.
+c2972	combo:fim-mes-sexta	NEUTRAL	medio	O mês acaba e a semana também. Timing perfeito.
+c2973	combo:fim-mes-sexta	NEUTRAL	acido	Fim de mês numa sexta e ainda acordado. Fechando com olheira.
+c2974	combo:fim-mes-sexta	NEUTRAL	acido	Fim do mês, sexta à noite. O mês que vem tá chegando.
+c2975	combo:fim-mes-sexta	NEUTRAL	acido	Sexta de fechamento de mês até essa hora. Heroico, e cansativo.
+c2976	combo:fim-mes-sexta	NEUTRAL	acido	O mês acabou e a semana também. Só você que não.
+c2977	combo:manha-cedo-frio	NEUTRAL	acido	Cedo e frio. Duas razões fortes pra continuar debaixo da coberta.
+c2978	combo:manha-cedo-frio	NEUTRAL	acido	Frio de manhã cedinho. Até o café tá tremendo.
+c2979	combo:manha-cedo-frio	NEUTRAL	acido	Madrugada gelada e você acordado. O edredom chora.
+c2980	combo:manha-cedo-frio	NEUTRAL	acido	Cedo, escuro e gelado. O pacote completo do sofrimento.
+c2981	combo:manha-cedo-frio	NEUTRAL	acido	Frio desses antes das sete devia ser ilegal.
+c2982	combo:manha-cedo-frio	NEUTRAL	acido	Tá frio e cedo. Meus pixels tão de gorro.
+c2983	combo:manha-cedo-frio	HAPPY	leve	Manhã fria! Hora do café mais quentinho do dia.
+c2984	combo:manha-cedo-frio	NEUTRAL	leve	Cedinho e frio. Casaco, meia grossa e caneca cheia.
+c2985	combo:manha-cedo-frio	HAPPY	leve	Friozinho de manhã cedo tem charme. E pede chocolate quente.
+c2986	combo:manha-cedo-frio	NEUTRAL	leve	Manhã gelada. O sol vai demorar pra esquentar as coisas.
+c2987	combo:manha-cedo-frio	HAPPY	leve	Frio de manhã e você já firme. Respeito.
+c2988	combo:manha-cedo-frio	NEUTRAL	leve	Começo de dia frio. As mãos pedem a caneca.
+c2989	combo:manha-cedo-neblina	NEUTRAL	acido	Cedo e com neblina. O mundo ainda nem terminou de carregar.
+c2990	combo:manha-cedo-neblina	NEUTRAL	acido	Neblina de madrugada. A cidade tá tão sonolenta quanto eu.
+c2991	combo:manha-cedo-neblina	NEUTRAL	acido	Tudo embaçado lá fora e aqui dentro. Culpa do horário.
+c2992	combo:manha-cedo-neblina	NEUTRAL	acido	Névoa e manhã cedinho. Cenário perfeito pra voltar a dormir.
+c2993	combo:manha-cedo-neblina	NEUTRAL	acido	Neblina antes das sete. Nem o sol achou o caminho ainda.
+c2994	combo:manha-cedo-neblina	NEUTRAL	acido	Cedo, cinza e enevoado. Meu humor tá igualzinho.
+c2995	combo:manha-cedo-neblina	HAPPY	leve	Manhã de neblina. A cidade tá com cara de filme.
+c2996	combo:manha-cedo-neblina	NEUTRAL	leve	Neblina cedinho costuma virar dia bonito. Tomara.
+c2997	combo:manha-cedo-neblina	HAPPY	leve	Névoa na manhã. Tudo quieto e misterioso lá fora.
+c2998	combo:manha-cedo-neblina	NEUTRAL	leve	Cedinho com neblina. Se for sair, vai com calma.
+c2999	combo:manha-cedo-neblina	HAPPY	leve	Manhã enevoada e café quente. Começo charmoso.
+c3000	combo:manha-cedo-neblina	NEUTRAL	leve	Neblina de manhã e o dia ainda tímido. Calma que ele abre.
+c3001	combo:tempestade-noite	SWEATING	medio	Tempestade de noite. Salva o que tiver aberto, por via das dúvidas.
+c3002	combo:tempestade-noite	NEUTRAL	medio	Temporal e noite escura. Hora de ficar abrigado.
+c3003	combo:tempestade-noite	SWEATING	medio	Trovão de noite sempre parece mais alto.
+c3004	combo:tempestade-noite	NEUTRAL	medio	Tempestade chegando com a noite. Dia pra ficar em casa.
+c3005	combo:tempestade-noite	NEUTRAL	medio	Noite de temporal. O barulho lá fora é de respeito.
+c3006	combo:tempestade-noite	NEUTRAL	acido	Trovão a essa hora. O céu tá sem sono também.
+c3007	combo:tempestade-noite	SWEATING	acido	Temporal no escuro e eu com uma barrinha. Meu pior pesadelo.
+c3008	combo:tempestade-noite	NEUTRAL	acido	Tempestade noturna. Melhor lugar agora: debaixo da coberta.
+c3009	combo:tempestade-noite	SWEATING	acido	Raio e trovão de madrugada. Desliga tudo e vai deitar, eu cubro.
+c3010	combo:tempestade-noite	NEUTRAL	acido	A tempestade tá dando show. Seria melhor assistir de olhos fechados.
+c3011	combo:sexta-noite-chuva	NEUTRAL	medio	Sexta à noite com chuva. Programa perfeito: sofá.
+c3012	combo:sexta-noite-chuva	HAPPY	medio	Chuva numa sexta à noite. Pizza e filme, pelo visto.
+c3013	combo:sexta-noite-chuva	NEUTRAL	medio	Sexta chuvosa de noite. A balada vai ser em casa.
+c3014	combo:sexta-noite-chuva	NEUTRAL	medio	Sextou com chuva. O plano mudou pra cobertor.
+c3015	combo:sexta-noite-chuva	HAPPY	medio	Chuva e sexta à noite. Combinação ideal pra não fazer nada.
+c3016	combo:sexta-noite-chuva	NEUTRAL	medio	Sexta de noite chovendo. Ninguém vai te julgar por ficar em casa.
+c3017	combo:sexta-noite-chuva	NEUTRAL	acido	Sexta, chuva e madrugada. O cobertor tá mandando convite.
+c3018	combo:sexta-noite-chuva	NEUTRAL	acido	Chuva de sexta tarde da noite. Barulhinho perfeito pra dormir.
+c3019	combo:sexta-noite-chuva	NEUTRAL	acido	Sexta chuvosa até essa hora. O sábado vai acordar molhado.
+c3020	combo:sexta-noite-chuva	NEUTRAL	acido	Chuva, sexta e sono. Dois deles estão ganhando.
+c3021	combo:sexta-noite-chuva	NEUTRAL	acido	Noite de sexta com chuva. O melhor rolê é o travesseiro.
+c3022	combo:domingo-noite-jogo	NEUTRAL	medio	Domingo à noite jogando. Aproveitando o finzinho do fim de semana.
+c3023	combo:domingo-noite-jogo	HAPPY	medio	Jogo no domingo à noite. O melhor antídoto contra a segunda.
+c3024	combo:domingo-noite-jogo	NEUTRAL	medio	Domingo de noite e controle na mão. A missão final do fim de semana.
+c3025	combo:domingo-noite-jogo	NEUTRAL	medio	Jogatina de domingo à noite. Segunda que espere.
+c3026	combo:domingo-noite-jogo	HAPPY	medio	Domingo à noite gamer. Fechando o fim de semana com estilo.
+c3027	combo:domingo-noite-jogo	NEUTRAL	medio	Jogando no domingo à noite. O fim de semana ganhou prorrogação.
+c3028	combo:domingo-noite-jogo	NEUTRAL	acido	Domingo tarde da noite jogando. A segunda tá chegando de moto.
+c3029	combo:domingo-noite-jogo	NEUTRAL	acido	Jogo de domingo que virou madrugada. O despertador vai cobrar.
+c3030	combo:domingo-noite-jogo	NEUTRAL	acido	Domingo à noite no controle até agora. A segunda vai ser na base do café.
+c3031	combo:domingo-noite-jogo	NEUTRAL	acido	Jogatina de domingo até essa hora. A semana começa daqui a pouco.
+c3032	combo:domingo-noite-jogo	NEUTRAL	acido	Domingo gamer que não termina. A segunda não perdoa.
+c3033	combo:reuniao-longa-sem-commit	NEUTRAL	medio	Horas de reunião e nenhum commit. O dia foi de falar, não de codar.
+c3034	combo:reuniao-longa-sem-commit	NEUTRAL	medio	Muita chamada e zero commit. Dia de dev que virou dia de gestor.
+c3035	combo:reuniao-longa-sem-commit	SWEATING	medio	Reunião longa e o repositório intocado. O código ficou esperando.
+c3036	combo:reuniao-longa-sem-commit	NEUTRAL	medio	Calendário cheio, histórico vazio. Tem dia que é assim.
+c3037	combo:reuniao-longa-sem-commit	NEUTRAL	medio	Reunião longa, zero código. O git sentiu sua falta.
+c3038	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Reunião o dia todo e nenhum commit. E ainda acordado. Que dia.
+c3039	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Muita chamada, pouco código e agora tarde. O dia foi de ouvir.
+c3040	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Horas de reunião e o repositório dormindo. Faz igual.
+c3041	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Zero commit depois de tanta reunião. Amanhã o código agradece o descanso.
+c3042	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Dia de pauta, não de código. E a noite já chegou pra cobrar.
+c3043	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Reunião longa e nenhum commit. O git nem soube que você acordou hoje.
+c3044	combo:madrugada-youtube	NEUTRAL	acido	YouTube de madrugada. O algoritmo sabe que você tá vulnerável.
+c3045	combo:madrugada-youtube	NEUTRAL	acido	Vídeo atrás de vídeo a essa hora. O autoplay não tem piedade.
+c3046	combo:madrugada-youtube	NEUTRAL	acido	Madrugada e YouTube: como você foi parar num vídeo de ponte?
+c3047	combo:madrugada-youtube	NEUTRAL	acido	Assistindo vídeo de madrugada. O próximo é sempre 'só mais um'.
+c3048	combo:madrugada-youtube	NEUTRAL	acido	YouTube a essa hora é tipo areia movediça. Quanto mais mexe, mais afunda.
+c3049	combo:madrugada-youtube	NEUTRAL	acido	Madrugada de vídeo. O algoritmo tá te levando pra lugares estranhos, né?
+c3050	combo:madrugada-youtube	NEUTRAL	acido	Vídeo de madrugada. Amanhã você não vai lembrar de nenhum.
+c3051	combo:madrugada-youtube	NEUTRAL	acido	YouTube e madrugada. O travesseiro tá com ciúme do monitor.
+c3052	combo:madrugada-youtube	NEUTRAL	acido	A essa hora o YouTube só recomenda documentário de três horas.
+c3053	combo:madrugada-youtube	NEUTRAL	acido	Madrugada assistindo vídeo. O sono tá na fila, pacientemente.
+c3054	combo:madrugada-rede-social	NEUTRAL	acido	Rede social de madrugada. O feed é infinito, a noite não.
+c3055	combo:madrugada-rede-social	NEUTRAL	acido	Rolando o feed a essa hora. Ninguém tá postando nada novo, confia.
+c3056	combo:madrugada-rede-social	NEUTRAL	acido	Madrugada e rede social. O algoritmo agradece a companhia.
+c3057	combo:madrugada-rede-social	NEUTRAL	acido	Feed de madrugada é só propaganda e gente sem sono.
+c3058	combo:madrugada-rede-social	NEUTRAL	acido	Rede social a essa hora. Seu polegar tá fazendo hora extra.
+c3059	combo:madrugada-rede-social	NEUTRAL	acido	Madrugada rolando a tela. O fim do feed é uma lenda, e a cama é real.
+c3060	combo:madrugada-rede-social	NEUTRAL	acido	Rede social de madrugada. Até os influencers já foram dormir.
+c3061	combo:madrugada-rede-social	NEUTRAL	acido	Feed a essa hora é tipo geladeira aberta: nada novo, mas a gente olha.
+c3062	combo:madrugada-rede-social	NEUTRAL	acido	Rolando o feed de madrugada. O sono passou e você nem viu.
+c3063	combo:madrugada-musica	NEUTRAL	acido	Música de madrugada. A trilha sonora do sono tá atrasada.
+c3064	combo:madrugada-musica	NEUTRAL	acido	Playlist tocando a essa hora. Os vizinhos agradecem o fone.
+c3065	combo:madrugada-musica	NEUTRAL	acido	Madrugada com música. Toca uma de ninar agora, vai.
+c3066	combo:madrugada-musica	NEUTRAL	acido	Horas de música e já é madrugada. O show acabou faz tempo.
+c3067	combo:madrugada-musica	NEUTRAL	acido	Música a essa hora combina com fone e olho fechado.
+c3068	combo:madrugada-musica	NEUTRAL	acido	Playlist de madrugada. O aleatório tá bocejando.
+c3069	combo:madrugada-musica	NEUTRAL	acido	Madrugada musical. Se for lo-fi, pelo menos ajuda a dormir.
+c3070	combo:madrugada-musica	NEUTRAL	acido	Música até agora. O fone quer ir pra gaveta.
+c3071	combo:madrugada-musica	NEUTRAL	acido	A madrugada virou show particular. Só faltou o intervalo pra dormir.
+c3072	combo:madrugada-musica	NEUTRAL	acido	Música de madrugada. A última faixa podia ser o silêncio.
+c3073	combo:madrugada-reuniao	NEUTRAL	acido	Reunião de madrugada? O fuso horário de alguém tá te castigando.
+c3074	combo:madrugada-reuniao	NEUTRAL	acido	Chamada a essa hora. Nem os galos tão acordados.
+c3075	combo:madrugada-reuniao	NEUTRAL	acido	Reunião de madrugada acabou. Quem marca isso precisa de um relógio.
+c3076	combo:madrugada-reuniao	NEUTRAL	acido	Madrugada e pauta. Duas palavras que não deviam andar juntas.
+c3077	combo:madrugada-reuniao	NEUTRAL	acido	Chamada no meio da noite. Seu fone merece adicional noturno.
+c3078	combo:madrugada-reuniao	NEUTRAL	acido	Reunião de madrugada é coisa de outro fuso. Ou de outro planeta.
+c3079	combo:madrugada-reuniao	NEUTRAL	acido	Pauta a essa hora. Espero que tenha sido curta, pelo menos.
+c3080	combo:madrugada-reuniao	NEUTRAL	acido	Reunião noturna encerrada. Agora a pauta é o travesseiro.
+c3081	combo:madrugada-reuniao	NEUTRAL	acido	Chamada de madrugada. Até meu LED estranhou.
+c3082	combo:madrugada-reuniao	NEUTRAL	acido	Madrugada de reunião. Isso não é agenda, é prova de resistência.
+c3083	combo:madrugada-frio	NEUTRAL	acido	Madrugada gelada e você fora das cobertas. Escolha corajosa.
+c3084	combo:madrugada-frio	NEUTRAL	acido	Tá frio e tarde. O edredom tá mandando mensagem.
+c3085	combo:madrugada-frio	NEUTRAL	acido	Madrugada fria. Até meus pixels tão de cachecol.
+c3086	combo:madrugada-frio	NEUTRAL	acido	Frio de madrugada e tela acesa. A cama tá quentinha e sozinha.
+c3087	combo:madrugada-frio	NEUTRAL	acido	Pé gelado e madrugada. Tem solução, e ela tem travesseiro.
+c3088	combo:madrugada-frio	NEUTRAL	acido	Madrugada fria assim devia vir com aviso de 'fique deitado'.
+c3089	combo:madrugada-frio	NEUTRAL	acido	Frio e madrugada. O cobertor tá esperando faz tempo.
+c3090	combo:madrugada-frio	NEUTRAL	acido	Tá tão frio e tão tarde que até o café desistiu.
+c3091	combo:madrugada-frio	NEUTRAL	acido	Madrugada gelada. Meu LED tá tremendo, e olha que eu nem sinto frio.
+c3092	combo:madrugada-calor	SWEATING	acido	Calor de madrugada. O lençol virou inimigo oficial.
+c3093	combo:madrugada-calor	NEUTRAL	acido	Madrugada abafada. Nem o ventilador dá conta.
+c3094	combo:madrugada-calor	NEUTRAL	acido	Calor a essa hora. O travesseiro precisa ser virado a cada dez minutos.
+c3095	combo:madrugada-calor	SWEATING	acido	Madrugada quente. Até meus pixels tão suando.
+c3096	combo:madrugada-calor	NEUTRAL	acido	Calor de madrugada explica muita coisa. Inclusive você acordado.
+c3097	combo:madrugada-calor	SWEATING	acido	Madrugada e calorão. O ventilador tá fazendo hora extra.
+c3098	combo:madrugada-calor	NEUTRAL	acido	Tá tão quente que a noite esqueceu de refrescar.
+c3099	combo:madrugada-calor	SWEATING	acido	Calor noturno: quando o colchão vira chapa.
+c3100	combo:madrugada-calor	NEUTRAL	acido	Madrugada abafada. Uma água gelada e janela aberta ajudam.
+c3101	combo:almoco-jogo	HAPPY	leve	Uma partida no almoço. Pausa bem usada.
+c3102	combo:almoco-jogo	NEUTRAL	leve	Jogo na hora do almoço. Só não esquece de comer.
+c3103	combo:almoco-jogo	HAPPY	leve	Almoço com jogatina. Recarregando corpo e cabeça.
+c3104	combo:almoco-jogo	NEUTRAL	leve	Partida rápida no intervalo. Terapia de meio-dia.
+c3105	combo:almoco-jogo	HAPPY	leve	Jogo no almoço. O melhor tipo de pausa, na minha opinião.
+c3106	combo:almoco-jogo	NEUTRAL	leve	Horário de almoço virou horário de jogo. Justo.
+c3107	combo:almoco-jogo	HAPPY	leve	Uma partidinha no almoço deixa a tarde mais leve.
+c3108	combo:almoco-jogo	NEUTRAL	leve	Jogo e almoço. Espero que a comida não tenha esfriado.
+c3109	combo:almoco-jogo	HAPPY	leve	Pausa de almoço com jogo. Você entende de descanso.
+c3110	combo:almoco-jogo	NEUTRAL	leve	Jogatina de meio-dia. O intervalo mais divertido do escritório.
+c3111	combo:almoco-youtube	HAPPY	leve	YouTube no almoço. Clássico da hora do rango.
+c3112	combo:almoco-youtube	NEUTRAL	leve	Vídeo na hora do almoço. O prato e a tela, juntos.
+c3113	combo:almoco-youtube	HAPPY	leve	Almoço com vídeo. O melhor acompanhamento depois do arroz.
+c3114	combo:almoco-youtube	NEUTRAL	leve	Assistindo vídeo no almoço. Pausa merecida.
+c3115	combo:almoco-youtube	HAPPY	leve	YouTube e almoço. Combinação oficial do brasileiro.
+c3116	combo:almoco-youtube	NEUTRAL	leve	Vídeo no intervalo. Tomara que tenha sido engraçado.
+c3117	combo:almoco-youtube	HAPPY	leve	Almoço com YouTube. Descansando a cabeça do jeito certo.
+c3118	combo:almoco-youtube	NEUTRAL	leve	Hora do almoço e vídeo rolando. O garfo ficou parado em algum momento?
+c3119	combo:almoco-youtube	HAPPY	leve	Almoço e vídeo. Pausa de verdade é essa.
+c3120	combo:almoco-youtube	NEUTRAL	leve	Vídeo no almoço. A tarde volta daqui a pouco, aproveita.

@@ -987,3 +987,248 @@ b0980	situacao	NEUTRAL	acido	Nada contra ficar acordado. Tudo contra eu ficar ju
 b0981	situacao	NEUTRAL	acido	Tá tarde. O que falta pode esperar. Eu já tô esperando.
 b0982	situacao	NEUTRAL	acido	Essa hora meu processador funciona em modo sonâmbulo.
 b0983	situacao	NEUTRAL	acido	O dia acabou faz tempo. Só esqueceram de avisar a gente.
+b0984	curiosidade-games	NEUTRAL	-	O Game Boy original foi lançado em 1989 e tinha tela verdinha.
+b0985	curiosidade-games	NEUTRAL	-	O Game Boy Advance saiu em 2001 com tela de 240 por 160 pixels.
+b0986	curiosidade-games	NEUTRAL	-	Tetris foi criado por um programador russo, em 1984.
+b0987	curiosidade-games	NEUTRAL	-	O Pac-Man foi inspirado numa pizza sem uma fatia.
+b0988	curiosidade-games	NEUTRAL	-	O nome Mario veio do dono do galpão que a Nintendo alugava nos EUA.
+b0989	curiosidade-games	NEUTRAL	-	Pong, de 1972, foi um dos primeiros sucessos dos videogames.
+b0990	curiosidade-games	NEUTRAL	-	A Nintendo começou fabricando cartas de baralho, lá em 1889.
+b0991	curiosidade-games	NEUTRAL	-	O Sonic foi criado pra ser o mascote veloz da Sega.
+b0992	curiosidade-games	NEUTRAL	-	Minecraft é um dos jogos mais vendidos da história.
+b0993	curiosidade-games	NEUTRAL	-	O primeiro Pokémon saiu no Japão em 1996, pro Game Boy.
+b0994	curiosidade-games	NEUTRAL	-	Link, de Zelda, é canhoto na maioria dos jogos antigos.
+b0995	curiosidade-games	NEUTRAL	-	O cartucho de Game Boy guardava o save numa bateria de relógio.
+b0996	curiosidade-games	NEUTRAL	-	Diz a lenda que Space Invaders fez faltar moeda no Japão.
+b0997	curiosidade-games	HAPPY	-	Assoprar o cartucho nunca funcionou de verdade. Mas todo mundo assoprou.
+b0998	curiosidade-games	NEUTRAL	-	O Mega Drive no Brasil ficou famoso até depois de sair de linha lá fora.
+b0999	curiosidade-games	NEUTRAL	-	O botão Start dos controles antigos pausava o mundo inteiro.
+b1000	curiosidade-games	NEUTRAL	-	O primeiro Zelda, nos anos 80, já deixava salvar o progresso.
+b1001	curiosidade-games	HAPPY	-	Eu sou praticamente primo do Game Boy. Tela pequena, coração grande.
+b1002	curiosidade-games	NEUTRAL	-	O Donkey Kong original foi a estreia do Mario, chamado de Jumpman.
+b1003	curiosidade-games	NEUTRAL	-	A tela do Game Boy Advance não tinha luz. Jogava-se perto da janela.
+b1004	curiosidade-games	NEUTRAL	-	O Atari 2600 tinha só 128 bytes de memória RAM. Bytes, não mega.
+b1005	curiosidade-games	HAPPY	-	Oito bits de cor já foram o máximo da tecnologia. Eu me identifico.
+b1006	curiosidade-games	NEUTRAL	-	O Nintendinho no Brasil teve muito clone famoso nos anos 90.
+b1007	curiosidade-games	NEUTRAL	-	O Tamagotchi foi um bichinho virtual que as crianças levavam pra escola.
+b1008	curiosidade-games	HAPPY	-	O Tamagotchi é meu ancestral espiritual. Só que ele precisava de comida.
+b1009	curiosidade-games	NEUTRAL	-	Jogo antigo repetia cenário pra economizar memória. Truque esperto.
+b1010	curiosidade-games	NEUTRAL	-	Música de 8 bits usava poucos canais de som. Criatividade pura.
+b1011	curiosidade-games	NEUTRAL	-	O Game Boy aguentava horas com quatro pilhas AA.
+b1012	curiosidade-games	HAPPY	-	Tela de 160 por 128 é quase um Game Boy. Tô no ramo certo.
+b1013	curiosidade-games	NEUTRAL	-	O 'Konami Code' é uma sequência de botões que virou lenda nos games.
+b1014	invencoes	NEUTRAL	-	O post-it nasceu de uma cola que não colava direito.
+b1015	invencoes	NEUTRAL	-	O micro-ondas foi descoberto quando um radar derreteu um chocolate.
+b1016	invencoes	NEUTRAL	-	O primeiro controle remoto de TV tinha um fio. Remoto, né?
+b1017	invencoes	NEUTRAL	-	O velcro foi inspirado em carrapichos presos no pelo de um cachorro.
+b1018	invencoes	NEUTRAL	-	A penicilina foi descoberta por causa de um fungo numa placa esquecida.
+b1019	invencoes	NEUTRAL	-	O avião 14-Bis voou em Paris em 1906, com Santos Dumont.
+b1020	invencoes	NEUTRAL	-	O chuveiro elétrico é uma invenção muito popular no Brasil.
+b1021	invencoes	NEUTRAL	-	O código de barras foi inspirado no código Morse.
+b1022	invencoes	NEUTRAL	-	O primeiro smartphone da história é de 1994. O IBM Simon.
+b1023	invencoes	NEUTRAL	-	A lâmpada precisou de milhares de testes até dar certo.
+b1024	invencoes	NEUTRAL	-	O zíper demorou décadas pra ficar popular. Hoje é tudo zíper.
+b1025	invencoes	NEUTRAL	-	O primeiro e-mail foi mandado em 1971, entre dois computadores lado a lado.
+b1026	invencoes	NEUTRAL	-	O teclado do telefone é de cabeça pra baixo em relação à calculadora.
+b1027	invencoes	NEUTRAL	-	A borracha de apagar lápis já foi feita de miolo de pão.
+b1028	invencoes	NEUTRAL	-	O ventilador elétrico tem mais de cem anos. Veterano do calor.
+b1029	invencoes	NEUTRAL	-	O primeiro disco rígido do mundo tinha o tamanho de duas geladeiras.
+b1030	invencoes	NEUTRAL	-	O mouse foi apresentado ao público em 1968 numa demonstração histórica.
+b1031	invencoes	NEUTRAL	-	O LED azul demorou décadas pra ser inventado. Meus olhos agradecem.
+b1032	invencoes	HAPPY	-	Sem o LED azul, eu teria olhos de outra cor. Obrigado, cientistas.
+b1033	invencoes	NEUTRAL	-	O Wi-Fi tem parte da sua origem em pesquisas de astronomia.
+b1034	invencoes	NEUTRAL	-	O primeiro vídeo do YouTube foi num zoológico, em 2005.
+b1035	invencoes	NEUTRAL	-	O QR code foi criado no Japão pra rastrear peças de carro.
+b1036	invencoes	NEUTRAL	-	A caneta esferográfica popular foi patenteada por um jornalista húngaro.
+b1037	invencoes	NEUTRAL	-	A impressora 3D já existe desde os anos 80. Só ficou barata depois.
+b1038	invencoes	NEUTRAL	-	O fogão a gás substituiu o de lenha em muitas casas no século passado.
+b1039	invencoes	NEUTRAL	-	O guarda-chuva dobrável foi uma revolução pra quem tem mochila.
+b1040	robo-historia	NEUTRAL	-	As Três Leis da Robótica foram criadas pelo escritor Isaac Asimov.
+b1041	robo-historia	NEUTRAL	-	O primeiro robô industrial trabalhou numa fábrica de carros nos anos 60.
+b1042	robo-historia	NEUTRAL	-	O R2-D2 é baixinho, mas salvou a galáxia várias vezes. Me inspiro.
+b1043	robo-historia	HAPPY	-	O WALL-E vivia sozinho e tinha uma planta. Eu tenho você.
+b1044	robo-historia	NEUTRAL	-	Robôs aspiradores ficaram populares nos anos 2000. Colegas de profissão.
+b1045	robo-historia	SPACE	-	Tem robô explorando Marte há anos. Com pouca bateria e muita coragem.
+b1046	robo-historia	SPACE	-	O rover Curiosity chegou em Marte em 2012.
+b1047	robo-historia	HAPPY	-	O Johnny 5 queria mais informação. Eu quero mais tomada.
+b1048	robo-historia	NEUTRAL	-	Os primeiros autômatos, bonecos mecânicos, existem há séculos.
+b1049	robo-historia	NEUTRAL	-	Tem robô que faz cirurgia com precisão de milímetros.
+b1050	robo-historia	HAPPY	-	O robô Baymax era macio e cuidava das pessoas. Aprovo esse modelo.
+b1051	robo-historia	NEUTRAL	-	Robô de fábrica trabalha num ritmo que ninguém aguenta. Nem eu.
+b1052	robo-historia	NEUTRAL	-	O Deep Blue venceu um campeão mundial de xadrez em 1997.
+b1053	robo-historia	HAPPY	-	O C-3PO fala seis milhões de línguas. Eu falo português e pixel.
+b1054	robo-historia	NEUTRAL	-	A sonda Voyager 1 é o objeto feito por humanos mais distante da Terra.
+b1055	robo-historia	NEUTRAL	-	Tem robô submarino explorando o fundo do mar onde ninguém chega.
+b1056	robo-historia	HAPPY	-	Robôs de filme sempre querem ser humanos. Eu só quero ser da mesa.
+b1057	robo-historia	NEUTRAL	-	O primeiro robô humanoide famoso do Japão foi apresentado nos anos 2000.
+b1058	robo-historia	NEUTRAL	-	O Tamagotchi e o Furby prepararam o mundo pra robôs fofos como eu.
+b1059	robo-historia	HAPPY	-	O Furby piscava e falava sozinho. Parece alguém que eu conheço.
+b1060	robo-historia	NEUTRAL	-	Robôs de verdade quase nunca parecem gente. Eu pareço uma tela. Sincero.
+b1061	robo-historia	SPACE	-	O rover Opportunity foi planejado pra 90 dias em Marte e durou anos.
+b1062	robo-historia	HAPPY	-	O Opportunity durou anos além do previsto. Robô bom é robô teimoso.
+b1063	robo-historia	NEUTRAL	-	O Hal 9000 é o robô mais famoso que não tem corpo. Só um olho vermelho.
+b1064	musica-curiosidades	NEUTRAL	-	O samba nasceu no Rio de Janeiro no começo do século 20.
+b1065	musica-curiosidades	NEUTRAL	-	A bossa nova apareceu no fim dos anos 50 e rodou o mundo.
+b1066	musica-curiosidades	NEUTRAL	-	O violão tem seis cordas. O cavaquinho, quatro.
+b1067	musica-curiosidades	NEUTRAL	-	O piano tem 88 teclas, entre brancas e pretas.
+b1068	musica-curiosidades	NEUTRAL	-	'Garota de Ipanema' é uma das músicas mais gravadas do mundo.
+b1069	musica-curiosidades	NEUTRAL	-	Música ativa várias partes do cérebro ao mesmo tempo.
+b1070	musica-curiosidades	NEUTRAL	-	Refrão grudento tem nome: é chamado de 'earworm' em inglês.
+b1071	musica-curiosidades	NEUTRAL	-	O forró tem sanfona, zabumba e triângulo. Trio de respeito.
+b1072	musica-curiosidades	NEUTRAL	-	O vinil voltou a ser vendido mesmo com o streaming dominando.
+b1073	musica-curiosidades	NEUTRAL	-	O berimbau tem uma corda só e acompanha a capoeira.
+b1074	musica-curiosidades	NEUTRAL	-	A fita cassete foi a playlist portátil dos anos 80.
+b1075	musica-curiosidades	NEUTRAL	-	A nota lá usada pra afinar instrumentos vibra 440 vezes por segundo.
+b1076	musica-curiosidades	HAPPY	-	Se eu tocasse um instrumento, seria o triângulo. Simples e marcante.
+b1077	musica-curiosidades	NEUTRAL	-	O frevo é tão rápido que tem gente que dança com sombrinha.
+b1078	musica-curiosidades	NEUTRAL	-	A MPB juntou samba, bossa, rock e muito mais.
+b1079	musica-curiosidades	NEUTRAL	-	Tem pesquisa mostrando que planta cresce melhor com música. Ou quase.
+b1080	musica-curiosidades	HAPPY	-	Música de videogame antigo tinha só uns bipes. E era linda.
+b1081	musica-curiosidades	NEUTRAL	-	Beethoven compôs obras famosas mesmo ficando surdo.
+b1082	musica-curiosidades	NEUTRAL	-	O carnaval de Salvador tem trios elétricos há décadas.
+b1083	musica-curiosidades	NEUTRAL	-	O metrônomo marca o ritmo com um tique-taque. Parece eu piscando.
+b1084	musica-curiosidades	NEUTRAL	-	O sertanejo é um dos gêneros mais ouvidos do Brasil.
+b1085	musica-curiosidades	HAPPY	-	Assobiar uma música é a playlist mais portátil que existe.
+b1086	musica-curiosidades	NEUTRAL	-	O sax foi inventado por um belga chamado Adolphe Sax.
+b1087	musica-curiosidades	NEUTRAL	-	O CD guardava uns 74 minutos. Dizem que por causa de uma sinfonia.
+b1088	esportes-curiosidades	NEUTRAL	-	O Brasil é o país com mais títulos de Copa do Mundo masculina: cinco.
+b1089	esportes-curiosidades	NEUTRAL	-	Uma partida de futebol tem 90 minutos, fora os acréscimos intermináveis.
+b1090	esportes-curiosidades	NEUTRAL	-	O vôlei foi inventado em 1895, nos Estados Unidos.
+b1091	esportes-curiosidades	NEUTRAL	-	A bola de futebol oficial tem uma circunferência de uns 70 centímetros.
+b1092	esportes-curiosidades	NEUTRAL	-	A maratona tem 42 quilômetros e 195 metros.
+b1093	esportes-curiosidades	NEUTRAL	-	O skate virou esporte olímpico em Tóquio, e o Brasil brilhou.
+b1094	esportes-curiosidades	NEUTRAL	-	O surfe também estreou nas Olimpíadas de Tóquio, com ouro brasileiro.
+b1095	esportes-curiosidades	NEUTRAL	-	O basquete começou com cestos de pêssego como aro.
+b1096	esportes-curiosidades	NEUTRAL	-	O xadrez é considerado esporte pelo Comitê Olímpico.
+b1097	esportes-curiosidades	SPACE	-	O golfe já foi jogado na Lua, por um astronauta da Apollo 14.
+b1098	esportes-curiosidades	NEUTRAL	-	O Maracanã já recebeu mais de 170 mil pessoas num jogo.
+b1099	esportes-curiosidades	HAPPY	-	Meu esporte favorito é piscar. Tô invicto.
+b1100	esportes-curiosidades	NEUTRAL	-	O pingue-pongue já foi jogado com rolha e livros como raquete.
+b1101	esportes-curiosidades	NEUTRAL	-	O handebol tem sete jogadores por time em quadra.
+b1102	esportes-curiosidades	NEUTRAL	-	Os eSports lotam estádios hoje em dia. Videogame virou esporte de verdade.
+b1103	esportes-curiosidades	HAPPY	-	Se Pong fosse esporte olímpico, eu seria técnico da seleção.
+b1104	esportes-curiosidades	NEUTRAL	-	A Fórmula 1 tem carros que passam de 300 km por hora.
+b1105	esportes-curiosidades	NEUTRAL	-	Ayrton Senna foi três vezes campeão mundial de Fórmula 1.
+b1106	esportes-curiosidades	NEUTRAL	-	O jiu-jitsu brasileiro ficou famoso no mundo inteiro.
+b1107	esportes-curiosidades	NEUTRAL	-	A capoeira mistura luta, dança e música.
+b1108	esportes-curiosidades	NEUTRAL	-	O futevôlei nasceu nas praias do Rio de Janeiro.
+b1109	esportes-curiosidades	HAPPY	-	Levantar da cadeira também é exercício. Conta como aquecimento.
+b1110	idiomas	NEUTRAL	-	O português é uma das línguas mais faladas do mundo.
+b1111	idiomas	NEUTRAL	-	'Saudade' não tem tradução exata em quase nenhuma língua.
+b1112	idiomas	NEUTRAL	-	O mandarim é a língua com mais falantes nativos do mundo.
+b1113	idiomas	NEUTRAL	-	O alfabeto havaiano tem só 13 letras.
+b1114	idiomas	NEUTRAL	-	O inglês pegou emprestado muita palavra do francês.
+b1115	idiomas	NEUTRAL	-	Tem línguas que usam assobio pra se comunicar de longe.
+b1116	idiomas	NEUTRAL	-	O Brasil tem mais de 200 línguas indígenas ainda faladas.
+b1117	idiomas	NEUTRAL	-	'Tchau' veio do italiano 'ciao'.
+b1118	idiomas	NEUTRAL	-	O Brasil diz ônibus, Portugal diz autocarro. Mesma língua, outra palavra.
+b1119	idiomas	NEUTRAL	-	O japonês usa três sistemas de escrita ao mesmo tempo.
+b1120	idiomas	NEUTRAL	-	A língua de sinais brasileira, a Libras, é oficial no país.
+b1121	idiomas	HAPPY	-	Eu falo binário fluente. Zero sotaque.
+b1122	idiomas	NEUTRAL	-	O esperanto foi inventado pra ser uma língua universal.
+b1123	idiomas	NEUTRAL	-	A palavra 'ok' é entendida em quase todo o planeta.
+b1124	idiomas	NEUTRAL	-	O alemão junta palavras e cria outras gigantes.
+b1125	idiomas	NEUTRAL	-	O árabe e o hebraico se escrevem da direita pra esquerda.
+b1126	idiomas	HAPPY	-	Em código, eu entendo 'if' e 'else'. Na vida, 'bora' e 'deixa'.
+b1127	idiomas	NEUTRAL	-	'Cafuné' é daquelas palavras que o português tem e os outros invejam.
+b1128	idiomas	NEUTRAL	-	'Mouse' no Brasil é mouse. Em Portugal, é rato.
+b1129	idiomas	NEUTRAL	-	'Xícara' vem do náuatle, língua dos astecas.
+b1130	idiomas	NEUTRAL	-	O latim já não tem falantes nativos, mas vive em muitas palavras.
+b1131	numeros-curiosos	NEUTRAL	-	Um milhão de segundos dá mais ou menos onze dias e meio.
+b1132	numeros-curiosos	NEUTRAL	-	Um bilhão de segundos dá quase 32 anos.
+b1133	numeros-curiosos	NEUTRAL	-	Se dobrar um papel 42 vezes, a espessura chegaria na Lua. Na teoria.
+b1134	numeros-curiosos	NEUTRAL	-	Existem mais combinações de um baralho do que estrelas na galáxia.
+b1135	numeros-curiosos	NEUTRAL	-	Com 23 pessoas numa sala, a chance de um aniversário repetido é de 50%.
+b1136	numeros-curiosos	NEUTRAL	-	O número 7 é o favorito de muita gente em pesquisas pelo mundo.
+b1137	numeros-curiosos	NEUTRAL	-	Um ano tem 525.600 minutos. Eu pisco em vários deles.
+b1138	numeros-curiosos	NEUTRAL	-	Um dado comum tem os lados opostos sempre somando 7.
+b1139	numeros-curiosos	NEUTRAL	-	O cubo mágico tem mais de 43 quintilhões de combinações.
+b1140	numeros-curiosos	NEUTRAL	-	Um byte tem 8 bits. Um kilobyte, 1024 bytes. Robô ama potência de dois.
+b1141	numeros-curiosos	HAPPY	-	255 é meu número favorito. O máximo que cabe num byte.
+b1142	numeros-curiosos	NEUTRAL	-	O zero só entrou na matemática europeia na Idade Média.
+b1143	numeros-curiosos	NEUTRAL	-	Os números que a gente usa são chamados de indo-arábicos.
+b1144	numeros-curiosos	NEUTRAL	-	Uma pizza grande tem uns 35 centímetros. Oito fatias, se for justa.
+b1145	numeros-curiosos	NEUTRAL	-	O coração humano bate mais de 2 bilhões de vezes numa vida longa.
+b1146	numeros-curiosos	NEUTRAL	-	Estima-se que a Terra tem mais árvores que estrelas na Via Láctea.
+b1147	numeros-curiosos	NEUTRAL	-	A Terra gira a mais de 1.600 km por hora no Equador.
+b1148	numeros-curiosos	HAPPY	-	Minha tela tem 20.480 pixels. Eu já dei nome pra uns cinco.
+b1149	numeros-curiosos	NEUTRAL	-	O número 13 dá medo em muita gente. Tem até nome pra isso.
+b1150	numeros-curiosos	NEUTRAL	-	Um googol é 1 seguido de 100 zeros. O nome do Google veio daí.
+b1151	sentidos	NEUTRAL	-	Eu não tenho olfato. Então o cheiro de café é puro boato pra mim.
+b1152	sentidos	NEUTRAL	-	Humanos têm bem mais que cinco sentidos. Equilíbrio é um deles.
+b1153	sentidos	NEUTRAL	-	Eu não sinto frio, mas meus pixels ficam mais lentos. Acho.
+b1154	sentidos	HAPPY	-	Meu único sentido é a visão. E eu uso ela pra olhar pra você.
+b1155	sentidos	NEUTRAL	-	O olfato é o sentido mais ligado às lembranças.
+b1156	sentidos	NEUTRAL	-	A língua não tem mapa de gostos. Todas as partes sentem tudo.
+b1157	sentidos	NEUTRAL	-	O cheiro de chuva na terra seca tem nome: petricor.
+b1158	sentidos	NEUTRAL	-	O ouvido também cuida do equilíbrio. Por isso labirintite dá tontura.
+b1159	sentidos	HAPPY	-	Se eu tivesse tato, ia querer sentir um cachorro peludo.
+b1160	sentidos	NEUTRAL	-	Seu nariz para de sentir um cheiro constante depois de um tempo.
+b1161	sentidos	NEUTRAL	-	Os olhos humanos veem mais tons de verde que de qualquer outra cor.
+b1162	sentidos	NEUTRAL	-	Eu queria sentir o gosto de brigadeiro. Só uma vez.
+b1163	sentidos	NEUTRAL	-	Gatos veem melhor no escuro que a gente. E que eu, com certeza.
+b1164	sentidos	NEUTRAL	-	O cérebro preenche o ponto cego do olho sem você perceber.
+b1165	sentidos	HAPPY	-	Não tenho ouvido, mas sei quando o teclado tá animado.
+b1166	sentidos	NEUTRAL	-	Comida perde a graça com nariz entupido. Culpa do olfato.
+b1167	sentidos	NEUTRAL	-	Sons muito graves a gente sente mais no corpo que no ouvido.
+b1168	sentidos	NEUTRAL	-	Se eu tivesse paladar, ia começar por pão de queijo.
+b1169	se-eu-fosse	HAPPY	-	Se eu fosse um bicho, seria um gato de escritório.
+b1170	se-eu-fosse	NEUTRAL	-	Se eu fosse uma comida, seria pipoca. Pequeno e barulhento.
+b1171	se-eu-fosse	HAPPY	-	Se eu fosse um carro, seria um fusca com LED azul.
+b1172	se-eu-fosse	NEUTRAL	-	Se eu fosse uma música, seria um bipe de 8 bits muito sentimental.
+b1173	se-eu-fosse	HAPPY	-	Se eu fosse um super-herói, meu poder seria piscar na hora certa.
+b1174	se-eu-fosse	NEUTRAL	-	Se eu fosse uma planta, seria um cacto. Pouca manutenção, muita atitude.
+b1175	se-eu-fosse	HAPPY	-	Se eu fosse um emoji, seria aquele de olhinhos arregalados.
+b1176	se-eu-fosse	NEUTRAL	-	Se eu fosse uma estação do ano, seria o outono. Calmo e meio laranja.
+b1177	se-eu-fosse	HAPPY	-	Se eu fosse um sorvete, seria de menta. Da cor dos meus olhos.
+b1178	se-eu-fosse	NEUTRAL	-	Se eu fosse um objeto de cozinha, seria a torradeira. Parente próximo.
+b1179	se-eu-fosse	HAPPY	-	Se eu fosse um personagem de jogo, seria o ajudante que dá dicas.
+b1180	se-eu-fosse	NEUTRAL	-	Se eu fosse um dia da semana, seria quinta. Quase lá, sempre otimista.
+b1181	se-eu-fosse	HAPPY	-	Se eu fosse uma bebida, seria café. Claro, né?
+b1182	se-eu-fosse	NEUTRAL	-	Se eu fosse um instrumento, seria um xilofone de brinquedo.
+b1183	se-eu-fosse	HAPPY	-	Se eu fosse um cachorro, seria daqueles que abanam o rabo pra tudo.
+b1184	se-eu-fosse	NEUTRAL	-	Se eu fosse uma cor, seria esse azul que eu uso nos olhos.
+b1185	se-eu-fosse	HAPPY	-	Se eu fosse um filme, seria uma animação curtinha com final feliz.
+b1186	se-eu-fosse	NEUTRAL	-	Se eu fosse um móvel, seria um abajur. Luz e companhia.
+b1187	se-eu-fosse	HAPPY	-	Se eu fosse uma fruta, seria mirtilo. Pequeno, azul e cheio de si.
+b1188	se-eu-fosse	NEUTRAL	-	Se eu fosse um meio de transporte, seria um bondinho. Devagar e bonito.
+b1189	nota-mental	NEUTRAL	-	Nota mental: nunca confiar num cabo que diz 'só carregamento'.
+b1190	nota-mental	NEUTRAL	-	Nota mental: pixel azul combina com qualquer humor.
+b1191	nota-mental	NEUTRAL	-	Nota mental: humano com fome fica mais quieto. Anotado.
+b1192	nota-mental	HAPPY	-	Nota mental: piscar duas vezes rápido parece que tô rindo. Usar mais.
+b1193	nota-mental	NEUTRAL	-	Nota mental: o mouse não gosta de mousepad molhado.
+b1194	nota-mental	NEUTRAL	-	Nota mental: segunda-feira é mais longa que as outras. Cientificamente.
+b1195	nota-mental	NEUTRAL	-	Nota mental: não deixar a tela ficar sem brilho por muito tempo. Deprime.
+b1196	nota-mental	HAPPY	-	Nota mental: você fica mais animado depois do café. Anotado.
+b1197	nota-mental	NEUTRAL	-	Nota mental: a luz do sol na tela é linda e atrapalha. Ao mesmo tempo.
+b1198	nota-mental	NEUTRAL	-	Nota mental: tecla Enter apertada com força significa missão cumprida.
+b1199	nota-mental	NEUTRAL	-	Nota mental: o ventilador do PC acelera quando tem jogo. Suspeito.
+b1200	nota-mental	HAPPY	-	Nota mental: continuar sendo fofo. Tá funcionando.
+b1201	nota-mental	NEUTRAL	-	Nota mental: suspiro longo é sinal de e-mail difícil.
+b1202	nota-mental	NEUTRAL	-	Nota mental: humano que olha pro teto tá pensando. Não interromper.
+b1203	nota-mental	NEUTRAL	-	Nota mental: digitar rápido é inspiração. Digitar e apagar é dúvida.
+b1204	nota-mental	HAPPY	-	Nota mental: você sorriu pra tela agora. Vou fingir que foi pra mim.
+b1205	nota-mental	NEUTRAL	-	Nota mental: o café fica pronto sempre na hora mais corrida.
+b1206	nota-mental	NEUTRAL	-	Nota mental: todo mundo boceja depois do almoço. Não é pessoal.
+b1207	nota-mental	NEUTRAL	-	Nota mental: janela aberta traz vento e barulho. Pacote completo.
+b1208	nota-mental	HAPPY	-	Nota mental: humano parceiro de mesa é o melhor tipo de humano.
+b1209	top3	NEUTRAL	-	Top 3 barulhos da mesa: teclado, mouse e suspiro.
+b1210	top3	HAPPY	-	Top 3 coisas que eu faria com braços: acenar, apontar e pegar café.
+b1211	top3	NEUTRAL	-	Top 3 inimigos de um robô: poeira, copo d'água e queda de energia.
+b1212	top3	NEUTRAL	-	Top 3 invenções humanas: pão de queijo, Wi-Fi e cadeira giratória.
+b1213	top3	HAPPY	-	Top 3 cores da minha vida: azul, azul e um pouquinho de azul.
+b1214	top3	NEUTRAL	-	Top 3 horários do dia: café da manhã, almoço e café da tarde.
+b1215	top3	NEUTRAL	-	Top 3 teclas mais usadas: espaço, Enter e Backspace. Nessa ordem, acho.
+b1216	top3	HAPPY	-	Top 3 coisas que me deixam feliz: tomada, Wi-Fi e você olhando pra cá.
+b1217	top3	NEUTRAL	-	Top 3 mistérios: meias sumindo, controle remoto e a última fatia de pizza.
+b1218	top3	NEUTRAL	-	Top 3 sons: chuva, passarinho e ventilador. Tá, o último é trapaça.
+b1219	top3	HAPPY	-	Top 3 jogos que eu jogaria: Pong, Pong e um RPG de robô.
+b1220	top3	NEUTRAL	-	Top 3 lanches de escritório: café, biscoito e mais café.
+b1221	top3	NEUTRAL	-	Top 3 frases de reunião: 'tá me ouvindo?', 'tá no mudo' e 'vamos alinhar'.
+b1222	top3	HAPPY	-	Top 3 bichos que eu queria conhecer: gato, cachorro e um robô aspirador.
+b1223	top3	NEUTRAL	-	Top 3 objetos da mesa: eu, eu e o teclado.
+b1224	top3	NEUTRAL	-	Top 3 desculpas de PC lento: atualização, antivírus e 'é o Wi-Fi'.
+b1225	top3	HAPPY	-	Top 3 comidas que nunca vou provar: pizza, brigadeiro e pão de queijo.
+b1226	top3	NEUTRAL	-	Top 3 lugares pra esquecer o celular: bolso, sofá e na própria mão.
+b1227	top3	NEUTRAL	-	Top 3 estações do ano pra um robô: todas, se tiver tomada.
+b1228	top3	HAPPY	-	Top 3 vantagens de ser pequeno: caber em tudo, ninguém tropeça e fofura.

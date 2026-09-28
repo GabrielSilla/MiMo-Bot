@@ -254,23 +254,91 @@ internal sealed class WorkContextMessages : IThoughtSource
             }
         }
 
-        // Combinations — the most specific, once a day each.
+        // Combinations — the most specific, once a day each: two things that
+        // hold at the same time, so the remark reads like Peemo connecting
+        // them rather than reading a list. Every flag below carries its
+        // card's gating already.
+        Situation Combo(string key) => new("combo:" + key, Tier.Combination, $"combo:{key}:{day}", none);
+
+        DayOfWeek dow = now.DayOfWeek;
+        bool weekend = !weekday;
         int? temperature = c.Weather?.TempC;
+        bool hot = temperature >= 28;
+        bool cold = temperature < 15;
         bool rainy = c.Weather?.Condition is WeatherCondition.Rain or WeatherCondition.Storm;
-        if (now.DayOfWeek == DayOfWeek.Friday && temperature >= 28)
-            yield return new Situation("combo:sexta-calor", Tier.Combination, "combo:sexta-calor:" + day, none);
-        if (now.DayOfWeek == DayOfWeek.Monday && rainy)
-            yield return new Situation("combo:segunda-chuva", Tier.Combination, "combo:segunda-chuva:" + day, none);
-        if (now.DayOfWeek == DayOfWeek.Friday && hour >= 18)
-            yield return new Situation("combo:sexta-noite", Tier.Combination, "combo:sexta-noite:" + day, none);
-        if (now.DayOfWeek == DayOfWeek.Monday && hour is >= 5 and < 9)
-            yield return new Situation("combo:segunda-cedo", Tier.Combination, "combo:segunda-cedo:" + day, none);
-        if (hour < 5 && c.DevToolsEnabled && r.CommitCount >= 1)
-            yield return new Situation("combo:madrugada-commit", Tier.Combination, "combo:madrugada-commit:" + day, none);
-        if (hour < 5 && c.GamesEnabled && c.LastGameEndedAt is { } late && now - late < TimeSpan.FromHours(1))
-            yield return new Situation("combo:madrugada-jogo", Tier.Combination, "combo:madrugada-jogo:" + day, none);
-        if (c.DevToolsEnabled && c.GamesEnabled && r.BuildFailCount >= 3 && gameMinutes >= 30)
-            yield return new Situation("combo:build-quebrado-jogo", Tier.Combination, "combo:build-quebrado-jogo:" + day, none);
+        bool storm = c.Weather?.Condition == WeatherCondition.Storm;
+        bool fog = c.Weather?.Condition == WeatherCondition.Fog;
+        bool lateNight = hour < 5;
+        bool earlyMorning = hour is >= 5 and < 8;
+        bool lunch = hour is >= 12 and < 14;
+        bool evening = hour >= 18;
+        var specials = SpecialDates(now).ToHashSet();
+
+        double socialTop = c.MediaEnabled && c.SocialMinutesBySite.Count > 0 ? c.SocialMinutesBySite.Values.Max() : 0;
+        double videoMin = c.MediaEnabled ? r.VideoFocusedMinutes : 0;
+        double musicMin = c.MediaEnabled ? r.MediaMinutes - r.VideoFocusedMinutes : 0;
+        double meetings = c.NotificationsEnabled ? r.MeetingMinutes : 0;
+        bool noMeetings = c.NotificationsEnabled && hour >= 15 && r.MeetingMinutes < 1;
+        bool meetingJustEnded = c.NotificationsEnabled && c.LastMeetingEndedAt is { } me && now - me < JustHappened;
+        int fails = c.DevToolsEnabled ? r.BuildFailCount : 0;
+        bool cleanBuilds = c.DevToolsEnabled && r.BuildSuccessCount >= 5 && r.BuildFailCount == 0;
+        int commits = c.DevToolsEnabled ? r.CommitCount : 0;
+        double games = c.GamesEnabled ? gameMinutes : 0;
+        bool gameJustEnded = c.GamesEnabled && c.LastGameEndedAt is { } ge && now - ge < JustHappened;
+        bool gameEndedLastHour = c.GamesEnabled && c.LastGameEndedAt is { } gh && now - gh < TimeSpan.FromHours(1);
+
+        // Day of the week × something
+        if (dow == DayOfWeek.Friday && hot) yield return Combo("sexta-calor");
+        if (dow == DayOfWeek.Monday && rainy) yield return Combo("segunda-chuva");
+        if (dow == DayOfWeek.Friday && evening) yield return Combo("sexta-noite");
+        if (dow == DayOfWeek.Monday && hour is >= 5 and < 9) yield return Combo("segunda-cedo");
+        if (dow == DayOfWeek.Friday && fails >= 3) yield return Combo("sexta-build-quebrado");
+        if (dow == DayOfWeek.Monday && weekday && noMeetings) yield return Combo("segunda-sem-reuniao");
+        if (dow == DayOfWeek.Friday && noMeetings) yield return Combo("sexta-sem-reuniao");
+        if (dow == DayOfWeek.Friday && evening && rainy) yield return Combo("sexta-noite-chuva");
+        if (dow == DayOfWeek.Monday && games >= 60) yield return Combo("segunda-jogo");
+        if (dow == DayOfWeek.Sunday && evening && (games >= 60 || gameEndedLastHour)) yield return Combo("domingo-noite-jogo");
+        if (weekend && commits >= 1) yield return Combo("fim-de-semana-commit");
+        if (weekend && meetings >= 30) yield return Combo("fim-de-semana-reuniao");
+        if (weekend && games >= 60) yield return Combo("fim-de-semana-jogo");
+
+        // Time of day × something
+        if (lateNight && commits >= 1) yield return Combo("madrugada-commit");
+        if (lateNight && gameEndedLastHour) yield return Combo("madrugada-jogo");
+        if (lateNight && videoMin >= 30) yield return Combo("madrugada-youtube");
+        if (lateNight && socialTop >= 30) yield return Combo("madrugada-rede-social");
+        if (lateNight && musicMin >= 120) yield return Combo("madrugada-musica");
+        if (lateNight && c.NotificationsEnabled && c.LastMeetingEndedAt is { } mn && now - mn < TimeSpan.FromHours(1))
+            yield return Combo("madrugada-reuniao");
+        if (lateNight && cold) yield return Combo("madrugada-frio");
+        if (lateNight && hot) yield return Combo("madrugada-calor");
+        if (earlyMorning && cold) yield return Combo("manha-cedo-frio");
+        if (earlyMorning && fog) yield return Combo("manha-cedo-neblina");
+        if (lunch && weekday && gameJustEnded) yield return Combo("almoco-jogo");
+        if (lunch && videoMin >= 30) yield return Combo("almoco-youtube");
+        if (storm && (evening || lateNight)) yield return Combo("tempestade-noite");
+
+        // Weather × the day's numbers
+        if (rainy && meetings >= 120) yield return Combo("chuva-reuniao-longa");
+        if (hot && meetings >= 120) yield return Combo("calor-reuniao-longa");
+        if (hot && games >= 180) yield return Combo("calor-jogo-muito");
+        if (rainy && games >= 60) yield return Combo("chuva-jogo");
+        if (rainy && videoMin >= 30) yield return Combo("chuva-youtube");
+
+        // The day's numbers × each other
+        if (fails >= 3 && games >= 30) yield return Combo("build-quebrado-jogo");
+        if (meetingJustEnded && fails >= 3) yield return Combo("reuniao-acabou-build-quebrado");
+        if (commits >= 5 && cleanBuilds) yield return Combo("dia-dev-perfeito");
+        if (c.DevToolsEnabled && hour >= 16 && meetings >= 120 && commits == 0) yield return Combo("reuniao-longa-sem-commit");
+        if (musicMin >= 120 && cleanBuilds) yield return Combo("musica-build-limpo");
+        if (socialTop >= 30 && meetings >= 120) yield return Combo("rede-social-reuniao-longa");
+
+        // Special date × something
+        if (specials.Contains("sexta-13") && fails >= 3) yield return Combo("sexta-13-build-quebrado");
+        if (specials.Contains("natal") && (commits >= 1 || meetings >= 1)) yield return Combo("natal-trabalho");
+        if (specials.Contains("ano-novo") && games >= 30) yield return Combo("ano-novo-jogo");
+        if (specials.Contains("inicio-mes") && dow == DayOfWeek.Monday) yield return Combo("inicio-mes-segunda");
+        if (specials.Contains("fim-mes") && dow == DayOfWeek.Friday) yield return Combo("fim-mes-sexta");
     }
 
     private static string TimeOfDay(int hour) => hour switch

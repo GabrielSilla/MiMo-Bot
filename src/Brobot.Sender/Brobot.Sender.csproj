@@ -103,7 +103,7 @@
     <Product>Peemo Sender</Product>
     <AssemblyTitle>Peemo Sender</AssemblyTitle>
     <Description>Envia hora, clima, mídia e atividade de IA para o seu Brobot</Description>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
     <NeutralLanguage>pt-BR</NeutralLanguage>
 
     <!-- The app's own UI has no other language, but WPF/WinForms still ship a
