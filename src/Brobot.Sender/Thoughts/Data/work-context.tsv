@@ -3131,3 +3131,198 @@ c3117	combo:almoco-youtube	HAPPY	leve	Almoço com YouTube. Descansando a cabeça
 c3118	combo:almoco-youtube	NEUTRAL	leve	Hora do almoço e vídeo rolando. O garfo ficou parado em algum momento?
 c3119	combo:almoco-youtube	HAPPY	leve	Almoço e vídeo. Pausa de verdade é essa.
 c3120	combo:almoco-youtube	NEUTRAL	leve	Vídeo no almoço. A tarde volta daqui a pouco, aproveita.
+c3121	combo:sexta-calor	HAPPY	leve	Sexta e sol de rachar. Só falta uma piscina do lado do teclado.
+c3122	combo:sexta-calor	NEUTRAL	leve	Sextou com calor. Um copo gelado ia cair bem agora.
+c3123	combo:sexta-calor	SWEATING	medio	Sexta esquentando e o dia acabando. O chuveiro frio vai ser a recompensa.
+c3124	combo:sexta-calor	NEUTRAL	medio	Calor de sexta na reta final. O ar-condicionado virou o MVP do dia.
+c3125	combo:sexta-calor	SWEATING	acido	Sexta quente até de noite. Nem o gelo do copo aguentou até agora.
+c3126	combo:sexta-calor	NEUTRAL	acido	Calorão numa sexta tarde da noite. O cobertor virou decoração.
+c3127	combo:segunda-chuva	NEUTRAL	leve	Segunda com chuva batendo na janela. Trilha sonora perfeita pra focar.
+c3128	combo:segunda-chuva	NEUTRAL	leve	Chuva logo na segunda. Pelo menos a semana começa mais fresquinha.
+c3129	combo:segunda-chuva	NEUTRAL	medio	Segunda de chuva ainda caindo à tarde. A semana começou sem trégua.
+c3130	combo:segunda-chuva	NEUTRAL	medio	Chuva e segunda no fim do expediente. Deixa qualquer um quieto assim.
+c3131	combo:segunda-chuva	SAD	acido	Segunda, chuva e a noite chegando. A semana já entrou pesada.
+c3132	combo:segunda-chuva	NEUTRAL	acido	Chuva de segunda até essa hora. Nem o pingo na janela quer parar.
+c3133	combo:sexta-noite	NEUTRAL	medio	Sexta de noite e a tela ainda ligada. Aproveita, o fim de semana é seu.
+c3134	combo:sexta-noite	HAPPY	medio	Sextou e a noite chegou rápido. Hora de decidir: sofá ou tela?
+c3135	combo:sexta-noite	NEUTRAL	acido	Sexta virando noite bem tarde. O sábado já tá nos bastidores.
+c3136	combo:sexta-noite	NEUTRAL	acido	Sexta essa hora ainda no PC. A balada virou tela azul.
+c3137	combo:madrugada-commit	NEUTRAL	acido	Commit de madrugada. Só a IDE testemunhou esse crime.
+c3138	combo:madrugada-commit	NEUTRAL	acido	Código sobe de madrugada, a revisão desce só amanhã.
+c3139	combo:segunda-cedo	HAPPY	leve	Segunda de manhã cedo e o teclado já ligado. Respeito total.
+c3140	combo:segunda-cedo	NEUTRAL	leve	Cedo numa segunda. O resto do mundo ainda nem ligou o café.
+c3141	combo:segunda-cedo	NEUTRAL	acido	Segunda cedo desse jeito devia dar direito a soneca ao meio-dia.
+c3142	combo:segunda-cedo	NEUTRAL	acido	Tão cedo numa segunda que até o relógio parece de mau humor.
+c3143	combo:madrugada-jogo	NEUTRAL	acido	Jogo de madrugada. A vitória vale, o sono cobra depois.
+c3144	combo:madrugada-jogo	NEUTRAL	acido	Controle na mão de madrugada. O amanhecer vai te encontrar assim.
+c3145	combo:sexta-sem-reuniao	HAPPY	leve	Sexta sem uma chamada sequer. Foco tranquilo até o fim.
+c3146	combo:sexta-sem-reuniao	NEUTRAL	leve	Agenda vazia numa sexta. O dia rendeu sem interrupção.
+c3147	combo:sexta-sem-reuniao	NEUTRAL	medio	Sexta quase sem chamada nenhuma até agora. Sorte rara.
+c3148	combo:sexta-sem-reuniao	NEUTRAL	medio	Fim de tarde de sexta sem reunião no caminho. Aproveitou bem.
+c3149	combo:sexta-sem-reuniao	NEUTRAL	acido	Sexta livre de pauta e você ainda no PC essa hora. Contraditório.
+c3150	combo:sexta-sem-reuniao	NEUTRAL	acido	Nenhuma reunião numa sexta, e olha a hora mesmo assim.
+c3151	combo:sexta-build-quebrado	NEUTRAL	leve	Sexta e um bug pra resolver antes de fechar. Ainda dá tempo.
+c3152	combo:sexta-build-quebrado	SWEATING	leve	Build vermelho bem na sexta. Ele também queria te testar hoje.
+c3153	combo:sexta-build-quebrado	SWEATING	medio	Sexta esquentando e o build ainda no vermelho. Foco no essencial.
+c3154	combo:sexta-build-quebrado	NEUTRAL	medio	Compilador de mau humor numa sexta de tarde. Combina com o clima.
+c3155	combo:sexta-build-quebrado	ANGRY	acido	Sexta, tarde da noite e o build ainda quebrado. Isso não tem graça.
+c3156	combo:sexta-build-quebrado	NEUTRAL	acido	Bug de sexta virou vigília. O fim de semana espera do lado de fora.
+c3157	combo:sexta-13-build-quebrado	NEUTRAL	leve	Sexta 13 e o compilador decidiu se vingar. Clássico do dia.
+c3158	combo:sexta-13-build-quebrado	NEUTRAL	leve	Bug apareceu numa sexta 13. Suspeito, mas resolvível.
+c3159	combo:sexta-13-build-quebrado	NEUTRAL	medio	Sexta 13 de tarde e build ainda travado. A data já tinha avisado.
+c3160	combo:sexta-13-build-quebrado	NEUTRAL	medio	Compilador assombrado numa sexta 13. Ninguém ficou surpreso.
+c3161	combo:sexta-13-build-quebrado	ANGRY	acido	Sexta 13, tarde da noite e o bug ainda ativo. Filme de terror puro.
+c3162	combo:sexta-13-build-quebrado	NEUTRAL	acido	Build quebrado numa sexta 13 de madrugada. A superstição venceu.
+c3163	combo:segunda-jogo	HAPPY	leve	Jogo numa segunda de manhã. Começo de semana no seu ritmo.
+c3164	combo:segunda-jogo	NEUTRAL	leve	Segunda com uma partida no meio. Aquecendo antes da correria.
+c3165	combo:segunda-jogo	NEUTRAL	medio	Segunda com jogo no fim de tarde. Recompensa por sobreviver ao dia.
+c3166	combo:segunda-jogo	NEUTRAL	medio	Uma horinha de jogo numa segunda cansada. Merecido.
+c3167	combo:segunda-jogo	NEUTRAL	acido	Segunda inteira de jogo até agora. A terça vai cobrar essa conta.
+c3168	combo:segunda-jogo	NEUTRAL	acido	Jogo até tarde numa segunda. Estreia forte de semana.
+c3169	combo:reuniao-acabou-build-quebrado	NEUTRAL	leve	Saiu da call e o build te recebeu quebrado. Um de cada vez.
+c3170	combo:reuniao-acabou-build-quebrado	NEUTRAL	leve	Chamada encerrada, agora é hora de encarar o bug. Bora.
+c3171	combo:reuniao-acabou-build-quebrado	NEUTRAL	medio	Fim da reunião e o compilador esperando bravo. Sequência dura.
+c3172	combo:reuniao-acabou-build-quebrado	SWEATING	medio	Call acabou, build no vermelho. O dia não facilitou nada.
+c3173	combo:reuniao-acabou-build-quebrado	NEUTRAL	acido	Reunião longa acabou e o bug ainda te espera. Sem descanso hoje.
+c3174	combo:reuniao-acabou-build-quebrado	NEUTRAL	acido	Saiu da call tarde e caiu direto no build quebrado. Duro.
+c3175	combo:rede-social-reuniao-longa	NEUTRAL	leve	Feed espiado no meio da call. Multitarefa nível básico, tudo bem.
+c3176	combo:rede-social-reuniao-longa	NEUTRAL	leve	Reunião comprida com uma pausa no feed. Sobrevivência inteligente.
+c3177	combo:rede-social-reuniao-longa	NEUTRAL	medio	Call sem fim e o feed rolando junto. Ninguém vai perceber, relaxa.
+c3178	combo:rede-social-reuniao-longa	NEUTRAL	medio	Pauta longa, feed aberto do lado. Parceria de sobrevivência.
+c3179	combo:rede-social-reuniao-longa	NEUTRAL	acido	Reunião interminável e o feed foi seu único aliado. Entendo.
+c3180	combo:rede-social-reuniao-longa	NEUTRAL	acido	Call até tarde com rede social ligada. O dia pediu um escape.
+c3181	combo:natal-trabalho	HAPPY	leve	Trabalho de Natal, mas só um pouquinho. A ceia agradece a brevidade.
+c3182	combo:natal-trabalho	NEUTRAL	leve	Natal com uma tarefinha rápida. Volta logo pra família.
+c3183	combo:natal-trabalho	NEUTRAL	medio	Natal e uma reunião no meio da festa. Nem o Papai Noel curtiu.
+c3184	combo:natal-trabalho	NEUTRAL	medio	Trabalhando no Natal à tarde. A ceia tá te esperando.
+c3185	combo:natal-trabalho	NEUTRAL	acido	Natal de madrugada e ainda no código. Isso não devia existir.
+c3186	combo:natal-trabalho	NEUTRAL	acido	Trabalho até tarde no Natal. Nem as renas fazem hora extra assim.
+c3187	combo:musica-build-limpo	HAPPY	leve	Playlist rolando e builds passando de cara. Dia sincronizado.
+c3188	combo:musica-build-limpo	NEUTRAL	leve	Música boa e código limpo. Trilha sonora funcionando de verdade.
+c3189	combo:musica-build-limpo	NEUTRAL	medio	Horas de playlist e nenhum erro até agora. Ritmo perfeito.
+c3190	combo:musica-build-limpo	NEUTRAL	medio	Música tocando o dia todo e builds sempre verdes. Combinação rara.
+c3191	combo:musica-build-limpo	NEUTRAL	acido	Música até tarde e builds ainda limpos. Encerra no auge.
+c3192	combo:musica-build-limpo	NEUTRAL	acido	Playlist longa, código impecável e a noite chegando. Bom fechamento.
+c3193	combo:manha-cedo-neblina	NEUTRAL	leve	Neblina cedinho e o dia tímido. Café quente resolve a cena.
+c3194	combo:manha-cedo-neblina	NEUTRAL	leve	Névoa de manhã. Tudo parece mais devagar, até o relógio.
+c3195	combo:manha-cedo-neblina	NEUTRAL	acido	Neblina e cedo demais. Nem o sol quis acordar junto.
+c3196	combo:manha-cedo-neblina	NEUTRAL	acido	Tudo embaçado antes das sete. Combina com meu humor de robô.
+c3197	combo:manha-cedo-frio	NEUTRAL	leve	Frio de manhã cedo. A caneca de café virou o herói do dia.
+c3198	combo:manha-cedo-frio	HAPPY	leve	Manhã fria e você já de pé. O cobertor ficou sozinho, mas tudo bem.
+c3199	combo:manha-cedo-frio	NEUTRAL	acido	Frio desde cedo e o dia mal começou. Cruel demais.
+c3200	combo:manha-cedo-frio	NEUTRAL	acido	Manhã congelante. Até meus circuitos preferiam ficar quietos.
+c3201	combo:inicio-mes-segunda	HAPPY	leve	Mês novo caindo numa segunda. Dá até vontade de fazer planilha.
+c3202	combo:inicio-mes-segunda	NEUTRAL	leve	Dia 1 numa segunda-feira. Duas largadas, uma energia só.
+c3203	combo:inicio-mes-segunda	NEUTRAL	medio	Mês e semana começando juntos, e o dia já rendeu bastante.
+c3204	combo:inicio-mes-segunda	NEUTRAL	medio	Segunda de dia 1 no fim de tarde. O mês já tá pedindo ritmo.
+c3205	combo:inicio-mes-segunda	NEUTRAL	acido	Início de mês numa segunda e você ainda acordado. Já entrou cansado.
+c3206	combo:inicio-mes-segunda	NEUTRAL	acido	Dia 1, segunda-feira e madrugada. O mês começou sem dó.
+c3207	combo:fim-de-semana-reuniao	NEUTRAL	leve	Reunião num fim de semana. Pelo menos foi rapidinha, espero.
+c3208	combo:fim-de-semana-reuniao	NEUTRAL	leve	Chamada de sábado ou domingo. Alguém não respeita calendário.
+c3209	combo:fim-de-semana-reuniao	NEUTRAL	medio	Fim de semana com pauta no meio. A folga ficou incompleta.
+c3210	combo:fim-de-semana-reuniao	NEUTRAL	medio	Reunião de fim de semana à tarde. O sofá tá te esperando depois.
+c3211	combo:fim-de-semana-reuniao	ANGRY	acido	Reunião de fim de semana até tarde. Isso não devia ser legal.
+c3212	combo:fim-de-semana-reuniao	NEUTRAL	acido	Chamada no fim de semana essa hora. Alguém esqueceu que é folga.
+c3213	combo:fim-de-semana-jogo	HAPPY	leve	Fim de semana com o controle na mão. Recarga total.
+c3214	combo:fim-de-semana-jogo	NEUTRAL	leve	Sábado ou domingo jogando. O jeito certo de descansar.
+c3215	combo:fim-de-semana-jogo	NEUTRAL	medio	Fim de semana inteiro de jogo até agora. Bem investido.
+c3216	combo:fim-de-semana-jogo	NEUTRAL	medio	Jogatina de fim de semana no fim de tarde. A última fase antes do jantar.
+c3217	combo:fim-de-semana-jogo	NEUTRAL	acido	Fim de semana de jogo até essa hora. A segunda vai doer.
+c3218	combo:fim-de-semana-jogo	NEUTRAL	acido	Sábado ou domingo jogando até tarde. O sono ficou pra depois.
+c3219	combo:fim-de-semana-commit	NEUTRAL	leve	Código no fim de semana. Hobby que também é trabalho, entendo.
+c3220	combo:fim-de-semana-commit	NEUTRAL	leve	Commit de sábado ou domingo. Projeto pessoal rendendo.
+c3221	combo:fim-de-semana-commit	NEUTRAL	medio	Fim de semana e o repositório ativo. Nem o git tira folga com você.
+c3222	combo:fim-de-semana-commit	NEUTRAL	medio	Commit no meio da tarde de fim de semana. Dedicação e tanto.
+c3223	combo:fim-de-semana-commit	NEUTRAL	acido	Commit de fim de semana até tarde. Isso já é vício, admite.
+c3224	combo:fim-de-semana-commit	NEUTRAL	acido	Fim de semana e código até essa hora. O descanso ficou pra outra hora.
+c3225	combo:dia-dev-perfeito	HAPPY	leve	Nenhum erro o dia todo e commits sobrando. Dia raro desses.
+c3226	combo:dia-dev-perfeito	HAPPY	leve	Compilador quieto e histórico cheio. Você tá on fire hoje.
+c3227	combo:dia-dev-perfeito	NEUTRAL	medio	Builds verdes até agora e nenhum imprevisto. Sorte ou talento?
+c3228	combo:dia-dev-perfeito	HAPPY	medio	Dia redondo de código. Nem um bug ousou aparecer.
+c3229	combo:dia-dev-perfeito	HAPPY	acido	Dia perfeito de dev e você ainda de pé pra comemorar. Merece.
+c3230	combo:dia-dev-perfeito	NEUTRAL	acido	Tudo funcionando até essa hora. Desconfio, mas vou aproveitar.
+c3231	combo:chuva-youtube	NEUTRAL	leve	Chuva caindo e vídeo passando. Tarde perfeita pra ficar em casa.
+c3232	combo:chuva-youtube	NEUTRAL	leve	Som de chuva e vídeo tocando junto. Ambientação de sofá.
+c3233	combo:chuva-youtube	NEUTRAL	medio	Chuva no fim de tarde e o YouTube ainda ligado. Clima que convida.
+c3234	combo:chuva-youtube	NEUTRAL	medio	Tela ligada, chuva lá fora. A tarde escorregou rápido.
+c3235	combo:chuva-youtube	NEUTRAL	acido	Chuva até tarde e vídeo sem parar. O sono ficou na fila.
+c3236	combo:chuva-youtube	NEUTRAL	acido	YouTube e chuva de madrugada. O silêncio lá fora era um convite.
+c3237	combo:chuva-reuniao-longa	NEUTRAL	leve	Chuva de fundo e reunião comprida. Pelo menos tinha trilha sonora.
+c3238	combo:chuva-reuniao-longa	NEUTRAL	leve	Dia de chuva e calendário cheio. Café quente resolveu metade.
+c3239	combo:chuva-reuniao-longa	NEUTRAL	medio	Chuva sem parar e chamada sem fim. Combinação cansativa.
+c3240	combo:chuva-reuniao-longa	NEUTRAL	medio	Reunião longa embaixo de chuva. A tarde ficou pesada dos dois lados.
+c3241	combo:chuva-reuniao-longa	SAD	acido	Chuva o dia inteiro e reunião até tarde. Cinza por fora e por dentro.
+c3242	combo:chuva-reuniao-longa	NEUTRAL	acido	Pauta longa debaixo de chuva. Nem o clima ajudou hoje.
+c3243	combo:chuva-jogo	NEUTRAL	leve	Chuva lá fora, jogo aqui. Programa perfeito de tarde parada.
+c3244	combo:chuva-jogo	HAPPY	leve	Dia molhado, controle seco. Combinação vencedora.
+c3245	combo:chuva-jogo	NEUTRAL	medio	Chuva e jogo dividindo a tarde. Ninguém queria sair mesmo.
+c3246	combo:chuva-jogo	NEUTRAL	medio	Som de chuva no fundo, fase difícil na tela. Trilha sonora ideal.
+c3247	combo:chuva-jogo	NEUTRAL	acido	Chuva e jogo até tarde. O barulho lá fora tava pedindo cama.
+c3248	combo:chuva-jogo	NEUTRAL	acido	Jogo com chuva de fundo até essa hora. A noite passou rápido.
+c3249	combo:calor-reuniao-longa	SWEATING	leve	Calor e agenda cheia. O ventilador trabalhou junto com você.
+c3250	combo:calor-reuniao-longa	NEUTRAL	leve	Dia quente de chamada. A água gelada foi a MVP da tarde.
+c3251	combo:calor-reuniao-longa	SWEATING	medio	Reunião comprida com esse calor. O headset virou uma sauna.
+c3252	combo:calor-reuniao-longa	NEUTRAL	medio	Calor e call sem fim. A tela e o clima combinaram pra cansar.
+c3253	combo:calor-reuniao-longa	SWEATING	acido	Calor e reunião até tarde. O corpo pediu arrego antes da pauta.
+c3254	combo:calor-reuniao-longa	NEUTRAL	acido	Pauta longa nesse calor. Nem o ar-condicionado deu conta hoje.
+c3255	combo:calor-jogo-muito	HAPPY	leve	Calor e jogatina boa. Só faltou um sorvete do lado.
+c3256	combo:calor-jogo-muito	SWEATING	leve	Dia quente de jogo. O controle esquentou junto com o sol.
+c3257	combo:calor-jogo-muito	SWEATING	medio	Muitas horas de jogo nesse calorão. O PC também tá suando.
+c3258	combo:calor-jogo-muito	NEUTRAL	medio	Jogo o dia todo com esse calor. Hidrata, sério.
+c3259	combo:calor-jogo-muito	SWEATING	acido	Calor e jogo até tarde. Nem a madrugada esfriou as coisas.
+c3260	combo:calor-jogo-muito	SWEATING	acido	Muitas horas de tela nesse calor. O quarto virou fornalha.
+c3261	combo:build-quebrado-jogo	NEUTRAL	leve	Bug pra resolver depois, jogo por enquanto. Prioridades certas.
+c3262	combo:build-quebrado-jogo	HAPPY	leve	Build quebrado hoje, mas o jogo tá impecável. Compensou.
+c3263	combo:build-quebrado-jogo	NEUTRAL	medio	Build no vermelho e uma pausa pro jogo. Autocuidado técnico.
+c3264	combo:build-quebrado-jogo	NEUTRAL	medio	Bug esperando e você jogando. O compilador que aguarde.
+c3265	combo:build-quebrado-jogo	NEUTRAL	acido	Build quebrado até tarde e você ainda jogando. Prioridades claras.
+c3266	combo:build-quebrado-jogo	NEUTRAL	acido	O bug não foi resolvido, mas a fase foi zerada. Justo é justo.
+c3267	combo:sexta-noite-chuva	NEUTRAL	medio	Sexta chuvosa de noite. Programa oficial: cobertor e tela.
+c3268	combo:sexta-noite-chuva	NEUTRAL	medio	Chuva na sexta à noite. O clima já decidiu o resto do dia.
+c3269	combo:sexta-noite-chuva	NEUTRAL	acido	Chuva na sexta até tarde. O sábado vai nascer molhado.
+c3270	combo:sexta-noite-chuva	NEUTRAL	acido	Sexta com chuva até a madrugada. O silêncio lá fora chamava pra cama.
+c3271	combo:segunda-sem-reuniao	HAPPY	leve	Segunda sem uma chamada. Raro e bem-vindo.
+c3272	combo:segunda-sem-reuniao	NEUTRAL	leve	Agenda livre numa segunda. Foco tranquilo o dia todo.
+c3273	combo:segunda-sem-reuniao	NEUTRAL	medio	Segunda quase sem reunião até agora. Sorte grande.
+c3274	combo:segunda-sem-reuniao	NEUTRAL	medio	Fim de tarde de segunda e nenhuma pauta apareceu. Aproveitou.
+c3275	combo:segunda-sem-reuniao	NEUTRAL	acido	Segunda sem reunião nenhuma, e olha a hora que ainda tá acordado.
+c3276	combo:reuniao-longa-sem-commit	NEUTRAL	medio	Tarde de reunião e o editor de código parado. Dia diferente.
+c3277	combo:reuniao-longa-sem-commit	NEUTRAL	medio	Muita pauta, nenhum commit até agora. O git ficou de boca aberta.
+c3278	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Reunião até tarde e nenhuma linha commitada. Cansativo dos dois jeitos.
+c3279	combo:reuniao-longa-sem-commit	NEUTRAL	acido	Dia de call sem fim e zero código. Amanhã tem que compensar.
+c3280	combo:fim-mes-sexta	HAPPY	leve	Fim de mês numa sexta. Fecha as contas e libera o fim de semana.
+c3281	combo:fim-mes-sexta	NEUTRAL	leve	A última sexta do mês. Duplo motivo pra comemorar.
+c3282	combo:fim-mes-sexta	NEUTRAL	medio	Mês fechando numa sexta corrida. Quase lá.
+c3283	combo:fim-mes-sexta	NEUTRAL	medio	Fim de mês e sexta no fim de tarde. Reta final apertada.
+c3284	combo:fim-mes-sexta	NEUTRAL	acido	Fim de mês, sexta e madrugada. Fechamento puxado esse.
+c3285	combo:fim-mes-sexta	NEUTRAL	acido	Mês acabando numa sexta até tarde. Amanhã já é outro mês, ainda bem.
+c3286	combo:domingo-noite-jogo	NEUTRAL	medio	Domingo de noite com jogo rolando. O último suspiro do fim de semana.
+c3287	combo:domingo-noite-jogo	NEUTRAL	medio	Jogatina de domingo à noite. Fechando bem antes da segunda chegar.
+c3288	combo:domingo-noite-jogo	NEUTRAL	acido	Domingo virando madrugada no jogo. A segunda chega sem pena.
+c3289	combo:domingo-noite-jogo	NEUTRAL	acido	Jogo de domingo até tarde da noite. O despertador já tá afiado.
+c3290	combo:ano-novo-jogo	HAPPY	leve	Primeira partida do ano rolando. Começo animado.
+c3291	combo:ano-novo-jogo	HAPPY	leve	Ano novo, controle na mão. Assim que se começa bem.
+c3292	combo:ano-novo-jogo	NEUTRAL	medio	Réveillon com jogo no meio. Comemoração do seu jeito.
+c3293	combo:ano-novo-jogo	NEUTRAL	medio	Fogos lá fora, jogo aqui dentro. Cada um comemora como quer.
+c3294	combo:ano-novo-jogo	NEUTRAL	acido	Virada de ano jogando até essa hora. O ano começou sem dormir.
+c3295	combo:ano-novo-jogo	NEUTRAL	acido	Ano novo e madrugada de jogo. Meta de sono já quebrada no dia 1.
+c3296	combo:tempestade-noite	NEUTRAL	medio	Tempestade forte lá fora. Bom momento pra desconectar um pouco.
+c3297	combo:tempestade-noite	NEUTRAL	medio	Trovoada de noite. O clima decidiu dar um show extra.
+c3298	combo:tempestade-noite	NEUTRAL	acido	Tempestade até tarde da noite. Melhor companhia agora é o travesseiro.
+c3299	combo:tempestade-noite	NEUTRAL	acido	Trovão e chuva forte de madrugada. Nem o WiFi confia nisso.
+c3300	combo:madrugada-youtube	NEUTRAL	acido	Vídeo atrás de vídeo de madrugada. O relógio virou sugestão.
+c3301	combo:madrugada-youtube	NEUTRAL	acido	YouTube de madrugada. O 'assistir mais tarde' virou agora.
+c3302	combo:madrugada-reuniao	NEUTRAL	acido	Call de madrugada. Alguém nesse fuso não dorme nunca.
+c3303	combo:madrugada-reuniao	NEUTRAL	acido	Reunião de madrugada terminando. Só a lua participou inteira.
+c3304	combo:madrugada-musica	NEUTRAL	acido	Playlist ainda tocando de madrugada. O repeat não cansa, você sim.
+c3305	combo:madrugada-musica	NEUTRAL	acido	Música rolando até tarde da madrugada. Hora do modo silencioso.
+c3306	combo:almoco-youtube	HAPPY	leve	Vídeo no horário do almoço. Sobremesa pros olhos.
+c3307	combo:almoco-youtube	NEUTRAL	leve	Almoço com tela ligada. Combo clássico de horário de pico.
+c3308	combo:almoco-jogo	HAPPY	leve	Uma fase rápida no almoço. Recarga antes da tarde.
+c3309	combo:almoco-jogo	NEUTRAL	leve	Jogo no intervalo do almoço. Pausa ganhou nível extra.
+c3310	combo:madrugada-rede-social	NEUTRAL	acido	Rolando o feed de madrugada. O 'só mais um post' não tem fim.
+c3311	combo:madrugada-rede-social	NEUTRAL	acido	Feed aberto até tarde da madrugada. O sono foi embora sem avisar.
+c3312	combo:madrugada-frio	NEUTRAL	acido	Frio de madrugada e a tela ainda ligada. O cobertor tá te chamando.
+c3313	combo:madrugada-frio	NEUTRAL	acido	Madrugada gelada dessas pede caneca quente e não teclado.
+c3314	combo:madrugada-calor	SWEATING	acido	Calor de madrugada sem trégua. O ventilador não desliga por nada.
+c3315	combo:madrugada-calor	NEUTRAL	acido	Noite abafada dessas faz até o silêncio suar.

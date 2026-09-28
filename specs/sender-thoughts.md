@@ -264,10 +264,11 @@ has phrases for every mood it can happen in (`GROUP_MOODS`). A new group
 needs adding to `KNOWN_GROUPS` (and `GROUP_MOODS` / `GROUP_VALUES` when it
 applies) as well as to `Situations`.
 
-Size today: ~1,220 base phrases in 56 categories and ~3,120 context
+Size today: ~1,220 base phrases in 56 categories and ~3,315 context
 phrases — the general groups (hora 109–148 each, dia 59–76, clima 49–74)
 were grown first since they come up most, then the daily triggers (34–54
-each), and 42 combos (~12 each); special dates, once a year, have 9 each. The original
+each), and 42 combos (11–27 each, after two growth passes); special dates,
+once a year, have 9 each. The original
 plan aimed at ~10,000 base and ~8,200 context; growing further is best done
 in rounds after real use shows what repeats and what lands, with the voice
 guide adjusted from that feedback. Weather is the hardest to grow without
