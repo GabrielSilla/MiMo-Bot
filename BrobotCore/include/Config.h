@@ -70,6 +70,20 @@ constexpr float PONG_PADDLE_DEFLECTION_FACTOR = 0.0025f;
 // Personality's own rendering (see PongGame::update / main.cpp's loop()).
 constexpr unsigned long PONG_GAME_OVER_HOLD_MS = 4000;
 
+// STREAM/FRAME video mode (StreamMode.h/.cpp) — a third exclusive mode,
+// see PROTOCOL.md's STREAM/FRAME section and specs/sender-gba.md. A row
+// record on the wire is 1 byte of row index plus 160 RGB565 pixels (2
+// bytes each, big-endian) — see Protocol.cpp's binary-mode parsing.
+constexpr int STREAM_ROW_PAYLOAD_BYTES = LOGICAL_WIDTH * 2;            // 320
+constexpr int STREAM_ROW_RECORD_BYTES = STREAM_ROW_PAYLOAD_BYTES + 1;  // 321
+// No FRAME for this long while STREAM is active means the PC app that was
+// streaming died or closed without a clean STREAM STOP — auto-revert to
+// Personality. Pong/RPG never needed a timeout like this: losing the
+// keyboard hook just stops key events, it doesn't need to end the round on
+// its own. A dead video source has no equivalent signal, so STREAM needs
+// its own watchdog (see StreamMode::update).
+constexpr unsigned long STREAM_TIMEOUT_MS = 3000;
+
 // RPG battle minigame ("Batalha RPG" in Brobot.Sender) — a Final Fantasy-
 // style turn-based fight against 2-3 randomly rolled enemies (see
 // RpgBattle.h/.cpp). Same exclusive-mode bypass as the Pong block above;

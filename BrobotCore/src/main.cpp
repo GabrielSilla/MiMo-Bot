@@ -10,6 +10,7 @@
 #include "PongGame.h"
 #include "Protocol.h"
 #include "RpgBattle.h"
+#include "StreamMode.h"
 
 #if VSCREEN
 #include "SerialVirtualDisplay.h"
@@ -50,8 +51,9 @@ Personality personality;
 DeviceSettings deviceSettings;
 PongGame pongGame;
 RpgBattle rpgBattle;
+StreamMode streamMode;
 Buzzer buzzer;
-Protocol protocol(personality, deviceSettings, pongGame, rpgBattle, buzzer);
+Protocol protocol(personality, deviceSettings, pongGame, rpgBattle, streamMode, buzzer);
 
 unsigned long lastFrameAt = 0;
 
@@ -142,6 +144,17 @@ void loop() {
 #if defined(ESP32)
     if (!protocolClient || !protocolClient.connected()) {
         protocolClient = protocolServer.available();
+        if (protocolClient) {
+            // Nagle (on by default) batches small writes hoping to
+            // coalesce with more outgoing data — invisible for the usual
+            // fire-and-forget FACE/MSG/PONG KEY commands (never waited on),
+            // but stalls a tight request-response exchange like STREAM/
+            // FRAME's one-frame-in-flight FRAMEOK ack (see PROTOCOL.md) by
+            // tens to hundreds of ms per round trip. Brobot.Connection
+            // disables it on its side of this same link for the same
+            // reason (see BrobotConnection.cs's ConnectTcp).
+            protocolClient.setNoDelay(true);
+        }
     }
     bool pcConnected = protocolClient && protocolClient.connected();
     if (pcConnected) {
@@ -152,16 +165,33 @@ void loop() {
     protocol.poll(Serial, now);
 #endif
 
-    // Pong and RPG Battle are both exclusive: while either is active it
-    // replaces Personality's own update entirely rather than adding another
-    // priority tier, so nothing (not even the idle blink/look-around/sleep
-    // timers, let alone a NOTIFY) advances or interrupts it — see
-    // PongGame.h/RpgBattle.h. Protocol::dispatch is what keeps the two from
-    // both being active at once, so this is a plain either/or, never both.
+#if !VSCREEN
+    // Drained every loop() iteration — independent of the FRAME_INTERVAL_MS
+    // gate below — so streamed rows land on the canvas with as little
+    // latency as possible instead of waiting for the next render tick. Only
+    // meaningful against the physical display, which is the only IDisplay
+    // implementation with a canvas to write into (see StreamMode.h).
+    while (streamMode.hasPendingRow()) {
+        uint8_t row;
+        const uint16_t* pixels;
+        streamMode.takePendingRow(row, pixels);
+        display.writeStreamRow(row, pixels);
+    }
+#endif
+
+    // Pong, RPG Battle and STREAM are all exclusive: while any one is active
+    // it replaces Personality's own update entirely rather than adding
+    // another priority tier, so nothing (not even the idle blink/look-
+    // around/sleep timers, let alone a NOTIFY) advances or interrupts it —
+    // see PongGame.h/RpgBattle.h/StreamMode.h. Protocol::dispatch is what
+    // keeps the three from ever being active at once, so this is a plain
+    // either/or/or, never more than one.
     if (pongGame.isActive()) {
         pongGame.update(now);
     } else if (rpgBattle.isActive()) {
         rpgBattle.update(now);
+    } else if (streamMode.isActive()) {
+        streamMode.update(now);
     } else {
         personality.update(now);
     }
@@ -220,14 +250,29 @@ void loop() {
 
     if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
         lastFrameAt = now;
-        display.clear(0, 0, 0);
+
+        // Normally cleared every frame like always. While STREAM is active,
+        // clearing is skipped except the one frame right after STREAM START
+        // (consumeNeedsCanvasClear() is edge-triggered — true exactly once)
+        // — the canvas is "cleared once, then only receives stream data"
+        // per PROTOCOL.md, since streamed rows accumulate across frames
+        // rather than being redrawn from scratch each time.
+        bool streamActive = streamMode.isActive();
+        if (!streamActive || streamMode.consumeNeedsCanvasClear()) {
+            display.clear(0, 0, 0);
+        }
+
         if (pongGame.isActive()) {
-            // Exclusive, same bypass shape as the two branches below: a
-            // round in progress owns the whole frame, Personality/Face never
-            // get a look-in until it ends.
+            // Exclusive, same bypass shape as the branches below: a round
+            // in progress owns the whole frame, Personality/Face never get
+            // a look-in until it ends.
             pongGame.render(display);
         } else if (rpgBattle.isActive()) {
             rpgBattle.render(display, now);
+        } else if (streamActive) {
+            // No-op: rows were already pushed straight into the canvas by
+            // the drain loop above, independent of this render tick —
+            // present() below just flushes whatever's accumulated there.
         } else {
 #if defined(ESP32)
             if (!pcConnected && !everConnected) {

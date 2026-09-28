@@ -2,6 +2,7 @@
 #include "AurebeshGFXFont.h"
 #include "LatinAccentGFXFont.h"
 #include <SPI.h>
+#include <string.h>
 
 // A cheap, integer-only take on the "Nostalgia CRT" style shader used on the
 // XBSX2/PCSX2 side (see D:\MyProjects\XBSX2\IA.MD) — that one is a GPU
@@ -199,6 +200,14 @@ void ST7735PhysicalDisplay::drawText(const char* text, int x, int y, uint8_t r, 
         penX += 6;
     }
     _canvas.setFont(nullptr);  // leave the canvas in its normal default-font state for every other drawText caller
+}
+
+void ST7735PhysicalDisplay::writeStreamRow(int row, const uint16_t pixelsRGB565[LOGICAL_WIDTH]) {
+    if (row < 0 || row >= LOGICAL_HEIGHT) {
+        return;
+    }
+    uint16_t* buffer = _canvas.getBuffer();
+    memcpy(buffer + row * LOGICAL_WIDTH, pixelsRGB565, LOGICAL_WIDTH * sizeof(uint16_t));
 }
 
 void ST7735PhysicalDisplay::present() {

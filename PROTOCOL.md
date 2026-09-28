@@ -35,8 +35,11 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `RPG LEFT` / `RPG RIGHT` | Um passo do cursor no menu atual (ação, magia ou alvo) — evento discreto por tecla pressionada, não "segurar para mover" como o `PONG KEY`. |
 | `RPG CONFIRM` | Confirma a opção selecionada. |
 | `RPG STOP` | Encerra a batalha na hora e volta ao normal. |
+| `STREAM START` | Liga o modo de vídeo (ver abaixo) — exclusivo, no mesmo nível do `PONG`/`RPG`: nenhum dos três roda ao mesmo tempo que outro. |
+| `FRAME <seq> <bytes>` | Uma linha de cabeçalho seguida imediatamente de exatamente `<bytes>` de payload **binário** (não texto) no mesmo Stream — ver abaixo. Só tem efeito com `STREAM` ativo. |
+| `STREAM STOP` | Encerra o modo de vídeo na hora e volta ao normal. Também acontece sozinho se nenhum `FRAME` chegar por 3s (app do PC caiu). |
 | `BUZZ <cue>` | **Só para teste manual** — toca uma vinheta do buzzer direto, sem precisar chegar no evento real que a dispara. `<cue>`: `VICTORY` (a fanfarra de vitória de Final Fantasy do fim da Batalha RPG, ver `Buzzer::playRpgVictory`). Respeita `SOUND OFF`. Nome não reconhecido é ignorado. |
-| `PING` | **O único comando que o Core responde** — devolve a linha `PEEMO <revisão>` (hoje `PEEMO 1`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o Peemo na rede (ver abaixo). |
+| `PING` | **O único comando que o Core responde** — devolve a linha `PEEMO <revisão>` (hoje `PEEMO 2`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o Peemo na rede (ver abaixo). |
 
 `WEATHER`, `TIME`, `THEME`, `CLASSICCOLOR`, `SOUND` e `SCANLINES` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.
 
@@ -165,6 +168,52 @@ RPG OVER <VICTORY|DEFEAT|FLED>
 Escrita direto no `Stream` seguida de um `PRESENT`, exatamente como o
 `PONG OVER` — o Brobot.Sender usa essa linha só para saber a hora certa de
 parar de escutar o teclado.
+
+### STREAM / FRAME (vídeo)
+
+Um terceiro modo exclusivo, no mesmo espírito do Pong e da Batalha RPG acima
+— hoje só a Fase 0 (medição) está implementada; o uso real (mGBA rodando no
+PC, ver `specs/sender-gba.md`) ainda não foi construído. `STREAM START` liga
+um modo de vídeo genérico (não é "modo GBA" — a ideia de espelhar a tela do
+PC também vai poder reaproveitar isso depois): `Personality`/`Face` param de
+atualizar/desenhar por completo, o framebuffer é limpo para preto **uma
+vez** e a partir daí só recebe dados de stream. `Protocol::dispatch` garante
+que `STREAM` nunca fica ativo ao mesmo tempo que `PONG`/`RPG`, e vice-versa,
+do mesmo jeito que os outros dois já se excluem entre si.
+
+Diferente de `PONG`/`RPG`, `FRAME` não é uma linha de texto: é um cabeçalho
+`FRAME <seq> <bytes>` seguido imediatamente de exatamente `<bytes>` de
+payload binário no mesmo Stream, antes de qualquer outra linha de comando.
+`Protocol::poll` alterna para consumir bytes crus enquanto o payload não
+termina, em vez de acumular linha por linha. O payload é uma sequência de
+registros de linha:
+
+```
+[linha y (1 byte)] [160 x RGB565 big-endian (320 bytes)]
+```
+
+Cada registro tem 321 bytes; `<bytes>` deve ser um múltiplo disso (um
+payload malformado — sobra menor que 321 bytes no fim — é descartado em vez
+de travar o parser). Depois de aplicar o frame inteiro, o Core responde
+direto no Stream, seguido de `PRESENT` — mesmo padrão de `PONG OVER`/
+`RPG OVER`, para reaproveitar o agrupamento em quadro que o lado do PC já
+tem:
+
+```
+FRAMEOK <seq>
+```
+
+Um `FRAME` que chega sem `STREAM` ativo, ou enquanto outro `FRAME` ainda
+está em andamento, é ignorado. Se nenhum `FRAME` chegar por 3s com `STREAM`
+ativo, o Core assume que o app do PC caiu e volta sozinho para
+`Personality`, sem precisar de `STREAM STOP`.
+
+O filtro CRT (`SCANLINES`) e o próprio `present()` (push em SPI por
+scanline) são os mesmos de sempre — o vídeo escreve direto no framebuffer
+que `present()` já sabe desenhar, então nenhum dos dois precisou de código
+novo. O Brobot Virtual Display (simulador) está fora de escopo por enquanto:
+`STREAM` ainda bloqueia `Personality` nele (via `isActive()`), mas nenhuma
+linha de desenho é gerada — ver `specs/sender-gba.md`.
 
 ### Telemetria da sessão de IA (`AISTATS`)
 

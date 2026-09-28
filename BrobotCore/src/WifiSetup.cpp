@@ -83,6 +83,15 @@ bool tryConnectSavedNetworks() {
     }
 
     WiFi.mode(WIFI_STA);
+    // Modem sleep (the default) dozes the radio between the AP's DTIM
+    // beacons and only wakes it on that schedule — invisible for the
+    // occasional FACE/MSG line, but it's what was silently capping STREAM/
+    // FRAME's round trip to well under what the raw data volume needs (see
+    // specs/sender-gba.md's Phase 0 measurement and PROTOCOL.md's STREAM/
+    // FRAME section) even after fixing Nagle on both ends of the TCP link.
+    // Always-on costs continuous power a battery-powered board couldn't
+    // afford, but Peemo is mains-powered, so there's nothing to trade off.
+    WiFi.setSleep(false);
     for (size_t i = 0; i < networks.size(); i++) {
         const SavedNetwork& network = networks[i];
         WiFi.begin(network.ssid.c_str(), network.password.c_str());

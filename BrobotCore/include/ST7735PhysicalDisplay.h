@@ -42,6 +42,18 @@ public:
     // the interface both displays mirror (see CLAUDE.md).
     void setScanlinesEnabled(bool enabled) { _scanlinesEnabled = enabled; }
 
+    // Writes one row of pre-converted RGB565 pixel data (host byte order,
+    // same format color565() produces) directly into the canvas's backing
+    // buffer, bypassing GFXcanvas16::drawPixel entirely — used only by
+    // StreamMode for video streaming (see specs/sender-gba.md), where a
+    // real frame is LOGICAL_WIDTH pixels/row and one GFXcanvas16 call per
+    // pixel (with its own bounds-check/rotation-switch overhead) would cost
+    // far more than a single memcpy needs to. Not part of IDisplay: same
+    // reasoning as setScanlinesEnabled — a hardware-only fast path with no
+    // Brobot Virtual Display equivalent (the simulator is out of scope for
+    // STREAM, see specs/sender-gba.md). No-ops if row is out of range.
+    void writeStreamRow(int row, const uint16_t pixelsRGB565[LOGICAL_WIDTH]);
+
 private:
     Adafruit_ST7735 _tft;
     GFXcanvas16 _canvas;

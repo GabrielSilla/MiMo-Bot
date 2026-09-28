@@ -1,10 +1,14 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Brobot.Connection;
+using Brobot.Sender.Gba;
 using Brobot.Sender.Thoughts;
 using Drawing = System.Drawing;
 using Forms = System.Windows.Forms;
@@ -191,6 +195,45 @@ public partial class MainWindow : Window
     // Batalha RPG: same shape as the Pong fields above.
     private DispatcherTimer? _rpgStartTimer;
     private GlobalKeyboardHook? _rpgHook;
+
+    // GBA streaming Phase 0 test (see specs/sender-gba.md and PROTOCOL.md's
+    // STREAM/FRAME section) — a throwaway measurement tool behind Modo
+    // teste, not the real feature: drives a synthetic moving pattern (a
+    // scan bar over a static gradient) so full frames and row-diff-only
+    // partial frames can both be exercised, and reports fps/RTT so Phase 1
+    // (the real libretro/mGBA integration) knows whether row-diffs alone
+    // are enough bandwidth-wise or RLE is needed on top.
+    private const int GbaCanvasWidth = 160;
+    private const int GbaCanvasHeight = 128;
+    private const int GbaScanBarHeight = 8;
+    private const int GbaFullFrameEveryNTicks = 30;
+
+    private DispatcherTimer? _gbaStreamTimer;
+    private bool _gbaStreamRunning;
+    private int _gbaTick;
+    private ushort _gbaSeq;
+    // One frame in flight (see specs/sender-gba.md's "Frame pipeline"):
+    // never send tick N+1 before FRAMEOK for tick N lands, so the link can
+    // never build a backlog — a slow/stalled link just shows up as low
+    // measured fps instead of growing latency.
+    private bool _gbaAwaitingAck;
+    private bool _gbaFrameWasFull;
+    private DateTime _gbaFrameSentAt;
+    private int _gbaScanBarRow;
+    private int _gbaPrevScanBarRow = -1;
+    private DateTime _gbaStreamStartedAt;
+    private int _gbaFullFrameCount;
+    private double _gbaFullFrameRttTotalMs;
+    private int _gbaPartialFrameCount;
+    private double _gbaPartialFrameRttTotalMs;
+
+    // GBA live streaming test (Fases 2/3 — see specs/sender-gba.md): the
+    // real libretro/mGBA pipeline, running continuously and streaming video
+    // to Peemo, as opposed to the synthetic-pattern test above (Fase 0) or
+    // the one-shot screenshot test (Fase 1). Mutually exclusive with the
+    // synthetic test — both would fight over the same STREAM/FRAME channel
+    // on Core's side otherwise.
+    private GbaSession? _gbaLiveSession;
 
     private AiThoughtsListener? _aiThoughtsListener;
     private bool _aiThoughtFaceActive;
@@ -670,7 +713,7 @@ public partial class MainWindow : Window
         if (!connected) return "desconectado";
         if (_activeCalls.Count > 0) return "em reunião";
         if (_gameRunning) return "jogo aberto";
-        if (_pongStartTimer != null || _pongHook != null || _rpgStartTimer != null || _rpgHook != null) return "minijogo rodando";
+        if (_pongStartTimer != null || _pongHook != null || _rpgStartTimer != null || _rpgHook != null || _gbaStreamRunning || _gbaLiveSession?.IsRunning == true) return "minijogo rodando";
         if (_aiThoughtFaceActive || DateTime.UtcNow < _aiMessageHoldUntil) return "mensagem da IA na tela";
         if (DateTime.UtcNow - _lastNotificationSentAt < ThoughtAfterNotificationGap) return "notificação recente";
         if (UserPresence.IdleTime > ThoughtAwayAfter) return "usuário ausente";
@@ -2146,6 +2189,346 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// "Iniciar stream" (Modo teste, GBA Phase 0): sends STREAM START, then
+    /// drives the synthetic pattern loop. See the class-level GBA field
+    /// comments for the overall shape.
+    /// </summary>
+    private void TesteGbaStreamStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (_gbaStreamRunning)
+        {
+            return;
+        }
+
+        if (_gbaLiveSession?.IsRunning == true)
+        {
+            ShowTestStatus("Já tem uma transmissão de GBA rodando.");
+            return;
+        }
+
+        if (!_connection.IsConnected)
+        {
+            ShowTestStatus("Sem conexão com o Peemo.");
+            return;
+        }
+
+        _gbaStreamRunning = true;
+        _gbaTick = 0;
+        _gbaSeq = 0;
+        _gbaAwaitingAck = false;
+        _gbaPrevScanBarRow = -1;
+        _gbaFullFrameCount = 0;
+        _gbaFullFrameRttTotalMs = 0;
+        _gbaPartialFrameCount = 0;
+        _gbaPartialFrameRttTotalMs = 0;
+        _gbaStreamStartedAt = DateTime.UtcNow;
+
+        _connection.SendCommand("STREAM START");
+
+        // The timer just offers a tick; one-frame-in-flight pacing
+        // (GbaStreamTimer_Tick skipping ticks while _gbaAwaitingAck) is what
+        // actually caps the effective rate to whatever the link/firmware
+        // keeps up with — this interval is a ceiling, not the measurement.
+        _gbaStreamTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) };
+        _gbaStreamTimer.Tick += GbaStreamTimer_Tick;
+        _gbaStreamTimer.Start();
+
+        GbaStreamStatusText.Text = "Transmitindo...";
+        TesteGbaStreamStartButton.IsEnabled = false;
+        TesteGbaStreamStopButton.IsEnabled = true;
+    }
+
+    private void TesteGbaStreamStop_Click(object sender, RoutedEventArgs e)
+    {
+        StopGbaStreamTest("Parado.");
+    }
+
+    private void StopGbaStreamTest(string statusSuffix)
+    {
+        if (!_gbaStreamRunning)
+        {
+            return;
+        }
+
+        _gbaStreamRunning = false;
+        _gbaStreamTimer?.Stop();
+        _gbaStreamTimer = null;
+        _connection.SendCommand("STREAM STOP");
+
+        TesteGbaStreamStartButton.IsEnabled = true;
+        TesteGbaStreamStopButton.IsEnabled = false;
+        GbaStreamStatusText.Text = $"{GbaStreamStatusText.Text} {statusSuffix}";
+    }
+
+    private void GbaStreamTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_gbaAwaitingAck)
+        {
+            return;
+        }
+
+        if (!_connection.IsConnected)
+        {
+            StopGbaStreamTest("Conexão perdida.");
+            return;
+        }
+
+        _gbaTick++;
+        bool fullFrame = (_gbaTick % GbaFullFrameEveryNTicks) == 0;
+        _gbaScanBarRow = (_gbaTick * 3) % GbaCanvasHeight;
+
+        var touchedRows = new List<int>();
+        if (fullFrame)
+        {
+            for (int y = 0; y < GbaCanvasHeight; y++)
+            {
+                touchedRows.Add(y);
+            }
+        }
+        else
+        {
+            // Only the scan bar's current band and the band it just
+            // vacated actually changed since the last tick — a real GBA
+            // frame changes in patches the same way (see specs/sender-gba.md),
+            // which is exactly the case Phase 0 needs to measure.
+            var touched = new SortedSet<int>();
+            for (int i = 0; i < GbaScanBarHeight; i++)
+            {
+                touched.Add((_gbaScanBarRow + i) % GbaCanvasHeight);
+                if (_gbaPrevScanBarRow >= 0)
+                {
+                    touched.Add((_gbaPrevScanBarRow + i) % GbaCanvasHeight);
+                }
+            }
+            touchedRows.AddRange(touched);
+        }
+        _gbaPrevScanBarRow = _gbaScanBarRow;
+
+        byte[] payload = new byte[touchedRows.Count * StreamRowRecordBytes];
+        int offset = 0;
+        foreach (int row in touchedRows)
+        {
+            payload[offset++] = (byte)row;
+            offset = WriteGbaRowPixels(row, payload, offset);
+        }
+
+        _gbaSeq++;
+        byte[] header = System.Text.Encoding.ASCII.GetBytes($"FRAME {_gbaSeq} {payload.Length}\n");
+        byte[] framed = new byte[header.Length + payload.Length];
+        Buffer.BlockCopy(header, 0, framed, 0, header.Length);
+        Buffer.BlockCopy(payload, 0, framed, header.Length, payload.Length);
+
+        _gbaFrameWasFull = fullFrame;
+        _gbaAwaitingAck = true;
+        _gbaFrameSentAt = DateTime.UtcNow;
+        _connection.SendRawBytes(framed);
+    }
+
+    // A row record on the wire is [row byte][160 RGB565 pixels, big-endian] —
+    // see PROTOCOL.md's STREAM/FRAME section. Kept here rather than in
+    // Config.h-style shared constants since this is Sender-only test code;
+    // the real GbaFrameSender (Phase 3+) is what will own this shape on the
+    // PC side for good.
+    private const int StreamRowPayloadBytes = GbaCanvasWidth * 2;
+    private const int StreamRowRecordBytes = StreamRowPayloadBytes + 1;
+
+    /// <summary>
+    /// Writes one row's 160 RGB565 pixels (big-endian, see PROTOCOL.md) into
+    /// <paramref name="dest"/> starting at <paramref name="offset"/> and
+    /// returns the offset just past them. Static gradient background, with
+    /// the moving scan bar (see GbaStreamTimer_Tick) drawn solid white over
+    /// whichever rows it currently occupies.
+    /// </summary>
+    private static int WriteGbaRowPixels(int row, byte[] dest, int offset)
+    {
+        for (int x = 0; x < GbaCanvasWidth; x++)
+        {
+            int r = x * 31 / GbaCanvasWidth;
+            int g = row * 63 / GbaCanvasHeight;
+            int b = 31 - r;
+            ushort pixel = (ushort)((r << 11) | (g << 5) | b);
+            dest[offset++] = (byte)(pixel >> 8);
+            dest[offset++] = (byte)(pixel & 0xFF);
+        }
+        return offset;
+    }
+
+    private void UpdateGbaStreamStats()
+    {
+        int totalFrames = _gbaFullFrameCount + _gbaPartialFrameCount;
+        double elapsedS = (DateTime.UtcNow - _gbaStreamStartedAt).TotalSeconds;
+        double fps = elapsedS > 0 ? totalFrames / elapsedS : 0;
+        double avgFullRtt = _gbaFullFrameCount > 0 ? _gbaFullFrameRttTotalMs / _gbaFullFrameCount : 0;
+        double avgPartialRtt = _gbaPartialFrameCount > 0 ? _gbaPartialFrameRttTotalMs / _gbaPartialFrameCount : 0;
+        GbaStreamStatusText.Text =
+            $"{fps:F1} fps ({totalFrames} frames) — RTT cheio {avgFullRtt:F0}ms ({_gbaFullFrameCount}), " +
+            $"parcial {avgPartialRtt:F0}ms ({_gbaPartialFrameCount})";
+    }
+
+    /// <summary>
+    /// "Rodar ROM" (Modo teste, GBA Fase 1): loads the mGBA libretro core
+    /// and a hardcoded ROM, runs a few seconds of emulated time headless,
+    /// and dumps the last frame as a PNG — proves the P/Invoke layer in
+    /// Gba/LibretroCore.cs actually produces real video before any of the
+    /// real frame pipeline (scale/diff/send to Peemo) gets built on top of
+    /// it. Throwaway verification, not the real feature — see
+    /// specs/sender-gba.md's Phase 1.
+    /// </summary>
+    private void TesteGbaRom_Click(object sender, RoutedEventArgs e)
+    {
+        TesteGbaRomButton.IsEnabled = false;
+        GbaRomStatusText.Text = "Carregando...";
+
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string gbaDir = Path.Combine(appData, "Brobot", "gba");
+        string corePath = Path.Combine(gbaDir, "mgba_libretro.dll");
+        // Hardcoded to the one ROM path given for this Phase 1 check — the
+        // real "pick a ROM" UI is Phase 4 (see specs/sender-gba.md).
+        const string romPath = @"C:\Users\Gabriel\Downloads\Pokemon_ FireRed Version\Pokemon - FireRed Version (USA, Europe) (Rev 1).gba";
+        string outPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "peemo-gba-teste.png");
+
+        Task.Run(() =>
+        {
+            try
+            {
+                byte[]? lastFramePixels = null;
+                LibretroCore.PixelFormat lastFormat = LibretroCore.PixelFormat.Rgb1555;
+                int lastWidth = 0;
+                int lastHeight = 0;
+
+                using var core = new LibretroCore(corePath, gbaDir);
+                core.FrameReady += (format, width, height, pixels) =>
+                {
+                    lastFramePixels = pixels;
+                    lastFormat = format;
+                    lastWidth = width;
+                    lastHeight = height;
+                };
+
+                if (!core.LoadGame(romPath))
+                {
+                    Dispatcher.Invoke(() => FinishGbaRomTest("Falha ao carregar a ROM."));
+                    return;
+                }
+
+                const int frameCount = 300; // ~5s de jogo a 60fps
+                var stopwatch = Stopwatch.StartNew();
+                for (int i = 0; i < frameCount; i++)
+                {
+                    core.Run();
+                }
+                stopwatch.Stop();
+
+                if (lastFramePixels == null)
+                {
+                    Dispatcher.Invoke(() => FinishGbaRomTest("Rodou, mas nenhum frame de vídeo chegou."));
+                    return;
+                }
+
+                SaveGbaFramePng(lastFormat, lastWidth, lastHeight, lastFramePixels, outPath);
+
+                double emulatedFps = frameCount / stopwatch.Elapsed.TotalSeconds;
+                Dispatcher.Invoke(() => FinishGbaRomTest(
+                    $"OK! {frameCount} frames em {stopwatch.ElapsedMilliseconds}ms ({emulatedFps:F0} fps de emulação). Print em {outPath}"));
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() => FinishGbaRomTest($"Erro: {ex.Message}"));
+            }
+        });
+    }
+
+    private void FinishGbaRomTest(string status)
+    {
+        GbaRomStatusText.Text = status;
+        TesteGbaRomButton.IsEnabled = true;
+    }
+
+    /// <summary>
+    /// The three retro_pixel_format values map onto WPF built-in pixel
+    /// formats with an identical bit layout each (verified against
+    /// libretro.h and the WPF PixelFormats docs) — no manual channel
+    /// shuffling needed, just picking the matching one.
+    /// </summary>
+    private static void SaveGbaFramePng(LibretroCore.PixelFormat format, int width, int height, byte[] pixels, string path)
+    {
+        PixelFormat wpfFormat = format switch
+        {
+            LibretroCore.PixelFormat.Xrgb8888 => PixelFormats.Bgr32,
+            LibretroCore.PixelFormat.Rgb565 => PixelFormats.Bgr565,
+            _ => PixelFormats.Bgr555,
+        };
+        int bytesPerPixel = format == LibretroCore.PixelFormat.Xrgb8888 ? 4 : 2;
+        int stride = width * bytesPerPixel;
+
+        BitmapSource bitmap = BitmapSource.Create(width, height, 96, 96, wpfFormat, null, pixels, stride);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
+        encoder.Save(fileStream);
+    }
+
+    /// <summary>
+    /// "Transmitir" (Modo teste, GBA Fases 2/3): loads the same hardcoded
+    /// ROM but runs it continuously on a GbaSession, streaming real video
+    /// to Peemo instead of dumping one screenshot. See GbaSession.cs for
+    /// the pacing/diff/send shape.
+    /// </summary>
+    private void TesteGbaLiveStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (_gbaLiveSession?.IsRunning == true)
+        {
+            return;
+        }
+
+        if (_gbaStreamRunning)
+        {
+            GbaLiveStatusText.Text = "Já tem o teste de padrão sintético rodando.";
+            return;
+        }
+
+        if (!_connection.IsConnected)
+        {
+            GbaLiveStatusText.Text = "Sem conexão com o Peemo.";
+            return;
+        }
+
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string gbaDir = Path.Combine(appData, "Brobot", "gba");
+        string corePath = Path.Combine(gbaDir, "mgba_libretro.dll");
+        const string romPath = @"C:\Users\Gabriel\Downloads\Pokemon_ FireRed Version\Pokemon - FireRed Version (USA, Europe) (Rev 1).gba";
+
+        _gbaLiveSession = new GbaSession(_connection, corePath, gbaDir, romPath);
+        _gbaLiveSession.StatusChanged += status => Dispatcher.Invoke(() => GbaLiveStatusText.Text = status);
+        _gbaLiveSession.Start();
+
+        TesteGbaLiveStartButton.IsEnabled = false;
+        TesteGbaLiveStopButton.IsEnabled = true;
+        GbaLiveStatusText.Text = "Iniciando...";
+    }
+
+    private void TesteGbaLiveStop_Click(object sender, RoutedEventArgs e)
+    {
+        StopGbaLiveSession("Parado.");
+    }
+
+    private void StopGbaLiveSession(string statusSuffix)
+    {
+        if (_gbaLiveSession is null)
+        {
+            return;
+        }
+
+        _gbaLiveSession.Stop();
+        _gbaLiveSession = null;
+
+        TesteGbaLiveStartButton.IsEnabled = true;
+        TesteGbaLiveStopButton.IsEnabled = false;
+        GbaLiveStatusText.Text = statusSuffix;
+    }
+
+    /// <summary>
     /// The only things this app ever reads out of BrobotConnection's
     /// incoming frames — everything else in them is draw commands meant for
     /// Brobot Virtual Display, not this app. Already on the UI thread:
@@ -2156,6 +2539,32 @@ public partial class MainWindow : Window
     {
         foreach (string line in lines)
         {
+            if (line.StartsWith("FRAMEOK ", StringComparison.Ordinal))
+            {
+                string seqText = line["FRAMEOK ".Length..].Trim();
+                if (ushort.TryParse(seqText, out ushort ackSeq))
+                {
+                    _gbaLiveSession?.OnFrameAck(ackSeq);
+                }
+                if (_gbaAwaitingAck && ushort.TryParse(seqText, out ackSeq) && ackSeq == _gbaSeq)
+                {
+                    double rttMs = (DateTime.UtcNow - _gbaFrameSentAt).TotalMilliseconds;
+                    _gbaAwaitingAck = false;
+                    if (_gbaFrameWasFull)
+                    {
+                        _gbaFullFrameCount++;
+                        _gbaFullFrameRttTotalMs += rttMs;
+                    }
+                    else
+                    {
+                        _gbaPartialFrameCount++;
+                        _gbaPartialFrameRttTotalMs += rttMs;
+                    }
+                    UpdateGbaStreamStats();
+                }
+                continue;
+            }
+
             if (line.StartsWith("PONG OVER ", StringComparison.Ordinal))
             {
                 string score = line["PONG OVER ".Length..].Trim();
@@ -3473,6 +3882,8 @@ public partial class MainWindow : Window
         _pongStartTimer?.Stop();
         _rpgHook?.Dispose();
         _rpgStartTimer?.Stop();
+        _gbaStreamTimer?.Stop();
+        _gbaLiveSession?.Stop();
         _clockTimer?.Stop();
         _breakTimer?.Stop();
         _reportTimer?.Stop();

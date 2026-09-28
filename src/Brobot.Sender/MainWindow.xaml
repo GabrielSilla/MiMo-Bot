@@ -722,6 +722,71 @@
                         <TextBlock Style="{StaticResource CardDescriptionStyle}" Margin="0,6,0,0"
                                    TextWrapping="Wrap"
                                    Text="Enter envia; seta para cima/baixo percorre o histórico. Separe vários comandos com | (ex.: WEATHER 18 RAIN | NOTIFY WEATHER Leva guarda-chuva) — por isso o | não pode aparecer dentro de uma mensagem. Comando desconhecido é ignorado pelo Peemo sem aviso. Hora, Clima e Jogos sobrescrevem o que você mandar na mão."/>
+
+                        <!-- GBA streaming Phase 0 test (see specs/sender-gba.md): sends a
+                             synthetic moving pattern over STREAM/FRAME and measures fps/RTT —
+                             the number that decides whether the real feature's row-diffs are
+                             enough bandwidth-wise or need RLE on top. -->
+                        <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0"
+                                Margin="0,14,0,0" Padding="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Teste de stream (GBA, Fase 0)" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Manda um padrão sintético (frames cheios e parciais) por STREAM/FRAME e mede fps/RTT."
+                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button x:Name="TesteGbaStreamStartButton" Content="Iniciar stream"
+                                            Style="{StaticResource InstallButtonStyle}"
+                                            Click="TesteGbaStreamStart_Click"/>
+                                    <Button x:Name="TesteGbaStreamStopButton" Content="Parar stream"
+                                            Style="{StaticResource InstallButtonStyle}" Margin="8,0,0,0"
+                                            IsEnabled="False" Click="TesteGbaStreamStop_Click"/>
+                                </StackPanel>
+                                <TextBlock x:Name="GbaStreamStatusText" Style="{StaticResource CardDescriptionStyle}"
+                                           Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- GBA Phase 1 test (see specs/sender-gba.md): loads the mGBA
+                             libretro core + a hardcoded ROM path and dumps a screenshot to
+                             prove the P/Invoke layer actually produces real video frames —
+                             "checked on the PC alone first" per the spec's implementation
+                             order, not yet the real Mini Games feature. -->
+                        <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0"
+                                Margin="0,14,0,0" Padding="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Teste de ROM (GBA, Fase 1)" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Roda alguns segundos de uma ROM fixa via mGBA/libretro e salva um print da tela."
+                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                <Button x:Name="TesteGbaRomButton" Content="Rodar ROM"
+                                        Style="{StaticResource InstallButtonStyle}" Margin="0,10,0,0"
+                                        HorizontalAlignment="Left" Click="TesteGbaRom_Click"/>
+                                <TextBlock x:Name="GbaRomStatusText" Style="{StaticResource CardDescriptionStyle}"
+                                           Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- GBA live streaming test (Fases 2/3, ver specs/sender-gba.md):
+                             a mesma ROM, mas rodando continuamente e mandando vídeo de
+                             verdade pro Peemo via STREAM/FRAME — ainda sem áudio nem
+                             controle, só pra confirmar o pipeline completo. -->
+                        <Border BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="0,1,0,0"
+                                Margin="0,14,0,0" Padding="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Transmitir pro Peemo (GBA, Fases 2/3)" Style="{StaticResource CardTitleStyle}"/>
+                                <TextBlock Text="Roda a ROM ao vivo e manda o vídeo pro Peemo em tempo real. Sem áudio e sem controle ainda."
+                                           Style="{StaticResource CardDescriptionStyle}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button x:Name="TesteGbaLiveStartButton" Content="Transmitir"
+                                            Style="{StaticResource InstallButtonStyle}"
+                                            Click="TesteGbaLiveStart_Click"/>
+                                    <Button x:Name="TesteGbaLiveStopButton" Content="Parar"
+                                            Style="{StaticResource InstallButtonStyle}" Margin="8,0,0,0"
+                                            IsEnabled="False" Click="TesteGbaLiveStop_Click"/>
+                                </StackPanel>
+                                <TextBlock x:Name="GbaLiveStatusText" Style="{StaticResource CardDescriptionStyle}"
+                                           Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Grid>
             </Border>

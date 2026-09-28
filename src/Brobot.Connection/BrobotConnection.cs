@@ -39,9 +39,19 @@ public sealed class BrobotConnection : IDisposable
 
     private TcpClient? _tcpClient;
     private StreamWriter? _tcpWriter;
+    // Same underlying stream _tcpWriter wraps — kept separately so
+    // SendRawBytes can write bytes straight through without StreamWriter's
+    // text encoding mangling them (see SendRawBytes's own comment).
+    private NetworkStream? _tcpStream;
     private string? _tcpHost;
     private int _tcpPort;
     private volatile bool _tcpConnected;
+    // Guards every write to _tcpStream/_tcpWriter — SendCommand (text) and
+    // SendRawBytes (binary, e.g. STREAM/FRAME payloads — see PROTOCOL.md)
+    // can be called from different threads, and TCP is a single ordered
+    // byte stream: without this, a raw frame write and a command line write
+    // could interleave mid-write and corrupt both.
+    private readonly object _tcpWriteLock = new();
 
     private Thread? _ioThread;
     private volatile bool _running;
@@ -107,14 +117,50 @@ public sealed class BrobotConnection : IDisposable
             return;
         }
 
-        try
+        lock (_tcpWriteLock)
         {
-            _tcpWriter?.Write(command + "\n");
-            _tcpWriter?.Flush();
+            try
+            {
+                _tcpWriter?.Write(command + "\n");
+                _tcpWriter?.Flush();
+            }
+            catch (IOException)
+            {
+                // Core disconnected; the read loop will notice and clean up.
+            }
         }
-        catch (IOException)
+    }
+
+    /// <summary>
+    /// Writes raw bytes straight to the TCP stream — for the one place the
+    /// protocol isn't a text line, a binary FRAME payload (see PROTOCOL.md's
+    /// STREAM/FRAME section): a "FRAME &lt;seq&gt; &lt;bytes&gt;" header
+    /// followed immediately by exactly that many bytes of pixel data. Must
+    /// bypass _tcpWriter's StreamWriter: its UTF8 encoding would transcode
+    /// any raw byte outside plain ASCII instead of passing it through
+    /// unchanged, silently corrupting the payload. TCP-only, same as the
+    /// rest of this class's write path — Brobot.Sender never reaches Core
+    /// over Serial (see specs/architecture.md), so STREAM/FRAME needs no
+    /// Serial-side binary support. A no-op while not connected over TCP.
+    /// </summary>
+    public void SendRawBytes(byte[] data)
+    {
+        lock (_tcpWriteLock)
         {
-            // Core disconnected; the read loop will notice and clean up.
+            if (_tcpStream is not { } stream)
+            {
+                return;
+            }
+
+            try
+            {
+                stream.Write(data, 0, data.Length);
+                stream.Flush();
+            }
+            catch (IOException)
+            {
+                // Core disconnected; the read loop will notice and clean up.
+            }
         }
     }
 
@@ -148,6 +194,7 @@ public sealed class BrobotConnection : IDisposable
 
         _tcpWriter?.Dispose();
         _tcpWriter = null;
+        _tcpStream = null;
         _tcpClient?.Dispose();
         _tcpClient = null;
         _tcpConnected = false;
@@ -222,7 +269,15 @@ public sealed class BrobotConnection : IDisposable
 
         while (_running)
         {
-            var client = new TcpClient();
+            // Nagle (on by default) batches up small writes waiting to see
+            // if more data is coming, which is invisible for this class's
+            // normal fire-and-forget commands (FACE/MSG/PONG KEY, never
+            // waited on) but stalls a tight request-response exchange like
+            // STREAM/FRAME's one-frame-in-flight ack (see PROTOCOL.md) by
+            // tens to hundreds of ms per round trip — PeemoDiscovery.cs
+            // already disables it for the same reason, on its own
+            // short-lived probe connections.
+            var client = new TcpClient { NoDelay = true };
             try
             {
                 // ConnectAsync + a bounded Wait so Disconnect() (which flips
@@ -251,6 +306,7 @@ public sealed class BrobotConnection : IDisposable
 
             _tcpClient = client;
             NetworkStream stream = client.GetStream();
+            _tcpStream = stream;
             // StreamWriter's default UTF8 encoding emits a byte-order-mark
             // preamble on its first write, which would silently corrupt the
             // first protocol line ever sent (its command name no longer
@@ -283,6 +339,7 @@ public sealed class BrobotConnection : IDisposable
 
             _tcpWriter.Dispose();
             _tcpWriter = null;
+            _tcpStream = null;
             _tcpClient.Dispose();
             _tcpClient = null;
             _tcpConnected = false;

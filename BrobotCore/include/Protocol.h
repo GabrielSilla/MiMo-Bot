@@ -2,27 +2,35 @@
 
 #include <Arduino.h>
 #include "Buzzer.h"
+#include "Config.h"
 #include "DeviceSettings.h"
 #include "Personality.h"
 #include "PongGame.h"
 #include "RpgBattle.h"
+#include "StreamMode.h"
 
 // Reads control commands (FACE / MSG, see PROTOCOL.md) off a Stream one
 // byte at a time and dispatches complete lines to a Personality, to a
 // DeviceSettings for the handful of commands (SOUND/SCANLINES) that aren't
-// about Brobot's expression/behavior state, or to a PongGame/RpgBattle for
-// the two exclusive minigame command families (see PROTOCOL.md's Pong and
-// RPG Battle sections). Never blocks — safe to call every loop() iteration.
+// about Brobot's expression/behavior state, or to a PongGame/RpgBattle/
+// StreamMode for the three exclusive-mode command families (see
+// PROTOCOL.md's Pong, RPG Battle and STREAM/FRAME sections). Never blocks —
+// safe to call every loop() iteration.
 //
 // PING is the one command answered here rather than forwarded anywhere:
 // it's about the link itself, not about Brobot, so there's no Personality
 // or DeviceSettings state for it to touch.
 //
-// Also the one place that arbitrates between the two minigames — PongGame
-// and RpgBattle stay unaware of each other (same separation Personality and
-// PongGame already have), so a PONG/RPG START is simply ignored while the
-// other minigame is already active, rather than letting one clobber the
-// other's exclusive screen.
+// Also the one place that arbitrates between the three exclusive modes —
+// PongGame, RpgBattle and StreamMode stay unaware of each other (same
+// separation Personality and PongGame already have), so a PONG/RPG/STREAM
+// START is simply ignored while another one is already active, rather than
+// letting one clobber another's exclusive screen.
+//
+// FRAME <seq> <bytes> is the one command that isn't a text line: once its
+// header is parsed, poll() switches to consuming exactly <bytes> of binary
+// payload off the same Stream before returning to line-oriented parsing —
+// see poll()'s own comment and PROTOCOL.md's STREAM/FRAME section.
 //
 // BUZZ <cue> triggers a Buzzer cue directly, bypassing Personality/
 // Expression entirely — a manual hook for testing a cue (e.g. the RPG
@@ -31,9 +39,9 @@
 class Protocol {
 public:
     Protocol(Personality& personality, DeviceSettings& deviceSettings, PongGame& pongGame, RpgBattle& rpgBattle,
-             Buzzer& buzzer)
+             StreamMode& streamMode, Buzzer& buzzer)
         : _personality(personality), _deviceSettings(deviceSettings), _pongGame(pongGame), _rpgBattle(rpgBattle),
-          _buzzer(buzzer) {}
+          _streamMode(streamMode), _buzzer(buzzer) {}
 
     void poll(Stream& serial, unsigned long now);
 
@@ -44,6 +52,9 @@ private:
     // bytes are buffered are stale (noise, a dropped newline, a client that
     // disconnected mid-command) and get discarded before the next byte is
     // appended — otherwise they'd silently corrupt the next real command.
+    // Reused as-is for FRAME's binary payload: a gap this long mid-frame
+    // means the sender stalled or died, so the partial frame is abandoned
+    // the same way a partial line is.
     static constexpr unsigned long LINE_STALE_TIMEOUT_MS = 300;
 
     char _line[LINE_CAPACITY] = {0};
@@ -53,10 +64,33 @@ private:
     DeviceSettings& _deviceSettings;
     PongGame& _pongGame;
     RpgBattle& _rpgBattle;
+    StreamMode& _streamMode;
     Buzzer& _buzzer;
+
+    // Binary FRAME payload state — persists across poll() calls the same
+    // way _line/_length do, since a frame's payload can easily span more
+    // than one call. _rowBuf accumulates one row record at a time
+    // ([row byte][160 x RGB565 big-endian]); each completed row is handed
+    // to _streamMode and the buffer resets, until _frameBytesRemaining
+    // reaches 0.
+    bool _inFrame = false;
+    uint16_t _frameSeq = 0;
+    uint32_t _frameBytesRemaining = 0;
+    uint8_t _rowBuf[STREAM_ROW_RECORD_BYTES];
+    size_t _rowBufLen = 0;
 
     // Takes the Stream (rather than only poll() holding it) purely so PING
     // can write its reply back to whoever asked — every other command is
     // one-way PC->Core.
     void dispatch(Stream& serial, char* line, unsigned long now);
+
+    // Parses "<seq> <bytes>" out of a FRAME line's args and, if well-formed,
+    // switches poll() into binary mode. Ignored (no state change) if
+    // malformed or if a frame is already in progress.
+    void beginFrame(const char* args);
+
+    // Called once _rowBuf holds a complete STREAM_ROW_RECORD_BYTES record:
+    // byte-swaps the 160 big-endian pixel pairs to host order and hands the
+    // row to _streamMode.
+    void applyRowBuf(unsigned long now);
 };

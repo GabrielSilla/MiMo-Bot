@@ -80,3 +80,14 @@ inline long random(long minValue, long maxValue) {
     }
     return minValue + (std::rand() % (maxValue - minValue));
 }
+
+// Arduino's tone()/noTone()/pinMode(): no-ops here. There's no speaker (or
+// any GPIO at all) on a dev PC, but Buzzer.cpp (and Protocol.cpp's BUZZ
+// command, which calls into it unconditionally) still need these symbols to
+// link — this just silently drops the sound instead of producing it, the
+// same "compiles unchanged, behaves like a no-op host stand-in" role every
+// other shim in this file already plays.
+constexpr uint8_t OUTPUT = 1;
+inline void pinMode(uint8_t /*pin*/, uint8_t /*mode*/) {}
+inline void tone(uint8_t /*pin*/, unsigned int /*frequency*/, unsigned long /*duration*/ = 0) {}
+inline void noTone(uint8_t /*pin*/) {}

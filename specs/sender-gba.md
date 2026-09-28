@@ -109,6 +109,48 @@ Decisions already taken with the user:
    pattern (full frames and partial frames) and reports the fps and
    round-trip time it gets. Decides whether row diffs are enough or RLE is
    needed, and what fps to expect.
+
+   **Built** (protocol + firmware + PC test harness): `StreamMode` (a
+   third exclusive mode alongside `PongGame`/`RpgBattle`), `Protocol`'s
+   binary-mode payload parsing, `ST7735PhysicalDisplay::writeStreamRow`
+   (a direct-canvas fast path, not part of `IDisplay` — same precedent as
+   `setScanlinesEnabled`), and `PROTOCOL.md`'s `STREAM`/`FRAME`/`FRAMEOK`
+   section (`PEEMO 2`). On the PC side, `BrobotConnection.SendRawBytes`
+   (a binary write path alongside the existing text `SendCommand`) and a
+   "Teste de stream (GBA, Fase 0)" card under Modo teste that drives a
+   synthetic scan-bar pattern (full frames every 30th tick, row-diff-only
+   otherwise) and reports rolling fps/RTT, separated by full vs. partial.
+   **Measured on real hardware: ~20fps** with the Modo teste button's
+   synthetic pattern (full frame every 30th tick, row-diff-only otherwise)
+   — inside the spec's 20-30fps target, and enough for actual GBA gameplay.
+   Row diffs alone are enough; Phase 1 doesn't need RLE on top.
+
+   Three fixes along the way, none obvious from the protocol design itself
+   — worth knowing before touching this code again:
+   - **Nagle's algorithm** was stalling every `FRAME`→`FRAMEOK` round trip
+     by tens to hundreds of ms. Invisible for every other command in this
+     protocol (fire-and-forget, nothing waits on a reply), but `STREAM`'s
+     one-frame-in-flight pacing is a tight request-response loop — exactly
+     the pattern Nagle+delayed-ACK punishes. Fixed with
+     `TcpClient.NoDelay = true` in `BrobotConnection.ConnectTcp` (C#) and
+     `WiFiClient::setNoDelay(true)` on the accepted `protocolClient` in
+     `main.cpp` (firmware) — `PeemoDiscovery.cs` already had the C# half of
+     this precedent for its own probe connections, for the same reason.
+   - **ESP32 WiFi modem sleep** (`WIFI_PS_MIN_MODEM`, the default) dozes the
+     radio between the AP's DTIM beacons, adding latency invisible to an
+     occasional `FACE`/`MSG` line but real for a tight loop. Fixed with
+     `WiFi.setSleep(false)` in `WifiSetup.cpp`'s `tryConnectSavedNetworks`
+     — Peemo is mains-powered, so there's no battery-life tradeoff to
+     weigh. Kept even though it turned out not to be the dominant cost
+     here: it independently fixed a different bug the user had been
+     hitting.
+   - **The real bottleneck**: `WiFiClient::available()` on ESP32 issues a
+     fresh `lwip_ioctl(FIONREAD)` syscall on every call, and
+     `Protocol::poll()`'s loop condition was calling it once per byte. Free
+     for a 20-byte `FACE`/`MSG` line; thousands of syscalls per `FRAME`
+     payload, and the dominant cost by far (~9fps even after both fixes
+     above). Fixed by snapshotting `available()` once per `poll()` call
+     instead of once per byte — see `Protocol.cpp`'s comment there.
 2. Libretro host: load mGBA, run a ROM headless, sound on the PC,
    keyboard input — checked on the PC alone first (dump frames to a file).
 3. Frame pipeline: scale, diff, one-in-flight sending — the first playable

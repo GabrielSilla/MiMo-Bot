@@ -22,6 +22,7 @@
 #include <thread>
 
 #include "Arduino.h"
+#include "Buzzer.h"
 #include "Config.h"
 #include "DeviceSettings.h"
 #include "Face.h"
@@ -30,6 +31,7 @@
 #include "Protocol.h"
 #include "RpgBattle.h"
 #include "SerialVirtualDisplay.h"
+#include "StreamMode.h"
 #include "TcpBroadcastStream.h"
 
 namespace {
@@ -76,9 +78,16 @@ int main(int argc, char** argv) {
     DeviceSettings deviceSettings;
     PongGame pongGame;
     RpgBattle rpgBattle;
-    Protocol protocol(personality, deviceSettings, pongGame, rpgBattle);
+    StreamMode streamMode;
+    // No speaker on a dev PC, but Protocol's BUZZ command (and its ctor)
+    // need a real Buzzer to bind to regardless — tone()/noTone() are no-ops
+    // on this platform (see native/include/Arduino.h), so this just quietly
+    // does nothing rather than needing its own Protocol-shaped carve-out.
+    Buzzer buzzer;
+    Protocol protocol(personality, deviceSettings, pongGame, rpgBattle, streamMode, buzzer);
 
     personality.begin(nativeMillis());
+    buzzer.begin();
 
     unsigned long lastFrameAt = 0;
     while (true) {
@@ -88,17 +97,25 @@ int main(int argc, char** argv) {
 
         protocol.poll(serial, now);
 
-        // Mirrors main.cpp's loop(): Pong and RPG Battle are both exclusive,
-        // replacing Personality's own update entirely while active rather
-        // than adding another priority tier. Protocol::dispatch keeps the
-        // two from both being active at once.
+        // Mirrors main.cpp's loop(): Pong, RPG Battle and STREAM are all
+        // exclusive, replacing Personality's own update entirely while
+        // active rather than adding another priority tier. Protocol::dispatch
+        // keeps the three from ever being active at once. STREAM has no
+        // physical canvas to write into here (there's no ST7735PhysicalDisplay
+        // on a dev PC — see StreamMode.h/main.cpp's own `#if !VSCREEN` row
+        // drain), so it just blocks Personality without drawing anything,
+        // the same "simulator out of scope for STREAM" behavior
+        // specs/sender-gba.md describes.
         if (pongGame.isActive()) {
             pongGame.update(now);
         } else if (rpgBattle.isActive()) {
             rpgBattle.update(now);
+        } else if (streamMode.isActive()) {
+            streamMode.update(now);
         } else {
             personality.update(now);
         }
+        buzzer.update(now);
 
         // See main.cpp's own copy of this for why — fired once per
         // round/battle, the instant it ends by the Core's own decision (see
@@ -110,6 +127,9 @@ int main(int argc, char** argv) {
             serial.println("PRESENT");
         }
         if (rpgBattle.justEnded()) {
+            if (strcmp(rpgBattle.lastResultToken(), "VICTORY") == 0) {
+                buzzer.playRpgVictory(now);
+            }
             char overLine[24];
             std::snprintf(overLine, sizeof(overLine), "RPG OVER %s", rpgBattle.lastResultToken());
             serial.println(overLine);
@@ -118,11 +138,26 @@ int main(int argc, char** argv) {
 
         if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
             lastFrameAt = now;
-            display.clear(0, 0, 0);
+
+            // Mirrors main.cpp's own clear-skip: while STREAM is active the
+            // canvas is "cleared once, then only receives stream data" (see
+            // PROTOCOL.md) rather than every frame. There's no physical
+            // canvas here for rows to accumulate into (see the no-op branch
+            // below), but skipping the clear still matters: without it,
+            // SerialVirtualDisplay would keep emitting a CLR/PRESENT draw
+            // command every render tick regardless, flooding the same
+            // stream a FRAME's FRAMEOK reply also travels over.
+            bool streamActive = streamMode.isActive();
+            if (!streamActive || streamMode.consumeNeedsCanvasClear()) {
+                display.clear(0, 0, 0);
+            }
+
             if (pongGame.isActive()) {
                 pongGame.render(display);
             } else if (rpgBattle.isActive()) {
                 rpgBattle.render(display, now);
+            } else if (streamActive) {
+                // No-op — see the update() branch above.
             } else {
                 Face::render(display, personality.currentState());
             }
