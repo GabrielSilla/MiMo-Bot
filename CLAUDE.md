@@ -62,6 +62,14 @@ replacement.
   sources: `WindowsMediaMonitor`, `NotificationMonitor` +
   `TeamsNotificationWatcher`, `WeatherMonitor`, `SystemStatsMonitor` +
   `AfterburnerSensors`, `GameMonitor`.
+- [specs/sender-thoughts.md](specs/sender-thoughts.md) — Pensamentos do
+  Peemo: always-on remarks at random moments (`Thoughts/`: scheduler,
+  director, the five sources, phrase data, `tools/validate-thoughts.py`).
+- [specs/mood.md](specs/mood.md) — Peemo's mood (Animado/Fim de Dia/Cansado
+  by the clock): Core's battery badge and the per-mood phrase pools
+  (`PeemoMood`/`MoodPhrases`).
+- [specs/voice-guide.md](specs/voice-guide.md) — the rules every canned
+  phrase is written against (tone per mood, format, what never goes in).
 - [specs/sender-ai-bridge.md](specs/sender-ai-bridge.md) — Atividade da IA:
   `ClaudeCodeHookInstaller`, `hooks/peemo-claude-hook.ps1`,
   `hooks/peemo-claude-statusline.ps1`, `AiThoughtsListener`, `SenderSettings`.

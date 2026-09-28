@@ -87,6 +87,12 @@ src/
                                      — plain ALT+F10 was tried first and dropped once RegisterHotKey
                                      confirmed something else on a real dev machine already owns it).
                                      Icons via the MahApps.Metro.IconPacks.Material NuGet package.
+                                     Thoughts/ is Pensamentos do Peemo — always-on remarks at random
+                                     moments (ThoughtScheduler/ThoughtDirector and one class per source,
+                                     phrase data in Thoughts/Data/*.tsv, see specs/sender-thoughts.md).
+                                     PeemoMood + MoodPhrases tone every canned phrase by Peemo's mood
+                                     (specs/mood.md, specs/voice-guide.md); LegacyNames reads what the
+                                     MiMo-era install left on disk (specs/installer.md).
   Brobot.VSExtension/                A real Visual Studio extension (VSIX, `net472` — devenv.exe is
                                      still .NET Framework even in modern VS), separate from
                                      Brobot.Sender's own process entirely: `BrobotBuildWatcherPackage`
@@ -111,6 +117,9 @@ hooks/                               peemo-claude-hook.ps1 (the Claude Code hook
                                      (post-commit/post-merge/post-checkout/pre-push, static shims
                                      pinned to LF via .gitattributes) are the git-side equivalent,
                                      wired up by GitHookInstaller — see specs/sender-feature-cards.md.
+tools/                               validate-thoughts.py — checks Pensamentos' phrase data against the
+                                     voice guide; run before committing phrase changes
+                                     (see specs/sender-thoughts.md).
 BrobotCore/                         PlatformIO project (Arduino/C++)
   include/, src/                    Config, IDisplay, SerialVirtualDisplay, ST7735PhysicalDisplay,
                                      WifiSetup (ESP32 only — WiFi provisioning, see specs/firmware-platform.md),

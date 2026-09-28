@@ -1,11 +1,8 @@
-# Peemo's mood (in progress)
+# Peemo's mood
 
-> Status: steps 1–2 done (Core badge + PeemoMood; every existing phrase
-> list converted to MoodPhrases pools). Step 3 comes with Pensamentos. Once it lands,
-> rewrite this as the usual "how it works and why" spec and link it from
-> CLAUDE.md and specs/overview.md. Closely tied to
-> [sender-thoughts.md](sender-thoughts.md), whose phrases are the biggest
-> user of it.
+Closely tied to [sender-thoughts.md](sender-thoughts.md), whose phrases are
+its biggest user, and to [voice-guide.md](voice-guide.md), which defines
+what each level may and may not say.
 
 Peemo gets a mood that follows the clock through the day. It sets **how
 sarcastic every phrase Peemo says is**, and it shows on screen as a small
@@ -21,8 +18,7 @@ creature whose day wears on, not a random-phrase machine.
 | `CANSADO` | 22:00–06:59 | **ácido** only |
 
 - Boundaries are `[start, end)` on the local clock; same on weekends.
-- Every level still obeys the tone rules in sender-thoughts.md ("Tone"):
-  Peemo mocks the situation, never the person; accomplice, never
+- Every level still obeys the voice guide: Peemo mocks the situation, never the person; accomplice, never
   supervisor. **Ácido is the sharpest wording, not a license** — no orders
   ("volta a trabalhar"), no threats (even joking "vou contar pro seu
   chefe"; "não vou contar" is fine), no judging the person, no swearing,
@@ -60,29 +56,31 @@ Top of the frame, **centered between the weather badge (left) and the
 clock (right)** — the free x-range there is roughly 38–122px at the
 default 18C / "22:15" widths.
 
-- Proposal to review on the device: a mini robot **battery** — full for
-  `ANIMADO`, half for `FIM_DE_DIA`, low and slowly blinking for `CANSADO`
-  — optionally with the mood name next to it if it fits. Procedural like
-  every other badge (no bitmap).
-- Same color and themes as the weather/clock badges: drawn wherever they
-  are (`drawWeatherBadge`/`drawClockBadge` in Face.cpp), hidden where they
-  are hidden.
+- A mini robot **battery** (`drawMoodBattery` in Face.cpp): 4 cells for
+  `ANIMADO`, 2 for `FIM_DE_DIA`, one cell blinking slowly for `CANSADO`.
+  Procedural like every other badge (no bitmap); its outline is four rects
+  rather than a hollowed fill, so it works on P2-M2's light plate too.
+- Same color as the weather/clock badges and drawn alongside them. Peemo-84
+  has no pictogram badges (its status row is text and already near full
+  width), so there the battery sits right-aligned on the header row, after
+  "PEEMO SYSTEM v2.6".
+- When looking up, the eyes can graze the badge's edges for a moment — it
+  sits mostly in the gap between the eyes; accepted on the device.
 
 ## Every phrase gets a level
 
 "Tudo que tem frase" — mood applies to **all** of Peemo's own phrases, not
 just Pensamentos:
 
-| Where | Today | With mood |
-|---|---|---|
-| `GreetingMessages` (connect greeting + disconnect farewell) | by time of day | by mood (time-of-day grouping largely lines up already) |
-| `PausaMessages` (Pausa, `NOTIFY COFFEE`) | one list | one pool per level |
-| `WeatherAlerts` (Clima, `NOTIFY WEATHER`) | per condition | per condition × level |
-| Social/YouTube 15-min nudges (`NOTIFY NEUTRAL`) | one fixed sentence each | a small pool per level; still an alert, `{min}` placeholder kept |
-| Resource alerts (`NOTIFY SWEATING`) | fixed CPU/RAM sentences | a small pool per level |
-| `DailyReportMessages` (Relatório) | by rating | by rating × level |
-| Core's `BEDTIME_MESSAGES` (`SLEEPY`) | 10 fixed phrases | always `CANSADO` → rewritten at ácido level, still no orders |
-| Pensamentos (all sources) | — | see below |
+| Where | How it follows the mood |
+|---|---|
+| `GreetingMessages` (connect greeting + disconnect farewell) | time buckets, each written at its mood's level; the 12–18h bucket split at 16h |
+| `PausaMessages` (Pausa, `NOTIFY COFFEE`) | a `MoodPhrases` pool per level |
+| `WeatherAlerts` (Clima, `NOTIFY WEATHER`) | per condition × level |
+| `AlertMessages` — social/YouTube 15-min nudges, CPU/RAM alerts | a pool per level; always keeps the `{min}`/`{percent}` number |
+| `DailyReportMessages` (Relatório) | per rating × level |
+| Core's `BEDTIME_MESSAGES` (`SLEEPY`) | always `CANSADO`, so written at ácido; no clock times in the text (it repeats every 30 min) |
+| Pensamentos | a `level` column in both data files (see sender-thoughts.md) |
 
 Not mood-toned: AI activity text (it's Claude's text, not Peemo's), the
 achievement names, and fixed labels like "Meet: <título> <hora>".
@@ -102,18 +100,7 @@ per level by **how often that mood actually comes up**:
 - Situations that can happen at any hour (weekday, weather, report
   triggers, games, special dates, combinations) need all three levels.
   Most PC time is daytime, so leve gets the largest share, then médio,
-  then ácido. Exact numbers are set in the voice-guide step, from the
-  real hours the user is connected.
+  then ácido.
 - Data files get a `level` column (`leve`/`medio`/`acido`/`-` for neutral);
   the validation script rejects a situation group missing a level it can
   occur in.
-
-## Implementation order
-
-1. `PeemoMood` in Sender + mood derivation and badge in Core (small, testable
-   on its own with `TIME` from the Modo teste).
-2. Existing phrase lists converted to per-level pools (content: voice guide
-   with per-mood examples first, user approves, then write).
-3. Pensamentos picks phrases by mood (folded into sender-thoughts.md's own
-   order: skeleton reads `PeemoMood`, content phases write per level).
-4. Docs.

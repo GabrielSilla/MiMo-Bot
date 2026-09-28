@@ -1,329 +1,263 @@
-# Brobot.Sender Internals — Pensamentos do Peemo (in progress)
+# Brobot.Sender Internals — Pensamentos do Peemo
 
-> Status: step 1 (skeleton) built — `src/Brobot.Sender/Thoughts/` with the
-> scheduler, director, history store, presence check and PeemoBaseMessages
-> on a small seed `peemo-base.tsv`; per-site/per-game tracking in
-> DailyReportTracker; MainWindow routing (FACE+MSG vs NOTIFY) and a
-> "Pensamento" button in Modo teste. Step 2 built too: RandomFactsMessages
-> (uselessfacts + MyMemory, on-disk stock), OnThisDayMessages (Wikimedia,
-> "selected" with "events" as fallback), SpaceMessages (CelesTrak TLE +
-> SGP.NET, sun/shadow visibility check), SpaceTopic, ThoughtText (cleanup
-> of fetched text), LocationProvider (shared with WeatherMonitor) and a
-> "Satélite" button in Modo teste. Step 4 (phase 1) built: WorkContextMessages
-> (situation tiers, see the class header), `tools/validate-thoughts.py`
-> (run it before committing any phrase change; `--sample N` writes a review
-> file) and the content — 979 base phrases in 45 categories and 842 context
-> phrases covering every situation group (fewer than the ~1,500 context
-> aimed for; phase 2 grows the big general groups). Both data files are TSV
-> (`peemo-base.tsv`, `work-context.tsv`), not JSON. Step 5 (real-device
-> test) done — it added the "last group goes last" rule and split a clear
-> sky into `clima:sol` (06–18h) / `clima:noite-limpa`. Step 6 (phase 2) in
-> progress: first round grew the general groups to 1,958 context phrases
-> (hora:* 109–148 each, dia:* 59–76, clima:* 32–48). This file is the
-> plan to implement from; once the feature lands, rewrite it as the usual
-> "how it works and why" spec and link it from CLAUDE.md and
-> specs/overview.md.
+At random, unpredictable moments through the day Peemo "thinks out loud": a
+remark about the user's day (built from the Relatório numbers), about the
+moment (time, weekday, weather, a game that just closed), a line from its
+own phrase base, a translated random fact, a "neste dia" historical event,
+or a heads-up that the ISS, Tiangong or Hubble is about to cross the
+user's sky. The point is to make Peemo feel like a small living creature,
+not a robot that only reacts.
 
-**"Pensamentos do Peemo"** — always on, part of who Peemo is rather than a
-feature to opt into (no checkbox, no setting). At
-random, unpredictable moments through the day Peemo "thinks out loud" — a
-short remark about the user's day (built from the Relatório data), the
-moment (time, weekday, weather, games), a line from Peemo's own huge phrase
-base, a translated random fact, a "neste dia" historical fact, or a heads-up
-that the ISS (or another famous satellite) is about to cross the user's sky.
-The goal is
-to make Peemo feel like a living little creature, not a robot that only reacts.
+It follows **the one rule** (specs/overview.md): Sender picks *which text*
+and *when*, exactly like `GreetingMessages`/`PausaMessages`/`WeatherAlerts`
+— Core has no RTC, no report data and no network. Core still owns how it's
+shown (plain foreground message, or the two space notifications).
 
-Consistent with **the one rule** (specs/overview.md): Sender picks *which
-text* and *when*, exactly like `GreetingMessages`/`PausaMessages`/
-`WeatherAlerts` already do — Core has no RTC, no report data and no network.
-Core still owns how it's shown.
+Code: `src/Brobot.Sender/Thoughts/`. Data: `Thoughts/Data/*.tsv` (embedded
+resources). Tone rules: [voice-guide.md](voice-guide.md) and
+[mood.md](mood.md).
 
-## Behavior
+## Always on, no card
 
-- **No toggle, no card**: there is deliberately no checkbox, no setting and
-  no card for this in the Sender UI — thoughts can't be turned off. (Which
-  *triggers* are possible still follows the other cards: dev triggers need
-  Ferramentas de Dev, social/YouTube need Mídia, games need Jogos.)
-- **Display**: plain `FACE <expr>` + `MSG <texto>` — a normal foreground
-  message, **not** `NOTIFY` (a musing must not take over the whole screen).
-  Core auto-clears it `MESSAGE_DURATION_MS` (10s) after typing finishes and
-  whatever background tier was there (music, etc.) comes back on its own. Not
-  `FACE THINKING`: it's the one sticky foreground expression and would need an
-  explicit clear. **Exception: space thoughts** go out as `NOTIFY SATELLITE`/
-  `NOTIFY SPACE` instead (see "Space thoughts" below).
-- **Accents allowed** (ã, ç, é...). Verify `Font5x7` and the physical display
-  draw every character used; if a glyph is missing, add it to the font rather
-  than stripping accents.
-- **Length**: target ≤ ~75 chars per rendered line so it reads well at 160x128.
-- **Runs all day** while connected (no business-hours window).
+There is deliberately **no checkbox, no setting and no card** for this —
+the user asked for it to be part of who Peemo is, not a feature to opt into.
+Which *subjects* can come up still follows the other cards, the same gating
+the Relatório uses: dev remarks need Ferramentas de Dev, social/YouTube/music
+need Mídia, games need Jogos, meetings need Notificações (that's what
+watches live calls).
 
-### Timing — deliberately unpredictable
+## When — `ThoughtScheduler` + `MainWindow.TickThoughts`
 
-- Next gap = **30 min + exponential(mean 50 min)** → overall mean ~80 min.
-  The 30-min floor is *added*, not clamped — clamping would pile every short
-  draw onto exactly 30 min and make it predictable again.
-- Cap any single gap at ~4h.
-- Simulated 9h day: ~6.5 thoughts on average, usually 4–9. Gap distribution:
-  30–45 min 28%, 45–90 min 45%, 90–150 min 20%, 150+ min 7%.
-- **No daily cap** — the distribution already limits it.
-- **No quick follow-up** ("ah, e outra coisa...") — the 30-min floor always holds.
-- Restarting Sender draws a fresh schedule.
-- **Holds its turn** (postpones until clear, doesn't skip) when:
-  disconnected, meeting active, game running, AI message on screen
-  (`_aiThoughtFaceActive`, `_aiMessageHoldUntil`), notification recently
-  sent, Pong/RPG running, or **user away from the PC** (~10 min with no
-  mouse/keyboard input, via `GetLastInputInfo`) — thinks when the user comes
-  back instead of talking to an empty room and wasting a phrase/trigger.
+- The gap to the next thought is **30 min + an exponential draw with a 50
+  min mean**, capped at 4h — mean ~80 min, typically 4–9 thoughts in a 9h
+  day. The 30-min floor is *added*, not clamped: clamping would pile every
+  short draw onto exactly 30 min and make it predictable again. There's no
+  daily cap (the distribution already limits it) and no quick follow-up.
+  Nothing about the schedule is persisted; restarting Sender draws a fresh
+  one.
+- `TickThoughts` runs from the same 200ms `UpdateConnectionStatus` tick as
+  everything else. A due slot is **held, not skipped**, while
+  `ThoughtHoldReason` returns something — disconnected, a live call
+  (`_activeCalls`), a game running (`_gameRunning`), Pong/RPG starting or
+  running, AI text on screen (`_aiThoughtFaceActive` /
+  `_aiMessageHoldUntil`), a full-screen notification in the last 2 minutes,
+  or **the user away** (10+ min with no input anywhere, `UserPresence` /
+  `GetLastInputInfo`). Peemo then thinks when the user comes back instead of
+  talking to an empty room and wasting a phrase or a trigger.
+- "Notification in the last 2 minutes" needs every full-screen line (NOTIFY,
+  ACHIEVEMENT, REPORT) to go through `MainWindow.SendNotification`, which
+  stamps `_lastNotificationSentAt`. New notifications must use it too.
 
-### Tone
+## Which source — `ThoughtDirector`
 
-Friendly accomplice, sarcastic, **never controlling / never a supervisor**.
-E.g. "2h de Facebook hoje hein, não deixa seu chefe saber". The existing
-15-min social/YouTube `NOTIFY` nudges stay the alert; thoughts are the
-loose joke, at another moment.
-
-**How sarcastic is set by Peemo's mood** — see [mood.md](mood.md):
-`ANIMADO` (07–16h) leve, `FIM_DE_DIA` (16–22h) médio, `CANSADO` (22–07h)
-ácido. Every joking phrase carries a level and is only used in its mood;
-neutral content (facts, "neste dia", passes, curiosities) is used in any
-mood. mood.md also lists what never goes in, even at ácido.
-
-### Space thoughts
-
-**Anything space-themed, from any source, uses one of the two space
-animations** already built in Core (see PROTOCOL.md → Notificações):
-
-| Face | When | Screen |
+| Source | Weight | What |
 |---|---|---|
-| `SATELLITE` | the thought is about a satellite/space station: a real ISS/Tiangong/Hubble pass, a fact or "neste dia" about a satellite, the ISS, Sputnik, a space station | tilted satellite crossing a starry sky, eyes following it |
-| `SPACE` | any other space subject: planets, Moon, Sun, stars, galaxies, astronauts, rockets, NASA, comets, telescopes... | same starry sky and eyes, no satellite |
+| `SpaceMessages` | priority | a real, visible ISS/Tiangong/Hubble pass |
+| `WorkContextMessages` | 40 | remarks about the day and the moment |
+| `PeemoBaseMessages` | 30 | Peemo's own standalone phrases |
+| `RandomFactsMessages` | 15 | random fact, translated |
+| `OnThisDayMessages` | 15 | "neste dia" from Wikipedia |
 
-- Sent as `NOTIFY <SATELLITE|SPACE> <texto>` — the one kind of thought that
-  takes the whole screen. Worth it: it's rare (a small slice of each
-  source) and it's the moment Peemo "receives a transmission".
-- Core opens both with "Transmissão Espacial Recebida!!!" and only then
-  types the text, so Sender sends **only the message** — phrases must not
-  repeat "transmissão"/"recebi" and should read well right after that line.
-- `Thought.Face` carries the choice; the one place that sends a thought
-  (`MainWindow`) does `NOTIFY` when `Face` is `SATELLITE`/`SPACE`, `FACE` +
-  `MSG` otherwise. Hold conditions are the same for both.
-- How each source decides:
-  - **SpaceMessages**: always `SATELLITE` (every one of its thoughts is a pass).
-  - **PeemoBaseMessages / WorkContextMessages**: the phrase's own face column
-    in the data file — space-category phrases (curiosidades do espaço,
-    teorias da conspiração espaciais, planos de dominação lunar...) are
-    written with `SPACE` (or `SATELLITE` when about a satellite/station).
-    The validation script rejects `SATELLITE` on a phrase that doesn't
-    mention a satellite/station, and flags space words under a non-space
-    face for review.
-  - **RandomFactsMessages**: keyword match on the **English** text, before
-    translating (more reliable than on MyMemory's output): satellite/ISS/
-    space station/Sputnik/Hubble → `SATELLITE`; space, planet, Moon, Mars,
-    Jupiter, Saturn, Sun, star, galaxy, universe, astronaut, NASA, orbit,
-    comet, asteroid, meteor, telescope, rocket, light-year... → `SPACE`.
-    Word-boundary match (so "star" doesn't hit "start", "sun" doesn't hit
-    "Sunday"), stored with the fact in the on-disk stock.
-  - **OnThisDayMessages**: same idea on the PT text: satélite/estação
-    espacial/ISS/Sputnik/Hubble → `SATELLITE`; espaço, espacial, Lua,
-    lunar, Marte, planeta, astronauta, cosmonauta, NASA, Apollo, órbita,
-    foguete, cometa, telescópio, galáxia... → `SPACE`.
-- The same keyword lists live in one small helper (`SpaceTopic.Classify`)
-  shared by the two API sources; the validation script reuses them for its
-  review flags.
+- Priority sources are asked **first** at every slot and only answer when
+  something real is happening; they don't count as "last source".
+- The weighted sources are tried in a weight-drawn order (without
+  replacement) with the source that spoke last moved to the very end — so
+  it's never the same source twice in a row unless nobody else has
+  anything. A source returning `null` ("nothing fresh right now") just
+  passes the turn. `PeemoBaseMessages` always has something, so Peemo is
+  never silent.
+- A new source is one class implementing `IThoughtSource` (plus
+  `IBackgroundThoughtSource` if it fetches something), added to the array
+  in `MainWindow`'s constructor.
 
-## Sources and weights
+## How it's shown
 
-| Class | Weight | Content |
-|---|---|---|
-| `WorkContextMessages` | 40% | ~8,200 phrases grouped by situation (see below), with `{min}`/`{site}`/`{temp}`/`{jogo}`/... placeholders |
-| `PeemoBaseMessages` | 30% | ~10,000 standalone phrases in ~45 categories |
-| `RandomFactsMessages` | 15% | uselessfacts.jsph.pl (EN) translated to PT-BR via MyMemory |
-| `OnThisDayMessages` | 15% | Wikimedia feed `wikipedia/pt/onthisday/selected/MM/DD` (native PT-BR) |
+- Ordinary thoughts: `FACE <expr>` + `MSG <texto>` — a normal foreground
+  message, **not** `NOTIFY` (a musing mustn't take over the screen). Core
+  clears it by itself after the message has had its time and whatever tier
+  was underneath (music, etc.) comes back. Never `FACE THINKING`: it's the
+  one sticky foreground expression and would need an explicit clear.
+- **Space thoughts** (`Thought.Face` = `SATELLITE` or `SPACE`) go out as
+  `NOTIFY SATELLITE|SPACE <texto>` — the one kind of thought that takes the
+  whole screen (see PROTOCOL.md → Notificações). Core opens both with
+  "Transmissão Espacial Recebida!!!" before the text, so phrases never
+  repeat "transmissão"/"recebi". SATELLITE is for satellites and stations,
+  SPACE for everything else about space. Each source decides:
+  - `SpaceMessages`: always SATELLITE.
+  - `PeemoBaseMessages` / `WorkContextMessages`: the face column in the data
+    file.
+  - `RandomFactsMessages` / `OnThisDayMessages`: `SpaceTopic`, a
+    whole-word keyword match — on the **English** text for facts, before
+    translating (more reliable than the machine translation), on the
+    Portuguese text for events.
+- Every thought is logged to `%AppData%\Brobot\ai-events.log` as
+  `Pensamento (<source>/<category or group>): <text>` — that's how a
+  real-device test is checked.
 
-| `SpaceMessages` | — (priority) | ISS/Tiangong/Hubble passes over the user's location, CelesTrak TLE + local SGP4 |
+## The sources
 
-`ThoughtDirector` draws a source by weight, never the same source twice in a
-row, and if a source's `TryPick` returns `null` ("nothing fresh right now")
-it passes the turn to the next source. Peemo is never silent: the local base
-is the final fallback.
+### PeemoBaseMessages — `Data/peemo-base.tsv`
 
-`SpaceMessages` is the exception to the weighted draw: it's an event, not a
-pool, so it's asked **first** at every slot and only answers when a real
-pass qualifies (see below); otherwise it returns `null` and the normal
-weighted draw happens. It doesn't count for the "never the same source twice
-in a row" rule.
+Columns `id  category  face  level  text`. ~980 phrases in 45 categories
+(existential, observations about humans, unanswerable questions, micro-poems,
+world-domination plans, robot conspiracy theories, confessions, curiosities
+about animals/body/history/food/ocean/plants/words/geography, space and
+satellite curiosities, ...). The whole pool is shuffled once per install
+into a persisted queue and walked in order, so nothing repeats until it has
+all been used; phrases added to the file later join the queue at a random
+spot. Never the same category twice in a row (relaxed only if that's the
+only thing left). Phrases with a level (`leve`/`medio`/`acido`) are only
+eligible in that mood; `-` is any mood.
 
-### WorkContextMessages — situations
+### WorkContextMessages — `Data/work-context.tsv`
 
-Each phrase belongs to one situation and can only be used when that
-situation holds, so pool size is scaled to how often the situation occurs
-per year (the most frequent groups must still take years to exhaust).
+Columns `id  group  face  level  text`. Every phrase belongs to a
+**situation group** and can only be said while that situation holds
+(`Situations(context)`). When several hold, the most specific **tier** wins:
 
-| Situation | Groups | Per group | Total |
-|---|---|---|---|
-| Time of day (madrugada, manhã cedo, manhã, almoço, tarde, noite) | 6 | 300 | 1,800 |
-| Weekday | 7 | 150 | 1,050 |
-| Weather (condition × cold/mild/hot) | ~12 | 80 | ~960 |
-| Report triggers (social per site ×2 levels, YouTube, long meetings, failing builds, many commits, first commit, no-meeting day, lots of music...) | ~15 | 100 | 1,500 |
-| Current moment (meeting just ended, build passed, back from lunch...) | ~8 | 80 | 640 |
-| Games (see below) | ~6 | ~80 | ~500 |
-| Special dates (holidays, Natal, month start/end, payday, sexta-feira 13...) | ~20 | 30 | 600 |
-| Combinations (sexta + calor, segunda + chuva, madrugada + commit, madrugada + jogo, build quebrado + jogo...) | ~44 | 25 | ~1,100 |
-| **Total** | | | **~8,200** |
+1. **Combinations** — `combo:sexta-calor` (Fri, ≥28°), `combo:segunda-chuva`,
+   `combo:sexta-noite` (Fri ≥18h), `combo:segunda-cedo` (Mon 5–9h),
+   `combo:madrugada-commit` (<5h with a commit today),
+   `combo:madrugada-jogo` (<5h, game closed in the last hour),
+   `combo:build-quebrado-jogo` (3+ failed builds and 30+ min of games).
+2. **Triggers and "just happened"** — `rede-social` / `rede-social-muito`
+   (top site ≥30 / ≥90 min, fills `{site}` `{tempo}`), `youtube` /
+   `youtube-muito` (≥30 / ≥90 min), `musica-longa` (media minus video ≥2h),
+   `reuniao-longa` (≥2h of calls), `sem-reuniao` (weekday, ≥15h, no calls),
+   `reuniao-acabou` (a call ended <20 min ago), `build-falhando` (≥3
+   fails), `build-limpo` (≥5 builds, 0 fails), `commits-muitos` (≥5) /
+   `commit-primeiro` (≥1), `jogo-acabou` (a game closed <20 min ago, fills
+   `{jogo}`), `jogo-expediente` (that game closed on a weekday 9–18h),
+   `jogo-hora` / `jogo-muito` (≥1h / ≥3h today), `jogos-varios` (≥3 games).
+3. **Special dates** — `data:natal`, `ano-novo`, `halloween`, `sexta-13`,
+   `dia-programador` (day 256), `inicio-mes`, `fim-mes`.
+4. **General, always true** — `hora:*` (madrugada <5h, manha-cedo <8h,
+   manha <12h, almoco <14h, tarde <18h, noite), `dia:*` (seg…dom), and
+   `clima:*` from the last weather reading: the condition (`sol`,
+   `nublado`, `chuva`, `tempestade`, `neblina`) plus `frio` (<15°) /
+   `calor` (≥28°). A clear sky is `clima:sol` only from 6h to 18h and
+   `clima:noite-limpa` otherwise — the first real-device test caught "tá sol"
+   being said at night.
 
-- **Triggers don't fire immediately** — a met condition only gets priority
-  at the next randomly scheduled slot, so timing stays unpredictable and it
-  never lands right on top of an existing `NOTIFY` nudge. Each level fires
-  once per day; the same trigger phrase won't repeat within a month.
-- **Combinations win** over single situations when several hold at once —
-  they read like Peemo connecting things in its head, not reading a list.
-- Placeholder phrases are validated with the **largest possible values**
-  ("TikTok", "180 min", the longest game name seen) so nothing overflows.
-- Dev triggers require the Ferramentas de Dev card; social/YouTube triggers
-  require Mídia; game situations require Jogos — same gating the Relatório
-  already uses.
+Rules around it:
 
-**Social per site**: `DailyReportTracker`/`DailyReportStore` start tracking
-focused seconds **per site** (Facebook/Instagram/TikTok) so thoughts can
-name the site. The Relatório keeps showing the grouped total only.
+- Triggers, dates and combos speak **once a day** each (`reuniao-acabou` and
+  `jogo-acabou` once per event), tracked in `ThoughtHistory.FiredToday`. A
+  met condition doesn't fire right away — it only gets priority at the next
+  random slot, so timing stays unpredictable and it never lands on top of the
+  15-min social/YouTube NOTIFY nudges (those stay the alert; the thought is
+  the joke, at another moment).
+- Within a tier, the group that spoke last is tried last
+  (`ThoughtHistory.LastContextGroup`) — also from the real-device test,
+  where one weather group spoke four times in two minutes.
+- Each group walks its own persisted shuffle queue, same as the base.
+- `{tempo}` renders as "45 min", "2h" or "2h30". Filled-in text goes through
+  `ThoughtText.Accept`; a phrase that no longer fits (a very long game name,
+  an undrawable character in it) is skipped for that situation.
+- Per-site and per-game minutes come from `DailyReportTracker`, which tracks
+  them (`SocialSecondsBySite`, `GameSecondsByName`) just for this — the
+  Relatório still shows only the grouped totals.
 
-**Games**: `GameMonitor.GameChanged` already provides the game name, and the
-report already sums game time. Track time **per game** in the day's progress
-too (report still shows the grouped total). Peemo never thinks *during* a game
-(Game Mode screen); game remarks come after it closes or later in the day:
-just finished playing, long single session (≥ 1h), daily game time ≥ 1h /
-≥ 3h, gaming during business hours, several games today, first game of the
-day — plus the combinations above.
+### RandomFactsMessages — uselessfacts.jsph.pl + MyMemory
 
-### PeemoBaseMessages
+Free, keyless APIs (project rule: nothing metered or keyed). A stock of
+translated facts lives in `thought-facts.json` and is refilled in the
+background every 30 min when it drops below 5 (up to 8, at most 20
+translations a day — far under MyMemory's ~5k anonymous chars/day, with 3s
+between requests); `TryPick` only ever reads the stock. Facts are filtered
+**before** translating: ≤70 chars in English (Portuguese runs longer) and a
+blocklist for grim subjects, since uselessfacts does return some.
+MyMemory's quota/error notices come back *as* the "translation", so those
+and untranslated echoes are rejected. Translations can read a bit
+machine-made; that's accepted.
 
-~10,000 phrases across ~45 categories (robot existential, observations about
-humans, animal/space/body/history/food/tech curiosities, invented tiny
-memories, random opinions, unanswerable questions, micro-poems, cute world-
-domination plans, conspiracy theories of a robot, ...), mixed formats
-(question, statement, exclamation, confession), each with a suggested face.
-Shuffled per install, never repeats; never the same category twice in a row.
-At ~2/day it lasts ~13 years.
+### OnThisDayMessages — Wikimedia `onthisday`
 
-### RandomFactsMessages
+Native PT-BR, free and keyless (Wikimedia asks for an identifying
+User-Agent — `ThoughtHttp.Client` sends one with the repo URL). The day's
+`selected` events are fetched once into `thought-onthisday.json`; if none
+survives the filters, the much longer `events` list is the fallback (a
+typical day has only ~3 selected, often grim). Filters: grim-subject
+blocklist, and the rendered line — "Neste dia, em {ano}: {evento}." — must
+pass `ThoughtText.Accept`. An event starting with an accented capital
+(É, Ó...) is lowercased after the colon, since the font only has
+lowercase accents. At most one a day. Ids use a stable FNV hash because
+`string.GetHashCode` changes between runs on .NET.
 
-- Prefetch and keep 5–10 translated facts **on disk**, refilled in the
-  background; `TryPick` only reads the stock, never waits on the network.
-- Filter **before** translating: EN length ≤ ~70 chars (PT runs 15–20%
-  longer) and a blocklist for heavy content (crime, death, kill...) —
-  uselessfacts does return grim ones.
-- MyMemory: no key, 5k chars/day anonymous; ~1 fact/day uses ~150.
-- Translation stays inside this class; extract a `MyMemoryTranslator` only if
-  another source ever needs it.
+### SpaceMessages — CelesTrak + SGP.NET
 
-### OnThisDayMessages
+- Orbital elements (TLE) for ISS 25544, Tiangong 48274 and Hubble 20580
+  only — famous ones; something generic passes every few minutes and would
+  kill the magic. Fetched from CelesTrak at most once a day into
+  `tle-cache.json`; a failed fetch keeps the previous elements. N2YO was
+  rejected: its key would be shared by every install.
+- Passes are computed locally with SGP.NET (`GroundStation.Observe`) at the
+  location from `LocationProvider` — shared with `WeatherMonitor`, so it
+  works with the Clima card off. No location, no passes.
+- A pass qualifies when its max elevation is ≥30°, it's **visible to the
+  naked eye** (sun ≤ −6° at the observer while the satellite is still
+  sunlit — Earth's shadow modeled as a cylinder, sun from `Sun.Predict`)
+  and it starts within the next 3h or is under way. The text gives the time
+  and where to look (8-point compass at rise, in Portuguese), from a few
+  templates; crewed stations get "tem gente lá" variants.
+- Each pass is announced once, and at most one space thought a day.
 
-Fetch the day's `selected` events once, cache them, use up to ~1/day. Same
-length filter; skip grim events.
+## Text from the internet — `ThoughtText`
 
-### SpaceMessages
+Folds typographic quotes, dashes, ellipses and `;` into what Font5x7 and
+the physical display draw, rejects anything still undrawable, and caps
+fetched text at 90 chars (a bit over the ~75 authored phrases aim for —
+the message box scrolls).
 
-"Um satélite famoso vai passar no seu céu" — computed locally, no API key
-(project rule: no metered/keyed APIs; N2YO was rejected for that reason —
-one key embedded in the installer would be shared by every user).
+## Memory and caches (`%AppData%\Brobot\`)
 
-- **Orbits**: CelesTrak GP data, TLE format, one request per satellite
-  (`https://celestrak.org/NORAD/elements/gp.php?CATNR=<id>&FORMAT=TLE`).
-  Fetched at most **once a day** (CelesTrak asks clients not to poll more
-  than every ~2h; TLEs stay accurate enough for a few days) and cached on
-  disk, so a failed fetch just reuses yesterday's.
-- **Satellites**: a short fixed list of famous ones only — ISS (25544),
-  Tiangong (48274), Hubble (20580). Never Starlink or generic satellites:
-  something passes overhead every few minutes, which would kill the magic.
-- **Propagation**: SGP4 in-process via a NuGet library (candidate:
-  `SGP.NET`; confirm it handles pass prediction/look angles before
-  committing to it, otherwise `Zeptomoby.OrbitTools`).
-- **Location**: the same Windows `Geolocator` lat/lon `WeatherMonitor`
-  already gets — today it's a local inside `WeatherMonitor.RunAsync`, so
-  extract a small shared location provider (cached lat/lon) rather than
-  requiring the Clima card to be on. No location → `null`.
-- **Qualifying pass** (all of them):
-  - max elevation ≥ ~30° (low passes are hard to see and don't impress);
-  - **visible to the naked eye**: sun ≤ −6° at the observer (dusk/night)
-    *and* the satellite sunlit (not in Earth's shadow) at some point of the
-    pass — otherwise "passing overhead" is technically true but useless;
-  - starts within the next **~3h** (the slot is random, so the remark is a
-    heads-up with the time), or is happening right now.
-- **Text**: time + direction in 8-point PT compass (norte, nordeste...),
-  e.g. "Às 19:42 a ISS passa bem visível no céu, olha pra noroeste!" or,
-  mid-pass, "A ISS tá passando em cima de você agora, dá um tchau!".
-  Phrase templates live in the source (a few dozen variants, `{sat}`,
-  `{hora}`, `{dir}` placeholders), same voice guide as the rest.
-- **Display**: `NOTIFY SATELLITE <texto>` (see "Space thoughts").
-- **Limits**: each pass announced once; at most one space thought per day.
-- Runs all day like the other sources, but visible passes are naturally
-  dusk/night only — fine, since the scheduler already holds while the user
-  is away from the PC.
+- `thought-history.json` (`ThoughtHistoryStore`): the shuffle queues,
+  when each phrase id was last used, today's fired triggers and per-source
+  counts, and the last source / category / context group. This is
+  *Sender's* memory for not repeating itself — the phrases themselves still
+  never imply Peemo remembers other days.
+- `thought-facts.json`, `thought-onthisday.json`, `tle-cache.json`: the
+  three fetch caches above.
+- Ids in the data files are permanent: never reuse or renumber one, the
+  history refers to them.
 
-## Architecture — `src/Brobot.Sender/Thoughts/`
+## Modo teste
+
+- **Pensamento** makes a thought now through the normal director (hold
+  conditions apply, except "notificação recente"), and shows what came out
+  or what's blocking it.
+- **Satélite** announces the next qualifying pass in the next 48h, even if
+  it's hours away, straight to Peemo — it doesn't touch the history, so it
+  doesn't use up the real one-a-day allowance.
+
+## Content and `tools/validate-thoughts.py`
+
+Run it before committing any change to either data file:
 
 ```
-Thoughts/
-  IThoughtSource.cs        Name, Weight, Thought? TryPick(ThoughtContext)
-  Thought.cs               Face, Text, Source, Category (Face SATELLITE/SPACE = send as NOTIFY)
-  SpaceTopic.cs            space keyword lists → SATELLITE / SPACE / none
-  ThoughtContext.cs        snapshot: now, DailyReportResult, per-site/per-game minutes,
-                           weather, current states (meeting just ended, last game...)
-  WorkContextMessages.cs
-  PeemoBaseMessages.cs
-  RandomFactsMessages.cs
-  OnThisDayMessages.cs
-  SpaceMessages.cs         CelesTrak TLE cache + SGP4 pass prediction
-  ThoughtDirector.cs       which source speaks (weights, no repeats, pass-the-turn)
-  ThoughtScheduler.cs      when (30 min + exponential, hold conditions, presence)
-  ThoughtHistoryStore.cs   persisted shuffle queues, used phrases, cooldowns, today's fired triggers
-  Data/
-    peemo-base.tsv          embedded resource
-    work-context.tsv       embedded resource, one row per phrase with its situation group
+python tools/validate-thoughts.py              # errors fail, warnings are for review
+python tools/validate-thoughts.py --sample 3   # also writes tools/thoughts-sample.md
 ```
 
-- **Each source owns its rules and its own data file.** Phrases live in
-  embedded data files, not C# arrays — fine for `PausaMessages`' dozens,
-  unreadable at 18k lines, and the validation script shouldn't parse C#.
-- A new source later = one class implementing `IThoughtSource`, registered
-  in `ThoughtDirector` with a weight.
-- `MainWindow` only starts the scheduler once connected, builds the `ThoughtContext` from
-  what it already has (`_dailyReport`, `_lastWeatherReading`, meeting/game/AI
-  flags) and sends `FACE` + `MSG` — or `NOTIFY SATELLITE|SPACE` for a space
-  thought.
+It checks columns and unique ids, known faces/levels/groups, placeholders
+per group, rendered length with the longest values ("Instagram", "10h30",
+"League of Legends"...), characters the display can draw (uppercase accents
+included — the font drops the accent), the voice guide's banned wording,
+SATELLITE only on satellite phrases (space words elsewhere are a warning),
+exact and near duplicates across both files, and that every context group
+has phrases for every mood it can happen in (`GROUP_MOODS`). A new group
+needs adding to `KNOWN_GROUPS` (and `GROUP_MOODS` / `GROUP_VALUES` when it
+applies) as well as to `Situations`.
 
-## Content production
+Size today: ~980 base phrases and ~1,960 context phrases — the general
+groups (hora 109–148 each, dia 59–76, clima 32–48) were grown first since
+they come up most; triggers, dates and combos have ~9–15 each. The original
+plan aimed at ~10,000 base and ~8,200 context; growing further is best done
+in rounds after real use shows what repeats and what lands, with the voice
+guide adjusted from that feedback. Weather is the hardest to grow without
+near-duplicates — it needs new angles, not rewordings.
 
-Total ~18,200 phrases — the heaviest part of the work, far more than the code.
-
-- **Voice guide first** (user approves before any generation): first person,
-  curious little robot creature, accomplice tone, ≤ ~75 chars. Includes a
-  section for space phrases (face `SPACE`/`SATELLITE`): they follow the
-  "Transmissão Espacial Recebida!!!" line, so they read as the transmission
-  itself, never announce it.
-- **Validation script**: length, glyphs supported by the font, exact and
-  near-duplicate detection, placeholder rendering with max values, and a
-  random sample per category for the user to review.
-- **Phase 1**: ~1,000 base + ~1,500 context (every situation covered with
-  smaller groups) — test the tone on the real Peemo.
-- **Phase 2**: complete to full size with the voice guide adjusted from phase 1.
-
-## Implementation order
-
-1. Skeleton: `IThoughtSource`, `ThoughtScheduler`, `ThoughtDirector`,
-   `ThoughtHistoryStore`, presence check,
-   per-site and per-game tracking in `DailyReportTracker`, and the
-   `FACE`+`MSG` vs `NOTIFY SATELLITE|SPACE` routing in `MainWindow`. (The
-   two Core animations themselves are already done.)
-2. API sources: `RandomFactsMessages`, `OnThisDayMessages`, `SpaceMessages`
-   (incl. the shared location provider extracted from `WeatherMonitor`),
-   plus `SpaceTopic` classifying the first two.
-   Modo teste should be able to force a space thought using the next
-   visible pass even if it's hours away, to check the text on the device.
-3. Voice guide → user approval.
-4. Phase 1 content + validation script + review sample.
-5. Real-device test, with a Modo teste way to force a thought (no waiting 30+ min).
-6. Phase 2 content.
-7. Docs: rewrite this file as a real spec, update specs/overview.md and
-   CLAUDE.md's index (not sender-feature-cards.md: there's no card).
+Not built from the original plan: a "long single game session" and "first
+game of the day" trigger (daily totals are used instead), and a strict
+one-month cooldown on trigger phrases (the per-group queues give the same
+effect in practice).
