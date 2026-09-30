@@ -1,4 +1,5 @@
-.pio/build/esp32dev_physical/src/main.cpp.o: src/main.cpp \
+.pio/build/esp32dev_physical/src/UsbLink.cpp.o: src/UsbLink.cpp \
+ include/UsbLink.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include/freertos/FreeRTOS.h \
@@ -161,41 +162,9 @@
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- include/Buzzer.h include/Face.h include/IDisplay.h include/Config.h \
- include/DeviceSettings.h include/Personality.h include/PongGame.h \
- include/Protocol.h include/RpgBattle.h include/StreamMode.h \
- include/UsbLink.h include/ST7735PhysicalDisplay.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/gfxfont.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_I2CDevice.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src/Wire.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ BusIO/Adafruit_SPIDevice.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src/SPI.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-spi.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST7735.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ ST7735\ and\ ST7789\ Library/Adafruit_ST77xx.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_GFX.h \
- .pio/libdeps/esp32dev_physical/Adafruit\ GFX\ Library/Adafruit_SPITFT_Macros.h \
- include/WifiSetup.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFi.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/IPv6Address.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiType.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiSTA.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiGeneric.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_wifi/include/esp_smartconfig.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/wifi_provisioning/include/wifi_provisioning/manager.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/protocomm/include/common/protocomm.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/protocomm/include/security/protocomm_security.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/wifi_provisioning/include/wifi_provisioning/wifi_config.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiAP.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiScan.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Client.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiServer.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Server.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiUdp.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/Udp.h \
- C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/cores/esp32/cbuf.h
+ include/Config.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/hal/esp32c3/include/hal/usb_serial_jtag_ll.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/usb_serial_jtag_reg.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/usb_serial_jtag_struct.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/system_struct.h \
+ C:/Users/Gabriel/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include/soc/periph_defs.h
