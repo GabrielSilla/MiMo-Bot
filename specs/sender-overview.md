@@ -246,3 +246,13 @@ off-center in the 28x28 box — this was a real bug, fixed once.
   show-then-hide flash at launch. Closing the window (the X) hides it back to the
   tray instead of exiting — only the tray menu's "Sair" calls
   `Application.Current.Shutdown()`.
+
+## connection.log
+
+`%APPDATA%\Brobot\connection.log` (`MainWindow.LogConnection`) records only
+link transitions: connected/disconnected, USB open failures, USB dropping
+mid-session, THEME/CLASSICCOLOR resends after a reconnect, PC power events
+(`SystemEvents.PowerModeChanged`: Suspend/Resume) and Sender start/stop.
+Separate from `ai-events.log` because Core's DIAG lines flood that one and it
+self-truncates within hours. Rolls to `connection.log.old` at 128 KB.
+Use it to tell a PC-suspend USB power cut from a cable drop when Peemo resets.

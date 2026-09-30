@@ -52,6 +52,15 @@ public partial class MainWindow : Window
         "Brobot", "ai-events.log");
     private const long AiEventLogMaxBytes = 256 * 1024;
 
+    // Separate from ai-events.log on purpose: that one is flooded by Core's
+    // DIAG lines and self-truncates within hours, which erased the evidence
+    // of Peemo resets. This one only gets connection/power transitions, and
+    // keeps the previous file as .old instead of deleting it.
+    private static readonly string ConnectionLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "Brobot", "connection.log");
+    private const long ConnectionLogMaxBytes = 128 * 1024;
+
     private readonly BrobotConnection _connection;
     private Forms.NotifyIcon? _trayIcon;
 
@@ -382,6 +391,9 @@ public partial class MainWindow : Window
 
         SetupTrayIcon();
         Closing += MainWindow_Closing;
+        LogConnection("Sender iniciado");
+        Microsoft.Win32.SystemEvents.PowerModeChanged += (_, args) =>
+            LogConnection($"energia do PC: {args.Mode}");
 
         // CTRL+SHIFT+F10, system-wide, so "check the partial Relatório"
         // works no matter what has focus (or whether this window is even
@@ -603,6 +615,7 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        LogConnection("Sender fechando");
         e.Cancel = true;
         Hide();
     }
@@ -699,6 +712,11 @@ public partial class MainWindow : Window
         // connection at all (it just runs on its own 30-min timer), so
         // without this the badge would stay blank for up to 30 minutes after
         // a reconnect instead of picking up the last known reading right away.
+        if (connected != _wasConnected) {
+            LogConnection(connected
+                ? $"CONECTADO via {(_connection.IsSerialConnected ? $"USB {_usbPortName}" : $"TCP {_coreHost}:{_corePort}")}"
+                : $"DESCONECTADO (modo {_linkMode}, userDisconnected={_userDisconnected}; {_usbStatusText})");
+        }
         if (connected && !_wasConnected && _lastWeatherReading is { } reading) {
             _connection.SendCommand($"WEATHER {reading.TempC} {reading.CoreConditionName}");
         }
@@ -709,6 +727,7 @@ public partial class MainWindow : Window
         if (connected && !_wasConnected && TemaComboBox.SelectedItem is ThemeManager.ThemeInfo currentTheme
             && currentTheme.CoreTheme != "DEFAULT") {
             _connection.SendCommand($"THEME {currentTheme.CoreTheme}");
+            LogConnection($"reenviou THEME {currentTheme.CoreTheme}");
         }
         // CLASSICCOLOR is another persistent flag Core forgets on its own
         // reboot — same resend-if-non-default reasoning as THEME just
@@ -718,6 +737,7 @@ public partial class MainWindow : Window
         if (connected && !_wasConnected && ClassicColorComboBox.SelectedItem is ThemeManager.ClassicColorInfo currentColor
             && currentColor.Key != ThemeManager.DefaultClassicColor) {
             _connection.SendCommand($"CLASSICCOLOR {currentColor.CoreColor}");
+            LogConnection($"reenviou CLASSICCOLOR {currentColor.CoreColor}");
         }
         // SOUND/SCANLINES are persistent flags too, and both default to ON
         // on Core (same as THEME's DEFAULT) — only the OFF case needs
@@ -863,6 +883,7 @@ public partial class MainWindow : Window
                 string reason = _connection.LastSerialFailure ?? "falha desconhecida ao abrir a USB";
                 _usbStatusText = $"USB: {reason}";
                 LogAiEvent($"[usb] {reason}");
+                LogConnection($"falha ao abrir USB: {reason}");
             }
         }
         if (_wasSerialConnected && !serialConnected)
@@ -870,6 +891,7 @@ public partial class MainWindow : Window
             // Cable pulled (or Peemo reset) mid-session. Release the port so the
             // next attempt can open it.
             _usbStatusText = "USB desconectada — procurando o Peemo de novo...";
+            LogConnection($"USB {_usbPortName} caiu no meio da sessão (cabo/reset do Peemo/suspensão)");
             _connection.Disconnect();
         }
         _wasSerialConnected = serialConnected;
@@ -3387,6 +3409,31 @@ public partial class MainWindow : Window
     /// Never allowed to throw — a failure to write a diagnostic must not take
     /// down the event that was being diagnosed.
     /// </summary>
+    private static void LogConnection(string line)
+    {
+        try
+        {
+            string? dir = Path.GetDirectoryName(ConnectionLogPath);
+            if (dir != null)
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            var info = new FileInfo(ConnectionLogPath);
+            if (info.Exists && info.Length > ConnectionLogMaxBytes)
+            {
+                File.Move(ConnectionLogPath, ConnectionLogPath + ".old", overwrite: true);
+            }
+
+            File.AppendAllText(
+                ConnectionLogPath,
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}  {line}{Environment.NewLine}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
     private static void LogAiEvent(string line)
     {
         try
