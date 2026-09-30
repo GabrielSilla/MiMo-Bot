@@ -37,6 +37,19 @@ constexpr unsigned long SERIAL_BAUD_RATE = 115200;
 // the host field.
 constexpr uint16_t PROTOCOL_TCP_PORT = 5555;
 
+// While a PC app is on the USB link it sends `HOST USB` every ~2s (see
+// PROTOCOL.md) and Core keeps WiFi switched off. No keepalive for this long
+// means the cable was pulled or the app died — WiFi comes back.
+constexpr unsigned long USB_HOST_TIMEOUT_MS = 6000;
+// Serial (USB-CDC) receive buffer; see main.cpp's setup() for why it is this big.
+// Bytes that arrive while this ring is full are dropped (see main.cpp), which
+// makes the firmware abandon the FRAME and never ack it. It has to hold every
+// FRAME the PC has in flight at once: one payload is up to 128 rows x 324
+// bytes ~= 41.5KB (STREAM_ROW_MAX_RECORD_BYTES), and the Sender caps the bytes
+// it keeps in flight below this (GbaSession.InFlightByteBudget — keep the two
+// in step).
+constexpr size_t USB_RX_BUFFER_BYTES = 65536;
+
 // ~60 fps. NOTE: this exceeds the 115200 baud link's ~11.5 KB/s budget by
 // several times over (a frame's worth of draw commands, incl. the eyes'
 // rounded-corner cuts in Face.cpp, easily runs 500+ bytes) — fine for now
@@ -45,6 +58,13 @@ constexpr uint16_t PROTOCOL_TCP_PORT = 5555;
 // must go up) before this is flashed to real Serial hardware again, or
 // frames will lag/garble.
 constexpr unsigned long FRAME_INTERVAL_MS = 16;
+
+// SPI clock to the ST7735S. Adafruit_SPITFT's default is 8MHz, at which
+// present() (a full 160x128x16-bit frame, ~41KB) alone takes ~40ms — that
+// capped STREAM at ~22fps no matter how fast the link was. The ESP32-C3's SPI
+// divides its 80MHz clock, so useful values are 40MHz, ~26.7MHz, 20MHz. If the
+// picture ever shows noise/garbage (long or loose wires), lower this first.
+constexpr uint32_t TFT_SPI_HZ = 40000000;
 
 // Pong minigame (PongGame.h/.cpp) — the "ANTI STRESS BUTTON" in Brobot.Sender.
 // Exclusive full-screen mode, bypasses Personality/Face entirely while
@@ -72,10 +92,18 @@ constexpr unsigned long PONG_GAME_OVER_HOLD_MS = 4000;
 
 // STREAM/FRAME video mode (StreamMode.h/.cpp) — a third exclusive mode,
 // see PROTOCOL.md's STREAM/FRAME section and specs/sender-gba.md. A row
-// record on the wire is 1 byte of row index plus 160 RGB565 pixels (2
-// bytes each, big-endian) — see Protocol.cpp's binary-mode parsing.
-constexpr int STREAM_ROW_PAYLOAD_BYTES = LOGICAL_WIDTH * 2;            // 320
-constexpr int STREAM_ROW_RECORD_BYTES = STREAM_ROW_PAYLOAD_BYTES + 1;  // 321
+// record on the wire is a small header — [row][encoding][length, 16-bit
+// big-endian] — followed by exactly <length> bytes of payload, either raw
+// RGB565 (encoding 0) or run-length-encoded (encoding 1, see
+// Protocol.cpp's applyRowBuf): PC-side gameplay testing (see
+// specs/sender-gba.md) found row diffs alone too heavy during scrolling —
+// nearly every row changes at once — so the sender now picks whichever
+// encoding is smaller per row, and this header's explicit length is what
+// lets the firmware skip straight to the next record without needing to
+// understand RLE itself to find the boundary.
+constexpr int STREAM_ROW_HEADER_BYTES = 4;
+constexpr int STREAM_ROW_MAX_PAYLOAD_BYTES = LOGICAL_WIDTH * 2;  // 320 — raw encoding's fixed size, RLE's ceiling
+constexpr int STREAM_ROW_MAX_RECORD_BYTES = STREAM_ROW_HEADER_BYTES + STREAM_ROW_MAX_PAYLOAD_BYTES;  // 324
 // No FRAME for this long while STREAM is active means the PC app that was
 // streaming died or closed without a clean STREAM STOP — auto-revert to
 // Personality. Pong/RPG never needed a timeout like this: losing the

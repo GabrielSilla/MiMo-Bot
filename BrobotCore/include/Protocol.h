@@ -45,6 +45,29 @@ public:
 
     void poll(Stream& serial, unsigned long now);
 
+    // True from the moment a FRAME <seq> <bytes> header is parsed until the
+    // last byte of its payload lands — i.e., exactly while StreamMode's
+    // canvas holds a mix of old and new rows. main.cpp uses this to hold
+    // off present() until a transfer finishes, rather than risk pushing
+    // that half-updated canvas to the physical panel (visible as tearing —
+    // part of the frame still showing the previous picture, part already
+    // the new one).
+    bool isReceivingFrame() const { return _inFrame; }
+
+    // Diagnostics only (main.cpp's periodic DIAG line): FRAMEs given up on
+    // mid-transfer — the PC never gets a FRAMEOK for these.
+    uint32_t abandonedFrames() const { return _abandonedFrames; }
+
+    // Edge-triggered: true once per `HOST USB` line received since the last
+    // call. A PC app on the USB link sends that as a keepalive; main.cpp uses
+    // it to keep WiFi switched off while USB is up (see PROTOCOL.md). Which
+    // stream the line arrived on is main.cpp's business, not Protocol's.
+    bool takeHostUsbPing() {
+        bool seen = _hostUsbPing;
+        _hostUsbPing = false;
+        return seen;
+    }
+
 private:
     // Must comfortably fit "MSG " + the longest message Personality accepts.
     static constexpr size_t LINE_CAPACITY = 264;
@@ -60,6 +83,8 @@ private:
     char _line[LINE_CAPACITY] = {0};
     size_t _length = 0;
     unsigned long _lastByteAt = 0;
+    bool _hostUsbPing = false;
+    uint32_t _abandonedFrames = 0;
     Personality& _personality;
     DeviceSettings& _deviceSettings;
     PongGame& _pongGame;
@@ -69,15 +94,25 @@ private:
 
     // Binary FRAME payload state — persists across poll() calls the same
     // way _line/_length do, since a frame's payload can easily span more
-    // than one call. _rowBuf accumulates one row record at a time
-    // ([row byte][160 x RGB565 big-endian]); each completed row is handed
-    // to _streamMode and the buffer resets, until _frameBytesRemaining
-    // reaches 0.
+    // than one call. Each row record is [row][encoding][length, 16-bit BE]
+    // followed by exactly <length> bytes of payload (see Config.h's
+    // STREAM_ROW_* comment) — poll() alternates between accumulating a
+    // fixed-size header and a length-driven payload, decoding and handing
+    // each row to _streamMode as its payload completes, until
+    // _frameBytesRemaining reaches 0.
+    enum class RowParseState : uint8_t { HEADER, PAYLOAD };
+
     bool _inFrame = false;
     uint16_t _frameSeq = 0;
     uint32_t _frameBytesRemaining = 0;
-    uint8_t _rowBuf[STREAM_ROW_RECORD_BYTES];
-    size_t _rowBufLen = 0;
+    RowParseState _rowParseState = RowParseState::HEADER;
+    uint8_t _rowHeaderBuf[STREAM_ROW_HEADER_BYTES];
+    size_t _rowHeaderLen = 0;
+    uint8_t _rowPayloadBuf[STREAM_ROW_MAX_PAYLOAD_BYTES];
+    size_t _rowPayloadLen = 0;
+    size_t _rowPayloadNeeded = 0;
+    uint8_t _currentRow = 0;
+    uint8_t _currentEncoding = 0;
 
     // Takes the Stream (rather than only poll() holding it) purely so PING
     // can write its reply back to whoever asked — every other command is
@@ -89,8 +124,15 @@ private:
     // malformed or if a frame is already in progress.
     void beginFrame(const char* args);
 
-    // Called once _rowBuf holds a complete STREAM_ROW_RECORD_BYTES record:
-    // byte-swaps the 160 big-endian pixel pairs to host order and hands the
-    // row to _streamMode.
+    // Called once a row record's header has been parsed, to sanity-check
+    // and record _rowPayloadNeeded. Returns false (aborting the frame) if
+    // the declared length is 0 or would overflow _rowPayloadBuf — a
+    // malformed/corrupt length must not be trusted to index into it.
+    bool beginRowPayload();
+
+    // Called once _rowPayloadBuf holds all _rowPayloadNeeded bytes: decodes
+    // it per _currentEncoding (raw RGB565 big-endian, or run-length —
+    // see PROTOCOL.md's STREAM/FRAME section) into 160 host-order pixels
+    // and hands the row to _streamMode.
     void applyRowBuf(unsigned long now);
 };

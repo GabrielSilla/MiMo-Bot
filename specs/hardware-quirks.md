@@ -19,6 +19,10 @@ USB port is the chip's own USB-Serial/JTAG peripheral, not a separate
 UART-bridge chip like the Uno's — opening it can toggle DTR/RTS in ways that
 made `System.IO.Ports.SerialPort.Open()` hang indefinitely against it during
 development (see [connection.md](connection.md) for the fix). This is
-specifically why `Brobot.Sender` connects over WiFi TCP instead of Serial
-now; `Brobot.Display.Simulator` still uses Serial and has the same
+why `Brobot.Sender` used WiFi TCP only for a while; it now tries USB
+first with the fixes from connection.md (background-thread open, PING
+verification, write timeout) and keeps WiFi as the fallback. The firmware needs
+`-D ARDUINO_USB_CDC_ON_BOOT=1 -D ARDUINO_USB_MODE=1` (set on
+`esp32dev_physical` in `platformio.ini`) for `Serial` to be that USB port
+rather than UART0; `Brobot.Display.Simulator` still uses Serial and has the same
 background-thread fix, but hasn't been retested against this exact board.

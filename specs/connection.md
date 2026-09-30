@@ -14,10 +14,28 @@
   *same* `SerialPort` also hung against this port — fixed by tracking
   connectedness in a separate `volatile bool _serialOpen` instead, so
   `IsConnected`/`SendCommand` never touch `_port`'s properties cross-thread.
-  Given both bugs, `Brobot.Sender` dropped Serial from its own UI entirely
-  (WiFi-only now — see [sender-overview.md](sender-overview.md)'s Conexão card); `Brobot.Display.Simulator`
+  Given both bugs, `Brobot.Sender` dropped Serial from its own UI for a while
+  (WiFi-only); it now uses Serial again as an *automatic* preferred link to
+  Peemo — see the USB link bullet below. `Brobot.Display.Simulator`
   still uses `ConnectSerial` for a real Arduino/ESP32 over COM, and benefits
   from both fixes.
+- **USB link** (`ConnectSerial(..., verifyPeemo: true)`, `PeemoUsbPorts`,
+  `MainWindow.TickUsbLink`): `PeemoUsbPorts.FindCandidates()` reads the
+  registry (`Enum\USB\VID_303A&PID_1001*\<instance>\Device Parameters\PortName`,
+  the composite device's `MI_00` child) intersected with the live
+  `SerialPort.GetPortNames()` — it never opens a port to look. A candidate is
+  then opened and verified with `PING`/`PEEMO` (repeated every read timeout,
+  3s budget) and only counts as `IsSerialConnected` after that; a failed
+  verification releases the COM port immediately (left open it would answer
+  "access denied" forever). Sender's status tick then sends `HOST USB` every
+  2s, which is what makes Core switch its WiFi off (PROTOCOL.md). A USB
+  attempt replaces the TCP connection (one transport per `BrobotConnection`),
+  so `_needTcpFallback` puts WiFi back when USB fails or is unplugged, and a
+  failed port isn't retried for 30s so an unrelated Espressif board or old
+  firmware can't flap the WiFi link. "Desconectar" sets `_userDisconnected`
+  and nothing reconnects until "Conectar". The serial port uses UTF-8 (default
+  is ASCII, which mangles accents) and `DtrEnable`; `SendRawBytes` also works
+  over serial, so STREAM/FRAME is possible over USB (unmeasured).
   `ConnectTcp` retries every 500ms via `TcpClient.ConnectAsync`
   bounded by a 500ms `Task.Wait` (not a plain blocking `Connect()`, so `Disconnect()`
   is noticed promptly instead of blocking on the OS's much longer default TCP

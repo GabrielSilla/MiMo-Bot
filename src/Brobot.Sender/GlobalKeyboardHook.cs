@@ -18,10 +18,12 @@ namespace Brobot.Sender;
 /// background-thread callback in this app, this one does NOT need
 /// Dispatcher.Invoke to touch UI/_connection: it's already on that thread.
 ///
-/// Never suppresses a key (always calls CallNextHookEx) — arrows/Escape
-/// still reach whatever window has focus on the PC. Deliberate simple
-/// default for a fun feature; easy to change later if it ever proves
-/// annoying in practice.
+/// Never suppresses a key by default (always calls CallNextHookEx) —
+/// arrows/Escape still reach whatever window has focus on the PC. Deliberate
+/// simple default for Pong/RPG's fun-feature use; a caller that needs
+/// exclusive control instead (see GbaSession — a GBA game reading a held
+/// arrow key every frame really shouldn't also be scrolling whatever window
+/// is behind Peemo's) passes <see cref="suppressedVirtualKeys"/>.
 /// </summary>
 public sealed class GlobalKeyboardHook : IDisposable
 {
@@ -40,6 +42,7 @@ public sealed class GlobalKeyboardHook : IDisposable
     // no managed reference keeping it alive, the GC would be free to collect
     // it out from under an active hook.
     private readonly HookProc _hookProc;
+    private readonly HashSet<int> _suppressedVirtualKeys;
     private nint _hookHandle;
 
     private bool _leftHeld;
@@ -60,11 +63,28 @@ public sealed class GlobalKeyboardHook : IDisposable
     /// </summary>
     public event Action? EnterPressed;
 
-    public GlobalKeyboardHook()
+    /// <summary>
+    /// Fires on every transition of every key this hook sees (not just the
+    /// specific ones the named events above cover), carrying the raw
+    /// Windows virtual-key code — the generic escape hatch for a caller
+    /// that needs more keys than a fixed set of named events would
+    /// reasonably cover one-by-one (see GbaSession's joypad mapping).
+    /// </summary>
+    public event Action<int, bool>? KeyChanged;
+
+    /// <param name="suppressedVirtualKeys">
+    /// Virtual-key codes to swallow entirely — CallNextHookEx is skipped for
+    /// these, so the OS and every other app never sees them while this hook
+    /// is installed, unlike every other key (still just observed, per this
+    /// class's own doc comment). Omit for Pong/RPG's original never-suppress
+    /// behavior.
+    /// </param>
+    public GlobalKeyboardHook(IEnumerable<int>? suppressedVirtualKeys = null)
     {
         // Stored once so it survives for the object's lifetime rather than a
         // fresh closure being handed to SetWindowsHookEx each Install() call.
         _hookProc = HookCallback;
+        _suppressedVirtualKeys = suppressedVirtualKeys is null ? new HashSet<int>() : new HashSet<int>(suppressedVirtualKeys);
     }
 
     public void Install()
@@ -134,6 +154,17 @@ public sealed class GlobalKeyboardHook : IDisposable
                             }
                         }
                         break;
+                }
+
+                KeyChanged?.Invoke(vkCode, isDown);
+
+                if (_suppressedVirtualKeys.Contains(vkCode))
+                {
+                    // Nonzero return value = "eaten": per SetWindowsHookEx's
+                    // documented WH_KEYBOARD_LL contract, the OS drops the
+                    // message here instead of forwarding it to the next hook
+                    // or the focused app.
+                    return (nint)1;
                 }
             }
         }

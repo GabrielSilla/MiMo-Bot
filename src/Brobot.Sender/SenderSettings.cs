@@ -52,6 +52,10 @@ public sealed class SenderSettings
     // WiFi (see MainWindow's Conexão card); Brobot.Display.Simulator still
     // supports Serial, but this app doesn't need it.
     public string TcpHost { get; set; } = "";
+
+    // How the Conexão card reaches Peemo: "Wifi" or "Usb" (the switch on the
+    // card). Exactly one is used at a time — the other is never tried.
+    public string ConnectionMode { get; set; } = "Wifi";
     public int TcpPort { get; set; } = 5555;
 
     // The Claude Code account that was signed in the last time a session
@@ -62,6 +66,15 @@ public sealed class SenderSettings
     // than waiting for "Salvar configurações", same reasoning as
     // PersistDiscoveredAddress.
     public string LastClaudeAccountUuid { get; set; } = "";
+
+    // ROM paths picked via the Mini Games GBA card's "Escolher ROM..."
+    // (see MainWindow's GbaChooseRomButton_Click), most-recent-first —
+    // same "recent list" shape specs/sender-gba.md's Phase 4 describes.
+    // Written immediately on pick (like TcpHost/LastClaudeAccountUuid
+    // above), not gated behind "Salvar configurações": picking a ROM is a
+    // fact about what you just did, not a checkbox preference waiting to
+    // be committed.
+    public List<string> GbaRecentRoms { get; set; } = new();
 
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

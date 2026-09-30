@@ -48,6 +48,16 @@ that could both start it (Start Menu, and an optional "start with Windows"
 shortcut in `{userstartup}`) — before the installer existed this was only
 ever launched by hand, so the collision wasn't a real scenario yet.
 
+**Emulator cores ride along with no installer step of their own.** The
+libretro DLLs (`mgba_libretro.dll` today) live in the repo at
+`src/Brobot.Sender/Cores/`, are copied to `cores\` next to the exe by the
+csproj (`<None Include="Cores\*.dll;Cores\NOTICE-*.txt">`), and so end up in
+the `dotnet publish` folder that `[Files]` packages wholesale. The app loads
+them from `AppContext.BaseDirectory\cores` (`Gba/CorePaths.cs`) — never from
+`%AppData%`, which used to be where a hand-downloaded copy had to be put.
+Saves/states still go to `%AppData%\Brobot\gba` (Program Files isn't
+writable). Each core ships with a `NOTICE-<core>.txt` for its license.
+
 **Also silently installs `Brobot.VSExtension`'s `.vsix`** (see Repository
 layout and [sender-feature-cards.md](sender-feature-cards.md)) when Visual Studio is present on
 the machine, and only then — most people running this installer won't have

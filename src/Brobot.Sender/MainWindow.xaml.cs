@@ -235,6 +235,16 @@ public partial class MainWindow : Window
     // on Core's side otherwise.
     private GbaSession? _gbaLiveSession;
 
+    // The real Mini Games GBA card (as opposed to the Modo teste harness
+    // above): a keyboard hook dedicated to the emulator, installed only
+    // while PlayGbaButton_Click's session is running and suppressing every
+    // key it maps (see ConsoleProfile.KeyMap) — "esse botões devem ficar travados"
+    // (exclusive to the emulator) was an explicit requirement, unlike Pong/
+    // RPG's arrows, which deliberately still reach whatever else has focus.
+    private GlobalKeyboardHook? _gbaHook;
+    // (The keyboard -> pad mapping lives with each console: see
+    // Gba/ConsoleProfile.cs.)
+
     private AiThoughtsListener? _aiThoughtsListener;
     private bool _aiThoughtFaceActive;
     private bool _aiStatsActive; // AISTATS is persistent on Core — see ClearAiStatsIfActive
@@ -269,6 +279,34 @@ public partial class MainWindow : Window
     // error.
     private string? _coreHost;
     private int _corePort = PeemoDiscovery.DefaultPort;
+
+    // How Peemo is reached, chosen with the switch on the Conexão card and
+    // exclusive: in WiFi mode USB is never touched, in USB mode neither the
+    // network nor a sweep is. (It used to be automatic — USB first, WiFi as the
+    // fallback — which left no way to say "USB, and tell me why it isn't
+    // working" when the cable link misbehaved.)
+    private enum LinkMode { Wifi, Usb }
+    private LinkMode _linkMode = LinkMode.Wifi;
+    // Setting the combo box from code (startup) must not run the switch handler.
+    private bool _linkModeInitializing = true;
+    // What the card says while USB mode has no connection: searching, or why it failed.
+    private string _usbStatusText = "Procurando Peemo na USB...";
+
+    // USB link (see TickUsbLink). In USB mode Core switches its WiFi off for as
+    // long as the `HOST USB` keepalive below keeps arriving, and back on when it
+    // stops.
+    private static readonly TimeSpan UsbScanEvery = TimeSpan.FromSeconds(3);
+    // Core drops WiFi back in after USB_HOST_TIMEOUT_MS (6s, Config.h); this has
+    // to stay comfortably inside that.
+    private static readonly TimeSpan UsbKeepaliveEvery = TimeSpan.FromSeconds(2);
+    private DateTime _lastUsbScanAt = DateTime.MinValue;
+    private DateTime _lastUsbKeepaliveAt = DateTime.MinValue;
+    private bool _usbAttemptInFlight;
+    private bool _wasSerialConnected;
+    // Set by "Desconectar": nothing here reconnects on its own until "Conectar".
+    private bool _userDisconnected;
+    private string _usbPortName = "";
+    private int _usbPortRotation;
 
     private DateTime? _connectingSince;
     private DateTime? _lastSweepFinishedAt;
@@ -337,6 +375,10 @@ public partial class MainWindow : Window
         // spontaneous "PONG OVER <score>" line Core writes when an
         // Anti-Stress round ends on its own (see OnFrameReceived).
         _connection.FrameReceived += OnFrameReceived;
+        // FRAMEOK gates the next GBA frame, so it is delivered from the IO
+        // thread directly instead of waiting for the UI thread (see
+        // BrobotConnection.LineReceived).
+        _connection.LineReceived += OnRawLine;
 
         SetupTrayIcon();
         Closing += MainWindow_Closing;
@@ -598,7 +640,15 @@ public partial class MainWindow : Window
         }
         else if (connected)
         {
-            ConnectionStatusText.Text = "Conectado";
+            ConnectionStatusText.Text = _connection.IsSerialConnected ? "Conectado via USB" : "Conectado";
+        }
+        else if (_connection.IsConnectingSerial)
+        {
+            ConnectionStatusText.Text = "Conectando via USB...";
+        }
+        else if (_linkMode == LinkMode.Usb)
+        {
+            ConnectionStatusText.Text = _usbStatusText;
         }
         else if (_sweepRunning)
         {
@@ -622,8 +672,11 @@ public partial class MainWindow : Window
         // "Conectando..." reads as if that address were the live one.
         ConnectionAddressText.Text = _sweepRunning
             ? _sweepProbeAddress
-            : (connected && _coreHost != null ? $"{_coreHost}:{_corePort}" : "");
+            : (_connection.IsSerialConnected
+                ? _usbPortName
+                : (connected && _coreHost != null ? $"{_coreHost}:{_corePort}" : ""));
 
+        TickUsbLink();
         TryStartNetworkSweep(connected, connecting);
 
         // The label tracks *connected*, and nothing else. It used to read
@@ -688,6 +741,13 @@ public partial class MainWindow : Window
         // Not gated on `connected` — meeting/media/game detection all
         // happen at the OS level, independent of whether Peemo is currently
         // reachable (see DailyReportTracker.Tick's own comment).
+        // The GBA/SNES card's game runs inside this app, so GameMonitor can't
+        // see it — its play time is fed in here, as long as the emulator is
+        // really running (not merely a session whose ROM failed to load).
+        _dailyReport.SetEmulatorGameActive(
+            _gbaHook != null && _gbaLiveSession is { IsPlaying: true } playing
+                ? ConsoleProfile.GameTitle(playing.RomPath)
+                : null);
         _dailyReport.Tick();
         TickThoughts(connected);
         _wasConnected = connected;
@@ -713,7 +773,7 @@ public partial class MainWindow : Window
         if (!connected) return "desconectado";
         if (_activeCalls.Count > 0) return "em reunião";
         if (_gameRunning) return "jogo aberto";
-        if (_pongStartTimer != null || _pongHook != null || _rpgStartTimer != null || _rpgHook != null || _gbaStreamRunning || _gbaLiveSession?.IsRunning == true) return "minijogo rodando";
+        if (_pongStartTimer != null || _pongHook != null || _rpgStartTimer != null || _rpgHook != null || _gbaStreamRunning || _gbaLiveSession?.IsRunning == true || _gbaHook != null) return "minijogo rodando";
         if (_aiThoughtFaceActive || DateTime.UtcNow < _aiMessageHoldUntil) return "mensagem da IA na tela";
         if (DateTime.UtcNow - _lastNotificationSentAt < ThoughtAfterNotificationGap) return "notificação recente";
         if (UserPresence.IdleTime > ThoughtAwayAfter) return "usuário ausente";
@@ -773,6 +833,151 @@ public partial class MainWindow : Window
         }
         _thoughtHistory.RecordSpoken(thought, thought.PhraseId, _thoughtDirector.CountsAsLastSource(thought), now);
         LogAiEvent($"Pensamento ({thought.Source}/{thought.Category}): {thought.Text}");
+    }
+
+    /// <summary>
+    /// Runs on every status tick and only does anything for the chosen mode.
+    /// USB mode: while USB is the live link, send Core the `HOST USB` keepalive
+    /// that keeps its WiFi off; otherwise keep looking for a Peemo on the cable
+    /// (every few seconds, forever — the cable may simply not be plugged in yet)
+    /// and report what went wrong. WiFi mode: make sure no USB link lingers.
+    /// </summary>
+    private void TickUsbLink()
+    {
+        DateTime now = DateTime.Now;
+        bool serialConnected = _connection.IsSerialConnected;
+        bool serialConnecting = _connection.IsConnectingSerial;
+
+        if (_linkMode == LinkMode.Wifi)
+        {
+            _usbAttemptInFlight = false;
+            _wasSerialConnected = false;
+            return;
+        }
+
+        if (_usbAttemptInFlight && !serialConnecting)
+        {
+            _usbAttemptInFlight = false;
+            if (!serialConnected)
+            {
+                string reason = _connection.LastSerialFailure ?? "falha desconhecida ao abrir a USB";
+                _usbStatusText = $"USB: {reason}";
+                LogAiEvent($"[usb] {reason}");
+            }
+        }
+        if (_wasSerialConnected && !serialConnected)
+        {
+            // Cable pulled (or Peemo reset) mid-session. Release the port so the
+            // next attempt can open it.
+            _usbStatusText = "USB desconectada — procurando o Peemo de novo...";
+            _connection.Disconnect();
+        }
+        _wasSerialConnected = serialConnected;
+
+        if (serialConnected)
+        {
+            if (now - _lastUsbKeepaliveAt >= UsbKeepaliveEvery)
+            {
+                _lastUsbKeepaliveAt = now;
+                _connection.SendCommand("HOST USB");
+            }
+            return;
+        }
+
+        if (serialConnecting || _userDisconnected || now - _lastUsbScanAt < UsbScanEvery)
+        {
+            return;
+        }
+        _lastUsbScanAt = now;
+        TryStartUsb();
+    }
+
+    /// <summary>
+    /// Opens the first Peemo-looking USB port (see PeemoUsbPorts) and lets
+    /// BrobotConnection verify it with PING. False when nothing is plugged in.
+    /// Everything about the outcome is picked up by TickUsbLink afterwards.
+    /// </summary>
+    private bool TryStartUsb()
+    {
+        IReadOnlyList<string> ports = PeemoUsbPorts.FindCandidates();
+        if (ports.Count == 0)
+        {
+            _usbStatusText = "USB: nenhum Peemo encontrado — confira o cabo (tem que ser de dados)";
+            return false;
+        }
+
+        _usbPortName = ports[_usbPortRotation++ % ports.Count];
+        _usbAttemptInFlight = true;
+        _lastUsbKeepaliveAt = DateTime.MinValue;
+        CancelNetworkSweep();
+        _connection.ConnectSerial(_usbPortName, verifyPeemo: true);
+        return true;
+    }
+
+    /// <summary>Starts reaching Peemo the way the switch says — the one place that knows what each mode means.</summary>
+    private void StartConnectionForMode()
+    {
+        _userDisconnected = false;
+        if (_linkMode == LinkMode.Usb)
+        {
+            ConnectionDescriptionText.Text = "Conectado direto pelo cabo USB";
+            _usbStatusText = "Procurando Peemo na USB...";
+            _lastUsbScanAt = DateTime.Now;
+            TryStartUsb();
+            return;
+        }
+
+        ConnectionDescriptionText.Text = "O Peemo é encontrado sozinho na sua rede";
+        if (_coreHost != null)
+        {
+            _connection.ConnectTcp(_coreHost, _corePort);
+        }
+        else
+        {
+            StartNetworkSweep(trustPreviousAddress: false);
+        }
+    }
+
+    private void ConnectionModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_linkModeInitializing
+            || ConnectionModeComboBox.SelectedItem is not ComboBoxItem { Tag: string tag })
+        {
+            return;
+        }
+
+        LinkMode mode = tag == "Usb" ? LinkMode.Usb : LinkMode.Wifi;
+        if (mode == _linkMode)
+        {
+            return;
+        }
+
+        // Tear the old link down completely before the new one starts: nothing
+        // of the previous mode may keep running (a sweep, a TCP retry loop, an
+        // open COM port).
+        _linkMode = mode;
+        CancelNetworkSweep();
+        _connection.Disconnect();
+        _connectingSince = null;
+        _usbAttemptInFlight = false;
+        _wasSerialConnected = false;
+        PersistConnectionMode(mode);
+        StartConnectionForMode();
+        UpdateConnectionStatus();
+    }
+
+    private static void PersistConnectionMode(LinkMode mode)
+    {
+        try
+        {
+            SenderSettings settings = SenderSettings.Load();
+            settings.ConnectionMode = mode == LinkMode.Usb ? "Usb" : "Wifi";
+            settings.Save();
+        }
+        catch (Exception)
+        {
+            // The choice still holds for this run; worst case it isn't remembered.
+        }
     }
 
     /// <summary>
@@ -896,6 +1101,13 @@ public partial class MainWindow : Window
 
         _coreHost = found;
         _corePort = port;
+        if (_linkMode == LinkMode.Usb)
+        {
+            // Switched to USB while the sweep ran: the address is still worth
+            // keeping for when WiFi is chosen again, but it is not connected to.
+            PersistDiscoveredAddress(found, port);
+            return;
+        }
         _connection.ConnectTcp(found, port);
         // The retry clock restarts with the new address — without this, the
         // elapsed time from the old one carries over and the cooldown is all
@@ -969,8 +1181,22 @@ public partial class MainWindow : Window
         if (_connection.IsConnected)
         {
             CancelNetworkSweep();
+            _userDisconnected = true;
             _connection.Disconnect();
             _connectingSince = null;
+            _wasSerialConnected = false;
+            _usbAttemptInFlight = false;
+            _usbStatusText = "USB desconectada";
+            UpdateConnectionStatus();
+            return;
+        }
+
+        _userDisconnected = false;
+        if (_linkMode == LinkMode.Usb)
+        {
+            // "Conectar" in USB mode: look for the cable right now instead of
+            // waiting for the next scan.
+            StartConnectionForMode();
             UpdateConnectionStatus();
             return;
         }
@@ -2024,6 +2250,7 @@ public partial class MainWindow : Window
     {
         PlayPongButton.IsEnabled = false;
         PlayRpgButton.IsEnabled = false;
+        PlayGbaButton.IsEnabled = false;
         PongPickerStatusText.Text = "Chamando você pra jogar...";
 
         // FACE HAPPY first, same as every other "genuinely good news" moment
@@ -2088,6 +2315,7 @@ public partial class MainWindow : Window
 
         PlayPongButton.IsEnabled = true;
         PlayRpgButton.IsEnabled = true;
+        PlayGbaButton.IsEnabled = GbaRomComboBox.SelectedItem is not null;
         PongPickerStatusText.Text = statusText;
     }
 
@@ -2104,6 +2332,7 @@ public partial class MainWindow : Window
     {
         PlayPongButton.IsEnabled = false;
         PlayRpgButton.IsEnabled = false;
+        PlayGbaButton.IsEnabled = false;
         RpgPickerStatusText.Text = "Preparando os inimigos...";
 
         _connection.SendCommand("FACE HAPPY");
@@ -2152,6 +2381,7 @@ public partial class MainWindow : Window
 
         PlayPongButton.IsEnabled = true;
         PlayRpgButton.IsEnabled = true;
+        PlayGbaButton.IsEnabled = GbaRomComboBox.SelectedItem is not null;
         RpgPickerStatusText.Text = statusText;
     }
 
@@ -2180,12 +2410,19 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_gbaHook != null || _gbaLiveSession?.IsRunning == true)
+        {
+            StopGbaSession("Você saiu do jogo.");
+            return;
+        }
+
         _pongStartTimer?.Stop();
         _pongStartTimer = null;
         _rpgStartTimer?.Stop();
         _rpgStartTimer = null;
         PlayPongButton.IsEnabled = true;
         PlayRpgButton.IsEnabled = true;
+        PlayGbaButton.IsEnabled = GbaRomComboBox.SelectedItem is not null;
     }
 
     /// <summary>
@@ -2223,6 +2460,7 @@ public partial class MainWindow : Window
         _gbaPartialFrameRttTotalMs = 0;
         _gbaStreamStartedAt = DateTime.UtcNow;
 
+        LogAiEvent($"[stream-teste] START via {(_connection.IsSerialConnected ? "USB " + _usbPortName : "WiFi")}");
         _connection.SendCommand("STREAM START");
 
         // The timer just offers a tick; one-frame-in-flight pacing
@@ -2253,6 +2491,7 @@ public partial class MainWindow : Window
         _gbaStreamRunning = false;
         _gbaStreamTimer?.Stop();
         _gbaStreamTimer = null;
+        LogAiEvent($"[stream-teste] STOP ({statusSuffix}) enviados={_gbaSeq} acks={_gbaFullFrameCount + _gbaPartialFrameCount}");
         _connection.SendCommand("STREAM STOP");
 
         TesteGbaStreamStartButton.IsEnabled = true;
@@ -2264,7 +2503,15 @@ public partial class MainWindow : Window
     {
         if (_gbaAwaitingAck)
         {
-            return;
+            // Core abandons a stalled FRAME and never acks it (see
+            // Protocol::poll), so without a deadline one lost frame would
+            // freeze the whole test on "waiting" forever.
+            if ((DateTime.UtcNow - _gbaFrameSentAt).TotalMilliseconds < GbaAckTimeoutMs)
+            {
+                return;
+            }
+            LogAiEvent($"[stream-teste] SEM ACK do frame {_gbaSeq} em {GbaAckTimeoutMs}ms — seguindo em frente");
+            _gbaAwaitingAck = false;
         }
 
         if (!_connection.IsConnected)
@@ -2308,7 +2555,12 @@ public partial class MainWindow : Window
         int offset = 0;
         foreach (int row in touchedRows)
         {
+            // [row][encoding 0 = raw][payload length, 16-bit big-endian] —
+            // the row header PROTOCOL.md's STREAM/FRAME section describes.
             payload[offset++] = (byte)row;
+            payload[offset++] = 0;
+            payload[offset++] = (byte)(StreamRowPayloadBytes >> 8);
+            payload[offset++] = (byte)(StreamRowPayloadBytes & 0xFF);
             offset = WriteGbaRowPixels(row, payload, offset);
         }
 
@@ -2321,16 +2573,23 @@ public partial class MainWindow : Window
         _gbaFrameWasFull = fullFrame;
         _gbaAwaitingAck = true;
         _gbaFrameSentAt = DateTime.UtcNow;
+        if (_gbaSeq <= 5 || _gbaSeq % 50 == 0)
+        {
+            LogAiEvent($"[stream-teste] envia frame {_gbaSeq} ({(fullFrame ? "cheio" : "parcial")}, {touchedRows.Count} linhas, {framed.Length} bytes)");
+        }
         _connection.SendRawBytes(framed);
     }
 
-    // A row record on the wire is [row byte][160 RGB565 pixels, big-endian] —
-    // see PROTOCOL.md's STREAM/FRAME section. Kept here rather than in
+    private const double GbaAckTimeoutMs = 1500;
+
+    // A row record on the wire is [row][encoding][length, 16-bit BE][payload]
+    // (raw here: 160 RGB565 pixels, big-endian) — see PROTOCOL.md's
+    // STREAM/FRAME section. Kept here rather than in
     // Config.h-style shared constants since this is Sender-only test code;
     // the real GbaFrameSender (Phase 3+) is what will own this shape on the
     // PC side for good.
     private const int StreamRowPayloadBytes = GbaCanvasWidth * 2;
-    private const int StreamRowRecordBytes = StreamRowPayloadBytes + 1;
+    private const int StreamRowRecordBytes = StreamRowPayloadBytes + 4;
 
     /// <summary>
     /// Writes one row's 160 RGB565 pixels (big-endian, see PROTOCOL.md) into
@@ -2381,7 +2640,7 @@ public partial class MainWindow : Window
 
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string gbaDir = Path.Combine(appData, "Brobot", "gba");
-        string corePath = Path.Combine(gbaDir, "mgba_libretro.dll");
+        string corePath = CorePaths.Mgba;
         // Hardcoded to the one ROM path given for this Phase 1 check — the
         // real "pick a ROM" UI is Phase 4 (see specs/sender-gba.md).
         const string romPath = @"C:\Users\Gabriel\Downloads\Pokemon_ FireRed Version\Pokemon - FireRed Version (USA, Europe) (Rev 1).gba";
@@ -2496,11 +2755,11 @@ public partial class MainWindow : Window
 
         string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string gbaDir = Path.Combine(appData, "Brobot", "gba");
-        string corePath = Path.Combine(gbaDir, "mgba_libretro.dll");
+        string corePath = CorePaths.Mgba;
         const string romPath = @"C:\Users\Gabriel\Downloads\Pokemon_ FireRed Version\Pokemon - FireRed Version (USA, Europe) (Rev 1).gba";
 
         _gbaLiveSession = new GbaSession(_connection, corePath, gbaDir, romPath);
-        _gbaLiveSession.StatusChanged += status => Dispatcher.Invoke(() => GbaLiveStatusText.Text = status);
+        _gbaLiveSession.StatusChanged += status => { LogAiEvent($"[gba] {status}"); Dispatcher.Invoke(() => GbaLiveStatusText.Text = status); };
         _gbaLiveSession.Start();
 
         TesteGbaLiveStartButton.IsEnabled = false;
@@ -2510,22 +2769,181 @@ public partial class MainWindow : Window
 
     private void TesteGbaLiveStop_Click(object sender, RoutedEventArgs e)
     {
-        StopGbaLiveSession("Parado.");
+        StopGbaSession("Parado.");
     }
 
-    private void StopGbaLiveSession(string statusSuffix)
+    /// <summary>
+    /// Shared teardown for both GBA entry points (the Modo teste "Transmitir"
+    /// harness and the real Mini Games card below) — they share one
+    /// GbaSession instance (only one can ever run at a time, see
+    /// PlayGbaButton_Click/TesteGbaLiveStart_Click's mutual guards), so
+    /// stopping always resets both surfaces' buttons/status regardless of
+    /// which one started it.
+    /// </summary>
+    private void StopGbaSession(string status)
     {
-        if (_gbaLiveSession is null)
+        _gbaHook?.Dispose();
+        _gbaHook = null;
+
+        if (_gbaLiveSession is not null)
+        {
+            _gbaLiveSession.Stop();
+            _gbaLiveSession = null;
+        }
+
+        TesteGbaLiveStartButton.IsEnabled = true;
+        TesteGbaLiveStopButton.IsEnabled = false;
+        GbaLiveStatusText.Text = status;
+
+        PlayGbaButton.IsEnabled = GbaRomComboBox.SelectedItem is not null;
+        GbaSaveStateButton.IsEnabled = false;
+        GbaLoadStateButton.IsEnabled = false;
+        PlayPongButton.IsEnabled = true;
+        PlayRpgButton.IsEnabled = true;
+        GbaPickerStatusText.Text = status;
+    }
+
+    /// <summary>Populates the Mini Games GBA card's dropdown from SenderSettings.GbaRecentRoms, most-recent-first, and selects the top one if any.</summary>
+    private void LoadGbaRomList(List<string> recentRoms)
+    {
+        var entries = recentRoms.Select(path => new GbaRomEntry(path)).ToList();
+        GbaRomComboBox.ItemsSource = entries;
+        GbaRomComboBox.SelectedItem = entries.FirstOrDefault();
+    }
+
+    private void GbaRomComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        GbaControlsText.Text = GbaRomComboBox.SelectedItem is GbaRomEntry selected && ConsoleProfile.ForRom(selected.FullPath) is { } console
+            ? console.ControlsHelp
+            : "GBA e SNES: setinhas movem, Enter=Start, Backspace=Select — escolha uma ROM para ver as teclas";
+        bool gameActive = _gbaLiveSession?.IsRunning == true || _pongHook != null || _rpgHook != null;
+        PlayGbaButton.IsEnabled = !gameActive && GbaRomComboBox.SelectedItem is not null;
+    }
+
+    /// <summary>
+    /// "Escolher ROM...": a standard file picker filtered to .gba files.
+    /// The picked path is remembered immediately (not gated behind "Salvar
+    /// configurações" — see SenderSettings.GbaRecentRoms), moved to the
+    /// front if it was already in the list, and capped the same way
+    /// WifiSetup.cpp's rememberNetwork caps saved WiFi networks on the
+    /// firmware side — same "most-recent-first, bounded" shape, just the PC
+    /// side's own copy of it.
+    /// </summary>
+    private void GbaChooseRomButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Escolher ROM (Game Boy Advance ou Super Nintendo)",
+            Filter = ConsoleProfile.FileDialogFilter(),
+        };
+        if (dialog.ShowDialog(this) != true)
         {
             return;
         }
 
-        _gbaLiveSession.Stop();
-        _gbaLiveSession = null;
+        SenderSettings settings = SenderSettings.Load();
+        settings.GbaRecentRoms.RemoveAll(p => string.Equals(p, dialog.FileName, StringComparison.OrdinalIgnoreCase));
+        settings.GbaRecentRoms.Insert(0, dialog.FileName);
+        const int maxRecentRoms = 8;
+        if (settings.GbaRecentRoms.Count > maxRecentRoms)
+        {
+            settings.GbaRecentRoms.RemoveRange(maxRecentRoms, settings.GbaRecentRoms.Count - maxRecentRoms);
+        }
+        settings.Save();
 
-        TesteGbaLiveStartButton.IsEnabled = true;
-        TesteGbaLiveStopButton.IsEnabled = false;
-        GbaLiveStatusText.Text = statusSuffix;
+        LoadGbaRomList(settings.GbaRecentRoms);
+    }
+
+    /// <summary>
+    /// "JOGAR" (GBA): unlike Pong/RPG there's no greeting/countdown ritual —
+    /// starts immediately. Installs a keyboard hook that both drives the
+    /// emulator (the console's ConsoleProfile.KeyMap) and swallows every key it maps, so gameplay
+    /// doesn't also leak into whatever window is behind Peemo's — see
+    /// GlobalKeyboardHook's suppressedVirtualKeys.
+    /// </summary>
+    private void PlayGbaButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (GbaRomComboBox.SelectedItem is not GbaRomEntry rom)
+        {
+            return;
+        }
+
+        if (_gbaLiveSession?.IsRunning == true)
+        {
+            GbaPickerStatusText.Text = "Já tem um GBA rodando.";
+            return;
+        }
+
+        if (!_connection.IsConnected)
+        {
+            GbaPickerStatusText.Text = "Sem conexão com o Peemo.";
+            return;
+        }
+
+        // The ROM's extension picks the console — and with it the core and the
+        // key map. Anything unrecognized never reaches a core.
+        if (ConsoleProfile.ForRom(rom.FullPath) is not { } profile)
+        {
+            GbaPickerStatusText.Text = "Formato de ROM não suportado (use .gba, .sfc ou .smc).";
+            return;
+        }
+        if (!File.Exists(profile.CorePath))
+        {
+            GbaPickerStatusText.Text = $"Emulador de {profile.Name} não encontrado ({Path.GetFileName(profile.CorePath)}).";
+            return;
+        }
+
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string gbaDir = Path.Combine(appData, "Brobot", "gba");
+
+        _gbaLiveSession = new GbaSession(_connection, profile.CorePath, gbaDir, rom.FullPath);
+        _gbaLiveSession.StatusChanged += status => { LogAiEvent($"[gba] {status}"); Dispatcher.Invoke(() => GbaPickerStatusText.Text = status); };
+        _gbaLiveSession.Start();
+
+        IReadOnlyDictionary<int, int> keyMap = profile.KeyMap;
+        _gbaHook = new GlobalKeyboardHook(keyMap.Keys);
+        _gbaHook.KeyChanged += (vkCode, isDown) =>
+        {
+            if (keyMap.TryGetValue(vkCode, out int button))
+            {
+                _gbaLiveSession?.SetButtonState(button, isDown);
+            }
+        };
+        _gbaHook.EscapePressed += () => StopGbaSession("Você saiu do jogo.");
+        _gbaHook.Install();
+
+        PlayPongButton.IsEnabled = false;
+        PlayRpgButton.IsEnabled = false;
+        PlayGbaButton.IsEnabled = false;
+        GbaSaveStateButton.IsEnabled = true;
+        GbaLoadStateButton.IsEnabled = true;
+        GbaPickerStatusText.Text = "Iniciando...";
+    }
+
+    /// <summary>One save-state slot per ROM, named after the ROM itself — see GbaSession.RequestSaveState/RequestLoadState.</summary>
+    private static string GbaStatePath(string romPath)
+    {
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string savesDir = Path.Combine(appData, "Brobot", "gba", "saves");
+        return Path.Combine(savesDir, Path.GetFileNameWithoutExtension(romPath) + ".state");
+    }
+
+    private void GbaSaveStateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_gbaLiveSession is not { IsRunning: true } session)
+        {
+            return;
+        }
+        session.RequestSaveState(GbaStatePath(session.RomPath));
+    }
+
+    private void GbaLoadStateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_gbaLiveSession is not { IsRunning: true } session)
+        {
+            return;
+        }
+        session.RequestLoadState(GbaStatePath(session.RomPath));
     }
 
     /// <summary>
@@ -2535,6 +2953,19 @@ public partial class MainWindow : Window
     /// FrameReceived is raised via a synchronous Dispatcher.Invoke inside
     /// BrobotConnection itself, so no marshaling is needed here.
     /// </summary>
+    private void OnRawLine(string line)
+    {
+        if (line.StartsWith("DIAG ", StringComparison.Ordinal))
+        {
+            LogAiEvent($"[core] {line}");
+        }
+        if (line.StartsWith("FRAMEOK ", StringComparison.Ordinal)
+            && ushort.TryParse(line["FRAMEOK ".Length..].Trim(), out ushort ackSeq))
+        {
+            _gbaLiveSession?.OnFrameAck(ackSeq);
+        }
+    }
+
     private void OnFrameReceived(IReadOnlyList<string> lines)
     {
         foreach (string line in lines)
@@ -2542,14 +2973,14 @@ public partial class MainWindow : Window
             if (line.StartsWith("FRAMEOK ", StringComparison.Ordinal))
             {
                 string seqText = line["FRAMEOK ".Length..].Trim();
-                if (ushort.TryParse(seqText, out ushort ackSeq))
-                {
-                    _gbaLiveSession?.OnFrameAck(ackSeq);
-                }
-                if (_gbaAwaitingAck && ushort.TryParse(seqText, out ackSeq) && ackSeq == _gbaSeq)
+                if (_gbaAwaitingAck && ushort.TryParse(seqText, out ushort ackSeq) && ackSeq == _gbaSeq)
                 {
                     double rttMs = (DateTime.UtcNow - _gbaFrameSentAt).TotalMilliseconds;
                     _gbaAwaitingAck = false;
+                    if (ackSeq <= 5 || ackSeq % 50 == 0)
+                    {
+                        LogAiEvent($"[stream-teste] ack {ackSeq} rtt={rttMs:F0}ms");
+                    }
                     if (_gbaFrameWasFull)
                     {
                         _gbaFullFrameCount++;
@@ -2563,6 +2994,13 @@ public partial class MainWindow : Window
                     UpdateGbaStreamStats();
                 }
                 continue;
+            }
+
+            if (_gbaStreamRunning && line.TrimEnd() != "PRESENT")
+            {
+                // Anything else Core says mid-stream (a log line, an error,
+                // an unexpected reply) is exactly what this log is for.
+                LogAiEvent($"[stream-teste] linha inesperada do Peemo: {line}");
             }
 
             if (line.StartsWith("PONG OVER ", StringComparison.Ordinal))
@@ -3731,7 +4169,19 @@ public partial class MainWindow : Window
         // note from last time, and it costs ~2.5s once at startup.
         _coreHost = string.IsNullOrWhiteSpace(settings.TcpHost) ? null : settings.TcpHost;
         _corePort = settings.TcpPort > 0 ? settings.TcpPort : PeemoDiscovery.DefaultPort;
-        StartNetworkSweep(trustPreviousAddress: false);
+        // The mode the switch was left on. WiFi starts with a fresh sweep (see
+        // above); USB starts looking for the cable right away.
+        _linkMode = string.Equals(settings.ConnectionMode, "Usb", StringComparison.OrdinalIgnoreCase) ? LinkMode.Usb : LinkMode.Wifi;
+        ConnectionModeComboBox.SelectedIndex = _linkMode == LinkMode.Usb ? 1 : 0;
+        _linkModeInitializing = false;
+        if (_linkMode == LinkMode.Usb)
+        {
+            StartConnectionForMode();
+        }
+        else
+        {
+            StartNetworkSweep(trustPreviousAddress: false);
+        }
         UpdateConnectionStatus();
 
         foreach (ComboBoxItem item in PensamentosIaComboBox.Items)
@@ -3770,6 +4220,8 @@ public partial class MainWindow : Window
 
         TemaComboBox.ItemsSource = ThemeManager.Available;
         SyncTemaComboBoxSelection(settings);
+
+        LoadGbaRomList(settings.GbaRecentRoms);
 
         RefreshAiThoughtsInstallUi();
         if (ClaudeCodeHookInstaller.IsInstalled())
@@ -3884,6 +4336,7 @@ public partial class MainWindow : Window
         _rpgStartTimer?.Stop();
         _gbaStreamTimer?.Stop();
         _gbaLiveSession?.Stop();
+        _gbaHook?.Dispose();
         _clockTimer?.Stop();
         _breakTimer?.Stop();
         _reportTimer?.Stop();

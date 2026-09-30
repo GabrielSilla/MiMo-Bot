@@ -1,0 +1,16 @@
+mGBA (mgba_libretro.dll)
+========================
+
+Peemo Sender bundles the mGBA emulator core, built for the libretro API, to
+run Game Boy Advance games on the PC and show them on Peemo's screen.
+
+  mGBA is Copyright (c) 2013-2024 Jeffrey Pfau and mGBA contributors.
+  Licensed under the Mozilla Public License, version 2.0 (MPL-2.0).
+
+  License text: https://www.mozilla.org/MPL/2.0/
+  Source code:  https://github.com/mgba-emu/mgba
+  libretro build: https://github.com/libretro/mgba
+
+The library is used unmodified, as a separate DLL that Peemo Sender loads at
+run time (cores\mgba_libretro.dll). No game ROMs are included or distributed:
+you provide your own.

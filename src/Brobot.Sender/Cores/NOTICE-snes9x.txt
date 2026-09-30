@@ -1,0 +1,25 @@
+Snes9x (snes9x_libretro.dll)
+============================
+
+Peemo Sender bundles the Snes9x emulator core, built for the libretro API, to
+run Super Nintendo games on the PC and show them on Peemo's screen.
+
+  Snes9x is Copyright (c) 1996-2003 Gary Henderson, Jerremy Koot, Copyright
+  (c) 2002-2004 Matthew Kendora, Copyright (c) 2002-2005 Peter Bortas,
+  Copyright (c) 2004-2005 Joel Yliluoma, Copyright (c) 2001-2006 John Weidman,
+  Copyright (c) 2002-2010 Brad Jorsch, Anthony Josiah Hanna, Kris Bleakley,
+  Nach, zones, and other contributors.
+
+  Snes9x is licensed under the Snes9x license, which permits NON-COMMERCIAL
+  use and redistribution only. Full license text:
+  https://github.com/snes9xgit/snes9x/blob/master/LICENSE
+
+  Source code:    https://github.com/snes9xgit/snes9x
+  libretro build: https://github.com/libretro/snes9x
+
+The library is used unmodified, as a separate DLL that Peemo Sender loads at
+run time (cores\snes9x_libretro.dll). No game ROMs are included or
+distributed: you provide your own.
+
+Peemo Sender itself must therefore not be sold or otherwise distributed
+commercially while it bundles this core.

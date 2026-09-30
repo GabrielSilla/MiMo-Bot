@@ -26,6 +26,21 @@
   `FaceState` directly) while the portal's blocking `WebServer::handleClient()`
   loop runs, without `WifiSetup.cpp` itself needing to know about
   `Face`/`Personality`/`IDisplay` at all.
+- **USB link (`main.cpp`, `WifiSetup::turnOff/beginReconnect`)**: `loop()`
+  polls `Serial` as well as the TCP client. `HOST USB` (see PROTOCOL.md) puts
+  Core in `usbActive`: TCP client dropped, `WiFiServer` ended, radio off
+  (`WifiSetup::turnOff`), replies/`PONG OVER`/`RPG OVER` go to `Serial`
+  (`hostStream`). `USB_HOST_TIMEOUT_MS` without another `HOST USB` calls
+  `leaveUsbMode()`: `WifiSetup::beginReconnect()` (non-blocking `WiFi.begin()`
+  with the driver's persisted credentials) and the `WiFiServer` is restarted
+  once `WiFi.status()` is connected (`wifiRestoring`); if WiFi was never up
+  this boot it just `ESP.restart()`s. At boot `connectOrStartPortal` takes a
+  `shouldAbort` predicate (`Serial.available() > 0`) polled in its connect
+  waits and portal loop, returning `Result::ABORTED` with WiFi off, so a
+  plugged-in PC skips the up-to-25s WiFi wait / portal. Only one stream is
+  polled per source but `Protocol`'s line buffer is shared, so mixing both
+  links at once isn't supported (Sender never does). Not yet flashed/tested on
+  hardware when written.
 - **`Buzzer.cpp`** (`BUZZER_PIN` = GPIO0 on the ESP32-C3 SuperMini — the one
   pin left over from `Config.h`'s already-vetted GPIO0/1/3/4/6/10 safe set
   once the display claims the rest): R2D2-style beeps via `tone()`/

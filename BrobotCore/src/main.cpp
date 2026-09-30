@@ -11,6 +11,9 @@
 #include "Protocol.h"
 #include "RpgBattle.h"
 #include "StreamMode.h"
+#if defined(ESP32)
+#include "UsbLink.h"
+#endif
 
 #if VSCREEN
 #include "SerialVirtualDisplay.h"
@@ -30,13 +33,71 @@ ST7735PhysicalDisplay display(TFT_CS_PIN, TFT_DC_PIN, TFT_RST_PIN);
 #include <WiFi.h>
 WiFiServer protocolServer(PROTOCOL_TCP_PORT);
 WiFiClient protocolClient;
+bool serverRunning = false;
+
+// The USB port as the protocol link (see UsbLink.h for why it isn't plain
+// Serial). Everything USB-related below goes through this.
+UsbLink usbLink;
+unsigned long lastDiagAt = 0;
+
+// USB link. While Brobot.Sender is plugged in over USB it sends `HOST USB`
+// as a keepalive and WiFi is switched off entirely (one link at a time, and
+// no radio burning power/bandwidth for nothing). No keepalive for
+// USB_HOST_TIMEOUT_MS brings WiFi back so the network path keeps working.
+bool usbActive = false;
+unsigned long lastUsbPingAt = 0;
+// Whether WiFi was ever actually up this boot. If USB took over before that
+// (boot-time abort — see setup()), there is nothing to "bring back": leaving
+// USB means rebooting so the normal WiFi/portal boot path runs.
+bool wifiWasUp = false;
+// WiFi.begin() issued after USB went away; waiting for it to associate so
+// the TCP server can be restarted.
+bool wifiRestoring = false;
 
 // Built once after WiFi connects, shown (see loop()) any time no PC app is
 // currently connected over TCP — not just briefly at boot. Kept as a String
 // at file scope, not a temporary, since FaceState::message is a non-owning
-// const char*; the string is assigned once and never mutated afterward, so
-// its c_str() pointer stays valid for the rest of the program.
+// const char*; the string is only reassigned between frames (see
+// updateWaitingMessage below), so its c_str() pointer is valid whenever it
+// is actually rendered.
 String pcWaitingMessage;
+
+// Rebuilt whenever WiFi (re)connects, since DHCP may hand back a different
+// address. Only ever assigned between frames, so c_str() stays valid while
+// it is being rendered.
+void updateWaitingMessage() {
+    pcWaitingMessage = "Peemo Configurado! IP: " + WiFi.localIP().toString() + ":" + String(PROTOCOL_TCP_PORT);
+}
+
+void startProtocolServer() {
+    if (!serverRunning) {
+        protocolServer.begin();
+        serverRunning = true;
+    }
+}
+
+void enterUsbMode(unsigned long now) {
+    usbActive = true;
+    lastUsbPingAt = now;
+    wifiRestoring = false;
+    if (protocolClient) {
+        protocolClient.stop();
+    }
+    if (serverRunning) {
+        protocolServer.end();
+        serverRunning = false;
+    }
+    WifiSetup::turnOff();
+}
+
+void leaveUsbMode() {
+    usbActive = false;
+    if (!wifiWasUp) {
+        ESP.restart();
+    }
+    WifiSetup::beginReconnect();
+    wifiRestoring = true;
+}
 
 // Whether any PC app has connected at all since this boot. The waiting
 // screen above exists purely to get a *first* connection going -- once
@@ -85,7 +146,16 @@ void renderPersonalityFrame(unsigned long now) {
 }
 
 void setup() {
+#if defined(ESP32)
+    // Receive ring for the USB link. Bytes that arrive while it is full are
+    // dropped (unlike TCP, where the kernel holds them and flow-controls the
+    // sender), and loop() is busy for a while at a time pushing the canvas over
+    // SPI while a FRAME payload — up to ~41KB — streams in. Must be sized for
+    // every FRAME the PC keeps in flight at once (see Config.h).
+    usbLink.begin(USB_RX_BUFFER_BYTES);
+#else
     Serial.begin(SERIAL_BAUD_RATE);
+#endif
     randomSeed(analogRead(A0));
 
 #if !VSCREEN
@@ -95,7 +165,7 @@ void setup() {
     buzzer.begin();
 
 #if defined(ESP32)
-    WifiSetup::connectOrStartPortal([&]() {
+    WifiSetup::Result wifiResult = WifiSetup::connectOrStartPortal([&]() {
         // Built directly, bypassing Personality entirely — its FINISHED
         // message auto-clears ~10s after typing finishes (intended for the
         // "Pensamentos da IA" Terminei! status, see CLAUDE.md), which isn't
@@ -114,19 +184,32 @@ void setup() {
             Face::render(display, portalState);
             display.present();
         }
+    }, []() {
+        // Any byte on USB means a PC is already there — no point burning
+        // ~25s on networks, or sitting in the portal, before it can talk to
+        // Peemo. The bytes stay buffered for loop() to read.
+        return usbLink.available() > 0;
     });
 
-    protocolServer.begin();
+    if (wifiResult == WifiSetup::Result::ABORTED) {
+        usbActive = true;
+        lastUsbPingAt = millis();
+    } else {
+        wifiWasUp = true;
+        startProtocolServer();
 
-    Serial.print("WiFi connected, IP: ");
-    Serial.println(WiFi.localIP());
+        usbLink.print("WiFi connected, IP: ");
+        usbLink.println(WiFi.localIP());
+    }
 
     // Rendered every frame by loop() for as long as no PC app is connected
     // (see below) — not just briefly at boot — so the IP:port stays legible
     // on the physical screen for however long it takes to open Brobot.Sender
     // and fill in the Conexão card, no Serial monitor needed. Same "IP:porta"
     // shape as that card's own text field, so it can be typed in verbatim.
-    pcWaitingMessage = "Peemo Configurado! IP: " + WiFi.localIP().toString() + ":" + String(PROTOCOL_TCP_PORT);
+    if (wifiWasUp) {
+        updateWaitingMessage();
+    }
 #endif
 
     // Last thing before loop() takes over, on every path (portal or not) —
@@ -142,7 +225,7 @@ void loop() {
     unsigned long now = millis();
 
 #if defined(ESP32)
-    if (!protocolClient || !protocolClient.connected()) {
+    if (!usbActive && serverRunning && (!protocolClient || !protocolClient.connected())) {
         protocolClient = protocolServer.available();
         if (protocolClient) {
             // Nagle (on by default) batches small writes hoping to
@@ -156,11 +239,47 @@ void loop() {
             protocolClient.setNoDelay(true);
         }
     }
-    bool pcConnected = protocolClient && protocolClient.connected();
+    bool tcpConnected = !usbActive && protocolClient && protocolClient.connected();
+    if (tcpConnected) {
+        protocol.poll(protocolClient, now);
+        protocol.takeHostUsbPing(); // only meaningful on the USB link itself
+    }
+
+    // Always listened to, WiFi up or not: that is how a PC that just plugged
+    // in gets its first PING answered and gets to send `HOST USB`.
+    if (usbLink.available() > 0) {
+        protocol.poll(usbLink, now);
+        if (protocol.takeHostUsbPing()) {
+            if (!usbActive) {
+                enterUsbMode(now);
+            }
+            lastUsbPingAt = now;
+        }
+    }
+    if (usbActive && now - lastUsbPingAt > USB_HOST_TIMEOUT_MS) {
+        leaveUsbMode();
+    }
+    // Every few seconds over USB: a line the PC app writes to its log, so a
+    // stalling stream can be told apart (buffer never allocated, frames
+    // abandoned, rows dropped, heap exhausted) without a serial monitor.
+    if (usbActive && now - lastDiagAt >= 5000) {
+        lastDiagAt = now;
+        usbLink.printf("DIAG rx=%u heap=%u maxblock=%u abandoned=%u dropped=%u\n",
+                      (unsigned)usbLink.rxCapacity(), (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap(),
+                      (unsigned)protocol.abandonedFrames(), (unsigned)streamMode.droppedRows());
+    }
+    if (wifiRestoring && WiFi.status() == WL_CONNECTED) {
+        wifiRestoring = false;
+        startProtocolServer();
+        updateWaitingMessage();
+    }
+
+    bool pcConnected = usbActive || tcpConnected;
     if (pcConnected) {
         everConnected = true;
-        protocol.poll(protocolClient, now);
     }
+    // Where replies and spontaneous lines (PONG OVER, ...) go.
+    Stream& hostStream = usbActive ? static_cast<Stream&>(usbLink) : static_cast<Stream&>(protocolClient);
 #else
     protocol.poll(Serial, now);
 #endif
@@ -210,8 +329,8 @@ void loop() {
         snprintf(overLine, sizeof(overLine), "PONG OVER %d", pongGame.lastScore());
 #if defined(ESP32)
         if (pcConnected) {
-            protocolClient.println(overLine);
-            protocolClient.println("PRESENT");
+            hostStream.println(overLine);
+            hostStream.println("PRESENT");
         }
 #else
         Serial.println(overLine);
@@ -231,8 +350,8 @@ void loop() {
         snprintf(overLine, sizeof(overLine), "RPG OVER %s", rpgBattle.lastResultToken());
 #if defined(ESP32)
         if (pcConnected) {
-            protocolClient.println(overLine);
-            protocolClient.println("PRESENT");
+            hostStream.println(overLine);
+            hostStream.println("PRESENT");
         }
 #else
         Serial.println(overLine);
@@ -248,7 +367,19 @@ void loop() {
     display.setScanlinesEnabled(deviceSettings.scanlinesEnabled());
 #endif
 
-    if (now - lastFrameAt >= FRAME_INTERVAL_MS) {
+    // While a FRAME payload is still arriving, StreamMode's canvas rows are
+    // a mix of this transfer's already-applied rows and whichever rows
+    // haven't been reached yet — pushing that to the physical panel now
+    // would show as tearing (part of the picture already updated, part
+    // still the previous frame). Holding off present() until the transfer
+    // finishes avoids ever showing that intermediate state; lastFrameAt is
+    // deliberately left untouched so this re-checks (and, once the transfer
+    // completes, presents) on the very next loop() iteration rather than
+    // waiting out another full FRAME_INTERVAL_MS on top of the transfer.
+    bool streamActive = streamMode.isActive();
+    bool midFrameTransfer = streamActive && protocol.isReceivingFrame();
+
+    if (!midFrameTransfer && now - lastFrameAt >= FRAME_INTERVAL_MS) {
         lastFrameAt = now;
 
         // Normally cleared every frame like always. While STREAM is active,
@@ -257,7 +388,6 @@ void loop() {
         // — the canvas is "cleared once, then only receives stream data"
         // per PROTOCOL.md, since streamed rows accumulate across frames
         // rather than being redrawn from scratch each time.
-        bool streamActive = streamMode.isActive();
         if (!streamActive || streamMode.consumeNeedsCanvasClear()) {
             display.clear(0, 0, 0);
         }

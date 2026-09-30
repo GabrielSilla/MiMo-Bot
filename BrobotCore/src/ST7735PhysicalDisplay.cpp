@@ -46,6 +46,7 @@ void ST7735PhysicalDisplay::begin() {
     // ST7735S is write-only over this link.
     SPI.begin(TFT_SCK_PIN, -1, TFT_MOSI_PIN, TFT_CS_PIN);
     _tft.initR(INITR_BLACKTAB);
+    _tft.setSPISpeed(TFT_SPI_HZ);
     _tft.setRotation(1); // landscape: matches LOGICAL_WIDTH/HEIGHT (160x128) in Config.h
     _tft.fillScreen(ST77XX_BLACK);
 }

@@ -32,6 +32,14 @@ public:
     void onRowReceived(unsigned long now, uint8_t row, const uint16_t pixels[LOGICAL_WIDTH]);
 
     bool hasPendingRow() const { return _queueCount > 0; }
+    // True once the queue can take no more rows. Protocol::poll stops
+    // consuming bytes while this holds (they wait in the transport's own
+    // buffer) instead of letting onRowReceived drop rows: over USB a whole
+    // FRAME can be sitting in the receive ring at once, i.e. far more rows
+    // than the queue holds, and dropped rows show up as tearing.
+    bool isQueueFull() const { return _queueCount >= ROW_QUEUE_DEPTH; }
+    // Diagnostics only: rows onRowReceived had to drop.
+    uint32_t droppedRows() const { return _droppedRows; }
     // Pops the oldest pending row. Caller must check hasPendingRow() first;
     // the returned pixel pointer is only valid until the next
     // onRowReceived()/takePendingRow() call.
@@ -59,6 +67,7 @@ private:
     uint16_t _queuePixels[ROW_QUEUE_DEPTH][LOGICAL_WIDTH];
     int _queueHead = 0;
     int _queueCount = 0;
+    uint32_t _droppedRows = 0;
 
     void stop();
 };

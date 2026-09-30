@@ -29,6 +29,25 @@ public sealed class LibretroCore : IDisposable
     private const uint RETRO_ENVIRONMENT_SET_PIXEL_FORMAT = 10;
     private const uint RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY = 31;
 
+    private const uint RETRO_DEVICE_JOYPAD = 1;
+    // RETRO_DEVICE_ID_JOYPAD_* — see libretro.h. Not contiguous/ordered by
+    // physical button (B is 0, A is 8, ...) — a libretro-spec quirk kept
+    // as-is rather than "fixed" here, since it has to match what the core
+    // itself expects.
+    public const int ButtonB = 0;
+    public const int ButtonY = 1;
+    public const int ButtonSelect = 2;
+    public const int ButtonStart = 3;
+    public const int ButtonUp = 4;
+    public const int ButtonDown = 5;
+    public const int ButtonLeft = 6;
+    public const int ButtonRight = 7;
+    public const int ButtonA = 8;
+    public const int ButtonX = 9;
+    public const int ButtonL = 10;
+    public const int ButtonR = 11;
+    private const int ButtonCount = 12;
+
     public enum PixelFormat
     {
         Rgb1555,
@@ -122,6 +141,14 @@ public sealed class LibretroCore : IDisposable
     private delegate void RetroUnloadGameFn();
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void RetroRunFn();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate UIntPtr RetroSerializeSizeFn();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private delegate bool RetroSerializeFn(IntPtr data, UIntPtr size);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private delegate bool RetroUnserializeFn(IntPtr data, UIntPtr size);
 
     private readonly nint _libraryHandle;
     private readonly RetroInitFn _retroInit;
@@ -131,6 +158,9 @@ public sealed class LibretroCore : IDisposable
     private readonly RetroLoadGameFn _retroLoadGame;
     private readonly RetroUnloadGameFn _retroUnloadGame;
     private readonly RetroRunFn _retroRun;
+    private readonly RetroSerializeSizeFn _retroSerializeSize;
+    private readonly RetroSerializeFn _retroSerialize;
+    private readonly RetroUnserializeFn _retroUnserialize;
 
     // Kept as fields (not locals) so the GC never collects them while the
     // core might still call back into native code holding their function
@@ -148,6 +178,15 @@ public sealed class LibretroCore : IDisposable
     private readonly nint _systemDirectoryPtr;
     private readonly nint _saveDirectoryPtr;
 
+    // Read by the input_state callback (native code, called synchronously
+    // from within Run()) and written by whoever is driving input for this
+    // core (GbaSession, itself forwarding from a UI-thread keyboard hook
+    // callback — see its own comment) — the one piece of state that
+    // genuinely crosses threads here, so it's lock-protected rather than
+    // relying on plain field visibility.
+    private readonly bool[] _buttonState = new bool[ButtonCount];
+    private readonly object _buttonStateLock = new();
+
     private bool _gameLoaded;
     private bool _disposed;
 
@@ -158,6 +197,9 @@ public sealed class LibretroCore : IDisposable
 
     /// <summary>The pixel format the core announced via SET_PIXEL_FORMAT — valid only once a game is loaded.</summary>
     public PixelFormat CurrentPixelFormat { get; private set; } = PixelFormat.Rgb1555;
+
+    /// <summary>Frames per second the core says the console runs at (GBA 59.73, SNES NTSC 60.10) — valid once a game is loaded, 0 before.</summary>
+    public double Fps { get; private set; }
 
     /// <param name="corePath">Path to the libretro core DLL (e.g. mgba_libretro.dll).</param>
     /// <param name="workingDirectory">
@@ -185,13 +227,16 @@ public sealed class LibretroCore : IDisposable
         _retroLoadGame = GetDelegate<RetroLoadGameFn>("retro_load_game");
         _retroUnloadGame = GetDelegate<RetroUnloadGameFn>("retro_unload_game");
         _retroRun = GetDelegate<RetroRunFn>("retro_run");
+        _retroSerializeSize = GetDelegate<RetroSerializeSizeFn>("retro_serialize_size");
+        _retroSerialize = GetDelegate<RetroSerializeFn>("retro_serialize");
+        _retroUnserialize = GetDelegate<RetroUnserializeFn>("retro_unserialize");
 
         _environmentCb = OnEnvironment;
         _videoRefreshCb = OnVideoRefresh;
         _audioSampleCb = (_, _) => { }; // batch below is what mGBA actually uses; this one just needs to exist
         _audioSampleBatchCb = OnAudioSampleBatch;
         _inputPollCb = () => { };
-        _inputStateCb = (_, _, _, _) => 0; // no input wired up yet — see specs/sender-gba.md Phase 1
+        _inputStateCb = OnInputState;
 
         retroSetEnvironment(_environmentCb);
         retroSetVideoRefresh(_videoRefreshCb);
@@ -236,6 +281,11 @@ public sealed class LibretroCore : IDisposable
             }
 
             _gameLoaded = _retroLoadGame(ref game);
+            if (_gameLoaded)
+            {
+                _retroGetSystemAvInfo(out RetroSystemAvInfo avInfo);
+                Fps = avInfo.Timing.Fps;
+            }
             return _gameLoaded;
         }
         finally
@@ -263,6 +313,93 @@ public sealed class LibretroCore : IDisposable
             throw new InvalidOperationException("No game loaded.");
         }
         _retroRun();
+    }
+
+    /// <summary>
+    /// A full emulator save-state (not the cartridge's own battery save —
+    /// see RETRO_MEMORY_SAVE_RAM/retro_get_memory_data for that, not
+    /// implemented here yet): everything retro_serialize_size() says the
+    /// core needs to reconstruct exactly where it is right now. Like Run(),
+    /// only ever safe to call from whatever thread is driving the core —
+    /// GbaSession queues a request rather than calling this directly from a
+    /// button click on the UI thread. Returns null if the core reports no
+    /// state (unusual — mGBA always has one once a game is loaded) or
+    /// refuses to serialize.
+    /// </summary>
+    public byte[]? SaveState()
+    {
+        if (!_gameLoaded)
+        {
+            return null;
+        }
+
+        UIntPtr size = _retroSerializeSize();
+        if (size == UIntPtr.Zero)
+        {
+            return null;
+        }
+
+        int sizeInt = (int)size;
+        IntPtr buffer = Marshal.AllocHGlobal(sizeInt);
+        try
+        {
+            if (!_retroSerialize(buffer, size))
+            {
+                return null;
+            }
+            byte[] result = new byte[sizeInt];
+            Marshal.Copy(buffer, result, 0, sizeInt);
+            return result;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+    }
+
+    /// <summary>Restores a save-state previously produced by SaveState(). Same single-thread caveat as SaveState().</summary>
+    public bool LoadState(byte[] data)
+    {
+        if (!_gameLoaded)
+        {
+            return false;
+        }
+
+        IntPtr buffer = Marshal.AllocHGlobal(data.Length);
+        try
+        {
+            Marshal.Copy(data, 0, buffer, data.Length);
+            return _retroUnserialize(buffer, (UIntPtr)data.Length);
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Sets whether a RETRO_DEVICE_ID_JOYPAD_* button (see the ButtonXxx
+    /// constants) is currently held — read back the next time the core
+    /// polls input during Run(). Safe to call from any thread.
+    /// </summary>
+    public void SetButtonState(int button, bool pressed)
+    {
+        lock (_buttonStateLock)
+        {
+            _buttonState[button] = pressed;
+        }
+    }
+
+    private short OnInputState(uint port, uint device, uint index, uint id)
+    {
+        if (port != 0 || device != RETRO_DEVICE_JOYPAD || id >= ButtonCount)
+        {
+            return 0;
+        }
+        lock (_buttonStateLock)
+        {
+            return (short)(_buttonState[id] ? 1 : 0);
+        }
     }
 
     private bool OnEnvironment(uint cmd, IntPtr data)
@@ -322,10 +459,9 @@ public sealed class LibretroCore : IDisposable
 
     private UIntPtr OnAudioSampleBatch(IntPtr data, UIntPtr frames)
     {
-        // Audio isn't wired up yet (see specs/sender-gba.md Phase 1) — the
-        // core still needs this callback to exist and to report every
-        // frame as "consumed", or it may stall waiting for room to write
-        // more samples.
+        // Audio is not played or used anywhere; the core just needs this
+        // callback to report every frame as "consumed", or it may stall
+        // waiting for room to write more samples.
         return frames;
     }
 

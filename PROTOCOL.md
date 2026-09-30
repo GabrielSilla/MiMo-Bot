@@ -39,7 +39,8 @@ Enviados via Serial Monitor ou por um script de teste no PC, para o Arduino.
 | `FRAME <seq> <bytes>` | Uma linha de cabeçalho seguida imediatamente de exatamente `<bytes>` de payload **binário** (não texto) no mesmo Stream — ver abaixo. Só tem efeito com `STREAM` ativo. |
 | `STREAM STOP` | Encerra o modo de vídeo na hora e volta ao normal. Também acontece sozinho se nenhum `FRAME` chegar por 3s (app do PC caiu). |
 | `BUZZ <cue>` | **Só para teste manual** — toca uma vinheta do buzzer direto, sem precisar chegar no evento real que a dispara. `<cue>`: `VICTORY` (a fanfarra de vitória de Final Fantasy do fim da Batalha RPG, ver `Buzzer::playRpgVictory`). Respeita `SOUND OFF`. Nome não reconhecido é ignorado. |
-| `PING` | **O único comando que o Core responde** — devolve a linha `PEEMO <revisão>` (hoje `PEEMO 2`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o Peemo na rede (ver abaixo). |
+| `HOST USB` | **Keepalive do link USB** (o Core não responde). O Core escuta comandos tanto no WiFi/TCP quanto na porta USB (`Serial`, o USB nativo do ESP32-C3); o app PC que abre a USB manda `PING`, confere o `PEEMO`, e passa a mandar `HOST USB` a cada ~2s. Enquanto esse keepalive chega, o Core **desliga o WiFi** (rádio, servidor TCP e portal de configuração) e responde só pela USB. Sem ele por `USB_HOST_TIMEOUT_MS` (6s, `Config.h`) — cabo puxado, app fechado — o WiFi volta sozinho (`WiFi.begin()` na última rede que funcionou) e o app reconecta por TCP. Se o Core nunca chegou a subir o WiFi neste boot (a USB assumiu durante a tentativa de conexão ou o portal), perder a USB reinicia a placa para o boot normal. Qualquer byte na USB durante esse boot também aborta a espera por WiFi/portal, para um PC já plugado não esperar ~25s. |
+| `PING` | **O único comando que o Core responde** — devolve a linha `PEEMO <revisão>` (hoje `PEEMO 4`) para quem perguntou. Não mexe em nada: não é sobre o Brobot, é sobre o link. Existe para o app PC conseguir *achar* o Peemo na rede (ver abaixo). |
 
 `WEATHER`, `TIME`, `THEME`, `CLASSICCOLOR`, `SOUND` e `SCANLINES` são independentes de `FACE`/`MSG`: não interrompem nem são interrompidos por eles, não "expiram" sozinhos, e ficam visíveis/valendo até o próximo comando do mesmo tipo substituí-los.
 
@@ -172,31 +173,42 @@ parar de escutar o teclado.
 ### STREAM / FRAME (vídeo)
 
 Um terceiro modo exclusivo, no mesmo espírito do Pong e da Batalha RPG acima
-— hoje só a Fase 0 (medição) está implementada; o uso real (mGBA rodando no
-PC, ver `specs/sender-gba.md`) ainda não foi construído. `STREAM START` liga
-um modo de vídeo genérico (não é "modo GBA" — a ideia de espelhar a tela do
-PC também vai poder reaproveitar isso depois): `Personality`/`Face` param de
-atualizar/desenhar por completo, o framebuffer é limpo para preto **uma
-vez** e a partir daí só recebe dados de stream. `Protocol::dispatch` garante
-que `STREAM` nunca fica ativo ao mesmo tempo que `PONG`/`RPG`, e vice-versa,
-do mesmo jeito que os outros dois já se excluem entre si.
+— usado hoje pelo card GBA do Brobot.Sender (mGBA rodando no PC via
+libretro, ver `specs/sender-gba.md`) e pelo teste de padrão sintético do
+Modo teste. `STREAM START` liga um modo de vídeo genérico (não é "modo
+GBA" — a ideia de espelhar a tela do PC também vai poder reaproveitar isso
+depois): `Personality`/`Face` param de atualizar/desenhar por completo, o
+framebuffer é limpo para preto **uma vez** e a partir daí só recebe dados de
+stream. `Protocol::dispatch` garante que `STREAM` nunca fica ativo ao mesmo
+tempo que `PONG`/`RPG`, e vice-versa, do mesmo jeito que os outros dois já se
+excluem entre si.
 
 Diferente de `PONG`/`RPG`, `FRAME` não é uma linha de texto: é um cabeçalho
 `FRAME <seq> <bytes>` seguido imediatamente de exatamente `<bytes>` de
 payload binário no mesmo Stream, antes de qualquer outra linha de comando.
 `Protocol::poll` alterna para consumir bytes crus enquanto o payload não
 termina, em vez de acumular linha por linha. O payload é uma sequência de
-registros de linha:
+registros de linha, cada um com um cabeçalho de tamanho fixo seguido de
+payload de tamanho variável:
 
 ```
-[linha y (1 byte)] [160 x RGB565 big-endian (320 bytes)]
+[linha y (1 byte)] [codificação (1 byte)] [tamanho (2 bytes, big-endian)] [payload, <tamanho> bytes]
 ```
 
-Cada registro tem 321 bytes; `<bytes>` deve ser um múltiplo disso (um
-payload malformado — sobra menor que 321 bytes no fim — é descartado em vez
-de travar o parser). Depois de aplicar o frame inteiro, o Core responde
-direto no Stream, seguido de `PRESENT` — mesmo padrão de `PONG OVER`/
-`RPG OVER`, para reaproveitar o agrupamento em quadro que o lado do PC já
+`codificação` é `0` (cru — exatamente 320 bytes, 160 pixels RGB565
+big-endian) ou `1` (run-length: uma sequência de trincas
+`[repetições (1 byte)] [pixel, 2 bytes big-endian]`, cada uma expandindo
+para `repetições` cópias daquele pixel, até completar as 160 colunas da
+linha). Quem decide qual codificação usar por linha é o remetente (ver
+`GbaSession.EncodeRow`) — escolhe a que sair menor, então RLE nunca é pior
+que cru, só melhor ou igual. `tamanho` é o que deixa o Core pular para o
+próximo registro sem precisar entender RLE, só contar bytes; um registro
+malformado (linha cortada no meio) é descartado sem travar o parser, e
+`<bytes>` do cabeçalho `FRAME` continua sendo a contagem definitiva de
+quando o payload inteiro terminou. Depois de aplicar o frame inteiro, o Core
+responde direto no Stream, seguido de `PRESENT` — mesmo padrão de
+`PONG OVER`/`RPG OVER`, para reaproveitar o agrupamento em quadro que o lado
+do PC já
 tem:
 
 ```
@@ -211,9 +223,14 @@ ativo, o Core assume que o app do PC caiu e volta sozinho para
 O filtro CRT (`SCANLINES`) e o próprio `present()` (push em SPI por
 scanline) são os mesmos de sempre — o vídeo escreve direto no framebuffer
 que `present()` já sabe desenhar, então nenhum dos dois precisou de código
-novo. O Brobot Virtual Display (simulador) está fora de escopo por enquanto:
-`STREAM` ainda bloqueia `Personality` nele (via `isActive()`), mas nenhuma
-linha de desenho é gerada — ver `specs/sender-gba.md`.
+novo. `main.cpp` segura `present()` enquanto `Protocol::isReceivingFrame()`
+for verdadeiro: empurrar o canvas pro painel físico no meio de um `FRAME`
+ainda chegando mostraria um quadro misturado (parte já atualizada, parte
+ainda o frame anterior) — visível como *tearing*, um corte horizontal na
+imagem — em vez de esperar o registro terminar de aplicar. O Brobot Virtual
+Display (simulador) está fora de escopo por enquanto: `STREAM` ainda bloqueia
+`Personality` nele (via `isActive()`), mas nenhuma linha de desenho é
+gerada — ver `specs/sender-gba.md`.
 
 ### Telemetria da sessão de IA (`AISTATS`)
 

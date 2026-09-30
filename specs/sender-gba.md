@@ -4,6 +4,27 @@
 > plan to implement from; once it lands, rewrite it as the usual "how it
 > works and why" spec and link it from CLAUDE.md and specs/overview.md.
 
+> **Update — SNES and bundled cores.** The same card also runs Super Nintendo
+> ROMs (`.sfc/.smc/.swc/.fig`, Snes9x core). `Gba/ConsoleProfile.cs` maps a
+> ROM's extension to its console: core DLL, keyboard map, help line. Cores are
+> shipped inside the app (`src/Brobot.Sender/Cores/` -> `cores\` next to the
+> exe, see installer.md), each with a `NOTICE-*.txt`. `GbaSession` fits any
+> core's picture into Peemo's 160x128 keeping the aspect (GBA 160x107, SNES
+> 146x128 with side bars) and paces itself on the core's own fps. **License
+> note:** Snes9x is non-commercial-only; mGBA is MPL-2.0. Sound is still not
+> wired for either. USB/WiFi transport tuning: see PROTOCOL.md (`HOST USB`) and
+> the `GbaSession` comments (2 frames in flight; byte budget on USB only).
+>
+> **Play time counts in the Relatório.** The emulator runs inside Peemo Sender,
+> so `GameMonitor` (which watches other processes) never sees it. Every status
+> tick `MainWindow` passes the playing ROM's title (`ConsoleProfile.GameTitle`:
+> file name minus region/revision tags) to `DailyReportTracker.SetEmulatorGameActive`
+> while `GbaSession.IsPlaying` (a game is really loaded, not just a session that
+> failed to load). It lands in the same `GameSeconds`/per-game totals as a
+> detected PC game — same free half hour and penalty blocks in
+> `DailyReportScoring` — and a detected PC game wins the tick if both are active,
+> so time is never counted twice. Stopping the card's game stops the clock.
+
 A "Game Boy Advance" card in the Sender's Mini Games tab. The game runs **on
 the PC** — emulation, sound, saves, input — and Peemo is only the screen:
 every frame goes over WiFi and Peemo draws it. Nothing is shown on the PC

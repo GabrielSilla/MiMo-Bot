@@ -374,6 +374,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
                         <iconPacks:PackIconMaterial Kind="Wifi" Width="24" Height="24"
@@ -381,7 +382,7 @@
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
                         <TextBlock Text="Conexão" Style="{StaticResource CardTitleStyle}"/>
-                        <TextBlock Text="O Peemo é encontrado sozinho na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="ConnectionDescriptionText" Text="O Peemo é encontrado sozinho na sua rede" Style="{StaticResource CardDescriptionStyle}"/>
                         <TextBlock x:Name="ConnectionStatusText" Style="{StaticResource CardStatusStyle}"/>
                     </StackPanel>
                     <!-- A display, not a field: Peemo's address is discovered (see
@@ -392,7 +393,16 @@
                                Margin="0,0,10,0" TextAlignment="Right" FontFamily="Consolas" FontSize="12"
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource InkBrush}"/>
-                    <Button x:Name="ConnectionButton" Grid.Column="3" Content="Conectar" VerticalAlignment="Center"
+                    <!-- The switch: which way to reach Peemo. Only the chosen one is
+                         ever tried — WiFi never falls back to USB or the other way
+                         round, so what the card says is what is happening. -->
+                    <ComboBox x:Name="ConnectionModeComboBox" Grid.Column="3" Width="86" VerticalAlignment="Center" Margin="0,0,10,0"
+                              Style="{StaticResource PeemoComboBoxStyle}" ItemContainerStyle="{StaticResource PeemoComboBoxItemStyle}"
+                              SelectionChanged="ConnectionModeComboBox_SelectionChanged">
+                        <ComboBoxItem Content="WiFi" Tag="Wifi"/>
+                        <ComboBoxItem Content="USB" Tag="Usb"/>
+                    </ComboBox>
+                    <Button x:Name="ConnectionButton" Grid.Column="4" Content="Conectar" VerticalAlignment="Center"
                             Style="{StaticResource InstallButtonStyle}" Click="ConnectionButton_Click"/>
                 </Grid>
             </Border>
@@ -984,6 +994,49 @@
                     </StackPanel>
                     <Button x:Name="PlayRpgButton" Grid.Column="2" Content="BATALHAR" VerticalAlignment="Center"
                             Style="{StaticResource InstallButtonStyle}" Click="PlayRpgButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Game Boy Advance e Super Nintendo (ver specs/sender-gba.md) — mGBA/snes9x rodando no PC,
+                 Peemo só mostra a tela. Controle travado no emulador enquanto
+                 ativo (ver GlobalKeyboardHook/GbaSession), igual ao Pong/RPG. -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource IconBadgeStyle}">
+                        <iconPacks:PackIconMaterial Kind="GamepadVariant" Width="24" Height="24"
+                                                     Foreground="{DynamicResource InkBrush}"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0">
+                        <TextBlock Text="Game Boy Advance e Super Nintendo" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Text="Roda uma ROM sua (.gba, .sfc ou .smc) na tela do Peemo — ESC sai na hora"
+                                   Style="{StaticResource CardDescriptionStyle}"/>
+                        <TextBlock x:Name="GbaControlsText" Style="{StaticResource CardDescriptionStyle}"/>
+                        <ComboBox x:Name="GbaRomComboBox" Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                                  Style="{StaticResource PeemoComboBoxStyle}" ItemContainerStyle="{StaticResource PeemoComboBoxItemStyle}"
+                                  SelectionChanged="GbaRomComboBox_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button x:Name="GbaChooseRomButton" Content="Escolher ROM..."
+                                    Style="{StaticResource InstallButtonStyle}" Click="GbaChooseRomButton_Click"/>
+                            <Button x:Name="GbaSaveStateButton" Content="Salvar Estado" Margin="8,0,0,0"
+                                    Style="{StaticResource InstallButtonStyle}" IsEnabled="False" Click="GbaSaveStateButton_Click"/>
+                            <Button x:Name="GbaLoadStateButton" Content="Carregar Estado" Margin="8,0,0,0"
+                                    Style="{StaticResource InstallButtonStyle}" IsEnabled="False" Click="GbaLoadStateButton_Click"/>
+                        </StackPanel>
+                        <TextBlock x:Name="GbaPickerStatusText" Style="{StaticResource CardStatusStyle}"/>
+                    </StackPanel>
+                    <Button x:Name="PlayGbaButton" Grid.Column="2" Content="JOGAR" VerticalAlignment="Center"
+                            Style="{StaticResource InstallButtonStyle}" Click="PlayGbaButton_Click" IsEnabled="False"/>
                 </Grid>
             </Border>
         </StackPanel>

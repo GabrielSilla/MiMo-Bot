@@ -36,6 +36,13 @@ public sealed class BrobotConnection : IDisposable
     // showed this). This was a real bug, fixed once — IsConnected/SendCommand
     // must never touch _port's properties from another thread again.
     private volatile bool _serialOpen;
+    // True from ConnectSerial until the open (and, if asked for, the PING
+    // verification) either succeeds or gives up — lets a caller tell "still
+    // trying" from "tried and failed" without an event.
+    private volatile bool _serialConnecting;
+    // Serial writes come from the UI thread (commands) and the keepalive
+    // timer alike, and SerialPort.Write isn't safe to interleave.
+    private readonly object _serialWriteLock = new();
 
     private TcpClient? _tcpClient;
     private StreamWriter? _tcpWriter;
@@ -64,7 +71,30 @@ public sealed class BrobotConnection : IDisposable
     /// <summary>Raised on the UI thread once per frame: every line received up to and including "PRESENT".</summary>
     public event Action<IReadOnlyList<string>>? FrameReceived;
 
+    /// <summary>
+    /// Raised on the IO thread for every line the moment it arrives, before
+    /// any frame batching or UI hop. For latency-sensitive replies only (a
+    /// FRAMEOK gates the next STREAM frame; going through the UI thread first
+    /// added its scheduling delay to every frame). Handlers must be quick and
+    /// must not touch UI.
+    /// </summary>
+    public event Action<string>? LineReceived;
+
     public bool IsConnected => _serialOpen || _tcpConnected;
+
+    /// <summary>True while connected over Serial specifically (with verification asked for: once the board has answered PING).</summary>
+    public bool IsSerialConnected => _serialOpen;
+
+    /// <summary>
+    /// Why the last ConnectSerial attempt ended without a connection (in words a
+    /// person can act on), or null while it hasn't failed. Cleared by the next
+    /// ConnectSerial.
+    /// </summary>
+    public string? LastSerialFailure => _lastSerialFailure;
+    private volatile string? _lastSerialFailure;
+
+    /// <summary>True while ConnectSerial is still opening/verifying the port.</summary>
+    public bool IsConnectingSerial => _serialConnecting;
 
     /// <summary>True while ConnectTcp is retrying but hasn't reached Core yet.</summary>
     public bool IsConnectingTcp => _tcpHost != null && !_tcpConnected;
@@ -79,12 +109,21 @@ public sealed class BrobotConnection : IDisposable
     /// this used to call it directly from the WPF button handler, freezing
     /// the whole app on connect. This was a real bug, fixed once.
     /// </summary>
-    public void ConnectSerial(string portName, int baudRate = 115200)
+    /// <param name="verifyPeemo">
+    /// Sends PING right after opening and only counts as connected once a
+    /// "PEEMO ..." line comes back (see PROTOCOL.md); anything else on that
+    /// port — another Espressif board, a Peemo firmware that doesn't listen
+    /// on USB — is closed again within a few seconds and leaves this
+    /// disconnected. Off by default: the Simulator's Uno/ESP32 never answers.
+    /// </param>
+    public void ConnectSerial(string portName, int baudRate = 115200, bool verifyPeemo = false)
     {
         Disconnect();
 
         _running = true;
-        _ioThread = new Thread(() => SerialOpenAndReadLoop(portName, baudRate))
+        _serialConnecting = true;
+        _lastSerialFailure = null;
+        _ioThread = new Thread(() => SerialOpenAndReadLoop(portName, baudRate, verifyPeemo))
             { IsBackground = true, Name = "BrobotConnection-SerialRead" };
         _ioThread.Start();
     }
@@ -113,7 +152,17 @@ public sealed class BrobotConnection : IDisposable
     {
         if (_serialOpen && _port is { } port)
         {
-            port.Write(command + "\n");
+            lock (_serialWriteLock)
+            {
+                try
+                {
+                    port.Write(command + "\n");
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or TimeoutException)
+                {
+                    // Cable pulled mid-write; the read loop notices and cleans up.
+                }
+            }
             return;
         }
 
@@ -139,12 +188,28 @@ public sealed class BrobotConnection : IDisposable
     /// bypass _tcpWriter's StreamWriter: its UTF8 encoding would transcode
     /// any raw byte outside plain ASCII instead of passing it through
     /// unchanged, silently corrupting the payload. TCP-only, same as the
-    /// rest of this class's write path — Brobot.Sender never reaches Core
-    /// over Serial (see specs/architecture.md), so STREAM/FRAME needs no
-    /// Serial-side binary support. A no-op while not connected over TCP.
+    /// rest of this class's write path. Goes to the serial port when that is
+    /// the live link (Write(byte[]) has no text encoding in the way either).
+    /// A no-op while not connected at all.
     /// </summary>
     public void SendRawBytes(byte[] data)
     {
+        if (_serialOpen && _port is { } port)
+        {
+            lock (_serialWriteLock)
+            {
+                try
+                {
+                    port.Write(data, 0, data.Length);
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or TimeoutException)
+                {
+                    // Same as SendCommand: the read loop cleans up.
+                }
+            }
+            return;
+        }
+
         lock (_tcpWriteLock)
         {
             if (_tcpStream is not { } stream)
@@ -202,9 +267,33 @@ public sealed class BrobotConnection : IDisposable
 
     public void Dispose() => Disconnect();
 
-    private void SerialOpenAndReadLoop(string portName, int baudRate)
+    private void SerialOpenAndReadLoop(string portName, int baudRate, bool verifyPeemo)
     {
-        var port = new SerialPort(portName, baudRate) { NewLine = "\n", ReadTimeout = 500 };
+        try
+        {
+            SerialOpenVerifyAndRead(portName, baudRate, verifyPeemo);
+        }
+        finally
+        {
+            _serialConnecting = false;
+        }
+    }
+
+    private void SerialOpenVerifyAndRead(string portName, int baudRate, bool verifyPeemo)
+    {
+        // UTF-8 both ways (SerialPort defaults to ASCII, which would turn
+        // every "ã"/"ç" in a MSG into '?' — TCP already sends UTF-8). DTR on,
+        // like every terminal program: the ESP32-C3's USB-CDC may hold back
+        // output until the host says it is listening. WriteTimeout so a
+        // yanked cable can't wedge the UI thread inside Write().
+        var port = new SerialPort(portName, baudRate)
+        {
+            NewLine = "\n",
+            ReadTimeout = 500,
+            WriteTimeout = 1000,
+            Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            DtrEnable = true,
+        };
         try
         {
             port.Open();
@@ -214,6 +303,9 @@ public sealed class BrobotConnection : IDisposable
             // Bad/missing port name, already in use, or the device dropped off
             // mid-open — same "leave disconnected, IsConnected stays false"
             // outcome as any other failed connect.
+            _lastSerialFailure = ex is UnauthorizedAccessException
+                ? $"{portName} está em uso por outro programa"
+                : $"não deu para abrir a {portName} ({ex.Message})";
             port.Dispose();
             return;
         }
@@ -226,6 +318,26 @@ public sealed class BrobotConnection : IDisposable
         }
 
         _port = port;
+        if (verifyPeemo && !VerifyPeemo(port))
+        {
+            // Not answering PING: same outcome as a failed open. The port has
+            // to be released here — left open, the COM name would stay locked
+            // and every later attempt would fail with "access denied".
+            _port = null;
+            if (_running)
+            {
+                _lastSerialFailure = $"a {portName} abriu, mas o Peemo não respondeu ao PING (outra placa, ou firmware sem USB?)";
+            }
+            try
+            {
+                port.Dispose();
+            }
+            catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException)
+            {
+            }
+            return;
+        }
+
         _serialOpen = true;
         try
         {
@@ -235,6 +347,47 @@ public sealed class BrobotConnection : IDisposable
         {
             _serialOpen = false;
         }
+    }
+
+    private static readonly TimeSpan PeemoVerifyTimeout = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// PING until "PEEMO ..." comes back or PeemoVerifyTimeout passes. The
+    /// PING is repeated on every read timeout (~500ms) because the very first
+    /// one can land while the board's USB is still enumerating and be dropped.
+    /// Anything else the port says (boot logs, ESP-IDF log lines) is skipped.
+    /// </summary>
+    private bool VerifyPeemo(SerialPort port)
+    {
+        DateTime deadline = DateTime.UtcNow + PeemoVerifyTimeout;
+        bool needPing = true;
+        while (_running && DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                if (needPing)
+                {
+                    port.Write("PING\n");
+                    needPing = false;
+                }
+
+                string line = port.ReadLine();
+                if (line.StartsWith("PEEMO", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+            catch (TimeoutException)
+            {
+                needPing = true;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException or OperationCanceledException)
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private void SerialReadLoop(SerialPort port)
@@ -369,6 +522,13 @@ public sealed class BrobotConnection : IDisposable
     /// </summary>
     private void AccumulateAndFlushOnFrameEnd(List<string> pendingLines, string line)
     {
+        // A serial port also carries the board's own log lines, which never
+        // end in PRESENT; without a cap they'd pile up for the whole session.
+        if (pendingLines.Count > 2000)
+        {
+            pendingLines.Clear();
+        }
+        LineReceived?.Invoke(line);
         pendingLines.Add(line);
 
         if (line.TrimEnd('\r', '\n') != "PRESENT")

@@ -76,10 +76,13 @@ void rememberNetwork(std::vector<SavedNetwork>& networks, const String& ssid, co
 // attempt each. A hit anywhere but the front promotes that network back to
 // most-recent, so a place Peemo visits often naturally floats to the top of
 // the list (and survives longest once the list fills up).
-bool tryConnectSavedNetworks() {
+//
+// Returns 1 on connect, 0 when every network failed, -1 when shouldAbort()
+// fired (WiFi already shut off by then).
+int tryConnectSavedNetworks(const std::function<bool()>& shouldAbort) {
     std::vector<SavedNetwork> networks = loadSavedNetworks();
     if (networks.empty()) {
-        return false;
+        return 0;
     }
 
     WiFi.mode(WIFI_STA);
@@ -98,7 +101,12 @@ bool tryConnectSavedNetworks() {
 
         unsigned long start = millis();
         while (WiFi.status() != WL_CONNECTED && millis() - start < kConnectTimeoutMs) {
-            delay(250);
+            if (shouldAbort && shouldAbort()) {
+                WiFi.disconnect(true);
+                WiFi.mode(WIFI_OFF);
+                return -1;
+            }
+            delay(50);
         }
 
         if (WiFi.status() == WL_CONNECTED) {
@@ -106,13 +114,13 @@ bool tryConnectSavedNetworks() {
                 rememberNetwork(networks, network.ssid, network.password);
                 persistSavedNetworks(networks);
             }
-            return true;
+            return 1;
         }
 
         WiFi.disconnect();
     }
 
-    return false;
+    return 0;
 }
 
 void saveCredentials(const String& ssid, const String& password) {
@@ -173,9 +181,10 @@ String buildSetupPage() {
         "</form></body></html>");
 }
 
-// Never returns — the only way out is saving new credentials, which reboots
-// straight into WifiSetup::connectOrStartPortal() again via setup().
-void runConfigPortal(const std::function<void()>& onPortalTick) {
+// Only leaves two ways: saving new credentials (reboots straight into
+// WifiSetup::connectOrStartPortal() again via setup()), or shouldAbort()
+// firing, which tears the portal down and returns.
+void runConfigPortal(const std::function<void()>& onPortalTick, const std::function<bool()>& shouldAbort) {
     WiFi.mode(WIFI_AP_STA); // AP_STA (not plain AP) so scanNetworks() still works while serving the portal
     WiFi.softAP(kApSsid);
 
@@ -201,27 +210,51 @@ void runConfigPortal(const std::function<void()>& onPortalTick) {
 
     server.begin();
 
-    while (true) {
+    while (!(shouldAbort && shouldAbort())) {
         server.handleClient();
         if (onPortalTick) {
             onPortalTick();
         }
     }
+
+    server.stop();
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_OFF);
 }
 
 } // namespace
 
 namespace WifiSetup {
 
-void connectOrStartPortal(const std::function<void()>& onPortalTick) {
-    if (tryConnectSavedNetworks()) {
-        return;
+Result connectOrStartPortal(const std::function<void()>& onPortalTick, const std::function<bool()>& shouldAbort) {
+    int saved = tryConnectSavedNetworks(shouldAbort);
+    if (saved > 0) {
+        return Result::CONNECTED;
+    }
+    if (saved < 0) {
+        return Result::ABORTED;
     }
 
     // No saved credentials, or the saved ones didn't work (wrong password,
     // router out of range, etc.) — either way the only way forward is
-    // someone entering the real ones via the portal.
-    runConfigPortal(onPortalTick);
+    // someone entering the real ones via the portal (or a USB host showing up).
+    runConfigPortal(onPortalTick, shouldAbort);
+    return Result::ABORTED;
+}
+
+void turnOff() {
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+}
+
+void beginReconnect() {
+    WiFi.mode(WIFI_STA);
+    WiFi.setSleep(false); // same reasoning as tryConnectSavedNetworks
+    WiFi.setAutoReconnect(true);
+    // No arguments: re-uses the credentials the WiFi driver itself persisted
+    // the last time begin(ssid, pass) succeeded, i.e. the network that was
+    // up when USB took over.
+    WiFi.begin();
 }
 
 } // namespace WifiSetup

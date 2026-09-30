@@ -65,6 +65,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Libretro emulator cores (see Gba/LibretroCore.cs) and their license
+         notices, shipped inside the app at cores\ next to the exe — so nobody
+         has to download anything, and the installer (which packages the whole
+         publish folder) carries them too. Loaded from AppContext.BaseDirectory
+         (see Gba/CorePaths.cs); user data (saves, states) stays in %AppData%. -->
+    <None Include="Cores\*.dll;Cores\NOTICE-*.txt">
+      <Link>cores\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="6.2.1" />
     <!-- Game Mode's CPU/GPU/RAM sensors (see SystemStatsMonitor). 0.9.6 or
          later specifically: that's the release that swapped the WinRing0

@@ -31,6 +31,7 @@ public sealed class DailyReportTracker
     private readonly DailyReportProgress _progress;
 
     private string? _gameName;
+    private string? _emulatorGameName;
     private bool _mediaActive;
     private bool _videoFocused;
     private string? _socialSite;
@@ -94,6 +95,18 @@ public sealed class DailyReportTracker
 
     /// <summary>Call from GameMonitor's own GameChanged handler (and with null when the Jogos checkbox turns off) with the game currently detected, if any.</summary>
     public void SetGameActive(string? gameName) => _gameName = gameName;
+
+    /// <summary>
+    /// Call every tick with the ROM's game name while a GBA/SNES game is actually
+    /// being played through the Mini Games card (null otherwise). The emulator
+    /// runs inside Peemo Sender itself, so GameMonitor — which looks for other
+    /// processes — never sees it; without this that time would not count. It is
+    /// credited exactly like a detected PC game (same GameSeconds total, so the
+    /// same free half hour and penalty blocks, and the same per-game minutes);
+    /// if both a PC game and an emulator are somehow active, the PC game takes
+    /// the tick so time is never counted twice.
+    /// </summary>
+    public void SetEmulatorGameActive(string? gameName) => _emulatorGameName = gameName;
 
     /// <summary>
     /// Call from WindowsMediaMonitor's NowPlayingChanged handler (and when
@@ -191,11 +204,12 @@ public sealed class DailyReportTracker
             }
         }
 
-        if (_gameName != null)
+        string? activeGame = _gameName ?? _emulatorGameName;
+        if (activeGame != null)
         {
             _progress.GameSeconds += elapsed;
-            _progress.GameSecondsByName[_gameName] =
-                _progress.GameSecondsByName.GetValueOrDefault(_gameName) + elapsed;
+            _progress.GameSecondsByName[activeGame] =
+                _progress.GameSecondsByName.GetValueOrDefault(activeGame) + elapsed;
         }
 
         MaybeSave(now);

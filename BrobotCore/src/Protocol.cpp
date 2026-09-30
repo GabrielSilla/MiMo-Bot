@@ -7,8 +7,10 @@
 // Answer to PING. The trailing number is the protocol revision, so a future
 // PC app can tell an old board from a new one without a second round trip;
 // bump it only for changes a client would actually need to branch on. Bumped
-// to 2 for STREAM/FRAME so a PC app can tell whether it's safe to try them.
-static const char* IDENTITY_REPLY = "PEEMO 2";
+// to 2 for STREAM/FRAME, and to 3 when the row record grew a header (see
+// Config.h's STREAM_ROW_* comment) to support RLE, and to 4 when Core started
+// listening for commands over USB (Serial) too, with `HOST USB`.
+static const char* IDENTITY_REPLY = "PEEMO 4";
 
 void Protocol::poll(Stream& serial, unsigned long now) {
     // Snapshotted once per call rather than re-checked every byte in the
@@ -23,33 +25,66 @@ void Protocol::poll(Stream& serial, unsigned long now) {
     // that's a sub-millisecond delay, not a correctness issue.
     int available = serial.available();
     while (available-- > 0) {
+#if !VSCREEN
+        // Only meaningful where main.cpp drains the row queue every loop()
+        // (the physical display) — see StreamMode::isQueueFull.
+        if (_streamMode.isQueueFull()) {
+            break;
+        }
+#endif
         if (_inFrame && (now - _lastByteAt) > LINE_STALE_TIMEOUT_MS) {
             // The PC app streaming this frame stalled or died mid-frame —
             // abandon it (no FRAMEOK follows) rather than wait forever for
             // bytes that may never come. The PC's one-frame-in-flight
             // pacing just times out and moves on.
             _inFrame = false;
-            _rowBufLen = 0;
+            _abandonedFrames++;
+            _rowParseState = RowParseState::HEADER;
+            _rowHeaderLen = 0;
+            _rowPayloadLen = 0;
         } else if (!_inFrame && _length > 0 && (now - _lastByteAt) > LINE_STALE_TIMEOUT_MS) {
             _length = 0;
         }
         _lastByteAt = now;
 
         if (_inFrame) {
-            _rowBuf[_rowBufLen++] = (uint8_t)serial.read();
+            uint8_t b = (uint8_t)serial.read();
             _frameBytesRemaining--;
 
-            if (_rowBufLen == STREAM_ROW_RECORD_BYTES) {
-                applyRowBuf(now);
-                _rowBufLen = 0;
+            if (_rowParseState == RowParseState::HEADER) {
+                _rowHeaderBuf[_rowHeaderLen++] = b;
+                if (_rowHeaderLen == STREAM_ROW_HEADER_BYTES) {
+                    _currentRow = _rowHeaderBuf[0];
+                    _currentEncoding = _rowHeaderBuf[1];
+                    _rowPayloadNeeded = ((size_t)_rowHeaderBuf[2] << 8) | _rowHeaderBuf[3];
+                    _rowHeaderLen = 0;
+                    _rowPayloadLen = 0;
+                    if (!beginRowPayload()) {
+                        // Declared length is 0 or bigger than this board
+                        // will ever accept — a corrupt/malicious length
+                        // must never be trusted to index _rowPayloadBuf.
+                        // Abandon the frame rather than risk an overrun.
+                        _inFrame = false;
+                        _abandonedFrames++;
+                    } else {
+                        _rowParseState = RowParseState::PAYLOAD;
+                    }
+                }
+            } else {
+                _rowPayloadBuf[_rowPayloadLen++] = b;
+                if (_rowPayloadLen == _rowPayloadNeeded) {
+                    applyRowBuf(now);
+                    _rowParseState = RowParseState::HEADER;
+                }
             }
 
             if (_frameBytesRemaining == 0) {
-                // Any bytes still sitting in _rowBuf here belong to a
-                // malformed payload (not an exact multiple of
-                // STREAM_ROW_RECORD_BYTES) — discarded rather than treated
-                // as an error, same leniency as an unrecognized command.
+                // Anything still sitting in the header/payload buffer here
+                // belongs to a malformed final record — discarded rather
+                // than treated as an error, same leniency as an
+                // unrecognized command.
                 _inFrame = false;
+                _rowParseState = RowParseState::HEADER;
                 char overLine[24];
                 snprintf(overLine, sizeof(overLine), "FRAMEOK %u", (unsigned)_frameSeq);
                 serial.println(overLine);
@@ -103,20 +138,58 @@ void Protocol::beginFrame(const char* args) {
     _inFrame = true;
     _frameSeq = (uint16_t)seq;
     _frameBytesRemaining = bytes;
-    _rowBufLen = 0;
+    _rowParseState = RowParseState::HEADER;
+    _rowHeaderLen = 0;
+    _rowPayloadLen = 0;
+}
+
+bool Protocol::beginRowPayload() {
+    return _rowPayloadNeeded > 0 && _rowPayloadNeeded <= STREAM_ROW_MAX_PAYLOAD_BYTES;
 }
 
 void Protocol::applyRowBuf(unsigned long now) {
-    uint8_t row = _rowBuf[0];
     uint16_t pixels[LOGICAL_WIDTH];
-    for (int i = 0; i < LOGICAL_WIDTH; i++) {
-        // Wire format is big-endian per PROTOCOL.md; the ESP32 is little-
-        // endian, so each pixel pair needs swapping into host order here.
-        uint8_t hi = _rowBuf[1 + i * 2];
-        uint8_t lo = _rowBuf[1 + i * 2 + 1];
-        pixels[i] = (uint16_t)((hi << 8) | lo);
+
+    if (_currentEncoding == 0) {
+        // Raw: LOGICAL_WIDTH big-endian pixel pairs. A short/malformed
+        // payload (not an exact multiple of 2, or fewer than LOGICAL_WIDTH
+        // pixels) fills whatever whole pixels fit and zeroes the rest,
+        // rather than reading past what actually arrived.
+        size_t pixelCount = _rowPayloadLen / 2;
+        if (pixelCount > (size_t)LOGICAL_WIDTH) {
+            pixelCount = LOGICAL_WIDTH;
+        }
+        for (size_t i = 0; i < pixelCount; i++) {
+            uint8_t hi = _rowPayloadBuf[i * 2];
+            uint8_t lo = _rowPayloadBuf[i * 2 + 1];
+            pixels[i] = (uint16_t)((hi << 8) | lo);
+        }
+        for (size_t i = pixelCount; i < (size_t)LOGICAL_WIDTH; i++) {
+            pixels[i] = 0;
+        }
+    } else {
+        // Run-length: [runLength][pixel, big-endian] tuples (3 bytes each),
+        // each expanding to runLength copies of that pixel, until
+        // LOGICAL_WIDTH pixels have been produced or the payload runs out
+        // — whichever comes first, so a truncated/corrupt tuple stream
+        // still leaves a fully-initialized (if incomplete-looking) row
+        // instead of reading past _rowPayloadBuf.
+        size_t outIdx = 0;
+        size_t inIdx = 0;
+        while (outIdx < (size_t)LOGICAL_WIDTH && inIdx + 3 <= _rowPayloadLen) {
+            uint8_t runLength = _rowPayloadBuf[inIdx];
+            uint16_t pixel = (uint16_t)((_rowPayloadBuf[inIdx + 1] << 8) | _rowPayloadBuf[inIdx + 2]);
+            inIdx += 3;
+            for (uint8_t r = 0; r < runLength && outIdx < (size_t)LOGICAL_WIDTH; r++) {
+                pixels[outIdx++] = pixel;
+            }
+        }
+        for (; outIdx < (size_t)LOGICAL_WIDTH; outIdx++) {
+            pixels[outIdx] = 0;
+        }
     }
-    _streamMode.onRowReceived(now, row, pixels);
+
+    _streamMode.onRowReceived(now, _currentRow, pixels);
 }
 
 void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
@@ -176,6 +249,11 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         // Buzzer::playRpgVictory); an unrecognized name is ignored.
         if (_deviceSettings.soundEnabled() && strcmp(args, "VICTORY") == 0) {
             _buzzer.playRpgVictory(now);
+        }
+    } else if (commandLength == 4 && strncmp(line, "HOST", 4) == 0) {
+        // Only `HOST USB` exists so far — see takeHostUsbPing().
+        if (strcmp(args, "USB") == 0) {
+            _hostUsbPing = true;
         }
     } else if (commandLength == 4 && strncmp(line, "PING", 4) == 0) {
         // The only command Core answers. Exists so a PC app sweeping the

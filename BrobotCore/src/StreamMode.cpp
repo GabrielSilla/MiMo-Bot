@@ -38,6 +38,7 @@ void StreamMode::onRowReceived(unsigned long now, uint8_t row, const uint16_t pi
     _lastFrameAt = now;
 
     if (_queueCount >= ROW_QUEUE_DEPTH) {
+        _droppedRows++;
         return;
     }
 
