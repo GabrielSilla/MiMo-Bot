@@ -542,6 +542,8 @@ void Personality::onThemeCommand(const char* name, unsigned long now) {
         _theme = Theme::P2M2;
     } else if (strcmp(name, "PEEMO84") == 0) {
         _theme = Theme::PEEMO84;
+    } else if (strcmp(name, "GAMEBOY") == 0) {
+        _theme = Theme::GAMEBOY;
     } else {
         _theme = Theme::CLASSIC;
     }

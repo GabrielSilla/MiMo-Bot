@@ -103,7 +103,11 @@ enum class DailyRating : uint8_t { PESSIMO, RUIM, QUESTIONAVEL, MEDIO, BOM, EXCE
 // wholesale (same FaceState::logLines/logTab, same Personality side) and
 // differs only in how that gets drawn — plus a boot sequence played once
 // each time the theme is selected (see FaceState::themeStartedMs).
-enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84 };
+// GAMEBOY is a 1989 handheld LCD: CLASSIC's exact layout (badges, corner icons,
+// eyes, message box) quantized to the four olive-green shades of the original
+// screen, light ground with dark ink — the only theme besides P2M2 that isn't
+// drawn on black (see Face.cpp's GameBoyDisplay).
+enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84, GAMEBOY };
 
 // CLASSIC's own primary color, set via CLASSICCOLOR (see PROTOCOL.md) —
 // every other theme has a fixed palette of its own and ignores this

@@ -332,3 +332,37 @@ Continues [Face.cpp core rendering](firmware-face-core.md) — same file, same
   `CLASSIC`/`P2M2` have no log to put this in and deliberately get nothing:
   there the same information keeps arriving as the ordinary `ContextUsage`
   `MSG` those themes already showed.
+
+## Theme::GAMEBOY
+
+CLASSIC's layout (badges, corner icons, eyes, message box) with no layout
+changes at all — only color. `GameBoyDisplay` (Face.cpp) is a decorator like
+`RecoloringDisplay`, but maps every draw color onto the 4 DMG shades
+(`GB_SHADES`, lightest to darkest) by *inverted brightness*: pure black
+(ground and every punch-out) → lightest, the dark message box → shade 1,
+mid colors → shade 2, white → darkest ink. `Face::render` re-clears through
+it so the ground becomes light green, and passes white as eye/icon color so
+they land on the darkest ink. `SLEEPING`'s `DimmingDisplay` sits outside it,
+so dimming lowers brightness *before* quantizing and the frame lightens
+toward the ground. Notification screens use `GB_SHADES` directly (raw display).
+Sender: `ThemeManager` entry "Peemo Game Boy" (`THEME GAMEBOY`), also in
+`AchievementMonitor.AllCoreThemes`.
+
+GAMEBOY's own touches (beyond the palette), all in Face.cpp:
+- **Boot** (`drawGameBoyBoot`, `GB_BOOT_*`): on every `THEME GAMEBOY`, "PEEMO" in
+  4x pixel letters falls linearly from the top and settles mid-screen with a
+  "PEEMO(TM) 1989" line (`themeStartedMs`, same anchor PEEMO84 uses). Drawn on
+  the raw display with real `GB_SHADES`.
+- **Eyes** (`drawGameBoyEye`): hard-edged sprite with a 4x4 glint and 3px mid-tone
+  shadow; only the default expression branch uses it, the others (X, caret,
+  worried, ...) keep their usual shapes in the DMG palette.
+- **Dialog box** (`drawGameBoyDialogBox`): double-line frame + blinking ▼ in
+  place of CLASSIC's solid panel; same box geometry, so text layout is unchanged.
+  The arrow blinks whenever a message shows (Core doesn't know the final length).
+- **THINKING** (`drawGameBoyThinkingScene`, `GB_BALL_*`/`GB_GROUND_Y`): a capture
+  attempt. No eyes: a 40px ball wobbles 3x (`gameBoyBallDx`, also what the
+  mid-tone shadow follows), clicks shut with a blinking button and sparkles,
+  rests, repeats. Swaying grass tufts line the ground, whose y is derived from
+  the dialog box's top edge (assumes the 160x128 frame) so the scene stands on
+  the box. Replaces the glitch bands. Tried and dropped: Tetris in the eye gap,
+  an LCD scanline sweep over the eyes.

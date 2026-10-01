@@ -77,6 +77,40 @@ private:
     uint8_t dim(uint8_t c) const { return (uint8_t)((float)c * _factor); }
 };
 
+// GAMEBOY: the four shades of the original DMG screen, lightest to darkest.
+// Every other function keeps drawing in its usual colors; GameBoyDisplay
+// (below) maps each one onto the nearest of these by brightness, inverted —
+// black (the ground, and every "cut a gap" punch-out) becomes the lightest
+// shade, bright content the darkest ink.
+constexpr uint8_t GB_SHADES[4][3] = {{155, 188, 15}, {139, 172, 15}, {48, 98, 48}, {15, 56, 15}};
+
+class GameBoyDisplay : public IDisplay {
+public:
+    explicit GameBoyDisplay(IDisplay& inner) : _inner(inner) {}
+
+    int width() const override { return _inner.width(); }
+    int height() const override { return _inner.height(); }
+
+    void clear(uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = shade(r, g, b); _inner.clear(c[0], c[1], c[2]); }
+    void drawPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = shade(r, g, b); _inner.drawPixel(x, y, c[0], c[1], c[2]); }
+    void drawRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = shade(r, g, b); _inner.drawRect(x, y, w, h, c[0], c[1], c[2]); }
+    void fillRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = shade(r, g, b); _inner.fillRect(x, y, w, h, c[0], c[1], c[2]); }
+    void drawRoundedRect(int x, int y, int w, int h, int radius, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = shade(r, g, b); _inner.drawRoundedRect(x, y, w, h, radius, c[0], c[1], c[2]); }
+    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, TextFont font = TextFont::LATIN) override { const uint8_t* c = shade(r, g, b); _inner.drawText(text, x, y, c[0], c[1], c[2], font); }
+    void present() override { _inner.present(); }
+
+private:
+    IDisplay& _inner;
+
+    static const uint8_t* shade(uint8_t r, uint8_t g, uint8_t b) {
+        int lum = (r * 30 + g * 59 + b * 11) / 100;
+        if (lum == 0) return GB_SHADES[0];
+        if (lum < 100) return GB_SHADES[1];
+        if (lum < 230) return GB_SHADES[2];
+        return GB_SHADES[3];
+    }
+};
+
 constexpr uint8_t MATRIX_R = 40, MATRIX_G = 255, MATRIX_B = 90;
 
 // P2M2 renders the whole frame as a close-up of R2D2's dome plate rather
@@ -154,6 +188,7 @@ private:
     uint8_t go(uint8_t r, uint8_t g, uint8_t b) const { return isBackground(r, g, b) ? 0 : _g; }
     uint8_t bo(uint8_t r, uint8_t g, uint8_t b) const { return isBackground(r, g, b) ? 0 : _b; }
 };
+
 
 // Corner rounding: a small 2-row "staircase" cut (2px, then 1px) instead of
 // one flat diagonal chamfer. It approximates a quarter-circle of radius ~4,
@@ -341,6 +376,236 @@ constexpr int MESSAGE_BOX_MARGIN_BOTTOM = 4;
 constexpr int MESSAGE_BOX_PADDING_Y = 4;
 constexpr int MESSAGE_BOX_HEIGHT = MESSAGE_VISIBLE_LINES * MESSAGE_LINE_HEIGHT + 2 * MESSAGE_BOX_PADDING_Y;
 constexpr int MESSAGE_MARGIN_X = MESSAGE_BOX_MARGIN_X + 4; // text inset from the box's edge
+
+// --- GAMEBOY's own touches --------------------------------------------------
+//
+// Colors below are real DMG shades handed straight to rawDisplay (the boot
+// screen) or ordinary white/black passed through GameBoyDisplay (everything
+// else), exactly like the rest of the file.
+
+// Boot: "PEEMO" drops in from the top in chunky 4x pixel letters, settles at
+// mid-screen and holds, like the DMG's logo scroll. Played on every THEME
+// command (same reasoning as PEEMO84's boot, see drawPeemo84Boot).
+constexpr uint8_t GB_BOOT_GLYPHS[4][7] = {
+    {0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10}, // P
+    {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F}, // E
+    {0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11}, // M
+    {0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}, // O
+};
+constexpr int GB_BOOT_LETTERS[5] = {0, 1, 1, 2, 3}; // P E E M O
+constexpr int GB_BOOT_SCALE = 4;
+constexpr int GB_BOOT_LETTER_W = 5 * GB_BOOT_SCALE + GB_BOOT_SCALE; // glyph + 1px(scaled) gap
+constexpr unsigned long GB_BOOT_DROP_MS = 1100;
+constexpr unsigned long GB_BOOT_END_MS = GB_BOOT_DROP_MS + 1100;
+
+void drawGameBoyBoot(IDisplay& display, unsigned long elapsed) {
+    display.clear(GB_SHADES[0][0], GB_SHADES[0][1], GB_SHADES[0][2]);
+    int glyphH = 7 * GB_BOOT_SCALE;
+    int totalW = 5 * GB_BOOT_LETTER_W - GB_BOOT_SCALE;
+    int x0 = (display.width() - totalW) / 2;
+    int restY = (display.height() - glyphH) / 2 - 6;
+    int y = restY;
+    if (elapsed < GB_BOOT_DROP_MS) {
+        // Linear fall, like the real thing — no easing.
+        y = -glyphH + (int)((long)(restY + glyphH) * (long)elapsed / (long)GB_BOOT_DROP_MS);
+    }
+    for (int i = 0; i < 5; i++) {
+        const uint8_t* rows = GB_BOOT_GLYPHS[GB_BOOT_LETTERS[i]];
+        for (int row = 0; row < 7; row++) {
+            for (int col = 0; col < 5; col++) {
+                if (rows[row] & (0x10 >> col)) {
+                    display.fillRect(x0 + i * GB_BOOT_LETTER_W + col * GB_BOOT_SCALE, y + row * GB_BOOT_SCALE,
+                                     GB_BOOT_SCALE, GB_BOOT_SCALE,
+                                     GB_SHADES[3][0], GB_SHADES[3][1], GB_SHADES[3][2]);
+                }
+            }
+        }
+    }
+    if (elapsed >= GB_BOOT_DROP_MS) {
+        const char* sub = "PEEMO(TM) 1989";
+        int w = (int)strlen(sub) * CHAR_ADVANCE_PX;
+        display.drawText(sub, (display.width() - w) / 2, restY + glyphH + 10,
+                         GB_SHADES[2][0], GB_SHADES[2][1], GB_SHADES[2][2]);
+    }
+}
+
+// Pixel-sprite eye: a hard-edged block with a light 3x3 glint and a mid-tone
+// 2px shadow on the lower/right edge — the chunky shading of a DMG sprite
+// rather than CLASSIC's soft rounded square. Collapses to a plain bar once
+// blinking leaves too little height for the shading to read.
+void drawGameBoyEye(IDisplay& display, int x, int y, int w, int h) {
+    display.fillRect(x, y, w, h, 255, 255, 255);
+    if (h >= 14 && w >= 14) {
+        display.fillRect(x + w - 3, y + 2, 3, h - 2, 150, 150, 150);   // right shadow
+        display.fillRect(x + 2, y + h - 3, w - 2, 3, 150, 150, 150);   // bottom shadow
+        display.fillRect(x + 4, y + 4, 4, 4, 0, 0, 0);                  // glint
+    }
+}
+
+// THINKING in GAMEBOY: a capture attempt. A ball under the eyes wobbles
+// three times, then clicks shut with a sparkle, rests a beat and starts over.
+// Stateless, driven purely off nowMs, like drawEyeGlitch. The ball is a
+// 16px disc: dark top half, hollow bottom half, a dark band, and a button.
+void drawEyeCircle(IDisplay& display, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b);
+
+constexpr int GB_BALL_SIZE = 40;
+constexpr int GB_BALL_CX = 80;
+// The grass sits right on the dialog box's top edge (160x128 frame), so the
+// scene reads as standing on the text box.
+constexpr int GB_GROUND_Y = 128 - MESSAGE_BOX_MARGIN_BOTTOM - MESSAGE_BOX_HEIGHT;
+constexpr int GB_BALL_Y = GB_GROUND_Y - GB_BALL_SIZE - 6;
+constexpr unsigned long GB_BALL_REST_MS = 500;
+constexpr unsigned long GB_BALL_WOBBLE_MS = 600;
+constexpr unsigned long GB_BALL_WOBBLE_GAP_MS = 280;
+constexpr int GB_BALL_WOBBLE_COUNT = 3;
+constexpr int GB_BALL_WOBBLE_PX = 10;
+constexpr unsigned long GB_BALL_CLICK_MS = 900;
+constexpr unsigned long GB_BALL_CYCLE_MS =
+    GB_BALL_REST_MS + GB_BALL_WOBBLE_COUNT * (GB_BALL_WOBBLE_MS + GB_BALL_WOBBLE_GAP_MS) + GB_BALL_CLICK_MS;
+
+void drawGameBoyBall(IDisplay& display, int x, int y, bool buttonLit) {
+    const int size = GB_BALL_SIZE;
+    const int rim = size / 8;
+    const int band = size / 8;
+    const float r = size / 2.0f;
+    for (int row = 0; row < size; row++) {
+        float dy = row - (r - 0.5f);
+        float t = 1.0f - (dy * dy) / (r * r);
+        if (t < 0.0f) continue;
+        int half = (int)(r * sqrtf(t));
+        display.fillRect(x + size / 2 - half, y + row, half * 2, 1, 255, 255, 255);
+        // Hollow lower half, leaving a rim.
+        if (row > size / 2) {
+            float ir = r - rim;
+            float it = 1.0f - (dy * dy) / (ir * ir);
+            if (it > 0.0f) {
+                int ihalf = (int)(ir * sqrtf(it));
+                display.fillRect(x + size / 2 - ihalf, y + row, ihalf * 2, 1, 0, 0, 0);
+            }
+        }
+    }
+    // Band across the middle (kept dark through the hollow half).
+    display.fillRect(x, y + size / 2 - band / 2, size, band, 255, 255, 255);
+    // Button: dark ring in a light gap, hole filled (lit) on the click.
+    int bd = size / 4;
+    int bx = x + size / 2 - bd / 2, by = y + size / 2 - bd / 2;
+    drawEyeCircle(display, bx, by, bd, bd, 0, 0, 0);
+    drawEyeCircle(display, bx + 2, by + 2, bd - 4, bd - 4, 255, 255, 255);
+    if (!buttonLit) {
+        int hole = bd / 3;
+        drawEyeCircle(display, bx + (bd - hole) / 2, by + (bd - hole) / 2, hole, hole, 0, 0, 0);
+    }
+}
+
+// The ball's horizontal offset this frame — also what the shadow follows.
+int gameBoyBallDx(unsigned long nowMs) {
+    unsigned long t = nowMs % GB_BALL_CYCLE_MS;
+    if (t < GB_BALL_REST_MS) return 0;
+    t -= GB_BALL_REST_MS;
+    unsigned long wobblesEnd = GB_BALL_WOBBLE_COUNT * (GB_BALL_WOBBLE_MS + GB_BALL_WOBBLE_GAP_MS);
+    if (t >= wobblesEnd) return 0;
+    unsigned long inWobble = t % (GB_BALL_WOBBLE_MS + GB_BALL_WOBBLE_GAP_MS);
+    if (inWobble >= GB_BALL_WOBBLE_MS) return 0;
+    // One full left-right-back swing, a touch quantized like a sprite.
+    float u = (float)inWobble / (float)GB_BALL_WOBBLE_MS;
+    return (int)lroundf(GB_BALL_WOBBLE_PX * sinf(u * 6.2831853f));
+}
+
+void drawGameBoyThinkingBall(IDisplay& display, unsigned long nowMs) {
+    unsigned long t = nowMs % GB_BALL_CYCLE_MS;
+    int x = GB_BALL_CX - GB_BALL_SIZE / 2;
+    int dx = gameBoyBallDx(nowMs);
+    bool clicked = false;
+    unsigned long clickT = 0;
+
+    if (t >= GB_BALL_REST_MS) {
+        t -= GB_BALL_REST_MS;
+        unsigned long wobblesEnd = GB_BALL_WOBBLE_COUNT * (GB_BALL_WOBBLE_MS + GB_BALL_WOBBLE_GAP_MS);
+        if (t >= wobblesEnd) {
+            clicked = true;
+            clickT = t - wobblesEnd;
+        }
+    }
+
+    drawGameBoyBall(display, x + dx, GB_BALL_Y, clicked && (clickT / 150) % 2 == 0);
+
+    if (clicked && clickT < 600) {
+        // Sparkles: two small plus shapes either side, alternating.
+        bool a = (clickT / 150) % 2 == 0;
+        int sx = a ? x - 4 : x + GB_BALL_SIZE - 2;
+        int sy = GB_BALL_Y + (a ? 4 : GB_BALL_SIZE - 14);
+        display.fillRect(sx - 4, sy + 4, 9, 1, 255, 255, 255);
+        display.fillRect(sx, sy, 1, 9, 255, 255, 255);
+    }
+}
+
+// A tuft of grass: three blades, the tips swaying a pixel left/right on a
+// slow per-tuft phase so the field isn't in lockstep.
+void drawGameBoyGrassTuft(IDisplay& display, int x, int groundY, int h, unsigned long nowMs, int phase, bool dark) {
+    uint8_t c = dark ? 255 : 150;
+    int sway = (int)(((nowMs / 450) + (unsigned long)phase) % 2);
+    const int offs[3] = {-4, -1, 2};
+    const int hs[3] = {h - 3, h, h - 2};
+    for (int i = 0; i < 3; i++) {
+        int bh = hs[i];
+        display.fillRect(x + offs[i], groundY - bh + 2, 2, bh - 2, c, c, c);          // stem
+        display.fillRect(x + offs[i] + (i == 1 ? 0 : (sway ? 1 : -1)), groundY - bh, 2, 2, c, c, c); // swaying tip
+    }
+}
+
+// THINKING's whole scene: grass in the corners and along the ground under
+// the ball, and a soft shadow beside it.
+void drawGameBoyThinkingScene(IDisplay& display, unsigned long nowMs) {
+    int w = display.width();
+    int h = display.height();
+
+    // Shadow: a flat mid-tone ellipse on the ground, shifted to the ball's
+    // lower right (the light comes from the upper left, like the eye glint).
+    int sw = GB_BALL_SIZE - 4;
+    int sx = GB_BALL_CX - sw / 2 + 8 + gameBoyBallDx(nowMs);
+    int sy = GB_BALL_Y + GB_BALL_SIZE - 6;
+    drawEyeCircle(display, sx, sy, sw, 10, 150, 150, 150);
+
+    // Ground-level tufts: under the ball and out to either side.
+    for (int i = 0; i < 7; i++) {
+        int x = GB_BALL_CX - 36 + i * 12;
+        drawGameBoyGrassTuft(display, x, GB_GROUND_Y, (i % 2) ? 7 : 9, nowMs, i, i % 3 == 0);
+    }
+    // Side and bottom corners.
+    drawGameBoyGrassTuft(display, 6, GB_GROUND_Y, 10, nowMs, 1, true);
+    drawGameBoyGrassTuft(display, 18, GB_GROUND_Y, 7, nowMs, 0, false);
+    drawGameBoyGrassTuft(display, w - 7, GB_GROUND_Y, 10, nowMs, 0, true);
+    drawGameBoyGrassTuft(display, w - 19, GB_GROUND_Y, 7, nowMs, 1, false);
+    drawGameBoyGrassTuft(display, 8, h - 4, 11, nowMs, 0, true);
+    drawGameBoyGrassTuft(display, 22, h - 3, 8, nowMs, 1, false);
+    drawGameBoyGrassTuft(display, 36, h - 2, 6, nowMs, 0, false);
+    drawGameBoyGrassTuft(display, w - 9, h - 4, 11, nowMs, 1, true);
+    drawGameBoyGrassTuft(display, w - 23, h - 3, 8, nowMs, 0, false);
+    drawGameBoyGrassTuft(display, w - 37, h - 2, 6, nowMs, 1, false);
+
+    drawGameBoyThinkingBall(display, nowMs);
+}
+
+// Dialog box: double-line frame around the usual box area, blinking "more"
+// arrow at the bottom-right — the RPG text box, instead of CLASSIC's
+// solid rounded panel.
+void drawGameBoyDialogBox(IDisplay& display, unsigned long nowMs) {
+    int boxX = MESSAGE_BOX_MARGIN_X;
+    int boxW = display.width() - 2 * MESSAGE_BOX_MARGIN_X;
+    int boxH = MESSAGE_BOX_HEIGHT;
+    int boxY = display.height() - MESSAGE_BOX_MARGIN_BOTTOM - boxH;
+    display.fillRect(boxX, boxY, boxW, boxH, 0, 0, 0);
+    display.drawRect(boxX, boxY, boxW, boxH, 255, 255, 255);
+    display.drawRect(boxX + 2, boxY + 2, boxW - 4, boxH - 4, 150, 150, 150);
+    if ((nowMs / 450) % 2 == 0) {
+        int ax = boxX + boxW - 11;
+        int ay = boxY + boxH - 9;
+        display.fillRect(ax, ay, 5, 1, 255, 255, 255);
+        display.fillRect(ax + 1, ay + 1, 3, 1, 255, 255, 255);
+        display.fillRect(ax + 2, ay + 2, 1, 1, 255, 255, 255);
+    }
+}
+
 
 // Game Mode grows the message box so each reading gets a line of its own,
 // the way MATRIX's monitor tab already lists them, and so a game's name has
@@ -2522,6 +2787,10 @@ NotificationPalette notificationPalette(const FaceState& state) {
         case Theme::PEEMO84:
             return {BG_R, BG_G, BG_B, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B,
                     PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B};
+        case Theme::GAMEBOY:
+            return {GB_SHADES[0][0], GB_SHADES[0][1], GB_SHADES[0][2],
+                    GB_SHADES[3][0], GB_SHADES[3][1], GB_SHADES[3][2],
+                    GB_SHADES[3][0], GB_SHADES[3][1], GB_SHADES[3][2]};
         case Theme::P2M2:
             // The one theme whose ground isn't black: R2's plate fills the
             // frame everywhere else, so a notification dropping to black
@@ -4170,6 +4439,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     bool isMatrix = state.theme == Theme::MATRIX;
     bool isP2M2 = state.theme == Theme::P2M2;
     bool isPeemo84 = state.theme == Theme::PEEMO84;
+    bool isGameBoy = state.theme == Theme::GAMEBOY;
 
     // A notification owns the entire frame and outranks everything, PEEMO84's
     // boot sequence included — it is the top tier by definition (see
@@ -4191,14 +4461,27 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         return;
     }
 
+    if (isGameBoy && state.nowMs - state.themeStartedMs < GB_BOOT_END_MS) {
+        drawGameBoyBoot(rawDisplay, state.nowMs - state.themeStartedMs);
+        return;
+    }
+
     RecoloringDisplay recolored(rawDisplay, MATRIX_R, MATRIX_G, MATRIX_B);
-    IDisplay& themed = isMatrix ? static_cast<IDisplay&>(recolored) : rawDisplay;
+    GameBoyDisplay gameBoy(rawDisplay);
+    IDisplay& themed = isMatrix ? static_cast<IDisplay&>(recolored)
+        : (isGameBoy ? static_cast<IDisplay&>(gameBoy) : rawDisplay);
     // P2M2 opts out of the whole-frame sleep dimming: there, SLEEPING is
     // specifically "the eye's light goes out" (see p2m2BlinkDim below)
     // with the blue plate, badges and message staying at full strength —
     // dimming everything would blur that into a generic faded frame.
     DimmingDisplay dimmed(themed, SLEEP_DIM_FACTOR);
     IDisplay& display = (state.expression == Expression::SLEEPING && !isP2M2) ? static_cast<IDisplay&>(dimmed) : themed;
+
+    // The only light ground besides P2M2: re-clear through the shade mapper
+    // so black becomes the LCD's lightest green instead of staying black.
+    if (isGameBoy) {
+        themed.clear(0, 0, 0);
+    }
 
     // CLASSIC's own primary color (see ClassicColor in Face.h) — resolved
     // once here and threaded into the same places EYE_R/G/B used to be
@@ -4212,9 +4495,10 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // eyes and the message text change color, everything else (badges,
     // corner icons, message box) stays exactly CLASSIC — so the eye color
     // is just a plain variable threaded into the eye-drawing calls below.
-    uint8_t eyeR = isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR);
-    uint8_t eyeG = isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG);
-    uint8_t eyeB = isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB);
+    // GAMEBOY draws white so GameBoyDisplay maps it to the darkest ink.
+    uint8_t eyeR = isGameBoy ? 255 : (isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
+    uint8_t eyeG = isGameBoy ? 255 : (isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
+    uint8_t eyeB = isGameBoy ? 255 : (isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
 
     // PEEMO84 keeps MATRIX's eye geometry and shapes but carries two things in
     // *brightness* that the other themes express some other way: the lamp
@@ -4246,9 +4530,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // it has to be the theme's amber all the same: left on CLASSIC's teal,
     // the one icon this theme does draw came out as the single non-amber
     // thing on an otherwise monochrome terminal.
-    uint8_t iconR = isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR);
-    uint8_t iconG = isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG);
-    uint8_t iconB = isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB);
+    uint8_t iconR = isGameBoy ? 255 : (isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
+    uint8_t iconG = isGameBoy ? 255 : (isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
+    uint8_t iconB = isGameBoy ? 255 : (isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
 
     bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix && !isPeemo84;
 
@@ -4379,7 +4663,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         // still.
         drawEyeCaret(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
         drawEyeCaret(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
-    } else if (state.expression == Expression::THINKING && !isPeemo84) {
+    } else if (state.expression == Expression::THINKING && !isPeemo84 && !isGameBoy) {
         // PEEMO84 deliberately falls through to the plain drawEye below: there,
         // THINKING is carried by the eyes' flicker (see the lamp block
         // above) and the ">THINKING_" prompt line, so glitch bands on top
@@ -4399,6 +4683,12 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         uint8_t dropB = isPeemo84 ? eyeB : MSG_B;
         drawSweatDrop(display, rightX + eyeSize + 3, eyeTop + worriedSlantPx(eyeHeight),
                       (int)(eyeSize * 0.7f), state.nowMs, dropR, dropG, dropB);
+    } else if (isGameBoy && state.expression == Expression::THINKING) {
+        // No eyes here: the whole frame is the capture scene.
+        drawGameBoyThinkingScene(display, state.nowMs);
+    } else if (isGameBoy) {
+        drawGameBoyEye(display, leftX, eyeTop, eyeSize, eyeHeight);
+        drawGameBoyEye(display, rightX, eyeTop, eyeSize, eyeHeight);
     } else {
         drawEye(display, leftX, eyeTop, eyeSize, eyeHeight, eyeR, eyeG, eyeB);
         drawEye(display, rightX, eyeTop, eyeSize, eyeHeight, eyeR, eyeG, eyeB);
@@ -4484,7 +4774,11 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
                                      MSG_R, MSG_G, MSG_B,
                                      state.messageTypingStartedMs, state.nowMs);
         } else {
-            drawMessageBox(display, MSG_BOX_R, MSG_BOX_G, MSG_BOX_B);
+            if (isGameBoy) {
+                drawGameBoyDialogBox(display, state.nowMs);
+            } else {
+                drawMessageBox(display, MSG_BOX_R, MSG_BOX_G, MSG_BOX_B);
+            }
             drawWrappedMessage(display, state.message, MSG_R, MSG_G, MSG_B);
         }
     }
