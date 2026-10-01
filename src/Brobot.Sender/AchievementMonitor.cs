@@ -46,7 +46,7 @@ public sealed class AchievementMonitor
 
     private static readonly TimeSpan PeriodicSaveInterval = TimeSpan.FromMinutes(1);
 
-    private static readonly string[] AllCoreThemes = ["DEFAULT", "MATRIX", "P2M2", "PEEMO84", "GAMEBOY"];
+    private static readonly string[] AllCoreThemes = ["DEFAULT", "MATRIX", "P2M2", "PEEMO84", "GAMEBOY", "TAMAGOTCHI"];
 
     private readonly AchievementProgress _progress;
 
@@ -122,7 +122,7 @@ public sealed class AchievementMonitor
         AchievementStore.Save(_progress);
     }
 
-    /// <summary>Call from TemaComboBox_SelectionChanged with the CoreTheme value just sent (DEFAULT/MATRIX/P2M2/PEEMO84/GAMEBOY).</summary>
+    /// <summary>Call from TemaComboBox_SelectionChanged with the CoreTheme value just sent (DEFAULT/MATRIX/P2M2/PEEMO84/GAMEBOY/TAMAGOTCHI).</summary>
     public void OnThemeSelected(string coreTheme)
     {
         _progress.ThemesUsed.Add(coreTheme);

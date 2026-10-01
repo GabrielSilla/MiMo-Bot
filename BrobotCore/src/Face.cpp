@@ -377,6 +377,285 @@ constexpr int MESSAGE_BOX_PADDING_Y = 4;
 constexpr int MESSAGE_BOX_HEIGHT = MESSAGE_VISIBLE_LINES * MESSAGE_LINE_HEIGHT + 2 * MESSAGE_BOX_PADDING_Y;
 constexpr int MESSAGE_MARGIN_X = MESSAGE_BOX_MARGIN_X + 4; // text inset from the box's edge
 
+// --- TAMAGOTCHI ------------------------------------------------------------
+//
+// A 1997 virtual-pet LCD: pale grey-green ground, near-black ink, and a faint
+// "ghost" tone for unlit segments. TamaDisplay maps every draw color onto
+// those three by brightness (black/ground -> LCD, dim -> ghost, bright ->
+// ink). The identity is the dot-matrix look (eyes built from square cells
+// with a 1px gap), the status-icon columns down both sides, an egg-hatching
+// boot, a speech bubble with a tail, and a thought cloud for THINKING.
+constexpr uint8_t TAMA_BG[3] = {196, 204, 184};
+constexpr uint8_t TAMA_GHOST[3] = {164, 172, 152};
+constexpr uint8_t TAMA_INK[3] = {34, 36, 30};
+// Lights off (LIGHT OFF): the same LCD in the dark — a dim ground with
+// light-ish ink, so everything stays readable, just dimmed.
+constexpr uint8_t TAMA_DARK_BG[3] = {44, 50, 42};
+constexpr uint8_t TAMA_DARK_GHOST[3] = {76, 86, 72};
+constexpr uint8_t TAMA_DARK_INK[3] = {176, 190, 164};
+
+class TamaDisplay : public IDisplay {
+public:
+    TamaDisplay(IDisplay& inner, bool dark) : _inner(inner), _dark(dark) {}
+
+    int width() const override { return _inner.width(); }
+    int height() const override { return _inner.height(); }
+
+    void clear(uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = tone(r, g, b); _inner.clear(c[0], c[1], c[2]); }
+    void drawPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = tone(r, g, b); _inner.drawPixel(x, y, c[0], c[1], c[2]); }
+    void drawRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = tone(r, g, b); _inner.drawRect(x, y, w, h, c[0], c[1], c[2]); }
+    void fillRect(int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = tone(r, g, b); _inner.fillRect(x, y, w, h, c[0], c[1], c[2]); }
+    void drawRoundedRect(int x, int y, int w, int h, int radius, uint8_t r, uint8_t g, uint8_t b) override { const uint8_t* c = tone(r, g, b); _inner.drawRoundedRect(x, y, w, h, radius, c[0], c[1], c[2]); }
+    void drawText(const char* text, int x, int y, uint8_t r, uint8_t g, uint8_t b, TextFont font = TextFont::LATIN) override { const uint8_t* c = tone(r, g, b); _inner.drawText(text, x, y, c[0], c[1], c[2], font); }
+    void present() override { _inner.present(); }
+
+private:
+    IDisplay& _inner;
+    bool _dark;
+
+    const uint8_t* tone(uint8_t r, uint8_t g, uint8_t b) const {
+        int lum = (r * 30 + g * 59 + b * 11) / 100;
+        if (lum == 0) return _dark ? TAMA_DARK_BG : TAMA_BG;
+        if (lum < 100) return _dark ? TAMA_DARK_GHOST : TAMA_GHOST;
+        return _dark ? TAMA_DARK_INK : TAMA_INK;
+    }
+};
+
+// A bitmap as rows of bitmasks (MSB = leftmost column), each set bit drawn
+// as a `cell`-px square on a `pitch`-px grid. pitch == cell is a solid
+// bitmap (the icons); pitch > cell leaves the LCD's pixel gap (the eyes).
+void drawTamaBitmap(IDisplay& display, int x, int y, const uint16_t* rows, int rowCount, int cols,
+                    int pitch, int cell, uint8_t r, uint8_t g, uint8_t b) {
+    for (int row = 0; row < rowCount; row++) {
+        for (int col = 0; col < cols; col++) {
+            if (rows[row] & (1 << (cols - 1 - col))) {
+                display.fillRect(x + col * pitch, y + row * pitch, cell, cell, r, g, b);
+            }
+        }
+    }
+}
+
+// The pet: the classic hollow-outline blob (9x8 cells) with eyes and a mouth
+// as loose cells inside. The face changes per expression; the eyes alone
+// also nudge a cell toward the look-around direction.
+constexpr uint16_t TAMA_PET_BODY[8] = {0x7C, 0x82, 0x101, 0x101, 0x101, 0x101, 0x82, 0xFE};
+constexpr int TAMA_PET_COLS = 9;
+constexpr int TAMA_PET_ROWS = 8;
+
+struct TamaFace {
+    int8_t eyes[6][2];
+    uint8_t eyeCount;
+    int8_t mouth[5][2];
+    uint8_t mouthCount;
+};
+enum TamaFaceId { TAMA_NEUTRAL, TAMA_HAPPY, TAMA_SAD, TAMA_ANGRY, TAMA_SLEEP, TAMA_BLINK, TAMA_THINK };
+constexpr TamaFace TAMA_FACES[] = {
+    /* NEUTRAL */ {{{3, 2}, {3, 6}}, 2, {{5, 3}, {5, 4}, {5, 5}}, 3},
+    /* HAPPY   */ {{{3, 1}, {2, 2}, {3, 3}, {3, 5}, {2, 6}, {3, 7}}, 6, {{5, 2}, {5, 6}, {6, 3}, {6, 4}, {6, 5}}, 5},
+    /* SAD     */ {{{3, 2}, {3, 6}}, 2, {{6, 2}, {5, 3}, {5, 4}, {5, 5}, {6, 6}}, 5},
+    /* ANGRY   */ {{{2, 2}, {3, 3}, {2, 6}, {3, 5}}, 4, {{5, 3}, {5, 4}, {5, 5}}, 3},
+    /* SLEEP   */ {{{3, 1}, {3, 2}, {3, 3}, {3, 5}, {3, 6}, {3, 7}}, 6, {{5, 4}}, 1},
+    /* BLINK   */ {{{3, 1}, {3, 2}, {3, 3}, {3, 5}, {3, 6}, {3, 7}}, 6, {{5, 3}, {5, 4}, {5, 5}}, 3},
+    /* THINK   */ {{{2, 3}, {2, 6}}, 2, {{5, 4}, {5, 5}}, 2},
+};
+
+void drawTamaPet(IDisplay& display, int cx, int cy, int pitch, TamaFaceId face, int eyeDx, int eyeDy,
+                 uint8_t r, uint8_t g, uint8_t b) {
+    int cell = pitch - 1;
+    int left = cx - (TAMA_PET_COLS * pitch) / 2;
+    int top = cy - (TAMA_PET_ROWS * pitch) / 2;
+    drawTamaBitmap(display, left, top, TAMA_PET_BODY, TAMA_PET_ROWS, TAMA_PET_COLS, pitch, cell, r, g, b);
+    const TamaFace& f = TAMA_FACES[face];
+    for (int i = 0; i < f.eyeCount; i++) {
+        int row = f.eyes[i][0] + eyeDy, col = f.eyes[i][1] + eyeDx;
+        if (row < 1) row = 1;
+        if (row > 5) row = 5;
+        if (col < 1) col = 1;
+        if (col > 7) col = 7;
+        display.fillRect(left + col * pitch, top + row * pitch, cell, cell, r, g, b);
+    }
+    for (int i = 0; i < f.mouthCount; i++) {
+        display.fillRect(left + f.mouth[i][1] * pitch, top + f.mouth[i][0] * pitch, cell, cell, r, g, b);
+    }
+}
+
+// Sleeping pose (lights off): the pet lying down, a flattened 10x6 mound with
+// closed-eye dashes, and a small z plus a bigger Z drifting up to its right,
+// like the real toy. Drawn from the same hollow-outline cells as the
+// standing pet.
+constexpr uint16_t TAMA_SLEEP_BODY[6] = {0x0FC, 0x102, 0x201, 0x201, 0x102, 0x1FE};
+constexpr uint16_t TAMA_SLEEP_EYES[6] = {0x000, 0x000, 0x000, 0x0CC, 0x000, 0x000}; // two dashes, row 3
+constexpr uint16_t TAMA_Z_SMALL[4] = {0xF, 0x2, 0x4, 0xF};
+constexpr uint16_t TAMA_Z_BIG[5] = {0x1F, 0x02, 0x04, 0x08, 0x1F};
+
+void drawTamaSleepPose(IDisplay& display, int cx, int cy, int pitch, uint8_t r, uint8_t g, uint8_t b) {
+    int cell = pitch - 1;
+    int pz = pitch - 2;
+    if (pz < 2) pz = 2;
+    int left = cx - (10 * pitch) / 2;
+    int anchorTop = cy - (6 * pitch) / 2;
+    // The Zs are anchored to where the pet's head would be; the pet itself sits
+    // lower, just enough that the small z clears its top-right corner.
+    int top = anchorTop + 2 * pz + 2;
+    drawTamaBitmap(display, left, top, TAMA_SLEEP_BODY, 6, 10, pitch, cell, r, g, b);
+    drawTamaBitmap(display, left, top, TAMA_SLEEP_EYES, 6, 10, pitch, cell, r, g, b);
+    int right = left + 10 * pitch;
+    int bigX = right + 1;
+    int bigY = anchorTop - 4 * pz;
+    drawTamaBitmap(display, bigX, bigY, TAMA_Z_BIG, 5, 5, pz, pz, r, g, b);
+    drawTamaBitmap(display, bigX - 5 * pz, bigY + 2 * pz, TAMA_Z_SMALL, 4, 4, pz, pz, r, g, b);
+}
+
+// Status icons, 9 wide, down both sides: food, play, light on the left;
+// medicine, bath, attention on the right. The one the current mood/state
+// calls for blinks in ink; the rest sit in the ghost tone like unlit
+// segments.
+constexpr uint16_t TAMA_ICON_FOOD[8]  = {0x7C, 0xFE, 0x1FF, 0x000, 0x1FF, 0x000, 0xFE, 0x7C};
+constexpr uint16_t TAMA_ICON_PLAY[9]  = {0x7C, 0xC6, 0x183, 0x183, 0x1FF, 0x183, 0x183, 0xC6, 0x7C};
+constexpr uint16_t TAMA_ICON_LIGHT[9] = {0x7C, 0xC6, 0x183, 0x183, 0xC6, 0x7C, 0x7C, 0x38, 0x10};
+constexpr uint16_t TAMA_ICON_MED[9]   = {0x38, 0x38, 0x38, 0x1FF, 0x1FF, 0x1FF, 0x38, 0x38, 0x38};
+constexpr uint16_t TAMA_ICON_BATH[9]  = {0x10, 0x38, 0x7C, 0xFE, 0x1FF, 0x1FF, 0x1FF, 0xFE, 0x7C};
+constexpr uint16_t TAMA_ICON_ATTN[9]  = {0x38, 0x38, 0x38, 0x38, 0x38, 0x000, 0x000, 0x38, 0x38};
+constexpr int TAMA_ICON_SIZE = 9;
+constexpr int TAMA_ICON_X_LEFT = 1;
+constexpr int TAMA_ICON_TOP_Y = 22;
+constexpr int TAMA_ICON_STEP_Y = 24;
+
+void drawTamaIcons(IDisplay& display, const FaceState& state) {
+    bool blink = (state.nowMs / 400) % 2 == 0;
+    bool active[6] = {
+        state.mood == Mood::FIM_DE_DIA || state.expression == Expression::COFFEE,                                           // food
+        state.expression == Expression::PLAYING || state.expression == Expression::MUSIC,                                  // play
+        state.mood == Mood::CANSADO || state.expression == Expression::SLEEPING || state.expression == Expression::SLEEPY, // light
+        state.expression == Expression::SWEATING || state.expression == Expression::FAILED,                                // medicine
+        state.expression == Expression::BUILDING,                                                                          // bath
+        state.expression == Expression::THINKING,                                                                          // attention
+    };
+    const uint16_t* bitmaps[6] = {TAMA_ICON_FOOD, TAMA_ICON_PLAY, TAMA_ICON_LIGHT, TAMA_ICON_MED, TAMA_ICON_BATH, TAMA_ICON_ATTN};
+    int heights[6] = {8, 9, 9, 9, 9, 9};
+    int xs[2] = {TAMA_ICON_X_LEFT, display.width() - TAMA_ICON_SIZE - 1};
+    for (int i = 0; i < 6; i++) {
+        int x = xs[i / 3];
+        int y = TAMA_ICON_TOP_Y + (i % 3) * TAMA_ICON_STEP_Y;
+        // With the lights off the light icon stays lit and steady.
+        bool lit = (i == 2 && state.lightOff) || (active[i] && blink);
+        uint8_t level = lit ? 255 : 60;
+        drawTamaBitmap(display, x, y, bitmaps[i], heights[i], TAMA_ICON_SIZE, 1, 1, level, level, level);
+    }
+}
+
+// Boot: an egg wobbles, cracks, flashes and hatches into a hopping blob with
+// hearts. Drawn straight on the raw display with real LCD tones.
+constexpr uint16_t TAMA_EGG_ROWS[11] = {0x38, 0x7C, 0xFE, 0xFE, 0x1FF, 0x1FF, 0x1FF, 0x1FF, 0xFE, 0xFE, 0x7C};
+constexpr int TAMA_CRACK_ROW[6] = {3, 4, 5, 6, 7, 8};
+constexpr int TAMA_CRACK_COL[6] = {4, 3, 4, 3, 4, 3};
+constexpr uint16_t TAMA_HEART_ROWS[6] = {0x36, 0x7F, 0x7F, 0x3E, 0x1C, 0x08};
+constexpr int TAMA_BOOT_PITCH = 5;
+constexpr unsigned long TAMA_BOOT_WOBBLE_END_MS = 1300;
+constexpr unsigned long TAMA_BOOT_CRACK_END_MS = 2000;
+constexpr unsigned long TAMA_BOOT_FLASH_END_MS = 2200;
+constexpr unsigned long TAMA_BOOT_END_MS = 3600;
+
+void drawTamaBoot(IDisplay& display, unsigned long elapsed) {
+    bool flash = elapsed >= TAMA_BOOT_CRACK_END_MS && elapsed < TAMA_BOOT_FLASH_END_MS && ((elapsed / 70) % 2 == 0);
+    display.clear(flash ? TAMA_INK[0] : TAMA_BG[0], flash ? TAMA_INK[1] : TAMA_BG[1], flash ? TAMA_INK[2] : TAMA_BG[2]);
+    int cx = display.width() / 2;
+    int pitch = TAMA_BOOT_PITCH;
+
+    if (elapsed < TAMA_BOOT_CRACK_END_MS) {
+        int wobble = 0;
+        if (elapsed >= 400) {
+            unsigned long phase = (elapsed / 160) % 4;
+            wobble = (phase == 1) ? -3 : (phase == 3 ? 3 : 0);
+        }
+        int x = cx - (9 * pitch) / 2 + wobble;
+        int y = (display.height() - 11 * pitch) / 2;
+        drawTamaBitmap(display, x, y, TAMA_EGG_ROWS, 11, 9, pitch, pitch - 1, TAMA_INK[0], TAMA_INK[1], TAMA_INK[2]);
+        if (elapsed >= TAMA_BOOT_WOBBLE_END_MS) {
+            int shown = (int)(6 * (elapsed - TAMA_BOOT_WOBBLE_END_MS) / (TAMA_BOOT_CRACK_END_MS - TAMA_BOOT_WOBBLE_END_MS)) + 1;
+            if (shown > 6) shown = 6;
+            for (int i = 0; i < shown; i++) {
+                display.fillRect(x + TAMA_CRACK_COL[i] * pitch, y + TAMA_CRACK_ROW[i] * pitch, pitch - 1, pitch - 1,
+                                 TAMA_BG[0], TAMA_BG[1], TAMA_BG[2]);
+            }
+        }
+        return;
+    }
+    if (elapsed < TAMA_BOOT_FLASH_END_MS) {
+        return;
+    }
+
+    // Hatched: the blob hops, hearts float up beside it.
+    unsigned long t = elapsed - TAMA_BOOT_FLASH_END_MS;
+    int hop = ((t / 350) % 2 == 1) ? 8 : 0;
+    int x = cx - (9 * pitch) / 2;
+    int y = (display.height() - 8 * pitch) / 2 + 6 - hop;
+    drawTamaPet(display, cx, y + (8 * pitch) / 2, pitch, TAMA_HAPPY, 0, 0, TAMA_INK[0], TAMA_INK[1], TAMA_INK[2]);
+    if (t > 500) {
+        int rise = (int)((t - 500) / 60);
+        if (rise > 14) rise = 14;
+        drawTamaBitmap(display, x - 18, y + 4 - rise, TAMA_HEART_ROWS, 6, 7, 3, 2, TAMA_INK[0], TAMA_INK[1], TAMA_INK[2]);
+        drawTamaBitmap(display, x + 9 * pitch + 6, y - rise, TAMA_HEART_ROWS, 6, 7, 3, 2, TAMA_INK[0], TAMA_INK[1], TAMA_INK[2]);
+    }
+}
+
+// Speech bubble: bordered box with a small tail pointing up at the face.
+void drawTamaDialogBox(IDisplay& display) {
+    int boxX = MESSAGE_BOX_MARGIN_X;
+    int boxW = display.width() - 2 * MESSAGE_BOX_MARGIN_X;
+    int boxH = MESSAGE_BOX_HEIGHT;
+    int boxY = display.height() - MESSAGE_BOX_MARGIN_BOTTOM - boxH;
+    display.fillRect(boxX, boxY, boxW, boxH, 0, 0, 0);
+    display.drawRect(boxX, boxY, boxW, boxH, 255, 255, 255);
+    // Notch the corners for a softer bubble.
+    display.drawPixel(boxX, boxY, 0, 0, 0);
+    display.drawPixel(boxX + boxW - 1, boxY, 0, 0, 0);
+    display.drawPixel(boxX, boxY + boxH - 1, 0, 0, 0);
+    display.drawPixel(boxX + boxW - 1, boxY + boxH - 1, 0, 0, 0);
+    // Tail.
+    int cx = display.width() / 2;
+    for (int i = 0; i < 5; i++) {
+        display.drawPixel(cx - i, boxY - 5 + i, 255, 255, 255);
+        display.drawPixel(cx + i, boxY - 5 + i, 255, 255, 255);
+    }
+    display.fillRect(cx - 3, boxY, 7, 1, 0, 0, 0); // open the border under the tail
+}
+
+// THINKING: a thought cloud beside the small left-pinned eyes, trailing two
+// bubbles back to the pet, with three dots lighting up in turn.
+constexpr int TAMA_CLOUD_X = 98;
+constexpr int TAMA_CLOUD_Y = 24;
+constexpr int TAMA_CLOUD_W = 34;
+constexpr int TAMA_CLOUD_H = 20;
+// Eye layout while thinking: smaller than COFFEE's and pulled in from the
+// edges so neither the eyes nor the cloud crowd the status-icon columns.
+constexpr int TAMA_THINK_EYE_SIZE = 28;
+constexpr int TAMA_THINK_EYE_GAP = 8;
+constexpr int TAMA_THINK_EYE_Y = 44;
+constexpr int TAMA_THINK_EYES_X = 24;
+
+void drawTamaThinking(IDisplay& display, unsigned long nowMs) {
+    display.fillRect(TAMA_CLOUD_X, TAMA_CLOUD_Y, TAMA_CLOUD_W, TAMA_CLOUD_H, 255, 255, 255);
+    display.fillRect(TAMA_CLOUD_X + 2, TAMA_CLOUD_Y + 2, TAMA_CLOUD_W - 4, TAMA_CLOUD_H - 4, 0, 0, 0);
+    // Rounded corners.
+    const int cxs[2] = {TAMA_CLOUD_X, TAMA_CLOUD_X + TAMA_CLOUD_W - 2};
+    const int cys[2] = {TAMA_CLOUD_Y, TAMA_CLOUD_Y + TAMA_CLOUD_H - 2};
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            display.fillRect(cxs[i], cys[j], 2, 2, 0, 0, 0);
+        }
+    }
+    // Trail bubbles.
+    display.fillRect(92, 49, 3, 3, 255, 255, 255);
+    display.fillRect(89, 55, 2, 2, 255, 255, 255);
+    int lit = 1 + (int)((nowMs / 450) % 3);
+    for (int i = 0; i < 3; i++) {
+        uint8_t level = (i < lit) ? 255 : 60;
+        display.fillRect(TAMA_CLOUD_X + 6 + i * 9, TAMA_CLOUD_Y + 7, 5, 5, level, level, level);
+    }
+}
+
+
 // --- GAMEBOY's own touches --------------------------------------------------
 //
 // Colors below are real DMG shades handed straight to rawDisplay (the boot
@@ -2787,6 +3066,15 @@ NotificationPalette notificationPalette(const FaceState& state) {
         case Theme::PEEMO84:
             return {BG_R, BG_G, BG_B, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B,
                     PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B};
+        case Theme::TAMAGOTCHI:
+            if (state.lightOff) {
+                return {TAMA_DARK_BG[0], TAMA_DARK_BG[1], TAMA_DARK_BG[2],
+                        TAMA_DARK_INK[0], TAMA_DARK_INK[1], TAMA_DARK_INK[2],
+                        TAMA_DARK_INK[0], TAMA_DARK_INK[1], TAMA_DARK_INK[2]};
+            }
+            return {TAMA_BG[0], TAMA_BG[1], TAMA_BG[2],
+                    TAMA_INK[0], TAMA_INK[1], TAMA_INK[2],
+                    TAMA_INK[0], TAMA_INK[1], TAMA_INK[2]};
         case Theme::GAMEBOY:
             return {GB_SHADES[0][0], GB_SHADES[0][1], GB_SHADES[0][2],
                     GB_SHADES[3][0], GB_SHADES[3][1], GB_SHADES[3][2],
@@ -4440,6 +4728,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     bool isP2M2 = state.theme == Theme::P2M2;
     bool isPeemo84 = state.theme == Theme::PEEMO84;
     bool isGameBoy = state.theme == Theme::GAMEBOY;
+    bool isTama = state.theme == Theme::TAMAGOTCHI;
 
     // A notification owns the entire frame and outranks everything, PEEMO84's
     // boot sequence included — it is the top tier by definition (see
@@ -4466,10 +4755,17 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         return;
     }
 
+    if (isTama && state.nowMs - state.themeStartedMs < TAMA_BOOT_END_MS) {
+        drawTamaBoot(rawDisplay, state.nowMs - state.themeStartedMs);
+        return;
+    }
+
     RecoloringDisplay recolored(rawDisplay, MATRIX_R, MATRIX_G, MATRIX_B);
+    TamaDisplay tama(rawDisplay, state.lightOff);
     GameBoyDisplay gameBoy(rawDisplay);
     IDisplay& themed = isMatrix ? static_cast<IDisplay&>(recolored)
-        : (isGameBoy ? static_cast<IDisplay&>(gameBoy) : rawDisplay);
+        : (isGameBoy ? static_cast<IDisplay&>(gameBoy)
+                     : (isTama ? static_cast<IDisplay&>(tama) : rawDisplay));
     // P2M2 opts out of the whole-frame sleep dimming: there, SLEEPING is
     // specifically "the eye's light goes out" (see p2m2BlinkDim below)
     // with the blue plate, badges and message staying at full strength —
@@ -4479,7 +4775,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
 
     // The only light ground besides P2M2: re-clear through the shade mapper
     // so black becomes the LCD's lightest green instead of staying black.
-    if (isGameBoy) {
+    if (isGameBoy || isTama) {
         themed.clear(0, 0, 0);
     }
 
@@ -4496,9 +4792,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // corner icons, message box) stays exactly CLASSIC — so the eye color
     // is just a plain variable threaded into the eye-drawing calls below.
     // GAMEBOY draws white so GameBoyDisplay maps it to the darkest ink.
-    uint8_t eyeR = isGameBoy ? 255 : (isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
-    uint8_t eyeG = isGameBoy ? 255 : (isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
-    uint8_t eyeB = isGameBoy ? 255 : (isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
+    uint8_t eyeR = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
+    uint8_t eyeG = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
+    uint8_t eyeB = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
 
     // PEEMO84 keeps MATRIX's eye geometry and shapes but carries two things in
     // *brightness* that the other themes express some other way: the lamp
@@ -4530,13 +4826,17 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // it has to be the theme's amber all the same: left on CLASSIC's teal,
     // the one icon this theme does draw came out as the single non-amber
     // thing on an otherwise monochrome terminal.
-    uint8_t iconR = isGameBoy ? 255 : (isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
-    uint8_t iconG = isGameBoy ? 255 : (isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
-    uint8_t iconB = isGameBoy ? 255 : (isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
+    uint8_t iconR = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
+    uint8_t iconG = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
+    uint8_t iconB = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
 
     bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix && !isPeemo84;
 
     bool isCoffee = state.expression == Expression::COFFEE;
+    // TAMAGOTCHI's THINKING borrows COFFEE's small left-pinned eyes to leave
+    // room for the thought cloud.
+    bool tamaThinking = isTama && state.expression == Expression::THINKING;
+    bool leftEyes = isCoffee || tamaThinking;
 
     // Game Mode: the stats panel replaces the message box in the themes with
     // no console log of their own. MATRIX doesn't come through here — its
@@ -4559,13 +4859,13 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // that decision (MATRIX/PEEMO84 pin them to the bottom; COFFEE pins them
     // left), same precedence order the geometry below already follows.
     bool byeEyes = state.expression == Expression::BYE && !isCoffee && !bottomPinnedEyes;
-    int eyeSize = isCoffee ? COFFEE_EYE_SIZE
+    int eyeSize = tamaThinking ? TAMA_THINK_EYE_SIZE : leftEyes ? COFFEE_EYE_SIZE
         : (bottomPinnedEyes ? MATRIX_EYE_SIZE
                             : (byeEyes ? BYE_EYE_SIZE : (gameEyes ? GAME_EYE_SIZE : EYE_SIZE)));
-    int eyeGap = isCoffee ? COFFEE_EYE_GAP
+    int eyeGap = tamaThinking ? TAMA_THINK_EYE_GAP : leftEyes ? COFFEE_EYE_GAP
         : (bottomPinnedEyes ? MATRIX_EYE_GAP
                             : (byeEyes ? BYE_EYE_GAP : (gameEyes ? GAME_EYE_GAP : EYE_GAP)));
-    int eyeY = isCoffee ? COFFEE_EYE_Y
+    int eyeY = tamaThinking ? TAMA_THINK_EYE_Y : leftEyes ? COFFEE_EYE_Y
         : (bottomPinnedEyes ? (display.height() - eyeSize - MATRIX_EYE_BOTTOM_MARGIN)
                             : (byeEyes ? BYE_EYE_Y : (gameEyes ? GAME_EYE_Y : EYE_Y)));
 
@@ -4574,7 +4874,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     eyeY += shape.verticalShift + state.lookOffsetY;
 
     int totalWidth = eyeSize * 2 + eyeGap;
-    int leftX = isCoffee ? COFFEE_EYES_X
+    int leftX = tamaThinking ? TAMA_THINK_EYES_X : leftEyes ? COFFEE_EYES_X
         : (byeEyes ? (BYE_EYES_CENTER_X - totalWidth / 2 + state.lookOffsetX)
                    : ((display.width() - totalWidth) / 2 + state.lookOffsetX));
     int rightX = leftX + eyeSize + eyeGap;
@@ -4643,7 +4943,64 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         rightX += (int)(READING_SWEEP_X_PX * s);
     }
 
-    if (isP2M2) {
+    if (isTama) {
+        // The pet replaces the eyes for every expression. Same center as the
+        // eye pair would have had, but ignoring the look-around pixel offset
+        // (that nudges only the pet's eye cells, below).
+        int groupW = eyeSize * 2 + eyeGap;
+        int petCx = leftEyes ? (leftX + groupW / 2) : (display.width() / 2);
+        int pitch = (eyeSize + 6) / 8;
+        if (pitch < 3) pitch = 3;
+        TamaFaceId face = TAMA_NEUTRAL;
+        switch (state.expression) {
+            case Expression::HAPPY: case Expression::FINISHED: case Expression::MUSIC: case Expression::ACHIEVEMENT:
+                face = TAMA_HAPPY; break;
+            case Expression::SAD: case Expression::FAILED: case Expression::SWEATING:
+                face = TAMA_SAD; break;
+            case Expression::ANGRY: face = TAMA_ANGRY; break;
+            case Expression::SLEEPING: case Expression::SLEEPY: face = TAMA_SLEEP; break;
+            case Expression::THINKING: face = TAMA_THINK; break;
+            default: break;
+        }
+        if (state.lightOff) {
+            face = TAMA_SLEEP; // lights off: asleep whatever the expression
+        } else if ((face == TAMA_NEUTRAL || face == TAMA_THINK) && state.blinkAmount > 0.5f) {
+            face = TAMA_BLINK;
+        }
+        int lookDx = (face == TAMA_NEUTRAL) ? (state.lookOffsetX > 2 ? 1 : (state.lookOffsetX < -2 ? -1 : 0)) : 0;
+        int lookDy = (face == TAMA_NEUTRAL) ? (state.lookOffsetY > 2 ? 1 : (state.lookOffsetY < -2 ? -1 : 0)) : 0;
+        // Idle life: the pet shuffles a cell left/right and hops, like the
+        // real thing's two-frame walk. Still while asleep or thinking.
+        bool still = face == TAMA_SLEEP || state.expression == Expression::THINKING;
+        int step = (int)((state.nowMs / 500) % 4);
+        const int walk[4] = {0, 1, 0, -1};
+        int walkX = still ? 0 : walk[step] * pitch;
+        int hopY = (!still && (step % 2 == 1)) ? -pitch / 2 : 0;
+        int petCy = eyeY + eyeSize / 2 + hopY;
+        if (state.lightOff) {
+            // Asleep means *still*: pin the pet to fixed coordinates instead of
+            // the eye pair's, which drift with look-around offsets and with each
+            // expression's own shift/bounce. Smaller too, with a Z..Z.. over it.
+            int baseSize = tamaThinking ? TAMA_THINK_EYE_SIZE : (isCoffee ? COFFEE_EYE_SIZE : EYE_SIZE);
+            int baseY = tamaThinking ? TAMA_THINK_EYE_Y : (isCoffee ? COFFEE_EYE_Y : EYE_Y);
+            if (tamaThinking) {
+                petCx = TAMA_THINK_EYES_X + (2 * baseSize + TAMA_THINK_EYE_GAP) / 2;
+            } else if (isCoffee) {
+                petCx = COFFEE_EYES_X + (2 * baseSize + COFFEE_EYE_GAP) / 2;
+            } else {
+                petCx = display.width() / 2;
+            }
+            walkX = 0;
+            pitch = (baseSize + 6) / 8 - 1;
+            if (pitch < 3) pitch = 3;
+            petCy = baseY + baseSize / 2;
+        }
+        if (state.lightOff) {
+            drawTamaSleepPose(display, petCx, petCy + pitch / 2, pitch, eyeR, eyeG, eyeB);
+        } else {
+            drawTamaPet(display, petCx + walkX, petCy, pitch, face, lookDx, lookDy, eyeR, eyeG, eyeB);
+        }
+    } else if (isP2M2) {
         // P2M2 draws the same three things for every expression — plate,
         // lens, logic display — in that back-to-front order. There's
         // deliberately no per-expression eye *shape* here (no X, no caret,
@@ -4663,7 +5020,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         // still.
         drawEyeCaret(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
         drawEyeCaret(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
-    } else if (state.expression == Expression::THINKING && !isPeemo84 && !isGameBoy) {
+    } else if (state.expression == Expression::THINKING && !isPeemo84 && !isGameBoy && !isTama) {
         // PEEMO84 deliberately falls through to the plain drawEye below: there,
         // THINKING is carried by the eyes' flicker (see the lamp block
         // above) and the ">THINKING_" prompt line, so glitch bands on top
@@ -4694,6 +5051,13 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         drawEye(display, rightX, eyeTop, eyeSize, eyeHeight, eyeR, eyeG, eyeB);
     }
 
+    if (isTama) {
+        drawTamaIcons(display, state);
+        if (state.expression == Expression::THINKING) {
+            drawTamaThinking(display, state.nowMs);
+        }
+    }
+
     // MATRIX drops every corner icon EXCEPT the coffee cup — their info
     // already lives in the console log below (see
     // Personality::update/onMessageCommand), and the icons' usual Y range
@@ -4719,7 +5083,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // information is already in its log, and the icons' Y range collides
     // with the content area - with the same COFFEE exception, for the same
     // reason: COFFEE repositions the eyes for its cup regardless of theme.
-    if (((!isMatrix && !isPeemo84) || state.expression == Expression::COFFEE) && !p2m2SuppressesIcon) {
+    if (((!isMatrix && !isPeemo84 && !isTama) || state.expression == Expression::COFFEE) && !p2m2SuppressesIcon) {
         if (state.expression == Expression::SLEEPING) {
             drawSleepZzz(display, rightX, eyeSize, eyeTop, state.nowMs, iconR, iconG, iconB);
         } else if (state.expression == Expression::MUSIC) {
@@ -4774,7 +5138,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
                                      MSG_R, MSG_G, MSG_B,
                                      state.messageTypingStartedMs, state.nowMs);
         } else {
-            if (isGameBoy) {
+            if (isTama) {
+                drawTamaDialogBox(display);
+            } else if (isGameBoy) {
                 drawGameBoyDialogBox(display, state.nowMs);
             } else {
                 drawMessageBox(display, MSG_BOX_R, MSG_BOX_G, MSG_BOX_B);

@@ -366,3 +366,33 @@ GAMEBOY's own touches (beyond the palette), all in Face.cpp:
   the dialog box's top edge (assumes the 160x128 frame) so the scene stands on
   the box. Replaces the glitch bands. Tried and dropped: Tetris in the eye gap,
   an LCD scanline sweep over the eyes.
+
+## Theme::TAMAGOTCHI
+
+A 1997 virtual-pet LCD, all in Face.cpp (`TAMA_*`, `drawTama*`). `TamaDisplay`
+maps every draw color to three tones by brightness (black -> ground, <100 ->
+"ghost" unlit-segment tone, else ink); its `dark` flag swaps in a dim ground with
+light ink for lights-off. Layout is CLASSIC's, plus:
+- **The pet** replaces the eyes for every expression (`drawTamaPet`): hollow-outline
+  9x8-cell blob with eyes/mouth as loose cells, one `TamaFace` per expression
+  (neutral/happy/sad/angry/sleep/blink/think). It shuffles a cell sideways and
+  hops on a 4-step walk; look-around only nudges its eye cells. Pet position
+  ignores the look-around pixel offset.
+- **Status icons** (`drawTamaIcons`): 3 each side (food/play/light, medicine/
+  bath/attention); the one the mood/expression calls for blinks in ink, the rest
+  sit in the ghost tone. Classic corner icons are suppressed (except COFFEE's cup).
+- **Boot** (`drawTamaBoot`): egg wobbles, cracks, flashes, hatches into the pet.
+- **Dialog**: bordered bubble with a tail pointing at the pet (`drawTamaDialogBox`).
+- **THINKING**: small left-pinned pet (`TAMA_THINK_*`) and a thought cloud with
+  three dots lighting in turn (`drawTamaThinking`).
+- **Lights off** (`LIGHT OFF`, see PROTOCOL.md; `Personality::_lightOff`,
+  `FaceState::lightOff`, only effective on this theme and cleared by every `THEME`):
+  dark palette, the pet lies asleep with two pixel Zs (`drawTamaSleepPose`) at a
+  fixed position (the standing pet's position drifts with look-around/expression
+  shifts, which read as it moving in its sleep), the light icon steady. Everything
+  else still renders: badges, messages, notifications, media, AI activity. The
+  AI's "Pensando..." label shows as "Sonhando..." (swapped char-for-char in
+  `currentState`, both are 11 chars so the typewriter reveal is unaffected).
+- **Sender**: "Peemo Tamagotchi" in `ThemeManager`; CTRL+SHIFT+L is registered only
+  while this theme is selected (it's "select all occurrences" in VS Code) and sends
+  `LIGHT ON/OFF`; resent after the `THEME` re-announce on reconnect.

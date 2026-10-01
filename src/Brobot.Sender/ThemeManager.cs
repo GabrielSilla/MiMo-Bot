@@ -41,6 +41,8 @@ public static class ThemeManager
         new ThemeInfo("Peemo84", "Peemo-84", "Themes/PeemoClassic.xaml", "PEEMO84"),
         // Same again: GAMEBOY is a DMG-green LCD look on Core's own display.
         new ThemeInfo("PeemoGameBoy", "Peemo Game Boy", "Themes/PeemoClassic.xaml", "GAMEBOY"),
+        // Same again: TAMAGOTCHI is a virtual-pet LCD look on Core's own display.
+        new ThemeInfo("PeemoTamagotchi", "Peemo Tamagotchi", "Themes/PeemoClassic.xaml", "TAMAGOTCHI"),
     ];
 
     /// <summary>

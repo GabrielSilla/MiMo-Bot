@@ -15,6 +15,7 @@ public:
     void onWeatherCommand(const char* args, unsigned long now);
     void onTimeCommand(const char* args, unsigned long now);
     void onThemeCommand(const char* name, unsigned long now);
+    void onLightCommand(const char* args);
     void onClassicColorCommand(const char* name);
     void onNotifyCommand(const char* args, unsigned long now);
     void onAchievementCommand(const char* args, unsigned long now);
@@ -172,6 +173,7 @@ private:
     // The theme itself never times out or gets pre-empted, same "just holds
     // whatever was last sent" idea as _hasWeather/_timeText above.
     Theme _theme = Theme::CLASSIC;
+    bool _lightOff = false; // see onLightCommand
     // When the last THEME command arrived — handed to Face via
     // FaceState::themeStartedMs, which see for why a stateless renderer
     // needs it. Only PEEMO84 reads it (its boot sequence).

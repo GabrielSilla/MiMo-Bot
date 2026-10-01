@@ -107,7 +107,10 @@ enum class DailyRating : uint8_t { PESSIMO, RUIM, QUESTIONAVEL, MEDIO, BOM, EXCE
 // eyes, message box) quantized to the four olive-green shades of the original
 // screen, light ground with dark ink — the only theme besides P2M2 that isn't
 // drawn on black (see Face.cpp's GameBoyDisplay).
-enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84, GAMEBOY };
+// TAMAGOTCHI is a 1997 virtual-pet LCD: pale grey-green ground, near-black ink,
+// dot-matrix eyes, status-icon columns down both sides and an egg-hatching boot
+// (see Face.cpp's TamaDisplay).
+enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84, GAMEBOY, TAMAGOTCHI };
 
 // CLASSIC's own primary color, set via CLASSICCOLOR (see PROTOCOL.md) —
 // every other theme has a fixed palette of its own and ignores this
@@ -279,6 +282,11 @@ struct FaceState {
     int aiRateFiveHour = -1;    // 5-hour rate limit consumed, 0..100
     int aiRateSevenDay = -1;    // 7-day rate limit consumed, 0..100
     const char* aiModelName = nullptr; // non-owning, same convention as message/timeText
+
+    // TAMAGOTCHI only: the lights are off (LIGHT OFF). The frame renders as
+    // usual in a dimmed palette, but the pet sleeps, frozen. See
+    // Personality::onLightCommand.
+    bool lightOff = false;
 
     Theme theme = Theme::CLASSIC;
     // Only meaningful (and only drawn) while theme == CLASSIC — see

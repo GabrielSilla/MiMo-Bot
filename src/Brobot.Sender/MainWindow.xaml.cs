@@ -192,6 +192,14 @@ public partial class MainWindow : Window
     private const uint VK_F10 = 0x79;
     private readonly GlobalHotkey _reportHotkey;
 
+    // TAMAGOTCHI only: CTRL+SHIFT+L turns Peemo's light off/on (LIGHT OFF/ON
+    // to Core). Registered only while that theme is selected — RegisterHotKey
+    // would otherwise swallow the combo system-wide for every other app
+    // (it's "select all occurrences" in VS Code, for one).
+    private const uint VK_L = 0x4C;
+    private GlobalHotkey? _lightHotkey;
+    private bool _tamaLightOff;
+
 
     // Anti-Stress Pong: the timer covers the 5s gap between the "Vamos jogar
     // um pouco?" greeting and the actual PONG START, and is null once that's
@@ -728,6 +736,11 @@ public partial class MainWindow : Window
             && currentTheme.CoreTheme != "DEFAULT") {
             _connection.SendCommand($"THEME {currentTheme.CoreTheme}");
             LogConnection($"reenviou THEME {currentTheme.CoreTheme}");
+            // THEME resets Core's lights-off flag, so resend ours.
+            if (_tamaLightOff)
+            {
+                _connection.SendCommand("LIGHT OFF");
+            }
         }
         // CLASSICCOLOR is another persistent flag Core forgets on its own
         // reboot — same resend-if-non-default reasoning as THEME just
@@ -3102,10 +3115,46 @@ public partial class MainWindow : Window
         _connection.SendCommand($"THEME {theme.CoreTheme}");
         RefreshClassicColorVisibility(theme);
         _achievements.OnThemeSelected(theme.CoreTheme);
+        UpdateLightHotkey(theme.CoreTheme);
 
         SenderSettings settings = SenderSettings.Load();
         settings.Theme = theme.Key;
         settings.Save();
+    }
+
+    /// <summary>
+    /// Core clears its lights-off flag on every THEME command, so selecting
+    /// any theme resets ours too; the hotkey itself only exists on Tamagotchi.
+    /// </summary>
+    private void UpdateLightHotkey(string coreTheme)
+    {
+        _lightHotkey?.Dispose();
+        _lightHotkey = null;
+        _tamaLightOff = false;
+
+        if (coreTheme != "TAMAGOTCHI")
+        {
+            return;
+        }
+
+        var hotkey = new GlobalHotkey(this, HotkeyModifiers.Control | HotkeyModifiers.Shift, VK_L);
+        if (hotkey.IsRegistered)
+        {
+            hotkey.Pressed += ToggleTamaLight;
+            _lightHotkey = hotkey;
+        }
+        else
+        {
+            hotkey.Dispose();
+            LogAiEvent("GlobalHotkey CTRL+SHIFT+L registration failed (combo already in use?).");
+        }
+    }
+
+    private void ToggleTamaLight()
+    {
+        _tamaLightOff = !_tamaLightOff;
+        _connection.SendCommand(_tamaLightOff ? "LIGHT OFF" : "LIGHT ON");
+        LogConnection(_tamaLightOff ? "luz do Peemo apagada (CTRL+SHIFT+L)" : "luz do Peemo acesa (CTRL+SHIFT+L)");
     }
 
     /// <summary>
@@ -4390,6 +4439,7 @@ public partial class MainWindow : Window
         _youTubeFocusTimer?.Stop();
         _socialMediaTimer?.Stop();
         _reportHotkey.Dispose();
+        _lightHotkey?.Dispose();
         _connectionStatusTimer.Stop();
         // A sweep in flight holds up to MaxConcurrentProbes sockets open;
         // cancelling lets them close instead of lingering past shutdown.

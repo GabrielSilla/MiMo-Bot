@@ -211,6 +211,8 @@ void Protocol::dispatch(Stream& serial, char* line, unsigned long now) {
         _personality.onTimeCommand(args, now);
     } else if (commandLength == 5 && strncmp(line, "THEME", 5) == 0) {
         _personality.onThemeCommand(args, now);
+    } else if (commandLength == 5 && strncmp(line, "LIGHT", 5) == 0) {
+        _personality.onLightCommand(args);
     } else if (commandLength == 12 && strncmp(line, "CLASSICCOLOR", 12) == 0) {
         _personality.onClassicColorCommand(args);
     } else if (commandLength == 5 && strncmp(line, "SOUND", 5) == 0) {

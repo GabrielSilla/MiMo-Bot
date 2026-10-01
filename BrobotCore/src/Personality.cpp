@@ -544,9 +544,16 @@ void Personality::onThemeCommand(const char* name, unsigned long now) {
         _theme = Theme::PEEMO84;
     } else if (strcmp(name, "GAMEBOY") == 0) {
         _theme = Theme::GAMEBOY;
+    } else if (strcmp(name, "TAMAGOTCHI") == 0) {
+        _theme = Theme::TAMAGOTCHI;
     } else {
         _theme = Theme::CLASSIC;
     }
+
+    // Any THEME command (including the re-announce on every reconnect) puts
+    // the lights back on: lights-off belongs to TAMAGOTCHI only, and the PC app
+    // resends LIGHT OFF right after THEME if it should still be off.
+    _lightOff = false;
 
     // Stamped on every THEME command, not only on an actual change of
     // value, and this is deliberate: PEEMO84's boot sequence is meant to play
@@ -558,6 +565,15 @@ void Personality::onThemeCommand(const char* name, unsigned long now) {
     // a change is what makes "boot when Peemo connects to the PC" work at
     // all. It costs nothing in the other themes, which don't read it.
     _themeChangedAt = now;
+}
+
+// LIGHT OFF / LIGHT ON — TAMAGOTCHI's "turn the light off". Only holds a
+// flag: every command keeps being processed as usual, and the render still
+// shows everything, in a dimmed palette, with the pet asleep and frozen
+// (see FaceState::lightOff). Passive like THEME — never touches
+// _lastInteractionAt.
+void Personality::onLightCommand(const char* args) {
+    _lightOff = strcmp(args, "OFF") == 0;
 }
 
 // Same "passive telemetry" reasoning as onThemeCommand just above: never
@@ -992,6 +1008,23 @@ FaceState Personality::currentState() const {
         state.message = _foregroundMessage.visible;
         state.messageTypingStartedMs = _foregroundMessage.typingStartedAt;
     }
+    // TAMAGOTCHI with the lights off: the AI's "Pensando..." status label
+    // reads "Sonhando..." instead (the pet is asleep, so it dreams). Done here
+    // rather than in the Sender, which just forwards the AI's own text. Both
+    // words are 11 characters, so this swaps whatever prefix the typewriter
+    // has revealed so far, character for character, with no length change.
+    state.lightOff = _lightOff && _theme == Theme::TAMAGOTCHI;
+    static char dreamBuffer[16];
+    if (state.lightOff && state.message != nullptr && state.message[0] != ' ') {
+        const char* thinking = "Pensando...";
+        const char* dreaming = "Sonhando...";
+        size_t n = strlen(state.message);
+        if (n <= strlen(thinking) && strncmp(state.message, thinking, n) == 0) {
+            memcpy(dreamBuffer, dreaming, n);
+            dreamBuffer[n] = ' ';
+            state.message = dreamBuffer;
+        }
+    }
     state.expressionStartedMs = _renderExpressionStartedAt;
     state.nowMs = _currentNow;
     state.hasWeather = _hasWeather;
@@ -1016,6 +1049,7 @@ FaceState Personality::currentState() const {
     state.aiModelName = (_aiModelName[0] != '\0') ? _aiModelName : nullptr;
 
     state.theme = _theme;
+    state.lightOff = _lightOff && _theme == Theme::TAMAGOTCHI;
     state.themeStartedMs = _themeChangedAt;
     state.classicColor = _classicColor;
     // Which of MATRIX's log tabs is on screen follows exactly what the face
