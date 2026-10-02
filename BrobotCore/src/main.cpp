@@ -264,8 +264,11 @@ void loop() {
     // abandoned, rows dropped, heap exhausted) without a serial monitor.
     if (usbActive && now - lastDiagAt >= 5000) {
         lastDiagAt = now;
-        usbLink.printf("DIAG rx=%u heap=%u maxblock=%u abandoned=%u dropped=%u\n",
-                      (unsigned)usbLink.rxCapacity(), (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap(),
+        // up= is millis() since boot: the PC app watches it go backwards to
+        // notice a Core reboot that never dropped the USB port (the C3's
+        // USB-Serial-JTAG can survive a CPU reset) and resend THEME/CLASSICCOLOR.
+        usbLink.printf("DIAG up=%lu rx=%u heap=%u maxblock=%u abandoned=%u dropped=%u\n",
+                      now, (unsigned)usbLink.rxCapacity(), (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxAllocHeap(),
                       (unsigned)protocol.abandonedFrames(), (unsigned)streamMode.droppedRows());
     }
     if (wifiRestoring && WiFi.status() == WL_CONNECTED) {

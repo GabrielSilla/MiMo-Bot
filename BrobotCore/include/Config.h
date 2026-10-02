@@ -40,7 +40,7 @@ constexpr uint16_t PROTOCOL_TCP_PORT = 5555;
 // While a PC app is on the USB link it sends `HOST USB` every ~2s (see
 // PROTOCOL.md) and Core keeps WiFi switched off. No keepalive for this long
 // means the cable was pulled or the app died — WiFi comes back.
-constexpr unsigned long USB_HOST_TIMEOUT_MS = 6000;
+constexpr unsigned long USB_HOST_TIMEOUT_MS = 20000;
 // Serial (USB-CDC) receive buffer; see main.cpp's setup() for why it is this big.
 // Bytes that arrive while this ring is full are dropped (see main.cpp), which
 // makes the firmware abandon the FRAME and never ack it. It has to hold every

@@ -42,6 +42,10 @@ replacement.
   `Protocol.cpp`, the `PongGame`/`RpgBattle` minigames, the native build's
   `TcpBroadcastStream`, and the `FRAME_INTERVAL_MS` baud-budget caveat.
 
+- [specs/display-upgrade-s3-ili9486.md](specs/display-upgrade-s3-ili9486.md)
+  — **PLANNED, not built**: ESP32-S3 + 3.5" ILI9486 (480x320), native-resolution
+  GBA/SNES stream at 30 fps (delta + compression, 2x scaling on the board).
+
 ## PC side
 
 - [specs/simulator.md](specs/simulator.md) — Brobot.Display.Simulator (WPF):

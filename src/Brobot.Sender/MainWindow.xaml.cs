@@ -167,6 +167,13 @@ public partial class MainWindow : Window
     private WeatherReading? _lastWeatherReading; // resent on reconnect (see UpdateConnectionStatus) instead of waiting out WeatherMonitor's own 30-min cycle
     private WeatherCondition? _lastWeatherCondition; // null = no baseline yet, so the very first reading never fires a "changed" alert
     private bool _wasConnected;
+    // Core reboot detection over a USB port that never dropped (see OnRawLine
+    // and TickUsbLink): last DIAG's uptime and arrival time. Core forgets
+    // THEME/CLASSICCOLOR on reboot, and the keepalive silently re-enters USB
+    // mode, so without this the Sender would never resend them.
+    private long _lastCoreUptimeMs = -1;
+    private DateTime _lastDiagAt = DateTime.MinValue;
+    private static readonly TimeSpan DiagSilenceLimit = TimeSpan.FromSeconds(20);
     private DispatcherTimer? _clockTimer;
 
     // "Modo teste" — hidden behind a gesture on the wordmark rather than
@@ -911,6 +918,16 @@ public partial class MainWindow : Window
 
         if (serialConnected)
         {
+            // DIAG arrives every 5s while Core is in USB mode. Long silence on
+            // a still-open port means Core left USB mode or rebooted; the
+            // keepalive below pulls it back, but it has forgotten our settings.
+            if (_lastDiagAt != DateTime.MinValue && now - _lastDiagAt > DiagSilenceLimit)
+            {
+                LogConnection($"Core ficou {(now - _lastDiagAt).TotalSeconds:F0}s sem DIAG com a USB aberta — reenviando tema/cor");
+                _lastDiagAt = DateTime.MinValue;
+                _lastCoreUptimeMs = -1;
+                _wasConnected = false;
+            }
             if (now - _lastUsbKeepaliveAt >= UsbKeepaliveEvery)
             {
                 _lastUsbKeepaliveAt = now;
@@ -943,6 +960,8 @@ public partial class MainWindow : Window
 
         _usbPortName = ports[_usbPortRotation++ % ports.Count];
         _usbAttemptInFlight = true;
+        _lastDiagAt = DateTime.MinValue;
+        _lastCoreUptimeMs = -1;
         _lastUsbKeepaliveAt = DateTime.MinValue;
         CancelNetworkSweep();
         _connection.ConnectSerial(_usbPortName, verifyPeemo: true);
@@ -2993,6 +3012,17 @@ public partial class MainWindow : Window
         if (line.StartsWith("DIAG ", StringComparison.Ordinal))
         {
             LogAiEvent($"[core] {line}");
+            _lastDiagAt = DateTime.Now;
+            System.Text.RegularExpressions.Match up = System.Text.RegularExpressions.Regex.Match(line, @"\bup=(\d+)");
+            if (up.Success && long.TryParse(up.Groups[1].Value, out long upMs))
+            {
+                if (_lastCoreUptimeMs >= 0 && upMs < _lastCoreUptimeMs)
+                {
+                    LogConnection($"Peemo reiniciou sem a USB cair (uptime {_lastCoreUptimeMs}ms -> {upMs}ms) — reenviando tema/cor");
+                    _wasConnected = false;
+                }
+                _lastCoreUptimeMs = upMs;
+            }
         }
         if (line.StartsWith("FRAMEOK ", StringComparison.Ordinal)
             && ushort.TryParse(line["FRAMEOK ".Length..].Trim(), out ushort ackSeq))
