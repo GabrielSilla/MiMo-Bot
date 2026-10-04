@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Brobot.Sender"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         mc:Ignorable="d"
-        Title="Peemo" Height="760" Width="580"
+        Title="Peemo" Height="760" Width="640" MinWidth="640" MinHeight="480"
         ResizeMode="CanResize"
         Icon="pack://application:,,,/Brobot.Sender;component/src/peemo-b.png"
         Background="{DynamicResource WindowBackgroundBrush}">
@@ -389,7 +389,7 @@
                          PeemoDiscovery), never typed. During a sweep this ticks
                          through the addresses being probed, so the search is
                          visibly doing something rather than just spinning. -->
-                    <TextBlock x:Name="ConnectionAddressText" Grid.Column="2" Width="150" VerticalAlignment="Center"
+                    <TextBlock x:Name="ConnectionAddressText" Grid.Column="2" MaxWidth="150" VerticalAlignment="Center"
                                Margin="0,0,10,0" TextAlignment="Right" FontFamily="Consolas" FontSize="12"
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource InkBrush}"/>

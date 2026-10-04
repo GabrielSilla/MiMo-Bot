@@ -67,6 +67,11 @@ public sealed class SenderSettings
     // PersistDiscoveredAddress.
     public string LastClaudeAccountUuid { get; set; } = "";
 
+    // The local date (yyyy-MM-dd) of the last connect greeting, so Peemo says
+    // good morning once a day instead of on every reconnect/app restart.
+    // Written immediately, like LastClaudeAccountUuid: a fact, not a preference.
+    public string LastConnectGreetingDate { get; set; } = "";
+
     // ROM paths picked via the Mini Games GBA card's "Escolher ROM..."
     // (see MainWindow's GbaChooseRomButton_Click), most-recent-first —
     // same "recent list" shape specs/sender-gba.md's Phase 4 describes.

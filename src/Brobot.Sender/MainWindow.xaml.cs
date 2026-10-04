@@ -704,6 +704,12 @@ public partial class MainWindow : Window
                 ? _usbPortName
                 : (connected && _coreHost != null ? $"{_coreHost}:{_corePort}" : ""));
 
+        // A COM port name is short, so the column shrinks to fit it; an IP
+        // keeps a fixed width so the sweep's ticking addresses don't jitter.
+        ConnectionAddressText.Width = _connection.IsSerialConnected || ConnectionAddressText.Text.Length == 0
+            ? double.NaN
+            : 150;
+
         TickUsbLink();
         TryStartNetworkSweep(connected, connecting);
 
@@ -773,8 +779,17 @@ public partial class MainWindow : Window
             // A time-of-day greeting, same as Pausa/Clima's own canned
             // lines — picked here rather than on Core, since Core has no
             // RTC and no memory of previous days (see GreetingMessages).
-            (string greetingFace, string greetingText) = GreetingMessages.ForConnect(DateTime.Now);
-            SendNotification($"NOTIFY {greetingFace} {greetingText}");
+            // Only the first connect of each calendar day greets; later
+            // reconnects or restarts the same day stay quiet.
+            string today = DateTime.Now.ToString("yyyy-MM-dd");
+            SenderSettings greetingSettings = SenderSettings.Load();
+            if (greetingSettings.LastConnectGreetingDate != today)
+            {
+                (string greetingFace, string greetingText) = GreetingMessages.ForConnect(DateTime.Now);
+                SendNotification($"NOTIFY {greetingFace} {greetingText}");
+                greetingSettings.LastConnectGreetingDate = today;
+                greetingSettings.Save();
+            }
             _achievements.OnConnected();
         }
         _achievements.Tick(connected);
@@ -3283,7 +3298,7 @@ public partial class MainWindow : Window
             try
             {
                 _gradleBuildMonitor = new GradleBuildLogMonitor();
-                _gradleBuildMonitor.BuildStateChanged += (state, project) => OnBuildStateChanged("Gradle", state, project);
+                _gradleBuildMonitor.BuildStateChanged += OnGradleLogBuildStateChanged;
                 _gradleBuildMonitor.TailError += ex => LogAiEvent($"GradleBuildLogMonitor.TailFile threw: {ex}");
                 _gradleBuildMonitor.Start();
             }
@@ -3335,6 +3350,24 @@ public partial class MainWindow : Window
             }
             StopAiThoughtsListenerIfUnused();
         }
+    }
+
+    // Last IdeBuild* event from the IntelliJ plugin. The plugin reports a
+    // build's start and end directly; the Gradle daemon log reports the same
+    // two moments up to one poll (2s) later, so a log event arriving shortly
+    // after a plugin event is the same build seen twice. A build from a
+    // terminal has no plugin event next to it and still gets through.
+    private DateTime _lastIdeBuildEventAt = DateTime.MinValue;
+    private static readonly TimeSpan IdeBuildDedupWindow = TimeSpan.FromSeconds(15);
+
+    private void OnGradleLogBuildStateChanged(BuildState state, string? project)
+    {
+        if (DateTime.UtcNow - _lastIdeBuildEventAt < IdeBuildDedupWindow)
+        {
+            return;
+        }
+
+        OnBuildStateChanged("Gradle", state, project);
     }
 
     /// <summary>
@@ -3862,6 +3895,26 @@ public partial class MainWindow : Window
 
                 case "VsBuildFailed":
                     OnBuildStateChanged("Visual Studio", BuildState.Failed, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
+
+                // From Brobot.IntelliJPlugin (PeemoBuildListener) -- the
+                // IntelliJ counterpart of the VSIX above, same wire. thought.Text
+                // is the Gradle project's name. Stamping _lastIdeBuildEventAt
+                // is what keeps GradleBuildLogMonitor quiet about this same
+                // build (see OnGradleLogBuildStateChanged).
+                case "IdeBuildStarted":
+                    _lastIdeBuildEventAt = DateTime.UtcNow;
+                    OnBuildStateChanged("IntelliJ", BuildState.Started, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
+
+                case "IdeBuildSucceeded":
+                    _lastIdeBuildEventAt = DateTime.UtcNow;
+                    OnBuildStateChanged("IntelliJ", BuildState.Successful, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
+                    break;
+
+                case "IdeBuildFailed":
+                    _lastIdeBuildEventAt = DateTime.UtcNow;
+                    OnBuildStateChanged("IntelliJ", BuildState.Failed, string.IsNullOrWhiteSpace(thought.Text) ? null : thought.Text.Trim());
                     break;
 
                 // From peemo-git-hook.ps1 via a global git hook (see

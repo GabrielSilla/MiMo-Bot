@@ -43,6 +43,8 @@ public static class ThemeManager
         new ThemeInfo("PeemoGameBoy", "Peemo Game Boy", "Themes/PeemoClassic.xaml", "GAMEBOY"),
         // Same again: TAMAGOTCHI is a virtual-pet LCD look on Core's own display.
         new ThemeInfo("PeemoTamagotchi", "Peemo Tamagotchi", "Themes/PeemoClassic.xaml", "TAMAGOTCHI"),
+        // Same again: XP is a Windows XP desktop look on Core's own display.
+        new ThemeInfo("PeemoXP", "Peemo XP", "Themes/PeemoClassic.xaml", "XP"),
     ];
 
     /// <summary>
