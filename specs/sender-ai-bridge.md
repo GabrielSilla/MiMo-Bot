@@ -169,7 +169,9 @@
   independent sources feed it, each its own external process reporting over
   the exact same one-line wire shape: the Claude Code hook script below, the
   `Brobot.VSExtension` VSIX (`VsBuildStarted`/`VsBuildSucceeded`/
-  `VsBuildFailed`, see specs/sender-feature-cards.md), and now
+  `VsBuildFailed`, see specs/sender-feature-cards.md), the
+  `Brobot.IntelliJPlugin` (`IdeBuildStarted`/`IdeBuildSucceeded`/
+  `IdeBuildFailed`, same file), and now
   `hooks/peemo-git-hook.ps1` via the global git hook `GitHookInstaller`
   installs (`GitCommit`/`GitMerge`/`GitCheckout`/`GitPush` — also
   specs/sender-feature-cards.md). Two independent features start/stop this

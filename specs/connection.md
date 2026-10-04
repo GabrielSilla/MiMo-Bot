@@ -36,6 +36,14 @@
   and nothing reconnects until "Conectar". The serial port uses UTF-8 (default
   is ASCII, which mangles accents) and `DtrEnable`; `SendRawBytes` also works
   over serial, so STREAM/FRAME is possible over USB (unmeasured).
+  **Core reboot behind an open port**: the C3's USB-Serial-JTAG can survive a
+  CPU reset without the COM port dropping, and the 2s `HOST USB` keepalive
+  silently puts the rebooted Core back in USB mode — so nothing looks
+  disconnected, yet Core has forgotten THEME/CLASSICCOLOR (it comes back in
+  the default color). Core's 5s `DIAG up=<ms>` line is the tell: `OnRawLine`
+  treats `up` going backwards, and `TickUsbLink` treats >20s without a `DIAG`
+  on an open port, as a fresh connect (`_wasConnected = false`, logged to
+  `connection.log`), so the existing resend block replays the settings.
   `ConnectTcp` retries every 500ms via `TcpClient.ConnectAsync`
   bounded by a 500ms `Task.Wait` (not a plain blocking `Connect()`, so `Disconnect()`
   is noticed promptly instead of blocking on the OS's much longer default TCP

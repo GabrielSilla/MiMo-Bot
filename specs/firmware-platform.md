@@ -30,7 +30,9 @@
   polls `Serial` as well as the TCP client. `HOST USB` (see PROTOCOL.md) puts
   Core in `usbActive`: TCP client dropped, `WiFiServer` ended, radio off
   (`WifiSetup::turnOff`), replies/`PONG OVER`/`RPG OVER` go to `Serial`
-  (`hostStream`). `USB_HOST_TIMEOUT_MS` without another `HOST USB` calls
+  (`hostStream`). `USB_HOST_TIMEOUT_MS` (20s; was 6s, which a ~6s Sender UI
+  stall was enough to trip, rebooting Core and losing THEME/CLASSICCOLOR)
+  without another `HOST USB` calls
   `leaveUsbMode()`: `WifiSetup::beginReconnect()` (non-blocking `WiFi.begin()`
   with the driver's persisted credentials) and the `WiFiServer` is restarted
   once `WiFi.status()` is connected (`wifiRestoring`); if WiFi was never up

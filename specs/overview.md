@@ -109,6 +109,16 @@ src/
                                      button for it the way Atividade da IA's Claude Code hook has, since
                                      there's no equivalent "is VS even here" question to ask from inside
                                      the app before the installer already answered it.
+  Brobot.IntelliJPlugin/             The IntelliJ counterpart of Brobot.VSExtension: a Java plugin
+                                     (Gradle, IntelliJ Platform Gradle Plugin 2.x, `sinceBuild` 253 =
+                                     IntelliJ 2025.3+) whose `PeemoBuildListener` is an
+                                     `ExternalSystemTaskNotificationListener` reporting Gradle task
+                                     runs (`IdeBuildStarted`/`IdeBuildSucceeded`/`IdeBuildFailed` +
+                                     project name, same one-line wire, port 5591). Gradle only — not
+                                     Maven or the IDE's own JPS compiler. Bundled by the installer and
+                                     copied into each IntelliJ 2025.3+ config dir (specs/installer.md);
+                                     see specs/sender-feature-cards.md for how it coexists with
+                                     GradleBuildLogMonitor.
 hooks/                               peemo-claude-hook.ps1 (the Claude Code hook command) and
                                      peemo-claude-statusline.ps1 (its statusLine command — a different
                                      contract, see specs/sender-ai-bridge.md); both wired up by ClaudeCodeHookInstaller and

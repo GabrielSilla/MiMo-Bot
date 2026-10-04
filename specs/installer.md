@@ -94,6 +94,31 @@ thing *this installer* put there silently, with no equivalent deliberate
 user action to undo it, so removing it again is this installer's job too
 — unlike the Claude Code hook, which the uninstaller leaves alone below).
 
+**Also installs the IntelliJ plugin** (`Brobot.IntelliJPlugin`) when IntelliJ
+is present, same "optional extra, never a requirement" shape as the VSIX.
+`build-installer.ps1` builds it with the Gradle wrapper, using the dev
+machine's own IntelliJ: its bundled JBR (JDK 21) as `JAVA_HOME` and
+`-PideaPath=<install dir>` so Gradle compiles against that IDE instead of
+downloading ~1.5GB (the plugin needs Gradle 8.13+, hence the wrapper rather
+than any older Gradle on the machine). No IntelliJ on the build machine →
+a warning, an installer without the plugin, and the `.iss` entry is
+`skipifsourcedoesntexist` so that stays a valid build. The built zip's single
+jar is staged as `installer\intellij\peemo-intellij-plugin.jar` (version-less,
+so an upgrade overwrites instead of leaving two copies in the IDE).
+
+There is no CLI installer to hand it to, unlike VSIXInstaller: a user plugin is
+just `%APPDATA%\JetBrains\<product><version>\plugins\peemo-intellij-plugin\lib\*.jar`,
+loaded the next time that IntelliJ starts. So "is IntelliJ installed" is
+answered by which config directories exist (`IntelliJIdea*`, and the older
+`IdeaIC*`), and `ForEachIntelliJConfigDir` in the `.iss` `[Code]` copies the jar
+into every one whose version is >= 2025.3 (`IntelliJPluginMinVersion`, matching
+the plugin's `sinceBuild` 253 — older IDEs would refuse it). Runs from
+`CurStepChanged(ssPostInstall)`; `CurUninstallStepChanged(usUninstall)` removes the
+plugin folder again from the same set, for the same reason as the VS extension
+(this installer put it there silently). **An already-running IntelliJ must be
+restarted** to load it. A new IntelliJ major version installed *after* Peemo
+Sender gets no plugin until the installer is run again.
+
 The uninstaller otherwise deliberately leaves `%AppData%\Brobot` (settings,
 weather/game caches) and any Claude Code hook entries `ClaudeCodeHookInstaller`
 wrote to `%USERPROFILE%\.claude\settings.json` untouched — those are the

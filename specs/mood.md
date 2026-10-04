@@ -74,7 +74,7 @@ just Pensamentos:
 
 | Where | How it follows the mood |
 |---|---|
-| `GreetingMessages` (connect greeting + disconnect farewell) | time buckets, each written at its mood's level; the 12–18h bucket split at 16h |
+| `GreetingMessages` (connect greeting — shown only on the first connect of each calendar day, tracked by `SenderSettings.LastConnectGreetingDate` — + disconnect farewell, shown on every shutdown) | time buckets, each written at its mood's level; the 12–18h bucket split at 16h |
 | `PausaMessages` (Pausa, `NOTIFY COFFEE`) | a `MoodPhrases` pool per level |
 | `WeatherAlerts` (Clima, `NOTIFY WEATHER`) | per condition × level |
 | `AlertMessages` — social/YouTube 15-min nudges, CPU/RAM alerts | a pool per level; always keeps the `{min}`/`{percent}` number |

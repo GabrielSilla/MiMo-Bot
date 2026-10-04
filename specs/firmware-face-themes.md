@@ -393,6 +393,38 @@ light ink for lights-off. Layout is CLASSIC's, plus:
   else still renders: badges, messages, notifications, media, AI activity. The
   AI's "Pensando..." label shows as "Sonhando..." (swapped char-for-char in
   `currentState`, both are 11 chars so the typewriter reveal is unaffected).
+- **Layout tweaks**: the standing pet sits `TAMA_PET_DROP_PX` (20px) below the
+  eye pair's center and rises `TAMA_PET_MESSAGE_RISE_PX` (10px) while a message
+  shows (same offsets for the lying pose). The two sleep Zs take turns every
+  500ms. Idle sleep (`SLEEPING`, 10 minutes without interaction) turns the light
+  off by itself, as if CTRL+SHIFT+L had been pressed; waking turns it back on.
 - **Sender**: "Peemo Tamagotchi" in `ThemeManager`; CTRL+SHIFT+L is registered only
   while this theme is selected (it's "select all occurrences" in VS Code) and sends
   `LIGHT ON/OFF`; resent after the `THEME` re-announce on reconnect.
+
+## Theme::XP
+
+A Windows XP desktop, true color, all in Face.cpp (`XP_*`, `drawXp*`); no
+decorator, unlike TAMAGOTCHI/GAMEBOY. `THEME XP`.
+- **Wallpaper** (`drawXpBackground`, `xpSkyFor`): six sky bands plus a rolling
+  hill. The sky follows the `TIME` text: day until 16:00, dusk (purple to
+  orange) 16:00-19:00, night (navy, 11 stars, crescent moon) 19:00-06:00. No
+  clock reading yet draws the day sky.
+- **Taskbar**: blue strip at the bottom with a green "start" button; the clock
+  (`TIME`) is drawn in the tray at the right instead of the top badge. The mood
+  battery moves to the top-right corner.
+- **Desktop icons**: folder and recycle bin down the left side with white
+  labels (1px black shadow), centered on x=24.
+- **Eyes**: small (`XP_EYE_SIZE` 14), `XP_EYE_Y` just under the battery row.
+  The HAPPY caret scales with the eye (`drawEyeCaret(..., scaleToSize)`) and its
+  bounce drops to 2px.
+- **Messages**: yellow notification balloon (black border and text) lifted
+  `XP_BALLOON_LIFT_PX` (5px) above the usual message box.
+- **Boot** (`drawXpBoot`, `XP_BOOT_END_MS`): four-square logo, "Peemo XP" and a
+  progress bar with three blue blocks sliding.
+- **BYE** (`drawXpShutdown`): dark-blue "Desligando..." screen with orange rules.
+  Used both for the foreground `FACE BYE` and for the NOTIFY BYE the Sender sends
+  on disconnect (the goodbye line types in the bottom band).
+- **Notifications**: dark blue ground (0,51,153), white text.
+- **Not done yet**: THINKING hourglass, FAILED error dialog, sleep screensaver,
+  weather badge in the tray, Windows-styled corner icons.

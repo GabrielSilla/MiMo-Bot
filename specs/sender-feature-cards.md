@@ -230,6 +230,25 @@
   `SolutionBuild.LastBuildInfo`'s failed-project *count* is a strictly
   worse signal than a same-project success bool handed to you directly.
 
+  **IntelliJ's Gradle builds** get the same treatment as VS's: the
+  `Brobot.IntelliJPlugin` (see repository layout) reports
+  `IdeBuildStarted`/`IdeBuildSucceeded`/`IdeBuildFailed <project>` over the
+  same AiThoughtsListener wire, routed through `OnBuildStateChanged` from
+  `OnAiThoughtReceived` (`sourceLabel` "IntelliJ"). It hooks
+  `ExternalSystemTaskNotificationListener` and only reports
+  `EXECUTE_TASK` runs of the `GRADLE` system, so project sync/import (same
+  callbacks, not builds) stays silent; the project name is the IDE's own
+  (`ExternalSystemTaskId.findProject()`), not a directory guess. Unlike the VS
+  case it does **not** replace the log monitor: `GradleBuildLogMonitor` is
+  still the only thing that sees a `gradlew` run from a terminal, so instead
+  of unwiring it, `OnGradleLogBuildStateChanged` drops its events for
+  `IdeBuildDedupWindow` (15s) after any `IdeBuild*` event
+  (`_lastIdeBuildEventAt`). The log reports a build's start and end up to one
+  2s poll after the plugin does, so those two land inside the window and are
+  swallowed; a terminal build has no plugin event next to it and gets
+  through. Long builds are fine — only the start and the end are compared,
+  never the time in between.
+
   **Git** ("coisas que ocorrem no Git" — commit/merge/checkout/push) is the
   card's other half, added alongside build detection rather than as its own
   checkbox: there's no separate provider choice to make the way Atividade da
