@@ -1,0 +1,13 @@
+<idea-plugin>
+    <id>br.com.brobot.peemo-build-watcher</id>
+    <name>Peemo Build Watcher</name>
+    <vendor>Brobot</vendor>
+    <description>Reports Gradle build start/finish in IntelliJ to Peemo Sender.</description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.gradle</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <externalSystemTaskNotificationListener implementation="br.com.brobot.peemo.PeemoBuildListener"/>
+    </extensions>
+</idea-plugin>

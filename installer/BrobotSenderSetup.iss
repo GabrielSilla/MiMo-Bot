@@ -59,6 +59,11 @@ Source: "{#MyPublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdi
 ; the same vswhere.exe Exec call twice (once for Files, once for [Run]) for
 ; no real savings. What actually gates the install is the [Run] entry below.
 Source: "vsix\Brobot.VSExtension.vsix"; DestDir: "{tmp}"
+; The IntelliJ plugin's jar: also always extracted to {tmp}; [Code]'s
+; CurStepChanged copies it into each detected IntelliJ config directory.
+; skipifsourcedoesntexist because build-installer.ps1 only produces it on a
+; machine that has IntelliJ to compile against.
+Source: "intellij\peemo-intellij-plugin.jar"; DestDir: "{tmp}"; Flags: skipifsourcedoesntexist
 
 ; Upgrade from before the MiMo -> Peemo rename: same AppId, so Setup
 ; installs over the old copy (into its existing folder), but the shortcuts
@@ -182,6 +187,81 @@ end;
 function GetVsixInstallerPath(Param: String): String;
 begin
   Result := VSInstallPath + '\Common7\IDE\VSIXInstaller.exe';
+end;
+
+// IntelliJ plugin. Unlike Visual Studio there's no CLI installer to hand a
+// package to -- a user plugin is just a folder in the IDE's *config*
+// directory, %APPDATA%\JetBrains\<product><version>\plugins\<name>\lib\*.jar,
+// picked up the next time that IDE starts. "Is IntelliJ installed" is
+// therefore answered the same way the IDE itself answers it: by which config
+// directories exist, one per major version the user has ever launched. The
+// plugin is built for 2025.3+ (sinceBuild 253 in build.gradle.kts), so older
+// config directories are left alone -- the IDE would refuse the plugin there.
+// Community used to be a separate product ("IdeaIC"); both prefixes are
+// matched in case an older-named directory is still around.
+const
+  IntelliJPluginMinVersion = '2025.3';
+  IntelliJPluginFolder = 'peemo-intellij-plugin';
+
+// Calls back once per supported IntelliJ config directory. Install = True
+// copies the jar into each; False removes the plugin folder from each.
+procedure ForEachIntelliJConfigDir(Install: Boolean);
+var
+  Root, Name, Version, PluginDir, Jar: String;
+  FindRec: TFindRec;
+  Prefix: Integer;
+begin
+  Root := ExpandConstant('{userappdata}') + '\JetBrains\';
+  if not FindFirst(Root + '*', FindRec) then
+    Exit;
+  try
+    repeat
+      if (FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
+      begin
+        Name := FindRec.Name;
+        Prefix := 0;
+        if Pos('IntelliJIdea', Name) = 1 then
+          Prefix := Length('IntelliJIdea')
+        else if Pos('IdeaIC', Name) = 1 then
+          Prefix := Length('IdeaIC');
+
+        if Prefix > 0 then
+        begin
+          Version := Copy(Name, Prefix + 1, Length(Name));
+          // "2025.3" style: a plain string compare orders these correctly
+          // (four-digit year, then the release number).
+          if CompareStr(Version, IntelliJPluginMinVersion) >= 0 then
+          begin
+            PluginDir := Root + Name + '\plugins\' + IntelliJPluginFolder;
+            if Install then
+            begin
+              Jar := ExpandConstant('{tmp}\peemo-intellij-plugin.jar');
+              if FileExists(Jar) and ForceDirectories(PluginDir + '\lib') then
+                FileCopy(Jar, PluginDir + '\lib\peemo-intellij-plugin.jar', False);
+            end
+            else
+              DelTree(PluginDir, True, True, True);
+          end;
+        end;
+      end;
+    until not FindNext(FindRec);
+  finally
+    FindClose(FindRec);
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    ForEachIntelliJConfigDir(True);
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  // Same reasoning as the VS extension's [UninstallRun] above: this
+  // installer put the plugin there silently, so removing it is its job too.
+  if CurUninstallStep = usUninstall then
+    ForEachIntelliJConfigDir(False);
 end;
 
 function InitializeSetup(): Boolean;

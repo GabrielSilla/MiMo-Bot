@@ -62,6 +62,60 @@ if (-not (Test-Path $builtVsix)) {
 }
 Copy-Item $builtVsix (Join-Path $vsixStagingDir "Brobot.VSExtension.vsix") -Force
 
+Write-Host "== Compilando o plugin do IntelliJ (Brobot.IntelliJPlugin) ==" -ForegroundColor Cyan
+# Same optional-extra shape as the VSIX above: the installer only hands this
+# jar to a detected IntelliJ (see [Code] in the .iss). Unlike the VSIX it is
+# NOT a hard build requirement -- Gradle needs a JDK 21 and the IntelliJ
+# platform to compile against, and the dev machine's own IntelliJ supplies
+# both (its bundled JBR, and -PideaPath so Gradle doesn't download ~1.5GB of
+# IDE). No IntelliJ here -> warn and ship the installer without the plugin;
+# the .iss entry is skipifsourcedoesntexist, so that stays a valid build.
+$intellijStagingDir = Join-Path $installerDir "intellij"
+if (Test-Path $intellijStagingDir) {
+    Remove-Item $intellijStagingDir -Recurse -Force
+}
+New-Item -ItemType Directory -Path $intellijStagingDir | Out-Null
+
+$ideaHome = @(
+    (Get-ChildItem "${env:ProgramFiles}\JetBrains" -Directory -Filter "IntelliJ IDEA*" -ErrorAction SilentlyContinue),
+    (Get-ChildItem "${env:LOCALAPPDATA}\Programs" -Directory -Filter "IntelliJ IDEA*" -ErrorAction SilentlyContinue)
+) | ForEach-Object { $_ } | Where-Object { Test-Path (Join-Path $_.FullName "jbr\bin\java.exe") } |
+    Sort-Object Name -Descending | Select-Object -First 1
+
+if (-not $ideaHome) {
+    Write-Warning "IntelliJ IDEA nao encontrado -- instalador sera gerado SEM o plugin do IntelliJ."
+} else {
+    $pluginDir = Join-Path $repoRoot "src\Brobot.IntelliJPlugin"
+    $previousJavaHome = $env:JAVA_HOME
+    $env:JAVA_HOME = Join-Path $ideaHome.FullName "jbr"
+    try {
+        Push-Location $pluginDir
+        & .\gradlew.bat buildPlugin "-PideaPath=$($ideaHome.FullName -replace '\\','/')" --no-daemon -q
+        if ($LASTEXITCODE -ne 0) {
+            throw "gradlew buildPlugin do plugin do IntelliJ falhou (exit code $LASTEXITCODE)"
+        }
+    } finally {
+        Pop-Location
+        $env:JAVA_HOME = $previousJavaHome
+    }
+
+    # The distribution zip is peemo-intellij-plugin/lib/peemo-intellij-plugin-<ver>.jar.
+    # Staged under a version-less name so an upgrade overwrites the previous
+    # jar instead of leaving two copies of the plugin in the IDE's plugins dir.
+    $pluginZip = Get-ChildItem (Join-Path $pluginDir "build\distributions") -Filter *.zip | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $pluginZip) {
+        throw "O zip do plugin do IntelliJ nao foi gerado em $pluginDir\build\distributions"
+    }
+    $extractDir = Join-Path $intellijStagingDir "_extract"
+    Expand-Archive $pluginZip.FullName -DestinationPath $extractDir -Force
+    $pluginJar = Get-ChildItem $extractDir -Recurse -Filter "peemo-intellij-plugin-*.jar" | Select-Object -First 1
+    if (-not $pluginJar) {
+        throw "O jar do plugin nao foi encontrado dentro de $($pluginZip.FullName)"
+    }
+    Copy-Item $pluginJar.FullName (Join-Path $intellijStagingDir "peemo-intellij-plugin.jar") -Force
+    Remove-Item $extractDir -Recurse -Force
+}
+
 Write-Host "== Localizando o Inno Setup (ISCC.exe) ==" -ForegroundColor Cyan
 $isccCommand = Get-Command ISCC.exe -ErrorAction SilentlyContinue
 if ($isccCommand) {
