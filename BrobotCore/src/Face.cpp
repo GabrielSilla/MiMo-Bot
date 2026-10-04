@@ -377,6 +377,187 @@ constexpr int MESSAGE_BOX_PADDING_Y = 4;
 constexpr int MESSAGE_BOX_HEIGHT = MESSAGE_VISIBLE_LINES * MESSAGE_LINE_HEIGHT + 2 * MESSAGE_BOX_PADDING_Y;
 constexpr int MESSAGE_MARGIN_X = MESSAGE_BOX_MARGIN_X + 4; // text inset from the box's edge
 
+// --- XP --------------------------------------------------------------------
+//
+// A Windows XP desktop on Core's display: the Bliss sky and hill as the
+// ground, the blue taskbar with a green start button along the bottom, a
+// yellow notification balloon for messages, and a boot screen with the four
+// colored squares and the sliding blue progress blocks. Drawn in true color,
+// no decorator: eyes stay white, and the balloon text is black.
+constexpr unsigned long XP_BOOT_END_MS = 3200;
+constexpr int XP_TASKBAR_H = 11;
+constexpr int XP_BALLOON_LIFT_PX = 5; // the balloon rides this far above the usual message box
+constexpr int XP_TRAY_W = 36; // fits the HH:MM clock (5 chars x 6px) with a 3px margin each side
+constexpr int XP_EYE_SIZE = 14;
+constexpr int XP_EYE_GAP = 8;
+constexpr int XP_EYE_GAP_BELOW_BATTERY = 10;
+// Mood battery sits at y = 3 (TOP_BADGE_MARGIN + 1) and is 9px tall.
+constexpr int XP_EYE_Y = 3 + 9 + XP_EYE_GAP_BELOW_BATTERY;
+
+void drawXpBoot(IDisplay& display, unsigned long elapsed) {
+    int w = display.width();
+    display.clear(0, 0, 0);
+    // Four-square logo, centered.
+    const int cell = 16, gap = 2;
+    int x0 = w / 2 - cell - gap / 2, y0 = 20;
+    display.fillRect(x0, y0, cell, cell, 241, 80, 32);
+    display.fillRect(x0 + cell + gap, y0, cell, cell, 127, 186, 0);
+    display.fillRect(x0, y0 + cell + gap, cell, cell, 0, 164, 239);
+    display.fillRect(x0 + cell + gap, y0 + cell + gap, cell, cell, 255, 185, 0);
+    display.drawText("Peemo XP", (w - 8 * 6) / 2, 64, 255, 255, 255);
+    // Progress bar: three blue blocks sliding through the track.
+    const int barW = 80, barH = 10, blocks = 7;
+    int bx = (w - barW) / 2, by = 88;
+    display.drawRoundedRect(bx, by, barW, barH, 3, 190, 190, 190);
+    int head = (int)((elapsed / 110) % (blocks + 3));
+    for (int k = 0; k < 3; k++) {
+        int idx = head - k;
+        if (idx >= 0 && idx < blocks) {
+            display.fillRect(bx + 3 + idx * 11, by + 3, 8, barH - 6, 38, 100, 230);
+        }
+    }
+}
+
+// Desktop icons, left side. Labels get a 1px black shadow like Windows draws them.
+void drawXpLabel(IDisplay& display, const char* text, int cx, int y) {
+    int x = cx - (int)strlen(text) * CHAR_ADVANCE_PX / 2;
+    display.drawText(text, x + 1, y + 1, 0, 0, 0);
+    display.drawText(text, x, y, 255, 255, 255);
+}
+
+void drawXpFolderIcon(IDisplay& display, int x, int y) {
+    display.fillRect(x, y, 5, 2, 214, 160, 36);        // tab
+    display.fillRect(x, y + 1, 13, 9, 244, 200, 70);   // back
+    display.fillRect(x, y + 4, 13, 6, 255, 226, 120);  // front flap
+    display.fillRect(x, y + 4, 13, 1, 255, 244, 190);  // flap highlight
+    display.fillRect(x, y + 9, 13, 1, 190, 140, 30);   // bottom edge
+}
+
+void drawXpRecycleBinIcon(IDisplay& display, int x, int y) {
+    display.fillRect(x + 4, y, 3, 1, 150, 160, 175);      // lid handle
+    display.fillRect(x, y + 1, 11, 2, 170, 178, 190);     // lid
+    display.fillRect(x + 1, y + 3, 9, 9, 206, 216, 228);  // bin body
+    display.fillRect(x + 2, y + 12, 7, 1, 170, 180, 195); // tapered base
+    display.fillRect(x + 1, y + 3, 1, 9, 150, 162, 180);  // left edge
+    display.fillRect(x + 9, y + 3, 1, 9, 150, 162, 180);  // right edge
+    display.fillRect(x + 3, y + 5, 1, 6, 140, 152, 170);  // slats
+    display.fillRect(x + 5, y + 5, 1, 6, 140, 152, 170);
+    display.fillRect(x + 7, y + 5, 1, 6, 140, 152, 170);
+}
+
+// "Windows is shutting down": the dark-blue shutdown screen, with the logo,
+// the product name and a "Desligando" whose dots count up. The art stops above
+// the notification text area (y < NOTIFICATION_TEXT_TOP_Y); the band under it
+// carries the goodbye line when this is the NOTIFY form.
+void drawXpShutdown(IDisplay& display, unsigned long nowMs) {
+    int w = display.width(), h = display.height();
+    display.clear(0, 51, 153);
+    display.fillRect(0, 0, w, 7, 0, 32, 105);
+    display.fillRect(0, 7, w, 1, 255, 153, 51);
+    display.fillRect(0, 88, w, h - 88, 0, 32, 105);
+    display.fillRect(0, 88, w, 1, 255, 153, 51);
+    const int cell = 12, gap = 2;
+    int x0 = w / 2 - cell - gap / 2, y0 = 18;
+    display.fillRect(x0, y0, cell, cell, 241, 80, 32);
+    display.fillRect(x0 + cell + gap, y0, cell, cell, 127, 186, 0);
+    display.fillRect(x0, y0 + cell + gap, cell, cell, 0, 164, 239);
+    display.fillRect(x0 + cell + gap, y0 + cell + gap, cell, cell, 255, 185, 0);
+    display.drawText("Peemo XP", (w - 8 * 6) / 2, 52, 255, 255, 255);
+    // Fixed start so the dots appearing don't shift the word.
+    display.drawText("Desligando", (w - 13 * 6) / 2, 68, 255, 255, 255);
+    int dots = (int)((nowMs / 400) % 4);
+    for (int i = 0; i < dots; i++) {
+        display.drawText(".", (w - 13 * 6) / 2 + (10 + i) * 6, 68, 255, 255, 255);
+    }
+}
+
+// Bliss, reduced to pixel art: six bands of sky and a rolling green hill.
+enum class XpSky { DAY, DUSK, NIGHT };
+
+// Day until 16:00, dusk from 16:00, night from 19:00 until 06:00. No clock
+// reading yet (or an unparseable one) draws the day sky.
+XpSky xpSkyFor(const char* timeText) {
+    if (timeText == nullptr || timeText[0] < '0' || timeText[0] > '9' || timeText[1] < '0' || timeText[1] > '9') {
+        return XpSky::DAY;
+    }
+    int hour = (timeText[0] - '0') * 10 + (timeText[1] - '0');
+    if (hour >= 19 || hour < 6) return XpSky::NIGHT;
+    if (hour >= 16) return XpSky::DUSK;
+    return XpSky::DAY;
+}
+
+void drawXpBackground(IDisplay& display, XpSky sky) {
+    int w = display.width(), h = display.height();
+    static const uint8_t SKY_DAY[6][3] = {{36, 100, 214}, {60, 128, 228}, {88, 156, 238},
+                                          {120, 182, 244}, {156, 206, 248}, {190, 226, 250}};
+    static const uint8_t SKY_DUSK[6][3] = {{52, 60, 140}, {110, 80, 160}, {190, 100, 120},
+                                           {236, 128, 80}, {250, 168, 70}, {255, 206, 110}};
+    static const uint8_t SKY_NIGHT[6][3] = {{8, 12, 40}, {12, 20, 56}, {16, 28, 72},
+                                            {22, 38, 88}, {28, 48, 100}, {36, 60, 110}};
+    // Hill: light, highlight line, shaded foreground.
+    static const uint8_t HILL_DAY[3][3] = {{84, 170, 38}, {126, 204, 64}, {62, 146, 30}};
+    static const uint8_t HILL_DUSK[3][3] = {{74, 128, 40}, {128, 168, 64}, {52, 100, 30}};
+    static const uint8_t HILL_NIGHT[3][3] = {{24, 70, 40}, {44, 104, 64}, {16, 52, 30}};
+    const uint8_t (*bands)[3] = sky == XpSky::NIGHT ? SKY_NIGHT : (sky == XpSky::DUSK ? SKY_DUSK : SKY_DAY);
+    const uint8_t (*hill)[3] = sky == XpSky::NIGHT ? HILL_NIGHT : (sky == XpSky::DUSK ? HILL_DUSK : HILL_DAY);
+    const int bandH = 16;
+    for (int i = 0; i < 6; i++) {
+        int bh = (i == 5) ? h - i * bandH : bandH;
+        display.fillRect(0, i * bandH, w, bh, bands[i][0], bands[i][1], bands[i][2]);
+    }
+    if (sky == XpSky::NIGHT) {
+        // Stars, kept clear of the eyes and the desktop icons.
+        static const uint8_t STARS[][2] = {{56, 6}, {70, 14}, {104, 8}, {120, 18}, {140, 30}, {92, 44},
+                                          {130, 52}, {110, 64}, {58, 40}, {150, 66}, {78, 58}};
+        for (const auto& star : STARS) {
+            display.fillRect(star[0], star[1], 1, 1, 255, 255, 255);
+        }
+        // Crescent moon: a pale disc with a night-sky disc biting into it.
+        static const int8_t MOON[][3] = {{3, 0, 4}, {1, 1, 8}, {0, 2, 10}, {0, 3, 10}, {1, 4, 8}, {3, 5, 4}}; // x offset, row, width
+        for (const auto& row : MOON) {
+            display.fillRect(122 + row[0], 36 + row[1], row[2], 1, 250, 240, 190);
+        }
+        for (const auto& row : MOON) {
+            display.fillRect(125 + row[0], 35 + row[1], row[2], 1, bands[2][0], bands[2][1], bands[2][2]);
+        }
+    }
+    for (int x = 0; x < w; x += 4) {
+        int dx = x + 2 - 70;
+        int top = 82 + (dx * dx) / 320;
+        display.fillRect(x, top, 4, h - top, hill[0][0], hill[0][1], hill[0][2]);
+        display.fillRect(x, top, 4, 1, hill[1][0], hill[1][1], hill[1][2]);
+        display.fillRect(x, top + 16, 4, h - top - 16, hill[2][0], hill[2][1], hill[2][2]);
+    }
+    // Desktop icons down the left side.
+    drawXpFolderIcon(display, 18, 34);
+    drawXpLabel(display, "Pasta", 24, 46);
+    drawXpRecycleBinIcon(display, 19, 58);
+    drawXpLabel(display, "Lixeira", 24, 73);
+    // Taskbar with the green start button and the tray.
+    int y = h - XP_TASKBAR_H;
+    display.fillRect(0, y, w, XP_TASKBAR_H, 36, 94, 220);
+    display.fillRect(0, y, w, 1, 84, 140, 240);
+    display.fillRect(0, y + 1, 34, XP_TASKBAR_H - 1, 58, 140, 58);
+    display.drawText("start", 3, y + 2, 255, 255, 255);
+    display.fillRect(w - XP_TRAY_W, y + 1, XP_TRAY_W, XP_TASKBAR_H - 1, 24, 126, 230);
+}
+
+// The notification balloon: pale yellow, black border, a tail toward the face.
+void drawXpBalloon(IDisplay& display) {
+    int boxX = MESSAGE_BOX_MARGIN_X;
+    int boxW = display.width() - 2 * MESSAGE_BOX_MARGIN_X;
+    int boxH = MESSAGE_BOX_HEIGHT;
+    int boxY = display.height() - MESSAGE_BOX_MARGIN_BOTTOM - boxH - XP_BALLOON_LIFT_PX;
+    display.fillRect(boxX, boxY, boxW, boxH, 255, 255, 225);
+    display.drawRect(boxX, boxY, boxW, boxH, 0, 0, 0);
+    int cx = display.width() / 2;
+    for (int i = 0; i < 5; i++) {
+        display.drawPixel(cx - i, boxY - 5 + i, 0, 0, 0);
+        display.drawPixel(cx + i, boxY - 5 + i, 0, 0, 0);
+    }
+    display.fillRect(cx - 3, boxY, 7, 1, 255, 255, 225); // open the border under the tail
+}
+
 // --- TAMAGOTCHI ------------------------------------------------------------
 //
 // A 1997 virtual-pet LCD: pale grey-green ground, near-black ink, and a faint
@@ -441,6 +622,8 @@ void drawTamaBitmap(IDisplay& display, int x, int y, const uint16_t* rows, int r
 constexpr uint16_t TAMA_PET_BODY[8] = {0x7C, 0x82, 0x101, 0x101, 0x101, 0x101, 0x82, 0xFE};
 constexpr int TAMA_PET_COLS = 9;
 constexpr int TAMA_PET_ROWS = 8;
+constexpr int TAMA_PET_DROP_PX = 20;         // standing pet sits this far below the eye pair's center
+constexpr int TAMA_PET_MESSAGE_RISE_PX = 10; // ...and climbs back this much while a message shows
 
 struct TamaFace {
     int8_t eyes[6][2];
@@ -488,7 +671,7 @@ constexpr uint16_t TAMA_SLEEP_EYES[6] = {0x000, 0x000, 0x000, 0x0CC, 0x000, 0x00
 constexpr uint16_t TAMA_Z_SMALL[4] = {0xF, 0x2, 0x4, 0xF};
 constexpr uint16_t TAMA_Z_BIG[5] = {0x1F, 0x02, 0x04, 0x08, 0x1F};
 
-void drawTamaSleepPose(IDisplay& display, int cx, int cy, int pitch, uint8_t r, uint8_t g, uint8_t b) {
+void drawTamaSleepPose(IDisplay& display, int cx, int cy, int pitch, uint32_t nowMs, uint8_t r, uint8_t g, uint8_t b) {
     int cell = pitch - 1;
     int pz = pitch - 2;
     if (pz < 2) pz = 2;
@@ -499,11 +682,17 @@ void drawTamaSleepPose(IDisplay& display, int cx, int cy, int pitch, uint8_t r, 
     int top = anchorTop + 2 * pz + 2;
     drawTamaBitmap(display, left, top, TAMA_SLEEP_BODY, 6, 10, pitch, cell, r, g, b);
     drawTamaBitmap(display, left, top, TAMA_SLEEP_EYES, 6, 10, pitch, cell, r, g, b);
+    // The Zs take turns (small z, then big Z, every 500ms); the sleeping pet
+    // itself stays still.
+    bool smallTurn = (nowMs / 500) % 2 == 0;
     int right = left + 10 * pitch;
     int bigX = right + 1;
     int bigY = anchorTop - 4 * pz;
-    drawTamaBitmap(display, bigX, bigY, TAMA_Z_BIG, 5, 5, pz, pz, r, g, b);
-    drawTamaBitmap(display, bigX - 5 * pz, bigY + 2 * pz, TAMA_Z_SMALL, 4, 4, pz, pz, r, g, b);
+    if (smallTurn) {
+        drawTamaBitmap(display, bigX - 5 * pz, bigY + 2 * pz, TAMA_Z_SMALL, 4, 4, pz, pz, r, g, b);
+    } else {
+        drawTamaBitmap(display, bigX, bigY, TAMA_Z_BIG, 5, 5, pz, pz, r, g, b);
+    }
 }
 
 // Status icons, 9 wide, down both sides: food, play, light on the left;
@@ -1169,7 +1358,7 @@ int utf8SafeTake(const char* text, int pos, int take, int remaining) {
 // the message box: the last line always sits just above the box's bottom
 // padding, the block grows upward one line at a time as text is typed, and
 // once a 4th line would be needed the oldest visible line scrolls off instead.
-void drawWrappedMessage(IDisplay& display, const char* message, uint8_t r, uint8_t g, uint8_t b) {
+void drawWrappedMessage(IDisplay& display, const char* message, uint8_t r, uint8_t g, uint8_t b, int liftPx = 0) {
     int len = (int)strlen(message);
     if (len == 0) {
         return;
@@ -1220,7 +1409,7 @@ void drawWrappedMessage(IDisplay& display, const char* message, uint8_t r, uint8
 
     int visibleStart = (lineCount > MESSAGE_VISIBLE_LINES) ? (lineCount - MESSAGE_VISIBLE_LINES) : 0;
     int visibleCount = lineCount - visibleStart;
-    int boxBottom = display.height() - MESSAGE_BOX_MARGIN_BOTTOM - MESSAGE_BOX_PADDING_Y;
+    int boxBottom = display.height() - MESSAGE_BOX_MARGIN_BOTTOM - MESSAGE_BOX_PADDING_Y - liftPx;
     int startY = boxBottom - visibleCount * MESSAGE_LINE_HEIGHT;
 
     char lineBuffer[MESSAGE_MAX_LINE_CHARS + 1];
@@ -1514,14 +1703,25 @@ constexpr int EYE_CARET_HEIGHT = 18;
 constexpr int EYE_CARET_BLOCK = 6;
 constexpr int EYE_CARET_STEP = EYE_CARET_BLOCK / 2;
 
-void drawEyeCaret(IDisplay& display, int x, int y, int size, uint8_t r, uint8_t g, uint8_t b) {
+// scaleToSize shrinks the caret's height and stroke along with the eye
+// (relative to the full EYE_SIZE): the fixed 18px/6px caret is drawn for 42px
+// eyes and turns into a blob on a 14px one (XP's small eyes).
+void drawEyeCaret(IDisplay& display, int x, int y, int size, uint8_t r, uint8_t g, uint8_t b, bool scaleToSize = false) {
     int halfWidth = size / 2;
-    int caretTop = y + (size - EYE_CARET_HEIGHT) / 2;
+    int height = EYE_CARET_HEIGHT;
+    int block = EYE_CARET_BLOCK;
+    if (scaleToSize) {
+        height = EYE_CARET_HEIGHT * size / EYE_SIZE;
+        block = EYE_CARET_BLOCK * size / EYE_SIZE;
+        if (block < 2) block = 2;
+    }
+    int step = block / 2;
+    int caretTop = y + (size - height) / 2;
 
-    for (int dx = 0; dx <= halfWidth; dx += EYE_CARET_STEP) {
-        int dy = (dx * EYE_CARET_HEIGHT) / halfWidth;
-        display.fillRect(x + halfWidth - dx - EYE_CARET_BLOCK / 2, caretTop + dy, EYE_CARET_BLOCK, EYE_CARET_BLOCK, r, g, b); // left stroke
-        display.fillRect(x + halfWidth + dx - EYE_CARET_BLOCK / 2, caretTop + dy, EYE_CARET_BLOCK, EYE_CARET_BLOCK, r, g, b); // right stroke
+    for (int dx = 0; dx <= halfWidth; dx += step) {
+        int dy = (dx * height) / halfWidth;
+        display.fillRect(x + halfWidth - dx - block / 2, caretTop + dy, block, block, r, g, b); // left stroke
+        display.fillRect(x + halfWidth + dx - block / 2, caretTop + dy, block, block, r, g, b); // right stroke
     }
 }
 
@@ -3066,6 +3266,8 @@ NotificationPalette notificationPalette(const FaceState& state) {
         case Theme::PEEMO84:
             return {BG_R, BG_G, BG_B, PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B,
                     PEEMO84_INK_R, PEEMO84_INK_G, PEEMO84_INK_B};
+        case Theme::XP:
+            return {0, 51, 153, 255, 255, 255, 255, 255, 255};
         case Theme::TAMAGOTCHI:
             if (state.lightOff) {
                 return {TAMA_DARK_BG[0], TAMA_DARK_BG[1], TAMA_DARK_BG[2],
@@ -3662,6 +3864,10 @@ void drawReportNotification(IDisplay& display, const FaceState& state, const Not
 // branch that normally zeroes BYE's blink never engages here.
 void drawByeNotification(IDisplay& display, const FaceState& state, const NotificationPalette& p,
                          float openFactor) {
+    if (state.theme == Theme::XP) {
+        drawXpShutdown(display, state.nowMs);
+        return;
+    }
     drawNotificationEyes(display, BYE_EYES_CENTER_X, BYE_EYE_Y,
                          BYE_EYE_SIZE, BYE_EYE_GAP, openFactor,
                          p.inkR, p.inkG, p.inkB, p.bgR, p.bgG, p.bgB);
@@ -4729,6 +4935,7 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     bool isPeemo84 = state.theme == Theme::PEEMO84;
     bool isGameBoy = state.theme == Theme::GAMEBOY;
     bool isTama = state.theme == Theme::TAMAGOTCHI;
+    bool isXp = state.theme == Theme::XP;
 
     // A notification owns the entire frame and outranks everything, PEEMO84's
     // boot sequence included — it is the top tier by definition (see
@@ -4760,6 +4967,16 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         return;
     }
 
+    if (isXp && state.expression == Expression::BYE) {
+        drawXpShutdown(rawDisplay, state.nowMs);
+        return;
+    }
+
+    if (isXp && state.nowMs - state.themeStartedMs < XP_BOOT_END_MS) {
+        drawXpBoot(rawDisplay, state.nowMs - state.themeStartedMs);
+        return;
+    }
+
     RecoloringDisplay recolored(rawDisplay, MATRIX_R, MATRIX_G, MATRIX_B);
     TamaDisplay tama(rawDisplay, state.lightOff);
     GameBoyDisplay gameBoy(rawDisplay);
@@ -4778,6 +4995,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     if (isGameBoy || isTama) {
         themed.clear(0, 0, 0);
     }
+    if (isXp) {
+        drawXpBackground(display, xpSkyFor(state.timeText));
+    }
 
     // CLASSIC's own primary color (see ClassicColor in Face.h) — resolved
     // once here and threaded into the same places EYE_R/G/B used to be
@@ -4792,9 +5012,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // corner icons, message box) stays exactly CLASSIC — so the eye color
     // is just a plain variable threaded into the eye-drawing calls below.
     // GAMEBOY draws white so GameBoyDisplay maps it to the darkest ink.
-    uint8_t eyeR = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
-    uint8_t eyeG = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
-    uint8_t eyeB = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
+    uint8_t eyeR = (isGameBoy || isTama || isXp) ? 255 : (isP2M2 ? P2M2_BADGE_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
+    uint8_t eyeG = (isGameBoy || isTama || isXp) ? 255 : (isP2M2 ? P2M2_BADGE_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
+    uint8_t eyeB = (isGameBoy || isTama || isXp) ? 255 : (isP2M2 ? P2M2_BADGE_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
 
     // PEEMO84 keeps MATRIX's eye geometry and shapes but carries two things in
     // *brightness* that the other themes express some other way: the lamp
@@ -4826,9 +5046,9 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // it has to be the theme's amber all the same: left on CLASSIC's teal,
     // the one icon this theme does draw came out as the single non-amber
     // thing on an otherwise monochrome terminal.
-    uint8_t iconR = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
-    uint8_t iconG = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
-    uint8_t iconB = (isGameBoy || isTama) ? 255 : (isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
+    uint8_t iconR = (isGameBoy || isTama || isXp) ? 255 : (isP2M2 ? P2M2_LOGIC_R : (isPeemo84 ? PEEMO84_INK_R : classicR));
+    uint8_t iconG = (isGameBoy || isTama || isXp) ? 255 : (isP2M2 ? P2M2_LOGIC_G : (isPeemo84 ? PEEMO84_INK_G : classicG));
+    uint8_t iconB = (isGameBoy || isTama || isXp) ? 255 : (isP2M2 ? P2M2_LOGIC_B : (isPeemo84 ? PEEMO84_INK_B : classicB));
 
     bool hasMessage = state.message != nullptr && state.message[0] != '\0' && !isMatrix && !isPeemo84;
 
@@ -4859,13 +5079,16 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
     // that decision (MATRIX/PEEMO84 pin them to the bottom; COFFEE pins them
     // left), same precedence order the geometry below already follows.
     bool byeEyes = state.expression == Expression::BYE && !isCoffee && !bottomPinnedEyes;
-    int eyeSize = tamaThinking ? TAMA_THINK_EYE_SIZE : leftEyes ? COFFEE_EYE_SIZE
+    // XP: small eyes up top, XP_EYE_GAP_BELOW_BATTERY px under the mood battery,
+    // leaving the Bliss hill and sky open instead of two big white blocks.
+    bool xpEyes = isXp && !leftEyes && !byeEyes && !gameEyes;
+    int eyeSize = xpEyes ? XP_EYE_SIZE : tamaThinking ? TAMA_THINK_EYE_SIZE : leftEyes ? COFFEE_EYE_SIZE
         : (bottomPinnedEyes ? MATRIX_EYE_SIZE
                             : (byeEyes ? BYE_EYE_SIZE : (gameEyes ? GAME_EYE_SIZE : EYE_SIZE)));
-    int eyeGap = tamaThinking ? TAMA_THINK_EYE_GAP : leftEyes ? COFFEE_EYE_GAP
+    int eyeGap = xpEyes ? XP_EYE_GAP : tamaThinking ? TAMA_THINK_EYE_GAP : leftEyes ? COFFEE_EYE_GAP
         : (bottomPinnedEyes ? MATRIX_EYE_GAP
                             : (byeEyes ? BYE_EYE_GAP : (gameEyes ? GAME_EYE_GAP : EYE_GAP)));
-    int eyeY = tamaThinking ? TAMA_THINK_EYE_Y : leftEyes ? COFFEE_EYE_Y
+    int eyeY = xpEyes ? XP_EYE_Y : tamaThinking ? TAMA_THINK_EYE_Y : leftEyes ? COFFEE_EYE_Y
         : (bottomPinnedEyes ? (display.height() - eyeSize - MATRIX_EYE_BOTTOM_MARGIN)
                             : (byeEyes ? BYE_EYE_Y : (gameEyes ? GAME_EYE_Y : EYE_Y)));
 
@@ -4936,7 +5159,8 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         rightX += (int)(DANCE_ARC_X_PX * s);
         eyeTop -= (int)(DANCE_ARC_Y_PX * (1.0f - s * s));
     } else if (state.expression == Expression::HAPPY) {
-        eyeTop += (int)(HAPPY_BOUNCE_Y_PX * sin((float)state.nowMs / HAPPY_BOUNCE_PERIOD_MS));
+        // XP's eyes are a third the size, so the bounce shrinks with them.
+        eyeTop += (int)((xpEyes ? 2 : HAPPY_BOUNCE_Y_PX) * sin((float)state.nowMs / HAPPY_BOUNCE_PERIOD_MS));
     } else if (state.expression == Expression::READING) {
         float s = readingSweep(state.nowMs);
         leftX += (int)(READING_SWEEP_X_PX * s);
@@ -4977,6 +5201,11 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         int walkX = still ? 0 : walk[step] * pitch;
         int hopY = (!still && (step % 2 == 1)) ? -pitch / 2 : 0;
         int petCy = eyeY + eyeSize / 2 + hopY;
+        // The standing pet sits lower than the eyes would; with a message up
+        // it rises 10px back, clear of the dialog box and its tail.
+        if (!tamaThinking && !isCoffee) {
+            petCy += hasMessage ? TAMA_PET_DROP_PX - TAMA_PET_MESSAGE_RISE_PX : TAMA_PET_DROP_PX;
+        }
         if (state.lightOff) {
             // Asleep means *still*: pin the pet to fixed coordinates instead of
             // the eye pair's, which drift with look-around offsets and with each
@@ -4994,9 +5223,12 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
             pitch = (baseSize + 6) / 8 - 1;
             if (pitch < 3) pitch = 3;
             petCy = baseY + baseSize / 2;
+            if (!tamaThinking && !isCoffee) {
+                petCy += hasMessage ? TAMA_PET_DROP_PX - TAMA_PET_MESSAGE_RISE_PX : TAMA_PET_DROP_PX;
+            }
         }
         if (state.lightOff) {
-            drawTamaSleepPose(display, petCx, petCy + pitch / 2, pitch, eyeR, eyeG, eyeB);
+            drawTamaSleepPose(display, petCx, petCy + pitch / 2, pitch, (uint32_t)state.nowMs, eyeR, eyeG, eyeB);
         } else {
             drawTamaPet(display, petCx + walkX, petCy, pitch, face, lookDx, lookDy, eyeR, eyeG, eyeB);
         }
@@ -5018,8 +5250,8 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
         // Same shape for both: a smile and a job well done look alike. What
         // separates them is that HAPPY bounces (see above) and FINISHED holds
         // still.
-        drawEyeCaret(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
-        drawEyeCaret(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB);
+        drawEyeCaret(display, leftX, eyeTop, eyeSize, eyeR, eyeG, eyeB, xpEyes);
+        drawEyeCaret(display, rightX, eyeTop, eyeSize, eyeR, eyeG, eyeB, xpEyes);
     } else if (state.expression == Expression::THINKING && !isPeemo84 && !isGameBoy && !isTama) {
         // PEEMO84 deliberately falls through to the plain drawEye below: there,
         // THINKING is carried by the eyes' flicker (see the lamp block
@@ -5142,10 +5374,13 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
                 drawTamaDialogBox(display);
             } else if (isGameBoy) {
                 drawGameBoyDialogBox(display, state.nowMs);
+            } else if (isXp) {
+                drawXpBalloon(display);
             } else {
                 drawMessageBox(display, MSG_BOX_R, MSG_BOX_G, MSG_BOX_B);
             }
-            drawWrappedMessage(display, state.message, MSG_R, MSG_G, MSG_B);
+            drawWrappedMessage(display, state.message, isXp ? 0 : MSG_R, isXp ? 0 : MSG_G, isXp ? 0 : MSG_B,
+                               isXp ? XP_BALLOON_LIFT_PX : 0);
         }
     }
 
@@ -5220,9 +5455,21 @@ void Face::render(IDisplay& rawDisplay, const FaceState& state) {
             drawWeatherBadge(display, state.weatherTempC, state.weatherCondition, state.timeText, eyeR, eyeG, eyeB);
         }
         if (state.timeText != nullptr && state.timeText[0] != '\0') {
-            drawClockBadge(display, state.timeText, eyeR, eyeG, eyeB);
+            if (isXp) {
+                // XP: the clock lives in the taskbar tray, bottom right, like Windows.
+                int trayTextX = display.width() - XP_TRAY_W + (XP_TRAY_W - (int)strlen(state.timeText) * CHAR_ADVANCE_PX) / 2;
+                display.drawText(state.timeText, trayTextX, display.height() - XP_TASKBAR_H + 2, 255, 255, 255);
+            } else {
+                drawClockBadge(display, state.timeText, eyeR, eyeG, eyeB);
+            }
         }
-        drawMoodBadge(display, state.mood, state.nowMs, eyeR, eyeG, eyeB);
+        if (isXp) {
+            // XP: the battery takes the top-right corner the clock left empty.
+            drawMoodBattery(display, display.width() - TOP_BADGE_MARGIN - MOOD_BATTERY_TOTAL_W, TOP_BADGE_MARGIN + 1,
+                            state.mood, state.nowMs, eyeR, eyeG, eyeB);
+        } else {
+            drawMoodBadge(display, state.mood, state.nowMs, eyeR, eyeG, eyeB);
+        }
     }
 
     // COFFEE's own eyes+cup layout (see isCoffee above) sits well inside the

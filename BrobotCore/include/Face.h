@@ -110,7 +110,7 @@ enum class DailyRating : uint8_t { PESSIMO, RUIM, QUESTIONAVEL, MEDIO, BOM, EXCE
 // TAMAGOTCHI is a 1997 virtual-pet LCD: pale grey-green ground, near-black ink,
 // dot-matrix eyes, status-icon columns down both sides and an egg-hatching boot
 // (see Face.cpp's TamaDisplay).
-enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84, GAMEBOY, TAMAGOTCHI };
+enum class Theme : uint8_t { CLASSIC, MATRIX, P2M2, PEEMO84, GAMEBOY, TAMAGOTCHI, XP };
 
 // CLASSIC's own primary color, set via CLASSICCOLOR (see PROTOCOL.md) —
 // every other theme has a fixed palette of its own and ignores this

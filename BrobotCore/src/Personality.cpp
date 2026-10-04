@@ -546,6 +546,8 @@ void Personality::onThemeCommand(const char* name, unsigned long now) {
         _theme = Theme::GAMEBOY;
     } else if (strcmp(name, "TAMAGOTCHI") == 0) {
         _theme = Theme::TAMAGOTCHI;
+    } else if (strcmp(name, "XP") == 0) {
+        _theme = Theme::XP;
     } else {
         _theme = Theme::CLASSIC;
     }
@@ -1013,7 +1015,9 @@ FaceState Personality::currentState() const {
     // rather than in the Sender, which just forwards the AI's own text. Both
     // words are 11 characters, so this swaps whatever prefix the typewriter
     // has revealed so far, character for character, with no length change.
-    state.lightOff = _lightOff && _theme == Theme::TAMAGOTCHI;
+    // Idle sleep (SLEEPING after SLEEP_TIMEOUT_MS) switches the light off by
+    // itself, as if CTRL+SHIFT+L had been pressed; any activity wakes it.
+    state.lightOff = (_lightOff || _renderExpression == Expression::SLEEPING) && _theme == Theme::TAMAGOTCHI;
     static char dreamBuffer[16];
     if (state.lightOff && state.message != nullptr && state.message[0] != ' ') {
         const char* thinking = "Pensando...";
@@ -1049,7 +1053,7 @@ FaceState Personality::currentState() const {
     state.aiModelName = (_aiModelName[0] != '\0') ? _aiModelName : nullptr;
 
     state.theme = _theme;
-    state.lightOff = _lightOff && _theme == Theme::TAMAGOTCHI;
+    state.lightOff = (_lightOff || _renderExpression == Expression::SLEEPING) && _theme == Theme::TAMAGOTCHI;
     state.themeStartedMs = _themeChangedAt;
     state.classicColor = _classicColor;
     // Which of MATRIX's log tabs is on screen follows exactly what the face
