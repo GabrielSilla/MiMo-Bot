@@ -13,10 +13,12 @@ repositories {
     }
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
+// Compiled by whichever JDK runs Gradle (build-installer.ps1 uses the bundled
+// JBR of the developer's IntelliJ, whose version changes with the IDE), but
+// always targets Java 21: the runtime of IntelliJ 2025.3, the oldest IDE
+// sinceBuild below accepts. A toolchain would require a separate JDK 21.
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(21)
 }
 
 // Compiles against the IntelliJ the developer already has installed when

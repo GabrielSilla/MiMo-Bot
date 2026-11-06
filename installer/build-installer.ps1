@@ -65,11 +65,13 @@ Copy-Item $builtVsix (Join-Path $vsixStagingDir "Brobot.VSExtension.vsix") -Forc
 Write-Host "== Compilando o plugin do IntelliJ (Brobot.IntelliJPlugin) ==" -ForegroundColor Cyan
 # Same optional-extra shape as the VSIX above: the installer only hands this
 # jar to a detected IntelliJ (see [Code] in the .iss). Unlike the VSIX it is
-# NOT a hard build requirement -- Gradle needs a JDK 21 and the IntelliJ
-# platform to compile against, and the dev machine's own IntelliJ supplies
-# both (its bundled JBR, and -PideaPath so Gradle doesn't download ~1.5GB of
-# IDE). No IntelliJ here -> warn and ship the installer without the plugin;
-# the .iss entry is skipifsourcedoesntexist, so that stays a valid build.
+# NOT a hard build requirement -- Gradle needs a JDK and the IntelliJ platform
+# to compile against, and the dev machine's own IntelliJ supplies both (its
+# bundled JBR, and -PideaPath so Gradle doesn't download ~1.5GB of IDE). That
+# JBR's version follows the IDE's, so the wrapper's Gradle must support it;
+# build.gradle.kts still targets Java 21 regardless. No IntelliJ here -> warn
+# and ship the installer without the plugin; the .iss entry is
+# skipifsourcedoesntexist, so that stays a valid build.
 $intellijStagingDir = Join-Path $installerDir "intellij"
 if (Test-Path $intellijStagingDir) {
     Remove-Item $intellijStagingDir -Recurse -Force

@@ -97,10 +97,15 @@ user action to undo it, so removing it again is this installer's job too
 **Also installs the IntelliJ plugin** (`Brobot.IntelliJPlugin`) when IntelliJ
 is present, same "optional extra, never a requirement" shape as the VSIX.
 `build-installer.ps1` builds it with the Gradle wrapper, using the dev
-machine's own IntelliJ: its bundled JBR (JDK 21) as `JAVA_HOME` and
+machine's own IntelliJ: its bundled JBR as `JAVA_HOME` and
 `-PideaPath=<install dir>` so Gradle compiles against that IDE instead of
 downloading ~1.5GB (the plugin needs Gradle 8.13+, hence the wrapper rather
-than any older Gradle on the machine). No IntelliJ on the build machine →
+than any older Gradle on the machine). That JBR's Java version follows the
+IDE's, so **the wrapper's Gradle must support it**: IntelliJ 2026.2 ships Java
+25, on which Gradle 8.14.3 failed with just `What went wrong: 25.0.4.1`, hence
+Gradle 9.9.0. `build.gradle.kts` uses `options.release = 21` rather than a Java
+toolchain, so no separate JDK 21 is needed and the bytecode still loads on
+IntelliJ 2025.3 (`sinceBuild` 253). No IntelliJ on the build machine →
 a warning, an installer without the plugin, and the `.iss` entry is
 `skipifsourcedoesntexist` so that stays a valid build. The built zip's single
 jar is staged as `installer\intellij\peemo-intellij-plugin.jar` (version-less,
