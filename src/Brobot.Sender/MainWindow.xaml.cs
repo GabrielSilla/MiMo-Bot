@@ -3118,16 +3118,24 @@ public partial class MainWindow : Window
     /// </summary>
     private void PensamentosIaInstallButton_Click(object sender, RoutedEventArgs e)
     {
+        // Same button for every provider that has an installer; which one it
+        // acts on is whatever the ComboBox says (see SelectedAiProvider).
+        AiProvider? provider = SelectedAiProvider();
+        if (provider == null)
+        {
+            return;
+        }
+
         try
         {
-            if (ClaudeCodeHookInstaller.IsInstalled())
+            if (provider.IsInstalled())
             {
-                ClaudeCodeHookInstaller.Uninstall();
+                provider.Uninstall();
                 StopAiThoughtsListenerIfUnused();
             }
             else
             {
-                ClaudeCodeHookInstaller.Install();
+                provider.Install();
                 StartAiThoughtsListener();
             }
         }
@@ -3378,7 +3386,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void StopAiThoughtsListenerIfUnused()
     {
-        if (ClaudeCodeHookInstaller.IsInstalled() || GitHookInstaller.IsInstalled())
+        if (ClaudeCodeHookInstaller.IsInstalled() || CodexHookInstaller.IsInstalled() || GitHookInstaller.IsInstalled())
         {
             return;
         }
@@ -3481,30 +3489,58 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>One AI tool whose hooks this card can install: its installer's three calls.</summary>
+    private sealed record AiProvider(string Name, Func<bool> IsInstalled, Action Install, Action Uninstall);
+
+    private static readonly AiProvider[] AiProviders =
+    {
+        new("Claude", ClaudeCodeHookInstaller.IsInstalled, ClaudeCodeHookInstaller.Install, ClaudeCodeHookInstaller.Uninstall),
+        new("Codex", CodexHookInstaller.IsInstalled, CodexHookInstaller.Install, CodexHookInstaller.Uninstall),
+    };
+
+    /// <summary>The ComboBox's provider, or null for one with no installer yet (Gemini/Cursor/Outro).</summary>
+    private AiProvider? SelectedAiProvider()
+    {
+        string? name = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string;
+        return AiProviders.FirstOrDefault(p => p.Name == name);
+    }
+
     /// <summary>
-    /// Reflects the *actual* on-disk install state (read fresh, not cached),
-    /// so this stays correct even if settings.json was hand-edited or Claude
-    /// Code was reinstalled since Peemo last checked. Only Claude Code hooks
-    /// are wired up so far — the button is disabled for the other providers
-    /// in the combo until they get their own installer.
+    /// Reflects the *actual* on-disk install state (read fresh, not cached)
+    /// of whichever provider is selected, so this stays correct even if a
+    /// config file was hand-edited or the tool reinstalled since Peemo last
+    /// checked. Claude and Codex each install independently — both can be on
+    /// at once, and their messages are told apart on screen by the
+    /// "Claude: " / "Codex: " prefix. The button is disabled for the
+    /// providers that don't have an installer yet.
     /// </summary>
     private void RefreshAiThoughtsInstallUi()
     {
-        bool isClaudeSelected = (PensamentosIaComboBox.SelectedItem as ComboBoxItem)?.Content as string == "Claude";
-        bool installed = ClaudeCodeHookInstaller.IsInstalled();
+        AiProvider? provider = SelectedAiProvider();
+        bool installed = provider?.IsInstalled() ?? false;
 
         PensamentosIaInstallButton.Content = installed ? "Desinstalar" : "Instalar";
-        PensamentosIaInstallButton.IsEnabled = isClaudeSelected;
+        PensamentosIaInstallButton.IsEnabled = provider != null;
 
-        if (!isClaudeSelected)
+        if (provider == null)
         {
-            PensamentosIaStatusText.Text = "Instalação automática disponível só para Claude Code por enquanto.";
+            PensamentosIaStatusText.Text = "Instalação automática disponível só para Claude Code e Codex por enquanto.";
+        }
+        else if (!installed)
+        {
+            PensamentosIaStatusText.Text = string.Empty;
+        }
+        else if (provider.Name == "Codex")
+        {
+            // Codex only runs a hook the user has reviewed, and nothing here
+            // can (or should) approve it for them — see CodexHookInstaller.
+            PensamentosIaStatusText.Text = CodexHookInstaller.HooksDisabledInConfig()
+                ? "Instalado, mas os hooks estão desligados no config.toml do Codex ([features] hooks = false)."
+                : $"Instalado na porta {AiThoughtsPort}. Aprove os hooks no Codex: Configurações > Hooks (ou /hooks no CLI).";
         }
         else
         {
-            PensamentosIaStatusText.Text = installed
-                ? $"Instalado — escutando eventos na porta {AiThoughtsPort}"
-                : string.Empty;
+            PensamentosIaStatusText.Text = $"Instalado — escutando eventos na porta {AiThoughtsPort}";
         }
     }
 
@@ -3583,24 +3619,50 @@ public partial class MainWindow : Window
     /// Every AI message goes through here rather than calling SendCommand
     /// directly, so <see cref="_aiMessageHoldUntil"/> only has to be honoured
     /// in one place.
+    ///
+    /// <paramref name="speaker"/> is which AI said it ("Claude", "Codex"),
+    /// prefixed as "Claude: ..." and fitted to the screen by
+    /// <see cref="AiMessageFit"/> so the prefix never scrolls away. Null for
+    /// the non-AI sources that share this choke point (the git hook), which
+    /// keep their plain messages. Returns what was actually sent, or null
+    /// when nothing was.
     /// </summary>
-    private void SendAiMessage(string? text, string? fallback = null, bool force = false)
+    private string? SendAiMessage(string? text, string? fallback = null, bool force = false, string? speaker = null)
     {
         string? message = string.IsNullOrWhiteSpace(text) ? fallback : text.Trim();
         if (string.IsNullOrWhiteSpace(message))
         {
-            return;
+            return null;
+        }
+
+        if (speaker != null)
+        {
+            message = AiMessageFit.Fit(speaker, message);
         }
 
         if (!force && DateTime.UtcNow < _aiMessageHoldUntil)
         {
             // The session greeting is still typing itself in — see HoldAiMessagesWhileTyping.
             LogAiEvent($"   (segurado, saudacao ainda digitando) MSG {message}");
-            return;
+            return null;
         }
 
         _connection.SendCommand($"MSG {message}");
+        return message;
     }
+
+    /// <summary>
+    /// Who an AI event came from, for the "Claude: " / "Codex: " prefix. The
+    /// hook scripts say so themselves ("Codex:PreToolUse ..."); a bare event
+    /// name can only be the Claude Code bridge, which is the one that existed
+    /// before the prefix did — e.g. a status line or hook process that was
+    /// already running across an upgrade.
+    /// </summary>
+    private static string AiSpeaker(AiThoughtEvent thought) =>
+        string.IsNullOrWhiteSpace(thought.Source) ? ClaudeSpeaker : thought.Source.Trim();
+
+    private const string ClaudeSpeaker = "Claude";
+    private const string CodexSpeaker = "Codex";
 
     /// <summary>
     /// Keeps the next second or so of AI messages from overwriting one that
@@ -3636,11 +3698,28 @@ public partial class MainWindow : Window
         // thread happened to win.
         Dispatcher.Invoke(() =>
         {
-            LogAiEvent($"<- {thought.Name} {thought.Text}".TrimEnd());
+            LogAiEvent($"<- {(thought.Source is { } src ? src + ":" : "")}{thought.Name} {thought.Text}".TrimEnd());
             _achievements.OnAiActivity();
+
+            // Only the AI-agent cases below pass this on; the VSIX/IntelliJ/
+            // git cases have no speaker and keep their messages unprefixed.
+            string speaker = AiSpeaker(thought);
 
             switch (thought.Name)
             {
+                case "SessionStart" when speaker != ClaudeSpeaker:
+                    // Codex (or any future non-Claude bridge): same HAPPY +
+                    // greeting as Claude's below, minus the account-switch
+                    // check, which reads Claude Code's own ~/.claude.json and
+                    // means nothing for another tool.
+                    _connection.SendCommand("FACE HAPPY");
+                    string otherGreeting = string.IsNullOrWhiteSpace(thought.Text) ? "Bora trabalhar!" : thought.Text.Trim();
+                    string? sentOtherGreeting = SendAiMessage(otherGreeting, speaker: speaker);
+                    LogAiEvent($"   -> MSG {sentOtherGreeting}");
+                    HoldAiMessagesWhileTyping(sentOtherGreeting ?? otherGreeting);
+                    _aiThoughtFaceActive = false;
+                    break;
+
                 case "SessionStart":
                     // HAPPY, not NEUTRAL: this is the one AI event that's
                     // unambiguously good news. It isn't sticky (it times out
@@ -3683,7 +3762,9 @@ public partial class MainWindow : Window
                         // more specific than "bora trabalhar em <pasta>", and
                         // switching accounts lands you in the home directory
                         // anyway, where there's no project name to offer instead.
-                        greeting = $"Conta do Claude trocada para {account!.DisplayName}!";
+                        // "Conta trocada", not "Conta do Claude trocada": the
+                        // "Claude: " prefix SendAiMessage adds already says whose.
+                        greeting = $"Conta trocada para {account!.DisplayName}!";
                     }
                     else
                     {
@@ -3702,9 +3783,11 @@ public partial class MainWindow : Window
                         sessionStartSettings.Save();
                     }
 
-                    LogAiEvent($"   -> MSG {greeting}");
-                    SendAiMessage(greeting);
-                    HoldAiMessagesWhileTyping(greeting);
+                    // The hold window is measured from what actually went out,
+                    // prefix included — "Claude: " is 8 more characters to type.
+                    string? sentGreeting = SendAiMessage(greeting, speaker: speaker);
+                    LogAiEvent($"   -> MSG {sentGreeting}");
+                    HoldAiMessagesWhileTyping(sentGreeting ?? greeting);
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3713,13 +3796,13 @@ public partial class MainWindow : Window
                     // picks something else), so it needs the same explicit-clear
                     // handling as MUSIC/WATCHING below.
                     _connection.SendCommand("FACE THINKING");
-                    SendAiMessage(null, "Pensando...");
+                    SendAiMessage(null, "Pensando...", speaker: speaker);
                     _aiThoughtFaceActive = true;
                     break;
 
                 case "PreToolUse":
                     _connection.SendCommand("FACE READING");
-                    SendAiMessage(thought.Text);
+                    SendAiMessage(thought.Text, speaker: speaker);
                     _aiThoughtFaceActive = false; // READING isn't sticky — it auto-reverts on its own
                     break;
 
@@ -3730,7 +3813,7 @@ public partial class MainWindow : Window
                     // existed with nothing ever triggering them from the AI
                     // side until this event was installed.
                     _connection.SendCommand("FACE ERROR");
-                    SendAiMessage(thought.Text, "Deu erro na ferramenta.");
+                    SendAiMessage(thought.Text, "Deu erro na ferramenta.", speaker: speaker);
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3743,12 +3826,20 @@ public partial class MainWindow : Window
                     // behind whatever is already up. READING carries it because
                     // its "olha aqui" chirp is already the sound for exactly
                     // this, and asking permission isn't an error.
-                    SendNotification($"NOTIFY READING {(string.IsNullOrWhiteSpace(thought.Text) ? "Preciso da sua permissao!" : thought.Text.Trim())}");
+                    // Prefixed and fitted like a MSG, but to NOTIFY's own
+                    // wrap (26 wide, not 24): with two agents running, *which*
+                    // one is waiting on you is the whole point of the alert.
+                    string permissionText = AiMessageFit.Fit(
+                        speaker,
+                        string.IsNullOrWhiteSpace(thought.Text) ? "Preciso da sua permissao!" : thought.Text.Trim(),
+                        AiMessageFit.NotificationCharsPerLine,
+                        AiMessageFit.NotificationLines);
+                    SendNotification($"NOTIFY READING {permissionText}");
                     break;
 
                 case "PermissionDenied":
                     _connection.SendCommand("FACE ERROR");
-                    SendAiMessage(thought.Text, "Bloqueado.");
+                    SendAiMessage(thought.Text, "Bloqueado.", speaker: speaker);
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3758,7 +3849,7 @@ public partial class MainWindow : Window
                     // UserPromptSubmit rather than inventing an expression:
                     // what changed is the message, not the state.
                     _connection.SendCommand("FACE THINKING");
-                    SendAiMessage(thought.Text, "Chamei um subagente...");
+                    SendAiMessage(thought.Text, "Chamei um subagente...", speaker: speaker);
                     _aiThoughtFaceActive = true;
                     break;
 
@@ -3766,18 +3857,18 @@ public partial class MainWindow : Window
                     // No FACE: the main agent is still working, and saying
                     // FINISHED here would announce an ending that hasn't
                     // happened. Same no-FACE reasoning as Notification below.
-                    SendAiMessage(thought.Text);
+                    SendAiMessage(thought.Text, "O subagente finalizou!", speaker: speaker);
                     break;
 
                 case "PreCompact":
                     _connection.SendCommand("FACE THINKING");
-                    SendAiMessage(null, "Organizando a memoria...");
+                    SendAiMessage(null, "Organizando a memoria...", speaker: speaker);
                     _aiThoughtFaceActive = true;
                     break;
 
                 case "PostCompact":
                     _connection.SendCommand("FACE FINISHED");
-                    SendAiMessage(null, "Memoria organizada!");
+                    SendAiMessage(null, "Memoria organizada!", speaker: speaker);
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3785,7 +3876,18 @@ public partial class MainWindow : Window
                     // The turn ended on an API error rather than on an answer,
                     // so it gets ERROR where Stop gets FINISHED.
                     _connection.SendCommand("FACE ERROR");
-                    SendAiMessage(null, "Deu ruim na API...");
+                    SendAiMessage(null, "Deu ruim na API...", speaker: speaker);
+                    _aiThoughtFaceActive = false;
+                    break;
+
+                case "Interrupt":
+                    // Codex only (Claude Code has no such hook). The user
+                    // stopped the turn, so no Stop follows — without this the
+                    // sticky THINKING from UserPromptSubmit would stay up until
+                    // the next prompt. NEUTRAL rather than FINISHED or ERROR:
+                    // nothing finished and nothing broke, it was just stopped.
+                    _connection.SendCommand("FACE NEUTRAL");
+                    SendAiMessage(null, "Ok, parei por aqui.", speaker: speaker);
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3808,13 +3910,13 @@ public partial class MainWindow : Window
                         "TaskCreated" => "Anotei uma tarefa nova.",
                         "TaskCompleted" => "Tarefa concluida!",
                         _ => null,
-                    });
+                    }, speaker: speaker);
                     break;
 
                 case "Notification":
                     // No FACE change: a notification (e.g. "waiting for permission")
                     // isn't itself an expression, just something worth saying.
-                    SendAiMessage(thought.Text);
+                    SendAiMessage(thought.Text, speaker: speaker);
                     break;
 
                 case "ContextUsage":
@@ -3825,7 +3927,7 @@ public partial class MainWindow : Window
                     // Claude Code runs the status line once on session start,
                     // so this is one of the two things that used to land on top
                     // of the greeting before it had finished typing.
-                    SendAiMessage(thought.Text);
+                    SendAiMessage(thought.Text, speaker: speaker);
                     break;
 
                 case "AiStats":
@@ -3847,7 +3949,7 @@ public partial class MainWindow : Window
                     // technical one — a plain "done" beat surfacing Claude's
                     // own words verbatim.
                     _connection.SendCommand("FACE FINISHED");
-                    SendAiMessage("Terminei!");
+                    SendAiMessage("Terminei!", speaker: speaker);
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3870,7 +3972,13 @@ public partial class MainWindow : Window
 
                     _connection.SendCommand("FACE NEUTRAL");
                     _connection.SendCommand("MSG");
-                    ClearAiStatsIfActive();
+                    // AISTATS only ever comes from Claude Code's status line,
+                    // so a Codex session ending must not wipe a Claude
+                    // session's numbers that are still live.
+                    if (speaker == ClaudeSpeaker)
+                    {
+                        ClearAiStatsIfActive();
+                    }
                     _aiThoughtFaceActive = false;
                     break;
 
@@ -3955,7 +4063,9 @@ public partial class MainWindow : Window
                     break;
             }
 
-            PensamentosIaStatusText.Text = $"Último evento: {thought.Name}";
+            PensamentosIaStatusText.Text = thought.Source is { } eventSource
+                ? $"Último evento: {eventSource} {thought.Name}"
+                : $"Último evento: {thought.Name}";
         });
     }
 
@@ -4403,7 +4513,9 @@ public partial class MainWindow : Window
         LoadGbaRomList(settings.GbaRecentRoms);
 
         RefreshAiThoughtsInstallUi();
-        if (ClaudeCodeHookInstaller.IsInstalled())
+        // Either AI bridge installed means the listener is needed — whichever
+        // provider the ComboBox happens to be showing.
+        if (AiProviders.Any(p => p.IsInstalled()))
         {
             StartAiThoughtsListener();
         }

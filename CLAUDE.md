@@ -76,7 +76,9 @@ replacement.
   phrase is written against (tone per mood, format, what never goes in).
 - [specs/sender-ai-bridge.md](specs/sender-ai-bridge.md) — Atividade da IA:
   `ClaudeCodeHookInstaller`, `hooks/peemo-claude-hook.ps1`,
-  `hooks/peemo-claude-statusline.ps1`, `AiThoughtsListener`, `SenderSettings`.
+  `hooks/peemo-claude-statusline.ps1`, `CodexHookInstaller`,
+  `hooks/peemo-codex-hook.ps1`, the `Claude:`/`Codex:` prefix
+  (`AiMessageFit`), `AiThoughtsListener`, `SenderSettings`.
 
 ## Ops
 

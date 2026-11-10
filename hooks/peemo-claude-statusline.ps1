@@ -125,7 +125,10 @@ if ($payload -and $payload.model -and $payload.model.display_name) {
     $modelName = ([string]$payload.model.display_name) -replace '[\r\n\t]+', ' '
 }
 
-$aiStatsLine = "AiStats $ctxPct $costCents $rateFiveHour $rateSevenDay $modelName".TrimEnd()
+# "Claude:" names the sender, the same way peemo-claude-hook.ps1's events do
+# (see AiThoughtsListener): it is what makes the Sender prefix the MSG with
+# "Claude: " now that Codex reports over this same port too.
+$aiStatsLine = "Claude:AiStats $ctxPct $costCents $rateFiveHour $rateSevenDay $modelName".TrimEnd()
 
 function Send-Line([string]$line) {
     try {
@@ -153,5 +156,5 @@ function Send-Line([string]$line) {
 # AiThoughtsListener reads exactly one line per connection and closes (see
 # HandleClient), which is what keeps a hook — a process that connects,
 # writes and exits — from needing to signal anything.
-Send-Line "ContextUsage $statusText"
+Send-Line "Claude:ContextUsage $statusText"
 Send-Line $aiStatsLine

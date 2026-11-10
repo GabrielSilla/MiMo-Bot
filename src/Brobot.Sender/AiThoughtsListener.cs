@@ -5,8 +5,15 @@ using System.Net.Sockets;
 
 namespace Brobot.Sender;
 
-/// <summary>One event pushed by an AI tool's hook: an event name and optional free-text.</summary>
-public sealed record AiThoughtEvent(string Name, string? Text);
+/// <summary>
+/// One event pushed by an AI tool's hook: an event name, optional free-text,
+/// and optionally which tool sent it. <paramref name="Source"/> comes from a
+/// "Source:" prefix on the event-name token ("Codex:PreToolUse ..."), which
+/// is how the Claude Code and Codex hooks tell their otherwise same-named
+/// events apart; it is null for a bare name (the VSIX, the IntelliJ plugin,
+/// the git hook, or a hook script from before the prefix existed).
+/// </summary>
+public sealed record AiThoughtEvent(string Name, string? Text, string? Source = null);
 
 /// <summary>
 /// Local TCP listener that receives one-line events from AI tool hooks (a
@@ -169,7 +176,18 @@ public sealed class AiThoughtsListener : IDisposable
             string name = space < 0 ? line : line[..space];
             string? text = space < 0 ? null : line[(space + 1)..];
 
-            ThoughtReceived?.Invoke(new AiThoughtEvent(name, text));
+            // "Codex:PreToolUse" -> source "Codex", name "PreToolUse". Only
+            // the name token is split, so a colon inside the free text
+            // ("Bash falhou: ...") is never mistaken for a source.
+            string? source = null;
+            int colon = name.IndexOf(':');
+            if (colon > 0 && colon < name.Length - 1)
+            {
+                source = name[..colon];
+                name = name[(colon + 1)..];
+            }
+
+            ThoughtReceived?.Invoke(new AiThoughtEvent(name, text, source));
         }
     }
 }

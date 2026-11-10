@@ -36,6 +36,13 @@
       <Link>peemo-claude-statusline.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Same reasoning, for CodexHookInstaller: ~/.codex/hooks.json points at
+         this copy next to the running exe (and the installer, which packages
+         the whole publish folder, carries it too). -->
+    <None Include="..\..\hooks\peemo-codex-hook.ps1">
+      <Link>peemo-codex-hook.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <!-- Same reasoning, for GitHookInstaller: core.hooksPath points straight
          at the copied-to-output git-hooks\ folder below, so peemo-git-hook.ps1
          needs to actually exist next to the running exe too. -->
@@ -115,7 +122,7 @@
     <Product>Peemo Sender</Product>
     <AssemblyTitle>Peemo Sender</AssemblyTitle>
     <Description>Envia hora, clima, mídia e atividade de IA para o seu Brobot</Description>
-    <Version>1.4.2</Version>
+    <Version>1.5.0</Version>
     <NeutralLanguage>pt-BR</NeutralLanguage>
 
     <!-- The app's own UI has no other language, but WPF/WinForms still ship a

@@ -296,7 +296,9 @@ if ($payload) {
             # it) rather than as a status update — unlike Stop's own
             # last_assistant_message, which is the main agent reporting to
             # the person actually watching the screen.
-            $text = "O subagente do Claude finalizou, olha lá!"
+            # "O subagente", not "O subagente do Claude": the Sender now
+            # prefixes every AI message with who sent it ("Claude: ...").
+            $text = "O subagente finalizou, olha lá!"
         }
 
         # The whole reason Stop is worth a payload read at all:
@@ -323,7 +325,11 @@ if ($payload) {
 
 if ($text) { $text = Limit-Length (ConvertTo-SingleLine $text) }
 
-$line = if ($text) { "$EventName $text" } else { $EventName }
+# "Claude:" names the sender (see AiThoughtsListener): Codex reports over
+# this same port with "Codex:", and the Sender — not this script, and never
+# Core — turns it into the "Claude: ..." prefix on Peemo's screen, fitted so
+# the prefix can't scroll away.
+$line = if ($text) { "Claude:$EventName $text" } else { "Claude:$EventName" }
 
 try {
     $client = New-Object System.Net.Sockets.TcpClient
