@@ -36,6 +36,13 @@
       <Link>peemo-claude-statusline.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Same reasoning, for CodexHookInstaller: ~/.codex/hooks.json points at
+         this copy next to the running exe (and the installer, which packages
+         the whole publish folder, carries it too). -->
+    <None Include="..\..\hooks\peemo-codex-hook.ps1">
+      <Link>peemo-codex-hook.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <!-- Same reasoning, for GitHookInstaller: core.hooksPath points straight
          at the copied-to-output git-hooks\ folder below, so peemo-git-hook.ps1
          needs to actually exist next to the running exe too. -->

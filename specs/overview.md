@@ -123,7 +123,9 @@ hooks/                               peemo-claude-hook.ps1 (the Claude Code hook
                                      peemo-claude-statusline.ps1 (its statusLine command — a different
                                      contract, see specs/sender-ai-bridge.md); both wired up by ClaudeCodeHookInstaller and
                                      copied to Brobot.Sender's build output (see its csproj) rather
-                                     than run from here. peemo-git-hook.ps1 and git-hooks/
+                                     than run from here. peemo-codex-hook.ps1 is the OpenAI Codex
+                                     equivalent (~/.codex/hooks.json, wired up by CodexHookInstaller,
+                                     same copy-to-output setup). peemo-git-hook.ps1 and git-hooks/
                                      (post-commit/post-merge/post-checkout/pre-push, static shims
                                      pinned to LF via .gitattributes) are the git-side equivalent,
                                      wired up by GitHookInstaller — see specs/sender-feature-cards.md.

@@ -1,16 +1,53 @@
-# Brobot.Sender Internals — Atividade da IA / Claude Code Bridge
+# Brobot.Sender Internals — Atividade da IA / Claude Code + Codex Bridge
 
 - **"Atividade da IA"** (a provider `ComboBox`: Claude/Codex/Gemini/Cursor/
   Outro, plus an **Instalar**/**Desinstalar** button — no checkbox) is the
   per-tool-hooks → local endpoint → `FACE`/`MSG` bridge. Unlike every other
   card, this one isn't a live toggle: installing edits the user's real,
-  persistent Claude Code config (`ClaudeCodeHookInstaller`, below), so it's a
-  deliberate, explicit, reversible action behind its own button rather than
-  something that happens as a side effect of a checkbox. The button's own
-  label always reflects the *actual on-disk* install state (re-read every
-  time, not cached) and is only enabled when "Claude" is selected in the
-  `ComboBox` — the other providers are UI/settings-persistence only so far,
-  since only Claude Code hooks are actually wired up.
+  persistent tool config (`ClaudeCodeHookInstaller` / `CodexHookInstaller`,
+  below), so it's a deliberate, explicit, reversible action behind its own
+  button rather than something that happens as a side effect of a checkbox.
+  The button acts on whichever provider the `ComboBox` shows (`MainWindow.
+  AiProviders`/`SelectedAiProvider`), and its label always reflects *that
+  provider's actual on-disk* install state (re-read every time, not cached).
+  It's enabled for **Claude** and **Codex**; Gemini/Cursor/Outro are still
+  UI/settings-persistence only. Claude and Codex install independently and
+  can both be on at once — the shared listener runs while either is
+  installed — and Peemo tells their messages apart by the speaker prefix
+  (see "Who said it" below).
+- **Who said it — the `Claude:` / `Codex:` prefix.** Every message the AI
+  bridge puts on screen starts with its sender: "Claude: Lendo PROTOCOL.md...",
+  "Codex: Terminei!". The hook scripts *name* the sender on the wire (below);
+  the Sender *adds and fits* the prefix; Core never knows about it (the
+  one rule in [overview.md](overview.md) — Core just draws the `MSG` it's
+  given). Wire: the event-name token may carry a `Source:` prefix —
+  `Codex:PreToolUse Lendo X...` — which `AiThoughtsListener` splits into
+  `AiThoughtEvent.Source`/`.Name`; only the name token is split, so a colon
+  in the free text is never read as a source. A bare name has no source:
+  that's the VSIX, the IntelliJ plugin and the git hook (whose messages stay
+  unprefixed), or a Claude script from before the prefix existed, which is
+  why `MainWindow.AiSpeaker` treats a bare AI event as `Claude`.
+  `SendAiMessage(..., speaker:)` is the choke point that applies it, through
+  **`AiMessageFit.cs`**: "fits" means *fits without scrolling*, not "under
+  255 bytes", because both of Core's wrappers (`drawWrappedMessage` for the
+  balloon, `drawNotificationText` for `NOTIFY`) keep only the **last three**
+  wrapped lines — a longer message scrolls its first line, the one with the
+  speaker's name, off the top while it types. So `AiMessageFit` re-runs
+  Face.cpp's own greedy word-wrap (24 bytes × 3 lines for `MSG` — 160px
+  minus 2×8px margin over a 6px advance; 26 × 3 for `NOTIFY`; counted in
+  UTF-8 bytes with Core's `0xC3` rule, since an accent is two bytes on the
+  wire) and shortens only the *body*, at a word boundary where it can, with
+  three literal periods, never the prefix. Anything that fits 3×24 is also
+  ≤ 72 bytes, under MATRIX's 74-byte `MATRIX_LOG_LINE_CAPACITY`, so the log
+  themes never truncate it either. The widths are hand-mirrored from
+  Face.cpp the same way `CoreTypingCharIntervalMs` mirrors Face.h — nothing
+  enforces the match. `PermissionRequest`'s `NOTIFY` is fitted the same way
+  at 26 wide, because with two agents running *which one* is waiting on you
+  is the point of the alert. `AiStats` is not a message and passes through
+  unprefixed. Phrases that used to name Claude themselves dropped it, since
+  the prefix now does: "Conta trocada para `<nome>`!" (was "Conta do Claude
+  trocada..."), "O subagente finalizou, olha lá!" (was "O subagente do
+  Claude...").
 - **`ClaudeCodeHookInstaller.cs`**: its `Events[]` array is the list of
   Claude Code hook events the bridge claims — `SessionStart`,
   `UserPromptSubmit`, `PreToolUse`, `PostToolUseFailure`,
@@ -161,13 +198,121 @@
   moment, so each falls back to `-1` — the same "no source for this"
   convention `STATS` already uses, which Core draws as `--`. Each line goes
   down its own connection: `AiThoughtsListener` reads exactly one line per
-  connection and closes.
+  connection and closes. Both lines (and every `peemo-claude-hook.ps1`
+  event) go out as `Claude:<Event>` — see "Who said it" above.
+- **`CodexHookInstaller.cs`** — the OpenAI Codex counterpart of
+  `ClaudeCodeHookInstaller`, same shape and rules (surgical
+  `System.Text.Json.Nodes` edits, entries identified by the command
+  containing `peemo-codex-hook.ps1` plus `-EventName X`, idempotent
+  `Install()` that self-repairs a partial install, matcher groups/event keys
+  pruned only once *our* entries emptied them). What's different, and why:
+  - **File: `hooks.json` in Codex's home** (`%CODEX_HOME%`, else
+    `%USERPROFILE%\.codex`) — user level, so it applies to every project.
+    Deliberately **not `config.toml`**: Codex reads hooks from either, but
+    config.toml is TOML full of the user's and the Codex app's own settings
+    (there's no TOML library here to edit it surgically), and its one
+    `notify` program — the only other "tell me when something happens"
+    mechanism Codex has, and a single program, not a list — is already
+    taken on a typical desktop install by the app's computer-use helper
+    (`notify = [ ...codex-computer-use.exe, "turn-ended" ]`). Hooks are also
+    strictly richer than `notify` (which only fires on turn end). The only
+    thing ever read from config.toml is a best-effort line scan for
+    `[features] hooks = false` (or the deprecated `codex_hooks`), so the
+    card can say why nothing arrives (`HooksDisabledInConfig`).
+  - A hooks.json that exists but **can't be parsed throws** instead of being
+    treated as empty — treating it as empty would make `Install()`
+    overwrite the user's own hooks with ours. Comments and trailing commas
+    are tolerated. `Uninstall()` deletes the file only when nothing at all
+    is left in it (it was only ever ours).
+  - **Trust.** Codex skips any non-managed hook until the user has reviewed
+    it; it records a per-hook hash once approved (in config.toml, written by
+    Codex). This class never writes that trust — approving a security
+    review on the user's behalf isn't an installer's call — so after
+    Instalar the hooks sit registered but inert until the user approves
+    them once in the Codex app (Configurações > Hooks / "Review hooks") or
+    the CLI (`/hooks`). The card's status text says exactly that. The hash
+    covers the command, which embeds the script's path, so moving the
+    Sender to another folder means approving again.
+  - **Command:** the absolute `System32\WindowsPowerShell\v1.0\powershell.exe`
+    rather than a bare `powershell`, because on Windows Codex runs hooks
+    through the session environment's shell, which can be **PowerShell**,
+    not just `cmd.exe /C` (`core/src/session/mod.rs::build_hooks_config`,
+    `hooks/src/engine/command_runner.rs`). A quoted executable followed by
+    flags is invalid PowerShell syntax without `&`, and `&` does not work
+    as a cmd invocation prefix. The launcher therefore uses the absolute
+    executable path **unquoted** (the normal Windows path has no spaces),
+    falling back to `powershell.exe` on PATH for unusual Windows paths with
+    whitespace. The script path remains quoted. Cmd's runtime wrapper already
+    adds outer command quotes; never add another pair. Test both shells with
+    `tools/test-codex-hook.ps1` and `-PowerShellShell`, not just a manual cmd
+    launch. The hook also records bounded lifecycle diagnostics next to the
+    script in `peemo-codex-hook.log`, without prompt/tool payloads or stdout.
+    `Install()` repairs existing Peemo
+    commands/paths in place, and `IsInstalled()` requires the current command.
+    A repaired command needs a fresh Codex trust review; the installer never
+    modifies trust hashes. Explicit **timeouts** — Codex's
+    default is 600s and it waits on each hook (synchronously, which is also
+    what keeps their order; `async: true` would save the ~0.4s PowerShell
+    start per event but lose ordering, which `AiThoughtsListener` exists to
+    protect): 5s, and 3s for `SessionEnd`/`Interrupt`, Codex's own cap.
+  - **Events — Codex's, not Claude's.** Codex (checked against CLI 0.167
+    and developers.openai.com/codex/hooks) has `SessionStart`,
+    `UserPromptSubmit`, `PreToolUse`, `PermissionRequest`, `PostToolUse`,
+    `Pre`/`PostCompact`, `SubagentStart`/`Stop`, `Stop`, `Interrupt`,
+    `SessionEnd` and `Pre`/`PostModelRequest` — no `Notification`,
+    `PostToolUseFailure`, `StopFailure`, `PermissionDenied`, model-switch,
+    task or cwd events. Installed: all of the first list **except
+    `PostToolUse`** (same reason as Claude's — and since Codex has no
+    failure-only variant, a failed Codex tool never shows `ERROR`; a
+    non-zero exit like grep finding nothing isn't a failure anyway) and
+    **except `Pre`/`PostModelRequest`**, which fire on every model request.
+    A failed `PostModelRequest` is the nearest thing to Claude's
+    `StopFailure`, but not worth a process per request. `Interrupt` is
+    Codex-only and is the reason this bridge needed a new case (below):
+    an interrupted turn gets no `Stop`, so without it the sticky
+    `THINKING` would stay up. No matchers: omitted means "all".
+- **`hooks/peemo-codex-hook.ps1`** (copied to output by the csproj like the
+  Claude scripts, so the installer package carries it): Codex's equivalent
+  of `peemo-claude-hook.ps1`, sending `Codex:<Event> [text]`. Self-contained
+  on purpose — the helpers (`ConvertTo-SingleLine`, `Get-FirstSentence`,
+  `Get-FolderName`, `Limit-Length`) are copied, not shared, so a change for
+  one tool can't quietly break the other. Same BOM and stdin-UTF-8 rules.
+  **It never writes to stdout**, which matters more for Codex than for
+  Claude: Codex adds plain stdout to the model's context on
+  `SessionStart`/`UserPromptSubmit`/`SubagentStart`, and treats non-JSON
+  stdout on `Stop`/`SubagentStop`/`Interrupt` as an invalid hook result.
+  Per event: `SessionStart` builds the greeting from `model` (a plain string
+  in Codex) and the `cwd` folder like Claude's, says "De volta em
+  `<pasta>`!" on `source = resume`, and sends **nothing** on
+  `source = compact` (Codex fires `SessionStart` again after compacting; a
+  greeting and HAPPY face mid-work would be wrong, and `PostCompact`
+  already reports it). `PreToolUse` prefers `tool_input.description`, then
+  per tool: **shell** (`Bash`/`shell`/`exec_command`; `tool_input.command`
+  as a string *or* an argv array, with a `powershell -Command` / `bash -lc`
+  / `cmd /c` wrapper peeled off) is summarized for the commands Codex uses
+  most to look around — `Get-Content`/`cat`/`type`/`head`/`sed -n` →
+  "Lendo `<arquivo>`...", `rg`/`grep`/`Select-String` → "Procurando
+  '`<padrão>`'..." (`rg --files` → "Procurando arquivos..."),
+  `Get-ChildItem`/`ls`/`dir` → "Olhando os arquivos..." — first command of a
+  chain only, flags and their values skipped by a small tokenizer, falling
+  back to the raw command; **`apply_patch`** reads its `*** Add/Update/Delete
+  File:` headers → "Editando/Criando/Apagando `<arquivo>`[ e mais N]...";
+  **MCP** (`mcp__server__tool`) → "Usando `<tool>` (`<server>`)..."; the
+  desktop app's **code-mode `exec`** tool, whose input is a JS string,
+  has its `exec_command({cmd: ...})` dug out. `agent_type` prefixes
+  `(agent)` for subagent calls, as for Claude. `PermissionRequest` →
+  "Posso usar o `<tool>`?"; `SubagentStart`/`SubagentStop` → the same
+  phrases as Claude's; `Stop` → first sentence of `last_assistant_message`
+  (logged; the Sender still shows "Terminei!"). `Limit-Length` (100) is
+  only a wire backstop now — the real fit, prefix included, is
+  `AiMessageFit`'s.
 - **`AiThoughtsListener.cs`**: a plain `TcpListener` on `127.0.0.1:5591`
   (`MainWindow.AiThoughtsPort`), not `HttpListener` — `HttpListener` needs
   either Administrator or a `netsh` URL ACL reservation to bind a prefix on
   Windows, even a loopback one, which a tray app shouldn't require. Three
   independent sources feed it, each its own external process reporting over
-  the exact same one-line wire shape: the Claude Code hook script below, the
+  the exact same one-line wire shape: the Claude Code hook scripts and the
+  Codex hook script above, the
   `Brobot.VSExtension` VSIX (`VsBuildStarted`/`VsBuildSucceeded`/
   `VsBuildFailed`, see specs/sender-feature-cards.md), the
   `Brobot.IntelliJPlugin` (`IdeBuildStarted`/`IdeBuildSucceeded`/
@@ -178,12 +323,13 @@
   one shared listener now — Atividade da IA's install button and
   "Ferramentas de Dev"'s checkbox — so `MainWindow.
   StopAiThoughtsListenerIfUnused` is what either one's off-switch actually
-  calls: it only tears the listener down once *neither*
-  `ClaudeCodeHookInstaller.IsInstalled()` nor `GitHookInstaller.IsInstalled()`
-  is true, so turning one off never silences the other's events. Wire
-  format is one line per event, `EVENTNAME optional free text...` (mirrors
-  PROTOCOL.md's own `FACE`/`MSG` line shape, just inbound instead of
-  outbound). Connections are accepted on one thread and **read on a single
+  calls: it only tears the listener down once *none* of
+  `ClaudeCodeHookInstaller`, `CodexHookInstaller` and `GitHookInstaller`
+  reports installed, so turning one off never silences the others' events.
+  Wire format is one line per event, `[Source:]EVENTNAME optional free
+  text...` (mirrors PROTOCOL.md's own `FACE`/`MSG` line shape, just inbound
+  instead of outbound; the optional `Source:` is the AI hooks' sender name —
+  see "Who said it" above). Connections are accepted on one thread and **read on a single
   worker thread**, in accept order, via a `BlockingCollection` — never on
   thread-pool threads, which is what it used to do. Order is load-bearing
   here and the pool destroyed it: a burst of hooks is a burst of *separate
@@ -216,7 +362,16 @@
   `FACE FINISHED`, `Stop` → `FACE FINISHED` + **the first sentence of
   `last_assistant_message`** (falling back to "Terminei!" for a turn that
   ended with no text), `SessionEnd` → `FACE NEUTRAL` + clear `MSG` + clear
-  `AISTATS`.
+  `AISTATS` (that last one only for a *Claude* `SessionEnd`: `AISTATS` only
+  ever comes from Claude Code's status line, so a Codex session ending must
+  not wipe a Claude session's live numbers), and the Codex-only `Interrupt`
+  → `FACE NEUTRAL` + "Ok, parei por aqui." — an interrupted turn gets no
+  `Stop`, so this is what releases the sticky `THINKING`; NEUTRAL, not
+  FINISHED or ERROR, because nothing finished and nothing broke. A Codex
+  `SessionStart` gets the same HAPPY + greeting (and the typing hold,
+  measured on the prefixed text) minus the account-switch check below,
+  which reads Claude's own files. Every message here goes out prefixed
+  (`Claude: `/`Codex: `) through `SendAiMessage`'s `speaker`.
   Three events map to `FACE ERROR` — `PostToolUseFailure`, `PermissionDenied`
   and `StopFailure` — and they are the *only* things in the whole app that
   ever send it: Core's `Expression::FAILED` and `Buzzer`'s three-trill
@@ -236,8 +391,9 @@
   different file from the `~/.claude/settings.json`
   `ClaudeCodeHookInstaller` writes — this one is never written, only read),
   and `SenderSettings.LastClaudeAccountUuid` remembers the account seen on
-  the *previous* `SessionStart`. A mismatch swaps the greeting to "Conta do
-  Claude trocada para `<nome>`!", which wins outright over the generic
+  the *previous* `SessionStart`. A mismatch swaps the greeting to "Conta
+  trocada para `<nome>`!" (on screen "Claude: Conta trocada para...";
+  Claude-only — a Codex `SessionStart` never runs this check), which wins outright over the generic
   "Bora trabalhar em `<pasta>`" one — a switch is more specific, and it
   lands you in the home directory anyway, where there's no project name to
   offer instead. The very first `SessionStart` after installing this (an
@@ -297,7 +453,8 @@
   sends `FACE NEUTRAL`/empty `MSG` (never `FACE IDLE` — that clears the
   other tier), or Brobot would be stuck glitching forever. `MainWindow`
   starts this listener
-  whenever `ClaudeCodeHookInstaller.IsInstalled()` is true — on launch
+  whenever either AI provider is installed (`AiProviders.Any(p =>
+  p.IsInstalled())`) — on launch
   (`RestoreSettings`) and right after a successful Install — rather than
   gating it behind any checkbox state.
 - **`SenderSettings.cs`**: a small JSON POCO persisted to
