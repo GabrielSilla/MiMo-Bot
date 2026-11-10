@@ -50,7 +50,10 @@ Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortugue
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar um atalho na Área de Trabalho"; GroupDescription: "Atalhos adicionais:"; Flags: unchecked
-Name: "startupicon"; Description: "Iniciar automaticamente com o Windows"; GroupDescription: "Atalhos adicionais:"; Flags: unchecked
+; Checked by default: Peemo Sender is a tray app that only does its job while
+; running. On an upgrade Inno still reuses the previous choice
+; (UsePreviousTasks), so someone who unticked it before keeps it off.
+Name: "startupicon"; Description: "Iniciar automaticamente com o Windows"; GroupDescription: "Atalhos adicionais:"
 
 [Files]
 Source: "{#MyPublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -87,18 +90,15 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: startupicon
 
 [Run]
-; Silent (/quiet) and per-user (no /admin, matching PrivilegesRequired=lowest
-; above) -- Check: ShouldInstallVsExtension is what actually gates this on
-; DetectVisualStudio finding a compatible install (see [Code] below); on a
-; machine with no Visual Studio at all (the common case for this installer)
-; this line simply never runs. Deliberately unlike Atividade da IA's Claude
-; Code hook, which is only ever installed via an explicit, reversible
-; Instalar/Desinstalar button inside the app itself -- there's no
-; MSBuild/dotnet-build-watching equivalent to opt into there, since it's
-; Visual Studio-only and the app has no UI to show/hide before VS is even
-; known to be present. If this ever needs to be user-toggleable the same way,
-; that button belongs in the app, not here.
-Filename: "{code:GetVsixInstallerPath}"; Parameters: "/quiet ""{tmp}\Brobot.VSExtension.vsix"""; Check: ShouldInstallVsExtension; StatusMsg: "Instalando a extensão do Peemo para o Visual Studio..."; Flags: runhidden waituntilterminated
+; The VS extension is NOT installed from here but from [Code]'s
+; InstallVsExtension: a [Run] entry can't see VSIXInstaller's exit code, and
+; with VS open it fails silently after about a minute of retrying
+; (BlockingProcessesException), which is exactly how it went unnoticed.
+; Deliberately unlike Atividade da IA's Claude Code hook, which is only ever
+; installed via an explicit, reversible Instalar/Desinstalar button inside
+; the app itself -- the app has no UI to show/hide before VS is even known to
+; be present. If this ever needs to be user-toggleable the same way, that
+; button belongs in the app, not here.
 Filename: "{app}\{#MyAppExeName}"; Description: "Iniciar o {#MyAppName} agora"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
@@ -127,6 +127,9 @@ Filename: "{code:GetVsixInstallerPath}"; Parameters: "/uninstall:872793e5-5485-4
 var
   VSInstallPath: String;
   VSDetected: Boolean;
+  // Set when the user chose to go on without the VS extension because
+  // Visual Studio was still open (see PrepareToInstall).
+  VsExtensionSkipped: Boolean;
 
 // vswhere.exe has shipped at this exact, stable path alongside the Visual
 // Studio Installer since VS2017 -- it's the documented, supported way to
@@ -160,7 +163,9 @@ begin
     Exit;
 
   OutputFile := ExpandConstant('{tmp}\brobot-vswhere-output.txt');
-  CmdLine := '/C ""' + VsWhere + '" -products * -latest -version "[17.0,19.0)" -property installationPath > "' + OutputFile + '""';
+  // -prerelease: without it vswhere skips Insiders/Preview channels entirely,
+  // and Visual Studio 2026 (18.x) Insiders is a real target of this extension.
+  CmdLine := '/C ""' + VsWhere + '" -products * -latest -prerelease -version "[17.0,19.0)" -property installationPath > "' + OutputFile + '""';
   if not Exec(ExpandConstant('{cmd}'), CmdLine, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
     Exit;
 
@@ -169,11 +174,6 @@ begin
 
   VSInstallPath := Trim(Lines[0]);
   Result := (VSInstallPath <> '') and DirExists(VSInstallPath);
-end;
-
-function ShouldInstallVsExtension(): Boolean;
-begin
-  Result := VSDetected;
 end;
 
 function ShouldUninstallVsExtension(): Boolean;
@@ -187,6 +187,83 @@ end;
 function GetVsixInstallerPath(Param: String): String;
 begin
   Result := VSInstallPath + '\Common7\IDE\VSIXInstaller.exe';
+end;
+
+// VSIXInstaller refuses to change extensions while devenv.exe runs. Matched
+// by name only: WMI can't read ExecutablePath of an elevated devenv from a
+// non-elevated Setup, and any open VS is worth asking about anyway.
+function IsVisualStudioRunning(): Boolean;
+var
+  Locator, Service, Procs: Variant;
+begin
+  Result := False;
+  try
+    Locator := CreateOleObject('WbemScripting.SWbemLocator');
+    Service := Locator.ConnectServer('.', 'root\CIMV2');
+    Procs := Service.ExecQuery('SELECT ProcessId FROM Win32_Process WHERE Name = ''devenv.exe''');
+    Result := Procs.Count > 0;
+  except
+    // WMI unavailable: don't block Setup; InstallVsExtension still reports
+    // a failure if VS really was open.
+    Result := False;
+  end;
+end;
+
+// Asks for VS to be closed *before* anything is installed, while the user can
+// still act on it. Cancel just skips the extension; Peemo Sender itself is
+// never blocked on Visual Studio. In a silent install the default (Cancel)
+// applies, so an unattended install never hangs on an open VS.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+  if not VSDetected then
+    Exit;
+  while IsVisualStudioRunning() do
+  begin
+    if SuppressibleMsgBox('O Visual Studio está aberto. Para instalar a extensão do Peemo para o Visual Studio, feche-o e clique em Repetir.' + #13#10#13#10 +
+        'Clique em Cancelar para continuar sem a extensão. O Peemo Sender é instalado normalmente.',
+        mbConfirmation, MB_RETRYCANCEL, IDCANCEL) <> IDRETRY then
+    begin
+      VsExtensionSkipped := True;
+      Exit;
+    end;
+  end;
+end;
+
+// Runs VSIXInstaller and checks its exit code, unlike a [Run] entry. Even
+// with devenv.exe closed it can still be blocked by MSBuild.exe worker nodes
+// that VS leaves running for a few minutes, so a failure offers Retry.
+// "This exact version is already installed" (a reinstall, or an upgrade that
+// didn't change the VSIX) is success here. It is recognized by the exception
+// name VSIXInstaller writes to its log, not by exit code: there is no
+// documented table of its exit codes.
+function VsixLogSaysAlreadyInstalled(LogFile: String): Boolean;
+var
+  Log: AnsiString;
+begin
+  Result := LoadStringFromFile(LogFile, Log) and (Pos('AlreadyInstalledException', Log) > 0);
+end;
+
+procedure InstallVsExtension();
+var
+  Params, LogFile: String;
+  ResultCode: Integer;
+begin
+  if (not VSDetected) or VsExtensionSkipped then
+    Exit;
+  LogFile := ExpandConstant('{%TEMP}\PeemoSender-vsix-install.log');
+  Params := '/quiet "/logFile:' + LogFile + '" "' + ExpandConstant('{tmp}\Brobot.VSExtension.vsix') + '"';
+  repeat
+    WizardForm.StatusLabel.Caption := 'Instalando a extensão do Peemo para o Visual Studio...';
+    DeleteFile(LogFile);
+    if Exec(GetVsixInstallerPath(''), Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and
+       ((ResultCode = 0) or VsixLogSaysAlreadyInstalled(LogFile)) then
+      Exit;
+  until SuppressibleMsgBox('Não foi possível instalar a extensão do Peemo para o Visual Studio (código ' + IntToStr(ResultCode) + ').' + #13#10#13#10 +
+      'Normalmente é algum processo do Visual Studio ainda aberto, como o MSBuild.exe, que continua ativo por alguns minutos depois que o VS fecha. ' +
+      'Feche-os no Gerenciador de Tarefas e clique em Repetir, ou clique em Cancelar para seguir sem a extensão.' + #13#10#13#10 +
+      'Detalhes em: ' + LogFile,
+      mbError, MB_RETRYCANCEL, IDCANCEL) <> IDRETRY;
 end;
 
 // IntelliJ plugin. Unlike Visual Studio there's no CLI installer to hand a
@@ -237,7 +314,7 @@ begin
             begin
               Jar := ExpandConstant('{tmp}\peemo-intellij-plugin.jar');
               if FileExists(Jar) and ForceDirectories(PluginDir + '\lib') then
-                FileCopy(Jar, PluginDir + '\lib\peemo-intellij-plugin.jar', False);
+                CopyFile(Jar, PluginDir + '\lib\peemo-intellij-plugin.jar', False);
             end
             else
               DelTree(PluginDir, True, True, True);
@@ -253,7 +330,10 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
+  begin
     ForEachIntelliJConfigDir(True);
+    InstallVsExtension();
+  end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

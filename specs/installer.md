@@ -45,7 +45,10 @@ what makes a second launch a well-defined no-op (silently `Shutdown()`s
 rather than opening a second tray icon/second `AiThoughtsListener` fighting
 over port 5591) now that the installer can offer *two* separate shortcuts
 that could both start it (Start Menu, and an optional "start with Windows"
-shortcut in `{userstartup}`) — before the installer existed this was only
+shortcut in `{userstartup}` — the `startupicon` task, **checked by default**
+since 1.5.0 because a tray app that isn't running does nothing; on an
+upgrade Inno's `UsePreviousTasks` still keeps whatever the user chose last
+time) — before the installer existed this was only
 ever launched by hand, so the collision wasn't a real scenario yet.
 
 **Emulator cores ride along with no installer step of their own.** The
@@ -72,15 +75,28 @@ Detection is Inno Pascal Script in the `.iss`'s own `[Code]` section
 path (`{commonpf32}\Microsoft Visual Studio\Installer\vswhere.exe`) by
 every VS2017+ install, and the documented, supported way to find an
 edition's install directory without guessing at per-edition/version
-registry keys. Queried with `-latest -version "[17.0,19.0)"` — the same
-range as the VSIX manifest's own `InstallationTarget`, so Setup doesn't
-hand the package to an incompatible edition just to have it fail to
-register inside VS later. `InitializeSetup` runs the detection once and
-caches the result (`VSDetected`/`VSInstallPath`) for the `[Run]` entry's
-`Check: ShouldInstallVsExtension`; that entry calls the detected
-`VSIXInstaller.exe` directly with `/quiet` (no `/admin` — matching this
-installer's own per-user default) so the install is silent, with no
-second wizard popping up inside the first one. `[UninstallRun]` mirrors
+registry keys. Queried with `-latest -prerelease -version "[17.0,19.0)"` —
+the same range as the VSIX manifest's own `InstallationTarget`, so Setup
+doesn't hand the package to an incompatible edition just to have it fail to
+register inside VS later. **`-prerelease` matters**: without it vswhere skips
+Insiders/Preview channels entirely, and Visual Studio 2026 (18.x) on the dev
+machine is Insiders — 1.5.0's first build found only an old 2017 BuildTools
+(which takes no extensions) and silently skipped the extension.
+`InitializeSetup` runs the detection once and caches the result
+(`VSDetected`/`VSInstallPath`). The install itself is **not a `[Run]`
+entry** but `InstallVsExtension` in `[Code]` (`ssPostInstall`), because
+VSIXInstaller refuses to touch extensions while VS is open: in `/quiet` mode
+it retries for about a minute and then exits with
+`BlockingProcessesException`, which a `[Run]` entry can't see. So
+`PrepareToInstall` asks for VS to be closed first (Repetir/Cancelar; Cancel
+or a silent install just skips the extension, never Peemo Sender), and
+`InstallVsExtension` checks the exit code and offers Retry on failure —
+MSBuild.exe worker nodes can keep blocking for a few minutes after devenv
+closes. "Already installed" (same VSIX version) counts as success, detected
+by `AlreadyInstalledException` in the log (`%TEMP%\PeemoSender-vsix-install.log`)
+since VSIXInstaller's exit codes aren't documented. It's still `/quiet` with
+no `/admin` (matching this installer's per-user default), so there's no
+second wizard inside the first one. `[UninstallRun]` mirrors
 this to remove the extension again (`/uninstall:<vsixID> /quiet`), but
 re-runs `DetectVisualStudio` fresh (`ShouldUninstallVsExtension`) rather
 than trusting a value from install time, since VS could have been added,
